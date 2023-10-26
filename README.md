@@ -1,3 +1,13 @@
+<div align="center">
+
+![yucca_logo](https://github.com/Sllambias/Yucca/assets/9844416/7a670109-a079-4ca3-9dff-36f16c654270)
+
+[![Paper](https://img.shields.io/badge/arXiv-1904.10620-44cc11.svg)](https://arxiv.org/abs/1904.10620)
+![coverage](https://img.shields.io/badge/coverage-80%25-yellowgreen)
+![downloads](https://img.shields.io/badge/downloads-13k%2Fmonth-brightgreen)
+![version](https://img.shields.io/badge/version-1.2.3-blue)
+
+</div>
 
 # Yucca
 All-Purpose Segmentation Framework. Yucca is designed to be plug-and-play while still being heavily customizable. This allows users to employ the basic Yucca models as solid baselines but it also allows users to change and experiment with exact features in a robust and thoroughly tested research environment. The Yucca project is inspired by Fabien Isensee's [nnUNet](https://github.com/MIC-DKFZ/nnUNet).
