@@ -1,6 +1,6 @@
 <div align="center">
 
-![yucca_logo](https://github.com/Sllambias/Yucca/assets/9844416/7a670109-a079-4ca3-9dff-36f16c654270)
+<img src="https://github.com/Sllambias/Yucca/assets/9844416/7a670109-a079-4ca3-9dff-36f16c654270" width="368" height="402" />
 
 [![Paper](https://img.shields.io/badge/arXiv-1904.10620-44cc11.svg)](https://arxiv.org/abs/1904.10620)
 ![coverage](https://img.shields.io/badge/coverage-80%25-yellowgreen)
