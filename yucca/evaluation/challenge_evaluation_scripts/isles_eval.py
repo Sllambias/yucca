@@ -236,13 +236,7 @@ for i in range(1):
                 if not np.logical_and(binary_cluster_image, gt_cc).any():
                     fp += 1
 print(tp, fp, fn, gt_cc_n, pred_cc_n)
-#%%
-    dice = compute_dice(im1, im2)
-    abs_les_diff = compute_absolute_lesion_difference(im1, im2)
-    les_f1 = compute_lesion_f1_score(im1, im2)
-    labeled_output, ground_truth_numb_lesion = cc3d.connected_components(im1, connectivity=26, return_N=True)
-    print(cc3d.statistics(labeled_output))
-#%%
+   
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

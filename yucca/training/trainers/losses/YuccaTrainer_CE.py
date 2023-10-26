@@ -1,5 +1,5 @@
 from yucca.training.trainers.YuccaTrainer import YuccaTrainer
-from yucca.training.loss_functions.CE import CE
+from yuccalib.loss_and_optim.loss_functions.CE import CE
 
 
 class YuccaTrainer_CE(YuccaTrainer):

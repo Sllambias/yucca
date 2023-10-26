@@ -1,8 +1,8 @@
-import os
-from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p
 """
 PLEASE READ YUCCA/DOCUMENTATION/TUTORIALS/ENVIRONMENT_VARIABLES.MD FOR INFORMATION ON HOW TO SET THIS UP
 """
+import os
+from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p
 
 yucca_raw_data = os.environ['yucca_raw_data'] if "yucca_raw_data" in os.environ.keys() else None
 yucca_preprocessed = os.environ['yucca_preprocessed'] if "yucca_preprocessed" in os.environ.keys() else None

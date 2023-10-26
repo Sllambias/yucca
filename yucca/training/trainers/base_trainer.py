@@ -15,7 +15,6 @@ from batchgenerators.dataloading.nondet_multi_threaded_augmenter import NonDetMu
 from batchgenerators.transforms.abstract_transforms import Compose
 from yucca.paths import yucca_preprocessed, yucca_models
 from yucca.training.data_loading.YuccaLoader import YuccaLoader
-from yucca.trainingmentation.YuccaAugmenter import YuccaAugmenter
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yuccalib.image_processing.matrix_ops import get_max_rotated_size
 from yuccalib.utils.files_and_folders import recursive_find_python_class, \

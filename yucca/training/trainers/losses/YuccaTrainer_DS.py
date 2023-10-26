@@ -1,8 +1,8 @@
-from yucca.training.trainers.YuccaTrainerV2 import YuccaTrainer
-from yucca.training.loss_functions.deep_supervision import DeepSupervisionLoss
+from yucca.training.trainers.YuccaTrainer import YuccaTrainer
+from yucca.loss_and_optim.loss_functions.deep_supervision import DeepSupervisionLoss
 
 
-class YuccaTrainerDS(YuccaTrainer):
+class YuccaTrainer_DS(YuccaTrainer):
     """
     The difference from YuccaTrainerV2 --> YuccaTrainerV3 is:
     - Introduces Deep Supervision

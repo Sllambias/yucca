@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from yucca.yucca.training.trainers.YuccaTrainer import YuccaTrainer
+from yucca.training.trainers.YuccaTrainer import YuccaTrainer
 from torch import optim
 
 

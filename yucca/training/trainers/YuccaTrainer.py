@@ -7,15 +7,14 @@ from torch import optim
 from torch.cuda.amp import GradScaler
 from batchgenerators.utilities.file_and_folder_operations import join, subfiles, save_pickle
 from yucca.paths import yucca_preprocessed
-from yucca.evaluation.confusion_matrix import torch_confusion_matrix_from_logits,\
-    torch_get_tp_fp_tn_fn
-from yucca.evaluation.metrics import dice_per_label
+
 from yucca.training.trainers.base_trainer import base_trainer
-from yucca.trainingmentation.default_augmentation_params import default_3D_augmentation_params,\
-    default_2D_augmentation_params
-from yucca.training.loss_functions.nnUNet_losses import DiceCE
-from yucca.utils.files_and_folders import recursive_find_python_class
-from yucca.utils.kwargs import filter_kwargs
+from yuccalib.evaluation.confusion_matrix import torch_confusion_matrix_from_logits,\
+    torch_get_tp_fp_tn_fn
+from yuccalib.evaluation.metrics import dice_per_label
+from yuccalib.loss_and_optim.loss_functions.nnUNet_losses import DiceCE
+from yuccalib.utils.files_and_folders import recursive_find_python_class
+from yuccalib.utils.kwargs import filter_kwargs
 
 
 class YuccaTrainer(base_trainer):
@@ -28,6 +27,7 @@ class YuccaTrainer(base_trainer):
         - Sets the # epochs and # batches pr. epoch
             - By default 1000 epochs of 250/50 train/val batches pr. epoch
         - Sets the batch size and patch size
+          - Patch Size is automatically set based on the dataset.
         - Defines the Data Augmentation scheme
         - Initializes the network
             - Input and output channels are derived from the # modalities and 
@@ -39,8 +39,10 @@ class YuccaTrainer(base_trainer):
         - Saves all these parameters in the defined outpath
         - Initializes weights & biases
     Then it starts training
+        - Using mixed precision
+        - Gradients are scaled and clipped.
         - Augmentations are applied using the CPU while the forward - backward pass is handled
-        by the GPU
+        by the GPU to avoid IO bottlenecks
         - On epoch start the start time is recorded and lists for losses etc. are created
         - On epoch finish the end time is recorded and validation results are evaluated and uploaded
         to both WANDB and the local training log. Finally the LR is updated according to any
