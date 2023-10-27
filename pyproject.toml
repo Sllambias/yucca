@@ -1,0 +1,52 @@
+[project]
+name = "yucca"
+version = "0.0.1"
+authors = [
+  { name="Sebastian LLambias", email="llambias@live.dk" },
+]
+description = "The modern framework for out-of-the box mahine Learning on medical data."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+keywords = ['deep learning', 'image segmentation', 'medical image analysis','medical image segmentation']
+
+
+dependencies = [
+    "batchgenerators>=0.23",
+    "connected_components_3d",
+    "matplotlib",
+    "nibabel",
+    "numpy",
+    "pandas",
+    "scikit_image",
+    "scikit_learn",
+    "seaborn",
+    "setuptools",
+    "SimpleITK",
+    "wandb",
+    "weave",
+]
+
+[project.optional-dependencies]
+test = [
+    'pytest>=7.3',
+]
+
+[project.scripts]
+yucca_preprocess = 'yucca.run.run_preprocessing:main'
+yucca_train = 'yucca.run.run_training:main'
+yucca_inference = 'yucca.run.run_inference:main'
+yucca_evaluation = 'yucca.run.run_evaluation:main'
+yucca_finetune = 'yucca.run.run_finetune:main'
+
+[project.urls]
+"Homepage" = "https://github.com/sllambias/yuccalib"
+"Bug Tracker" = "https://github.com/sllambias/yuccalib/issues"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
