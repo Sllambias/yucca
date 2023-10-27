@@ -16,3 +16,7 @@ class YuccaDataset(Dataset):
         data = np.load(join(self.data_path, data))['data']
         data = {'image': data[:-1], 'seg': data[-1:]}
         return self.transform(**data)
+    
+
+#%%
+

@@ -7,7 +7,6 @@ from torch import optim
 from torch.cuda.amp import GradScaler
 from batchgenerators.utilities.file_and_folder_operations import join, subfiles, save_pickle
 from yucca.paths import yucca_preprocessed
-
 from yucca.training.trainers.base_trainer import base_trainer
 from yuccalib.evaluation.confusion_matrix import torch_confusion_matrix_from_logits,\
     torch_get_tp_fp_tn_fn
