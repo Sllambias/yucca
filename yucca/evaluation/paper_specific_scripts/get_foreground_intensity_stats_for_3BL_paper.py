@@ -1,6 +1,5 @@
 #%%
-from batchgenerators.utilities.file_and_folder_operations import subfiles, join
-import nibabel as nib
+from batchgenerators.utilities.file_and_folder_operations import subfiles
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns

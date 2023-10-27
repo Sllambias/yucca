@@ -56,10 +56,10 @@ class YuccaEvaluator(object):
               f"Evaluating performance on labels: {labels}")
 
     def sanity_checks(self):
-        assert self.pred_subjects <= self.gt_subjects,\
+        assert self.pred_subjects <= self.gt_subjects, \
             "Ground Truth is missing for predicted scans"
 
-        assert self.gt_subjects <= self.pred_subjects,\
+        assert self.gt_subjects <= self.pred_subjects, \
             "Prediction is missing for Ground Truth of scans"
 
         # Check if the Ground Truth directory is a subdirectory of a 'TaskXXX_MyTask' folder.
@@ -98,9 +98,13 @@ class YuccaEvaluator(object):
             pred = nib.load(predpath)
             gt = nib.load(gtpath)
             if self.as_binary:
-                cmat = confusion_matrix(np.around(gt.get_fdata().flatten()).astype(bool).astype(int), np.around(pred.get_fdata().flatten()).astype(bool).astype(int), labels=self.labelarr)
+                cmat = confusion_matrix(np.around(gt.get_fdata().flatten()).astype(bool).astype(int), 
+                                        np.around(pred.get_fdata().flatten()).astype(bool).astype(int), 
+                                        labels=self.labelarr)
             else:
-                cmat = confusion_matrix(np.around(gt.get_fdata().flatten()).astype(int), np.around(pred.get_fdata().flatten()).astype(int), labels=self.labelarr)
+                cmat = confusion_matrix(np.around(gt.get_fdata().flatten()).astype(int), 
+                                        np.around(pred.get_fdata().flatten()).astype(int), 
+                                        labels=self.labelarr)
 
             for label in self.labelarr:
                 labeldict = {}

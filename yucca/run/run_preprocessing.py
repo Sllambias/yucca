@@ -1,6 +1,7 @@
 import argparse
 import yucca
-from yucca.utils.files_and_folders import recursive_find_python_class, maybe_get_task_from_task_id
+from yucca.utils.task_ids import maybe_get_task_from_task_id
+from yuccalib.utils.files_and_folders import recursive_find_python_class
 from batchgenerators.utilities.file_and_folder_operations import join
 
 
@@ -11,7 +12,7 @@ def main():
                         required=True)
     parser.add_argument("-pl", help="Experiment Planner Class to employ. "
                         "Defaults to the YuccaPlannerV2",
-                        default='YuccaPlannerV2')
+                        default='YuccaPlanner')
     parser.add_argument("-v", help="Designate target view or orientation to obtain with transposition. "
                         "Standard settings will handle this for you, but use this to manually specify. "
                         "Can be 'X', 'Y' or 'Z'")

@@ -4,18 +4,19 @@ Takes raw data conforming with Yucca standards and preprocesses according to the
 import numpy as np
 import torch
 import nibabel as nib
-from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
-from yucca.image_processing.objects.BoundingBox import get_bbox_for_foreground
-from yucca.image_processing.cropping_and_padding import crop_to_box, pad_to_size
-from yucca.paths import yucca_preprocessed, yucca_raw_data
-from yucca.preprocessing.normalization import normalizer
-from yucca.utils.nib_utils import get_nib_spacing, get_nib_orientation, reorient_nib_image, nib_to_np
-from batchgenerators.utilities.file_and_folder_operations import join, load_json, subfiles, \
-    save_pickle, maybe_mkdir_p, isfile, subdirs
-from multiprocessing import Pool
-from skimage.transform import resize
 import os
 import cc3d
+from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
+from yucca.paths import yucca_preprocessed, yucca_raw_data
+from yucca.preprocessing.normalization import normalizer
+from yuccalib.utils.nib_utils import get_nib_spacing, get_nib_orientation, reorient_nib_image
+from yuccalib.utils.type_conversions import nib_to_np
+from yuccalib.image_processing.objects.BoundingBox import get_bbox_for_foreground
+from yuccalib.image_processing.cropping_and_padding import crop_to_box, pad_to_size
+from multiprocessing import Pool
+from skimage.transform import resize
+from batchgenerators.utilities.file_and_folder_operations import join, load_json, subfiles, \
+    save_pickle, maybe_mkdir_p, isfile, subdirs
 
 
 class YuccaMultiTaskPreprocessor(YuccaPreprocessor):
@@ -66,14 +67,14 @@ class YuccaMultiTaskPreprocessor(YuccaPreprocessor):
                 if subject.endswith("_000.nii.gz"):
                     s = subject[:-len("_000.nii.gz")]
                     subject_ids.append((s, task))
-        
+
         print(f"{'Preprocessing Task:':25.25} {self.task} \n"
               f"{'Using Planner:':25.25} {self.plans_path} \n"
               f"{'Crop to nonzero:':25.25} {self.plans['crop_to_nonzero']} \n"
               f"{'Normalization scheme:':25.25} {self.plans['normalization_scheme']} \n"
               f"{'Transpose Forward:':25.25} {self.transpose_forward} \n"
               f"{'Transpose Backward:':25.25} {self.transpose_backward} \n")
-        
+
         p = Pool(self.threads)
         p.map(self._preprocess_train_subject, subject_ids)
         p.close()
@@ -141,7 +142,7 @@ class YuccaMultiTaskPreprocessor(YuccaPreprocessor):
         else:
             target_spacing = original_spacing
 
-        # If qform and sform are both missing the header is corrupt and we do not trust the 
+        # If qform and sform are both missing the header is corrupt and we do not trust the
         # direction from the affine
         # Make sure you know what you're doing
         if images[0].get_qform(coded=True)[1] or images[0].get_sform(coded=True)[1]:
@@ -170,10 +171,10 @@ class YuccaMultiTaskPreprocessor(YuccaPreprocessor):
 
         if task != 'Segmentation':
             images = self._resample_and_normalize_case(images, None,
-                                                   self.plans['normalization_scheme'],
-                                                   self.transpose_forward,
-                                                   original_spacing,
-                                                   target_spacing)
+                                                       self.plans['normalization_scheme'],
+                                                       self.transpose_forward,
+                                                       original_spacing,
+                                                       target_spacing)
             if seg is not None:
                 images = np.array((np.array(images).T, seg), dtype='object')
                 images[0] = images[0].T
@@ -183,10 +184,10 @@ class YuccaMultiTaskPreprocessor(YuccaPreprocessor):
                 final_size = list(images[0].shape)
         else:
             images, seg = self._resample_and_normalize_case(images, seg,
-                                                    self.plans['normalization_scheme'],
-                                                    self.transpose_forward,
-                                                    original_spacing,
-                                                    target_spacing)
+                                                            self.plans['normalization_scheme'],
+                                                            self.transpose_forward,
+                                                            original_spacing,
+                                                            target_spacing)
 
             # Stack and fix dimensions
             images = np.vstack((np.array(images), np.array(seg)[np.newaxis]))
@@ -201,11 +202,11 @@ class YuccaMultiTaskPreprocessor(YuccaPreprocessor):
             if ground_truth_numb_lesion == 0:
                 object_sizes = 0
             else:
-                object_sizes = [i * np.prod(target_spacing) for i in np.unique(numbered_ground_truth, return_counts=True)[-1][1:]]
+                object_sizes = [i * np.prod(target_spacing) for i in
+                                np.unique(numbered_ground_truth, return_counts=True)[-1][1:]]
         else:
             foreground_locs = []
             numbered_ground_truth = ground_truth_numb_lesion = object_sizes = 0
-
 
         # save relevant values
         image_props['original_spacing'] = original_spacing
@@ -219,11 +220,9 @@ class YuccaMultiTaskPreprocessor(YuccaPreprocessor):
         image_props['n_cc'] = ground_truth_numb_lesion
         image_props['size_cc'] = object_sizes
 
-
-        print(
-            f"size before: {original_size} size after: {image_props['new_size']} \n"
-            f"spacing before: {original_spacing} spacing after: {image_props['new_spacing']} \n"
-            f"Saving {subject_id} in {arraypath} \n")
+        print(f"size before: {original_size} size after: {image_props['new_size']} \n"
+              f"spacing before: {original_spacing} spacing after: {image_props['new_spacing']} \n"
+              f"Saving {subject_id} in {arraypath} \n")
 
         # save the image
         np.save(arraypath, images)
@@ -274,7 +273,7 @@ class YuccaMultiTaskPreprocessor(YuccaPreprocessor):
             except OverflowError:
                 print("Unexpected values in either shape or seg for resize")
             return images, seg
-        
+
         return images
 
     def preprocess_case_for_inference(self, images: list, patch_size: tuple, do_tta=False):
@@ -301,7 +300,7 @@ class YuccaMultiTaskPreprocessor(YuccaPreprocessor):
         image_properties['qform'] = images[0].get_qform()
         image_properties['sform'] = images[0].get_sform()
 
-        assert len(image_properties['original_shape']) in [2, 3], "images must be either 2D or 3D for preprocessing" 
+        assert len(image_properties['original_shape']) in [2, 3], "images must be either 2D or 3D for preprocessing"
 
         # Check if header is valid and then attempt to orient to target orientation.
         if (images[0].get_qform(coded=True)[1] or images[0].get_sform(coded=True)[1] and
@@ -310,7 +309,8 @@ class YuccaMultiTaskPreprocessor(YuccaPreprocessor):
                 original_orientation = get_nib_orientation(images[0])
                 image_properties['original_orientation'] = original_orientation
                 images = [reorient_nib_image(image, original_orientation,
-                                         self.plans['target_coordinate_system']) for image in images]
+                                             self.plans['target_coordinate_system'])
+                          for image in images]
                 image_properties['new_orientation'] = get_nib_orientation(images[0])
         else:
             print("Insufficient header information. Reorientation will not be attempted.")
@@ -350,7 +350,8 @@ class YuccaMultiTaskPreprocessor(YuccaPreprocessor):
 
     def reverse_preprocessing(self, images: np.ndarray, image_properties: dict):
         """
-        At this point images are potentially: cropped, transposed, resized and padded (in this order).
+        At this point images are potentially: cropped, transposed, resized and padded
+        (in this order).
 
         First we undo the padding
         Then we reverse resizing to ensure correct spacing
@@ -371,7 +372,7 @@ class YuccaMultiTaskPreprocessor(YuccaPreprocessor):
         for b in range(images.shape[0]):
 
             for c in range(images.shape[1]):
-                image = images[b,c]
+                image = images[b, c]
 
                 assert np.all(image.shape == image_properties['padded_shape']), f"Reversing padding: "\
                     f"image should be of shape: {image_properties['padded_shape']}"\
@@ -386,7 +387,7 @@ class YuccaMultiTaskPreprocessor(YuccaPreprocessor):
                     f"image should be of shape: {image_properties['resampled_transposed_shape']}"\
                     f"but is: {image.shape}"
                 image = resize(image, output_shape=shape_after_crop_transposed, order=3).transpose(self.transpose_backward)
-                
+
                 assert np.all(image.shape == image_properties['cropped_shape']), f"Reversing cropping: "\
                     f"image should be of shape: {image_properties['cropped_shape']}"\
                     f"but is: {image.shape}"

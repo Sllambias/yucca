@@ -9,10 +9,10 @@ from yuccalib.utils.nib_utils import get_nib_spacing, get_nib_orientation, reori
 from yuccalib.utils.type_conversions import nib_to_np
 from yucca.paths import yucca_preprocessed, yucca_raw_data
 from yucca.preprocessing.normalization import normalizer
-from batchgenerators.utilities.file_and_folder_operations import join, load_json, subfiles, \
-    save_pickle, maybe_mkdir_p, isfile
 from multiprocessing import Pool
 from skimage.transform import resize
+from batchgenerators.utilities.file_and_folder_operations import join, load_json, subfiles, \
+    save_pickle, maybe_mkdir_p, isfile
 
 
 class YuccaPreprocessor(object):

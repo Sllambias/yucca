@@ -6,14 +6,10 @@ using "--pred" and "--gt" and define the labels of interest using e.g. "-c 0 1"
 2. You can specify the task, trainer and planner like it's also done in other yucca_ scripts.
 if "-t" for target task is left blank, we assume you are predicting and evaluating data
 from the same task as the one the model is trained on.
-
-
 """
-
-
 import argparse
 from yucca.evaluation.YuccaEvaluator import YuccaEvaluator
-from yucca.utils.files_and_folders import maybe_get_task_from_task_id
+from yucca.utils.task_ids import maybe_get_task_from_task_id
 from yucca.paths import yucca_raw_data, yucca_results
 from batchgenerators.utilities.file_and_folder_operations import load_json, join
 
@@ -30,8 +26,8 @@ def main():
     parser.add_argument("-m", help="Model Architecture. Defaults to UNet.", default="UNet")
     parser.add_argument("-d", help="2D, 25D or 3D model. Defaults to 3D.", default='3D')
     parser.add_argument("-tr", help="Full name of Trainer Class. \n"
-                        "e.g. 'YuccaTrainer_DCE' or 'YuccaTrainerV2'. Defaults to YuccaTrainerV2.", default='YuccaTrainerV2')
-    parser.add_argument("-pl", help="Plan ID. Defaults to YuccaPlannerV2", default="YuccaPlannerV2")
+                        "e.g. 'YuccaTrainer_DCE' or 'YuccaTrainer'. Defaults to YuccaTrainer.", default='YuccaTrainer')
+    parser.add_argument("-pl", help="Plan ID. Defaults to YuccaPlanner", default="YuccaPlanner")
     parser.add_argument("-chk", help="Checkpoint to use for inference. Defaults to checkpoint_best.", default="checkpoint_best")
 
     parser.add_argument("-c", nargs='*', help="Classes to include for evaluation", type=str)

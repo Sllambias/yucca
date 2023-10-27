@@ -1,7 +1,7 @@
 from yucca.training.trainers.YuccaTrainer import YuccaTrainer
 
 
-class YuccaTrainer_24GB(YuccaTrainerV2):
+class YuccaTrainer_24GB(YuccaTrainer):
     def __init__(self, model, model_dimensions: str, task: str, folds: str | int, plan_id: str,
                  starting_lr: float = None, loss_fn: str = None, momentum: float = None,
                  continue_training: bool = False, checkpoint: str = None, finetune: bool = False,

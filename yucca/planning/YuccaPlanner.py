@@ -1,10 +1,10 @@
 import yucca
+import numpy as np
 from yucca.paths import yucca_preprocessed, yucca_raw_data
 from yucca.planning.dataset_properties import create_properties_pkl
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p,\
-    isfile, load_pickle, save_json, subfiles
-import numpy as np
 from yuccalib.utils.files_and_folders import recursive_find_python_class
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, \
+    isfile, load_pickle, save_json, subfiles
 
 
 class YuccaPlanner(object):
@@ -53,7 +53,6 @@ class YuccaPlanner(object):
         self.suggested_dimensionality = '3D'
         self.view = view
 
-
     def plan(self):
         self.set_paths()
 
@@ -71,7 +70,7 @@ class YuccaPlanner(object):
 
     def determine_transpose(self):
         # If no specific view is determined in run training, we select the optimal.
-        # This will be the optimal solution in most cases that are not 2.5D training. 
+        # This will be the optimal solution in most cases that are not 2.5D training.
         dims = self.dataset_properties['data_dimensions']
 
         if dims == 2:
@@ -107,7 +106,6 @@ class YuccaPlanner(object):
             self.transpose_bw = [2, 1, 0]
 
         assert self.transpose_fw is not None, "no transposition, something is wrong."
-
 
     def determine_spacing(self):
         self.target_spacing = np.median(self.dataset_properties['original_spacings'], 0).tolist()

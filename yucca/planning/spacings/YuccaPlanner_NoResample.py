@@ -1,10 +1,10 @@
 # This planner can be used for highly anisotropic data.
 # It will not resample data to a uniform spacing but rather leave all samples
 # with their native spacing.
-from yucca.planning.YuccaPlannerV2 import YuccaPlannerV2
+from yucca.planning.YuccaPlanner import YuccaPlanner
 
 
-class YuccaPlannerV2_NoResample(YuccaPlannerV2):
+class YuccaPlanner_NoResample(YuccaPlanner):
     def __init__(self, task, threads=2, disable_unittests=False, view=None):
         super().__init__(task, threads, disable_unittests, view)
         self.name = str(self.__class__.__name__) + str(view or '')

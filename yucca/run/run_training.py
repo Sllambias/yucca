@@ -1,7 +1,8 @@
 
 import argparse
 import yucca
-from yucca.utils.files_and_folders import recursive_find_python_class, maybe_get_task_from_task_id
+from yucca.utils.task_ids import maybe_get_task_from_task_id
+from yuccalib.utils.files_and_folders import recursive_find_python_class
 from batchgenerators.utilities.file_and_folder_operations import join
 
 
@@ -20,10 +21,10 @@ def main():
     parser.add_argument("-d", help="Dimensionality of the Model. Can be 3D or 2D. "
                         "Defaults to 3D. Note that this will always be 2D if ensemble is enabled.")
     parser.add_argument("-tr", help="Trainer Class to be used. "
-                        "Defaults to the basic YuccaTrainer", default="YuccaTrainerV2")
+                        "Defaults to the basic YuccaTrainer", default="YuccaTrainer")
     parser.add_argument("-pl", help="Plan ID to be used. "
                         "This specifies which plan and preprocessed data to use for training "
-                        "on the given task. Defaults to the YuccaPlannerV2 folder", default='YuccaPlannerV2')
+                        "on the given task. Defaults to the YuccaPlanne folder", default='YuccaPlanner')
     parser.add_argument("-f", help="Fold to use for training. Unless manually assigned, "
                         "folds [0,1,2,3,4] will be created automatically. "
                         "Defaults to training on fold 0", default=0)

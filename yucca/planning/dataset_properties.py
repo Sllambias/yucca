@@ -1,8 +1,10 @@
 from batchgenerators.utilities.file_and_folder_operations import subfiles, join, load_json, save_pickle
-from yucca.utils.nib_utils import get_nib_spacing, nib_to_np
+from yuccalib.utils.nib_utils import get_nib_spacing
+from yuccalib.utils.type_conversions import nib_to_np
 import nibabel as nib
 import numpy as np
 import sys
+
 
 def create_properties_pkl(data_dir, save_dir, suffix='.nii.gz'):
     """"
@@ -18,7 +20,7 @@ def create_properties_pkl(data_dir, save_dir, suffix='.nii.gz'):
     if len(dataset_json['tasks']) > 0:
         assert not dataset_json["label_hierarchy"], "Multi Task implementation currently doesn't support Label Hierarchies"
         properties['classes'] = [list(dataset_json["labels"][task].keys()) for task in dataset_json['tasks']]
-    
+
     properties['label_hierarchy'] = dataset_json["label_hierarchy"]
     properties['modalities'] = dataset_json["modality"]
 

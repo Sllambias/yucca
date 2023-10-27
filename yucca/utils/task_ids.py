@@ -1,4 +1,5 @@
 from yucca.paths import yucca_raw_data
+from batchgenerators.utilities.file_and_folder_operations import subdirs
 
 
 def maybe_get_task_from_task_id(task_id: str | int):

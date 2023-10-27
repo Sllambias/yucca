@@ -279,6 +279,7 @@ class YuccaTrainer(base_trainer):
 
         if self.current_epoch == self.final_epoch:
             self.save_checkpoint("checkpoint_final.model")
+            wandb.finish()
 
     def setup_DA(self):
         super().setup_DA()

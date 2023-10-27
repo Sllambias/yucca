@@ -5,10 +5,11 @@ import wandb
 import sys
 import random
 import yucca
+import yuccalib
 from time import localtime, strftime, time, mktime
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
-from torch import nn
+from torch import nn, autocast
 from batchgenerators.utilities.file_and_folder_operations import save_json, join, load_json, \
     load_pickle, maybe_mkdir_p, isfile, subfiles
 from batchgenerators.dataloading.nondet_multi_threaded_augmenter import NonDetMultiThreadedAugmenter
@@ -17,6 +18,7 @@ from yucca.paths import yucca_preprocessed, yucca_models
 from yucca.training.data_loading.YuccaLoader import YuccaLoader
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yuccalib.image_processing.matrix_ops import get_max_rotated_size
+from yuccalib.network_architectures.utils.model_memory_estimation import find_optimal_tensor_dims
 from yuccalib.utils.files_and_folders import recursive_find_python_class, \
     save_segmentation_from_logits
 from yuccalib.utils.torch_utils import maybe_to_cuda
@@ -58,6 +60,7 @@ class base_trainer(object):
 
         # These can be changed during inference
         self.threads_for_inference = 2
+        self.threads_for_augmentation = 6
         self.sliding_window_overlap = 0.5
         self.preprocessor = None
         self.compression_level = 9  # 0-9 with 0 = min and 9 = max
@@ -79,7 +82,6 @@ class base_trainer(object):
             = self.loss_fn = self.loss_fn_kwargs \
             = self.lr_scheduler = self.lr_scheduler_kwargs \
             = self.momentum \
-            = selfmentation_parameters \
             = self.optim = self.optim_kwargs \
             = self.random_seed = self.fast_training \
             = self.finetune \
@@ -252,9 +254,9 @@ class base_trainer(object):
         self.log("\n", time=False, also_print=True)
 
     def initialize_network(self):
-        self.network = recursive_find_python_class(folder=[join(yucca.__path__[0], 'architectures')],
+        self.network = recursive_find_python_class(folder=[join(yuccalib.__path__[0], 'network_architectures')],
                                                    class_name=self.model_name,
-                                                   current_module='yucca.architectures')
+                                                   current_module='yuccalib.network_architectures')
 
         if self.model_dimensions == '3D':
             conv = nn.Conv3d
@@ -461,6 +463,7 @@ class base_trainer(object):
         if not self.EarlyCrop:
             train_transforms.append(CropPad(patch_size=self.patch_size,
                                             random_crop=self.RandomCrop))
+
         if self.deep_supervision:
             train_transforms.append(DownsampleSegForDS())
 
@@ -473,9 +476,10 @@ class base_trainer(object):
         train_transforms.append(NumpyToTorch(seg_dtype=self.SegDtype))
         train_transforms = Compose(train_transforms)
 
-        self.tr_gen = NonDetMultiThreadedAugmenter(self.tr_loader, train_transforms, 6,
+        self.tr_gen = NonDetMultiThreadedAugmenter(self.tr_loader, train_transforms,
+                                                   self.threads_for_augmentation,
                                                    2, pin_memory=True)
-    
+
         # Validation Transforms
         if self.deep_supervision:
             val_transforms.append(DownsampleSegForDS())
@@ -488,7 +492,7 @@ class base_trainer(object):
 
         val_transforms.append(NumpyToTorch(seg_dtype=self.SegDtype))
         val_transforms = Compose(val_transforms)
-        self.val_gen = NonDetMultiThreadedAugmenter(self.val_loader, val_transforms, threads//2,
+        self.val_gen = NonDetMultiThreadedAugmenter(self.val_loader, val_transforms, self.threads_for_augmentation//2,
                                                     2, pin_memory=True)
 
     def load_plans_from_path(self, path):
@@ -692,7 +696,7 @@ class base_trainer(object):
         self.param_dict['optimizer kwargs'] = self.optim_kwargs
         self.param_dict['momentum'] = self.momentum
         self.param_dict['starting lr'] = self.starting_lr
-        self.param_dict['parameters for augmentation'] = selfmentation_parameters
+        #self.param_dict['parameters for augmentation'] = selfmentation_parameters
 
         if self.lr_scheduler:
             self.param_dict['lr scheduler'] = self.lr_scheduler.__class__.__name__
@@ -773,14 +777,3 @@ class base_trainer(object):
             print("Random seed already set")
 
 
-
-#%%
-
-class test(object):
-    def __init__(self):
-        self.a = {}
-        self.a.a = 1
-        self.a.b = 2
-
-x = test()
-# %%

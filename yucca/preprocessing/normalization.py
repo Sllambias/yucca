@@ -1,6 +1,6 @@
-#%%
 from skimage import exposure
 import numpy as np
+
 
 def normalizer(array, scheme, intensities):
     """
@@ -31,6 +31,6 @@ def normalizer(array, scheme, intensities):
 
     if scheme == 'clip':
         lower_bound, upper_bound = np.percentile(array, (0.01, 99.99))
-        array = exposure.rescale_intensity(array, in_range=(lower_bound, upper_bound), 
-                                                out_range = (0, 1))
+        array = exposure.rescale_intensity(array, in_range=(lower_bound, upper_bound),
+                                           out_range=(0, 1))
         return array

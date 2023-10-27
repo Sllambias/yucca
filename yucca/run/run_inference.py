@@ -1,14 +1,14 @@
 import argparse
 import yucca
 import warnings
-from yucca.utils.files_and_folders import recursive_find_python_class, maybe_get_task_from_task_id
-from batchgenerators.utilities.file_and_folder_operations import join, load_json, isfile, \
-    maybe_mkdir_p, isdir
+from yucca.utils.task_ids import maybe_get_task_from_task_id
 from yucca.paths import yucca_raw_data, yucca_results, yucca_models
 from yucca.evaluation.YuccaEvaluator import YuccaEvaluator
 from yucca.training.trainers.YuccaTrainer import YuccaTrainer
-from yuccatemp.yucca.utils.merge_softmax import merge_softmax_from_folders
-
+from yuccalib.utils.files_and_folders import recursive_find_python_class, \
+    merge_softmax_from_folders
+from batchgenerators.utilities.file_and_folder_operations import join, load_json, isfile, \
+    maybe_mkdir_p, isdir
 
 
 def main():
@@ -22,8 +22,8 @@ def main():
     parser.add_argument("-m", help="Model Architecture. Defaults to UNet.", default="UNet")
     parser.add_argument("-d", help="2D, 25D or 3D model. Defaults to 3D.", default='3D')
     parser.add_argument("-tr", help="Full name of Trainer Class. \n"
-                        "e.g. 'YuccaTrainer_DCE' or 'YuccaTrainerV2'. Defaults to YuccaTrainerV2.", default='YuccaTrainerV2')
-    parser.add_argument("-pl", help="Plan ID. Defaults to YuccaPlannerV2", default="YuccaPlannerV2")
+                        "e.g. 'YuccaTrainer_DCE' or 'YuccaTrainer'. Defaults to YuccaTrainer.", default='YuccaTrainer')
+    parser.add_argument("-pl", help="Plan ID. Defaults to YuccaPlanner", default="YuccaPlanner")
     parser.add_argument("-chk", help="Checkpoint to use for inference. Defaults to checkpoint_best.", default="checkpoint_best")
     parser.add_argument("--ensemble", help="Used to initialize data preprocessing for ensemble/2.5D training", default=False,
                         action='store_true')
