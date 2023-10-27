@@ -38,7 +38,7 @@ from yucca.paths import yucca_raw_data
 
 ###INPUT DATA###
 #Input path and names
-base_in = "/maps/projects/image/people/zcr545/datasets/OASIS"
+base_in = "/Users/zcr545/Desktop/Projects/Data/OASIS"
 file_suffix = '.nii'
 
 #Train/Test Splits
