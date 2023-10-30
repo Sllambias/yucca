@@ -18,11 +18,11 @@ Task_conversion file for a dataset with 1 modality.
 
   (1) Random Train/Val splits. In this case nothing needs to be done, as these are defined at training time.
 
-  (2) Predefined Train/Val according to a list of filenames. 
+  (2) Predefined Train/Val according to a list of filenames.
   This list of files need to be defined and populated now.
   It can be generated using one of the resources mentioned above.
 
-  It should be saved in the yucca_preprocessing_dir: 
+  It should be saved in the yucca_preprocessing_dir:
 
     from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, save_pickle
 
@@ -35,11 +35,20 @@ from yucca.task_conversion.utils import generate_dataset_json
 import shutil
 import gzip
 from yucca.paths import yucca_raw_data
+import argparse
+from tqdm import tqdm
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument("-p", "--path", help="Path to OASIS dataset")
+parser.add_argument("--file_ext", default=".nii", help="Input file extension")
+
+args = parser.parse_args()
 
 ###INPUT DATA###
 #Input path and names
-base_in = "/maps/projects/image/people/zcr545/datasets/OASIS"
-file_suffix = '.nii'
+base_in = args.path
+file_suffix = args.file_ext
 
 #Train/Test Splits
 labels_dir_tr = join(base_in, 'Labels', 'Train')
@@ -47,7 +56,7 @@ images_dir_tr = join(base_in, 'Images', 'Train')
 training_samples = subfiles(labels_dir_tr, join=False, suffix=file_suffix)
 
 labels_dir_ts = join(base_in, 'Labels', 'Test')
-images_dir_ts = join(base_in, 'Images', 'Test')    
+images_dir_ts = join(base_in, 'Images', 'Test')
 test_samples = subfiles(labels_dir_ts, join=False, suffix=file_suffix)
 
 ###OUTPUT DATA
@@ -71,22 +80,22 @@ maybe_mkdir_p(target_labelsTr)
 
 ###Populate Target Directory###
 #This is likely also the place to apply any re-orientation, resampling and/or label correction.
-for sTr in training_samples:
+for sTr in tqdm(training_samples, desc="Train"):
     serial_number = sTr[:-4]
     image_file = open(join(images_dir_tr, sTr),'rb')
     label = open(join(labels_dir_tr, sTr), 'rb')
     shutil.copyfileobj(image_file, gzip.open(f'{target_imagesTr}/{prefix}_{serial_number}_000.nii.gz', 'wb'))
     shutil.copyfileobj(label, gzip.open(f'{target_labelsTr}/{prefix}_{serial_number}.nii.gz', 'wb'))
- 
-for sTs in test_samples:
+
+for sTs in tqdm(test_samples, desc="Test"):
     serial_number = sTs[:-4]
     image_file = open(join(images_dir_ts, sTs), 'rb')
     label = open(join(labels_dir_ts, sTs), 'rb')
     shutil.copyfileobj(image_file, gzip.open(f'{target_imagesTs}/{prefix}_{serial_number}_000.nii.gz', 'wb'))
     shutil.copyfileobj(label, gzip.open(f'{target_labelsTs}/{prefix}_{serial_number}.nii.gz', 'wb'))
-    
+
 generate_dataset_json(join(target_base, 'dataset.json'), target_imagesTr, target_imagesTs, ('T1', ),
-                          labels={0: 'background', 1: 'Left Hippocampus', 2: 'Right Hippocampus'}, 
+                          labels={0: 'background', 1: 'Left Hippocampus', 2: 'Right Hippocampus'},
                           dataset_name=task_name, license='hands off!',
                           dataset_description="OASIS Dataset",
                           dataset_reference="")
