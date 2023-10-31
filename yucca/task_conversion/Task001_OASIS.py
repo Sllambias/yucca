@@ -47,13 +47,8 @@ args = parser.parse_args()
 
 ###INPUT DATA###
 #Input path and names
-<<<<<<< HEAD
 base_in = args.path
 file_suffix = args.file_ext
-=======
-base_in = "/Users/zcr545/Desktop/Projects/Data/OASIS"
-file_suffix = '.nii'
->>>>>>> 934f22f (Imports)
 
 #Train/Test Splits
 labels_dir_tr = join(base_in, 'Labels', 'Train')
