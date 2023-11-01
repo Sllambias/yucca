@@ -5,30 +5,19 @@ import lightning as pl
 import random
 import numpy as np
 import torchvision
-from torchvision import transforms
-from torchvision.transforms import v2
 import numpy as np
-from scipy.ndimage import map_coordinates
-from yuccalib.image_processing.matrix_ops import create_zero_centered_coordinate_matrix, \
-	deform_coordinate_matrix, Rx, Ry, Rz, Rz2D
-from yuccalib.image_processing.transforms.YuccaTransform import YuccaTransform
-from typing import Tuple
-from yuccalib.image_processing.transforms.BiasField import BiasField
-from yuccalib.image_processing.transforms.Spatial import Spatial
-from yuccalib.image_processing.transforms.formatting import NumpyToTorch, AddBatchDimension, RemoveBatchDimension
 from yuccalib.image_processing.transforms.cropping_and_padding import CropPad
 
 class YuccaDataset(Dataset):
 	def __init__(self, preprocessed_data_dir,
-			  	 keep_in_ram: bool = False):
+			  	 keep_in_ram: bool = False,
+				 generator_patch_size: list | tuple = None,
+				 composed_transforms: torchvision.transforms.Compose = None):
 		self.data_path = preprocessed_data_dir
 		self.files = np.array(subfiles(self.data_path, suffix='.npy', join=False))
 		self.keep_in_ram = keep_in_ram
-		self.croppad = CropPad(patch_size=(48, 48, 48), p_oversample_foreground=0.33)
-		self.composed_transforms = transforms.Compose([AddBatchDimension(),
-													   Spatial(patch_size=(32, 32, 32), crop=True),
-													   BiasField(),
-													   RemoveBatchDimension()])
+		self.croppad = CropPad(patch_size=generator_patch_size, p_oversample_foreground=0.33)
+		self.composed_transforms = composed_transforms
 		self.already_loaded_cases = {}
 
 	def load_and_maybe_keep_pickle(self, picklepath):
@@ -86,26 +75,42 @@ class InfiniteRandomBatchSampler(Sampler) :
 		
 
 class YuccaDataModule(pl.LightningDataModule):
-	def __init__(self, preprocessed_data_dir: str = "./", batch_size: int = 2, 
-				 composed_transforms: torchvision.transforms.Compose = None):
+	def __init__(self, preprocessed_data_dir: str = "./", batch_size: int = 2,
+				 composed_tr_transforms: torchvision.transforms.Compose = None,
+				 composed_val_transforms: torchvision.transforms.Compose = None,
+				 generator_patch_size: list | tuple = None,
+):
 		super().__init__()
 		self.batch_size = batch_size
 		self.preprocessed_data_dir = preprocessed_data_dir
 		self.files = subfiles(self.preprocessed_data_dir, suffix='.npy', join=False)
-
+		self.composed_tr_transforms = composed_tr_transforms
+		self.composed_val_transforms = composed_val_transforms
+		self.generator_patch_size = generator_patch_size
+		
 	def prepare_data(self):
 		pass
 
 	def setup(self, stage: str):
 		# Assign train/val datasets for use in dataloaders
-		self.train_dataset = YuccaDataset(self.preprocessed_data_dir, keep_in_ram=True)
-
+		self.train_dataset = YuccaDataset(
+			self.preprocessed_data_dir, 
+			keep_in_ram=True,
+			composed_transforms=self.composed_tr_transforms,
+			generator_patch_size=self.generator_patch_size)
+		self.val_dataset = YuccaDataset(
+			self.preprocessed_data_dir,
+			keep_in_ram=True,
+			composed_transforms=self.composed_val_transforms,
+			generator_patch_size=self.generator_patch_size)
+		
 	def train_dataloader(self):
 		train_sampler = InfiniteRandomBatchSampler(self.train_dataset, batch_size=self.batch_size)
 		return DataLoader(self.train_dataset, num_workers=0, batch_sampler=train_sampler)
 
 	def val_dataloader(self):
-		return YuccaDataset(self.mnist_val, batch_size=32)
+		val_sampler = InfiniteRandomBatchSampler(self.val_dataset, batch_size=self.batch_size)
+		return DataLoader(self.val_dataset, num_workers=0, batch_sampler=val_sampler)
 
 	def test_dataloader(self):
 		return YuccaDataset(self.mnist_test, batch_size=32)
