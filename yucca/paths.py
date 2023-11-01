@@ -2,12 +2,16 @@
 PLEASE READ YUCCA/DOCUMENTATION/TUTORIALS/ENVIRONMENT_VARIABLES.MD FOR INFORMATION ON HOW TO SET THIS UP
 """
 import os
+from dotenv import load_dotenv
+
 from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p
 
-yucca_raw_data = os.environ['yucca_raw_data'] if "yucca_raw_data" in os.environ.keys() else None
-yucca_preprocessed = os.environ['yucca_preprocessed'] if "yucca_preprocessed" in os.environ.keys() else None
-yucca_models = os.environ['yucca_models'] if "yucca_models" in os.environ.keys() else None
-yucca_results = os.environ['yucca_results'] if "yucca_results" in os.environ.keys() else None
+assert load_dotenv()
+
+yucca_raw_data = os.environ['YUCCA_RAW_DATA'] if "YUCCA_RAW_DATA" in os.environ.keys() else None
+yucca_preprocessed = os.environ['YUCCA_PREPROCESSED'] if "YUCCA_PREPROCESSED" in os.environ.keys() else None
+yucca_models = os.environ['YUCCA_MODELS'] if "YUCCA_MODELS" in os.environ.keys() else None
+yucca_results = os.environ['YUCCA_RESULTS'] if "YUCCA_RESULTS" in os.environ.keys() else None
 
 if yucca_raw_data is not None:
     maybe_mkdir_p(yucca_raw_data)
