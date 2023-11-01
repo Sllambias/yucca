@@ -15,8 +15,13 @@ from torchvision import transforms
 class YuccaLightningModule(pl.LightningModule):
 	def __init__(self, model_name: str = 'UNet'):
 		super().__init__()
+		# Model parameters
 		self.model_name = model_name
+
+		# Loss, optimizer and scheduler parameters
 		self.loss_fn = CE
+
+
 		self.save_hyperparameters()
 		self.initialize()
 
