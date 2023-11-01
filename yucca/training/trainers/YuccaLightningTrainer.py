@@ -26,6 +26,40 @@ from yuccalib.network_architectures.utils.model_memory_estimation import find_op
 from yuccalib.image_processing.matrix_ops import get_max_rotated_size
 
 class YuccaLightningTrainer:
+	"""
+	The YuccaLightningTrainer is the one to rule them all.
+	This will take ALL the arguments you need for training and apply them accordingly.
+
+	First it automatically configure a host of parameters for you - such as batch size, 
+	patch size, modalities, classes, augmentations (and their hyperparameters) and formatting.
+	It also instantiates the PyTorch Lightning trainer.
+	
+	Then, it will instantiate the YuccaLightningModule - containing the model, optimizers, 
+	loss functions and learning rates.
+
+	Then, it will call the YuccaLightningDataModule. The DataModule creates the dataloaders that 
+	we use iterate over the chosen Task, which is wrapped in a YuccaDataset.
+
+	YuccaLightningTrainer
+	├── model_params
+	├── data_params
+	├── aug_params
+	├── pl.Trainer
+	|
+	├── YuccaLightningModule(model_params) -> model
+	|   ├── network(model_params)
+	|   ├── optim
+	|   ├── loss_fn
+	|   ├── scheduler
+	|
+	├── YuccaLightningDataModule(data_params, aug_params) -> train_dataloader, val_dataloader
+	|   ├── YuccaDataset(data_params, aug_params)
+	|   ├── InfiniteRandomSampler
+	|   ├── DataLoaders(YuccaDataset, InfiniteRandomSampler)
+	|
+	├── pl.Trainer.fit(model, train_dataloader, val_dataloader)
+	| 
+	"""
 	def __init__(
 			self, 
 			continue_training: bool = None,
