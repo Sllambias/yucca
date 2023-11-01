@@ -16,6 +16,7 @@ keywords = ['deep learning', 'image segmentation', 'medical image analysis','med
 
 
 dependencies = [
+    "yuccalib@git+https://github.com/Sllambias/yuccalib",
     "batchgenerators>=0.23",
     "connected_components_3d",
     "matplotlib",
@@ -29,6 +30,7 @@ dependencies = [
     "SimpleITK",
     "wandb",
     "weave",
+    "torchmetrics",
     "python-dotenv==1.0.0"
 ]
 
