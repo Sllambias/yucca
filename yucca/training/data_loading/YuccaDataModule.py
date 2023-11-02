@@ -4,22 +4,24 @@ import numpy as np
 import torchvision
 from torch.utils.data import DataLoader
 from batchgenerators.utilities.file_and_folder_operations import subfiles
-from yucca.training.data_loading.YuccaDataset import YuccaDataset
+from yucca.training.data_loading.YuccaDataset import YuccaTrainDataset, YuccaTestDataset
 from yucca.training.data_loading.samplers import InfiniteRandomBatchSampler
 
 
 class YuccaDataModule(pl.LightningDataModule):
 	def __init__(self, 
-			  preprocessed_data_dir: str = None, batch_size: int = 2,
-			  composed_tr_transforms: torchvision.transforms.Compose = None,
+			  train_data_dir: str = None, 
+			  pred_data_dir: str = None,
+			  batch_size: int = 2,
+			  composed_train_transforms: torchvision.transforms.Compose = None,
 			  composed_val_transforms: torchvision.transforms.Compose = None,
 			  generator_patch_size: list | tuple = None
 			  ):
 		super().__init__()
 		self.batch_size = batch_size
-		self.preprocessed_data_dir = preprocessed_data_dir
-		self.files = subfiles(self.preprocessed_data_dir, suffix='.npy', join=False)
-		self.composed_tr_transforms = composed_tr_transforms
+		self.train_data_dir = train_data_dir
+		self.pred_data_dir = pred_data_dir
+		self.composed_train_transforms = composed_train_transforms
 		self.composed_val_transforms = composed_val_transforms
 		self.generator_patch_size = generator_patch_size
 		self.sampler = InfiniteRandomBatchSampler
@@ -34,16 +36,20 @@ class YuccaDataModule(pl.LightningDataModule):
 		
 		# Assign train/val datasets for use in dataloaders
 		if stage == 'fit':
-			self.train_dataset = YuccaDataset(
-				self.preprocessed_data_dir, 
+			self.train_dataset = YuccaTrainDataset(
+				self.train_data_dir, 
 				keep_in_ram=True,
-				composed_transforms=self.composed_tr_transforms,
+				composed_transforms=self.composed_train_transforms,
 				generator_patch_size=self.generator_patch_size)
-			self.val_dataset = YuccaDataset(
-				self.preprocessed_data_dir,
+			
+			self.val_dataset = YuccaTrainDataset(
+				self.train_data_dir,
 				keep_in_ram=True,
 				composed_transforms=self.composed_val_transforms,
 				generator_patch_size=self.generator_patch_size)
+			
+		if stage == 'predict':
+			self.pred_dataset = YuccaTestDataset(self.pred_data_dir)
 		
 	def train_dataloader(self):
 		train_sampler = self.sampler(self.train_dataset, batch_size=self.batch_size)
@@ -54,8 +60,8 @@ class YuccaDataModule(pl.LightningDataModule):
 		return DataLoader(self.val_dataset, num_workers=0, batch_sampler=val_sampler)
 
 	def test_dataloader(self):
-		return YuccaDataset(self.mnist_test, batch_size=32)
+		return None
 
 	def predict_dataloader(self):
-		return YuccaDataset(self.mnist_predict, batch_size=32)
+		return DataLoader(self.pred_dataset, batch_size=1)
 

@@ -1,11 +1,12 @@
 import numpy as np
 import torchvision
+import nibabel as nib
 from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle, join
 from torch.utils.data import Dataset
 from yuccalib.image_processing.transforms.cropping_and_padding import CropPad
 
 
-class YuccaDataset(Dataset):
+class YuccaTrainDataset(Dataset):
 	def __init__(self, preprocessed_data_dir,
 			  	 keep_in_ram: bool = False,
 				 generator_patch_size: list | tuple = None,
@@ -60,3 +61,18 @@ class YuccaDataset(Dataset):
 		data_dict = {'image': data[:-1], 'seg': data[-1:]}
 		data_dict = self.croppad(data_dict, metadata)
 		return self.composed_transforms(data_dict)
+
+
+
+class YuccaTestDataset(Dataset):
+	def __init__(self, raw_data_dir):
+		self.data_path = raw_data_dir
+		self.files = np.array(subfiles(self.data_path, suffix='.nii.gz', join=False))
+		self.already_loaded_cases = {}
+
+	def __len__(self):
+		return len(self.files)
+
+	def __getitem__(self, idx):
+		case = self.files[idx]
+		return nib.load(join(self.data_path, case)).get_fdata()
