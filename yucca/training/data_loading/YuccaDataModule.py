@@ -27,13 +27,13 @@ class YuccaDataModule(pl.LightningDataModule):
 	def prepare_data(self):
 		pass
 
-	def setup(self, stage: str = 'train'):
-		expected_stages = ['train', 'test', 'inference']
+	def setup(self, stage: str = 'fit'):
+		expected_stages = ['fit', 'test', 'predict']
 		assert stage in expected_stages, "unexpected stage. "\
 			f"Expected: {expected_stages} and found: {stage}"
 		
 		# Assign train/val datasets for use in dataloaders
-		if stage == 'train':
+		if stage == 'fit':
 			self.train_dataset = YuccaDataset(
 				self.preprocessed_data_dir, 
 				keep_in_ram=True,

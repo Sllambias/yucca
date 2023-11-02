@@ -25,6 +25,11 @@ class YuccaConfigurator:
 		self.planner = planner
 		self.task = task
 		self.max_vram = max_vram
+		self.run_setup()
+		
+	def run_setup(self):
+		self.setup_paths_and_plans()
+		self.setup_train_params()
 		
 	def setup_paths_and_plans(self):
 		self.outpath = join(

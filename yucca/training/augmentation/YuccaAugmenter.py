@@ -17,13 +17,21 @@ from yuccalib.network_architectures.utils.model_memory_estimation import find_op
 
 
 class YuccaAugmenter:
-	def __init__(self, 
+	def __init__(self,
+			  patch_size: list | tuple = None,
 			  is_2D: bool = False,
 			  parameter_dict: dict = {}):
+		self.setup_default_params(is_2D, patch_size)
+		self.overwrite_params(parameter_dict)
+		self.tr_transforms = self.compose_tr_transforms()
+		self.val_transforms = self.compose_val_transforms()
+
+	def setup_default_params(self, is_2D, patch_size):
 		# Define whether we crop before or after applying augmentations
 		# Define if cropping is random or always centered
 		self.RandomCrop = True
 		self.MaskImageForReconstruction = False
+		self.patch_size = patch_size
 
 		# Label/segmentation transforms
 		self.SkipSeg = False
@@ -85,15 +93,13 @@ class YuccaAugmenter:
 			self.MotionGhosting_axes = (0, 2)
 			self.Rotation_y = (-0., 0.)
 			self.Rotation_z = (-0., 0.)
-		
-		self.overwrite_params(parameter_dict)
 
 	def overwrite_params(self, parameter_dict):
 		for key, value in parameter_dict.items():
 			self.key = value
 
-	def compose_transforms(self):
-		self.tr_transforms = transforms.Compose([
+	def compose_tr_transforms(self):
+		tr_transforms = transforms.Compose([
 			AddBatchDimension(),
 			Spatial(
 				patch_size=self.patch_size, 
@@ -151,10 +157,12 @@ class YuccaAugmenter:
 			#CopyImageToSeg() if self.CopyImageToSeg else None,
 			#Masking() if self.MaskImageForReconstruction else None,
 			RemoveBatchDimension()])
-
-		self.val_transforms = transforms.Compose([
+		return tr_transforms
+	
+	def compose_val_transforms(self):		
+		val_transforms = transforms.Compose([
 			AddBatchDimension(),
 			#CopyImageToSeg() if self.CopyImageToSeg else None,
 			#Masking() if self.MaskImageForReconstruction else None,
 			RemoveBatchDimension()])
-		
+		return val_transforms

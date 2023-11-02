@@ -61,9 +61,7 @@ class YuccaLightningModule(pl.LightningModule):
 	def training_step(self, batch, batch_idx):
 		inputs, target = batch['image'], batch['seg']
 		output = self(inputs.float())
-		print(output.size(), target.size())
 		loss = self.loss_fn(output.softmax(1), target)
-		print(loss)
 		self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 		return loss
 
@@ -82,16 +80,3 @@ class YuccaLightningModule(pl.LightningModule):
 		optim_kwargs = filter_kwargs(self.optim, optim_kwargs)
 		return self.optim(self.model.parameters(), lr=self.lr)
 	
-
-if __name__ == '__main__':
-	from repos.yucca.yucca.training.data_loading.YuccaDataModule import YuccaDataModule
-	from yucca.paths import yucca_preprocessed
-	from batchgenerators.utilities.file_and_folder_operations import join
-
-	augs = YuccaAugmenter()
-	#%%
-	trainer = YuccaLightningWrapper(task = 'Task001_OASIS', fast_dev_run=2, max_epochs=1, default_root_dir=None)
-	trainer.fit()
-
-
-# %%

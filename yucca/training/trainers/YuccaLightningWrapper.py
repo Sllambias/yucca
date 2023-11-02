@@ -5,9 +5,9 @@ from yucca.training.augmentation.YuccaAugmenter import YuccaAugmenter
 from yucca.training.data_loading.YuccaDataModule import YuccaDataModule
 from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 from yucca.training.trainers.YuccaLightningModule import YuccaLightningModule
+from yucca.paths import yucca_preprocessed
 
-
-class YuccaLightningTrainer(pl.Trainer):
+class YuccaLightningTrainer:
 	"""
 	The YuccaLightningWrapper is the one to rule them all.
 	This will take ALL the arguments you need for training and apply them accordingly.
@@ -51,9 +51,9 @@ class YuccaLightningTrainer(pl.Trainer):
 			model_name: str = 'UNet',
 			planner: str = 'YuccaPlanner',
 			task: str = None,
+			ckpt_path: str = None,
 			**kwargs
 			):
-		super().__init__(**kwargs)
 		
 		self.continue_training = continue_training
 		self.deep_supervision = deep_supervision
@@ -63,10 +63,12 @@ class YuccaLightningTrainer(pl.Trainer):
 		self.name = self.__class__.__name__
 		self.planner = planner
 		self.task = task
+		self.ckpt_path = ckpt_path
 
 		# default settings
 		self.max_vram = 2
 		self.is_initialized = False
+		self.trainer = pl.Trainer(**kwargs)
 
 	def initialize(self):
 		if not self.is_initialized:
@@ -82,7 +84,9 @@ class YuccaLightningTrainer(pl.Trainer):
 			# Based on the plans file loaded above, this will load information about the expected
 			# number of modalities and classes in the dataset and compute the optimal batch and
 			# patch sizes given the specified network architecture.
-			augmenter = YuccaAugmenter(is_2D=False)
+			augmenter = YuccaAugmenter(
+				patch_size=configurator.patch_size,
+				is_2D=False)
 
 			self.data_module = YuccaDataModule(
 				preprocessed_data_dir=join(yucca_preprocessed, self.task, self.planner), 
@@ -106,13 +110,13 @@ class YuccaLightningTrainer(pl.Trainer):
 				  Calling initialize repeatedly should be avoided.")
 	
 	def run_training(self):
+
 		self.initialize()
-		super().fit(self.model_module, self.data_module)
+		self.trainer.fit(self.model_module, datamodule=self.data_module, ckpt_path=self.ckpt_path)
 
 
-if __name__ == '__main__':
-	from batchgenerators.utilities.file_and_folder_operations import join
+#if __name__ == '__main__':
 
-	trainer = YuccaLightningTrainer(task = 'Task001_OASIS', fast_dev_run=2, max_epochs=1, default_root_dir=None)
-	#trainer.fit()
+trainer = YuccaLightningTrainer(task = 'Task001_OASIS', fast_dev_run=2, max_epochs=1, default_root_dir=None)
+trainer.run_training()
 #%%
