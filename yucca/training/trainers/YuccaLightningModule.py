@@ -1,5 +1,5 @@
 #%%
-import lightning as pl
+import lightning as L
 import torch
 import yuccalib
 import torch.nn as nn
@@ -10,7 +10,7 @@ from yuccalib.loss_and_optim.loss_functions.CE import CE
 from yuccalib.utils.kwargs import filter_kwargs
 
 
-class YuccaLightningModule(pl.LightningModule):
+class YuccaLightningModule(L.LightningModule):
 	def __init__(
 			self,
 			learning_rate: float = 1e-3,
@@ -34,6 +34,9 @@ class YuccaLightningModule(pl.LightningModule):
 		self.loss_fn = loss_fn
 		self.momentum = momentum
 		self.optim = optimizer
+
+		# Default values
+		self.sliding_window_overlap = 0.5
 
 		# Save params and start training
 		self.save_hyperparameters()
@@ -64,6 +67,29 @@ class YuccaLightningModule(pl.LightningModule):
 		loss = self.loss_fn(output.softmax(1), target)
 		self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 		return loss
+	
+    def validation_step(self, batch, batch_idx):
+		inputs, target = batch['image'], batch['seg']
+		output = self(inputs.float())
+		loss = self.loss_fn(output.softmax(1), target)
+        self.log("val_loss", loss)
+
+    def predict_step(self, 
+                     inputs, 
+                     preprocessor, 
+					 patch_size: list | tuple = None, 
+					 do_tta: bool = False):
+        
+        case, image_properties = preprocessor.preprocess_case_for_inference(inputs, patch_size)
+        
+        logits = self.model.predict(mode=self.model_dimensions,
+                                    data=case,
+                                    patch_size=patch_size,
+                                    overlap=self.sliding_window_overlap,
+                                    mirror=do_tta).detach().cpu().numpy()
+		logits = preprocessor.reverse_preprocessing(logits, image_properties)
+        return logits
+
 
 	def configure_optimizers(self):
 		# Initialize the loss function using relevant kwargs
