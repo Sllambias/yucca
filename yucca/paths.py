@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p
 
-assert load_dotenv()
+assert load_dotenv(), "dotenv not found"
 
 yucca_raw_data = os.environ['YUCCA_RAW_DATA'] if "YUCCA_RAW_DATA" in os.environ.keys() else None
 yucca_preprocessed = os.environ['YUCCA_PREPROCESSED'] if "YUCCA_PREPROCESSED" in os.environ.keys() else None
