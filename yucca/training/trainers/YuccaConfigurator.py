@@ -1,7 +1,7 @@
 
 import torch
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, load_json
-from yucca.paths import yucca_models, yucca_preprocessed
+from yucca.paths import yucca_models, yucca_preprocessed, yucca_raw_data
 from yuccalib.image_processing.matrix_ops import get_max_rotated_size
 from yuccalib.network_architectures.utils.model_memory_estimation import find_optimal_tensor_dims
 
@@ -17,7 +17,6 @@ class YuccaConfigurator:
             task: str = None,
 
             ):
-        
         self.folds = folds
         self.model_dimensions = model_dimensions
         self.model_name = model_name
@@ -32,6 +31,8 @@ class YuccaConfigurator:
         self.setup_train_params()
         
     def setup_paths_and_plans(self):
+        self.train_data_dir = join(yucca_preprocessed, self.task, self.planner)
+
         self.outpath = join(
             yucca_models, 
             self.task,

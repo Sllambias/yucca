@@ -29,14 +29,14 @@ class YuccaAugmentationComposer:
 	def setup_default_params(self, is_2d, patch_size):
 		# Define whether we crop before or after applying augmentations
 		# Define if cropping is random or always centered
-		self.random_crop = true
-		self.mask_image_for_reconstruction = false
+		self.random_crop = True
+		self.mask_image_for_reconstruction = False
 		self.patch_size = patch_size
 
 		# label/segmentation transforms
-		self.skip_seg = false
+		self.skip_seg = False
 		self.seg_dtype = int
-		self.copy_image_to_seg = false
+		self.copy_image_to_seg = False
 
 		self.additive_noise_p_per_sample = 0.2
 		self.additive_noise_mean = (0., 0.)
@@ -124,11 +124,11 @@ class YuccaAugmentationComposer:
 			MotionGhosting(
 				p_per_sample=self.motion_ghosting_p_per_sample,
 				alpha=self.motion_ghosting_alpha,
-				numReps=self.motion_ghosting_numReps,
+				numReps=self.motion_ghosting_numreps,
 				axes=self.motion_ghosting_axes),
 			GibbsRinging(
 				p_per_sample=self.gibbs_ringing_p_per_sample,
-				cutFreq=self.gibbs_ringing_cutFreq,
+				cutFreq=self.gibbs_ringing_cutfreq,
 				axes=self.gibbs_ringing_axes),
 			SimulateLowres(
 				p_per_sample=self.simulate_lowres_p_per_sample,
