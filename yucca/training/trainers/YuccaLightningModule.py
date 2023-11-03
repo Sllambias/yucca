@@ -1,5 +1,5 @@
 #%%
-from typing import Any
+from typing import Any, Optional
 import lightning as L
 import torch
 import yuccalib
@@ -23,7 +23,10 @@ class YuccaLightningModule(L.LightningModule):
             num_modalities: int = 1,
             num_classes: int = 1,
             optimizer: torch.optim.Optimizer = torch.optim.SGD,
-            preprocessor: YuccaPreprocessor = YuccaPreprocessor,
+            patch_size: list | tuple = None,
+            plans_path: str = None,
+            sliding_window_overlap: float = 0.5,
+            test_time_augmentation: bool = False
             ):
         super().__init__()
         # Model parameters
@@ -38,8 +41,11 @@ class YuccaLightningModule(L.LightningModule):
         self.momentum = momentum
         self.optim = optimizer
 
-        # Default values
-        self.sliding_window_overlap = 0.5
+        # Inference
+        self.sliding_window_overlap = sliding_window_overlap
+        self.patch_size = patch_size
+        self.plans_path = plans_path
+        self.test_time_augmentation = test_time_augmentation
 
         # Save params and start training
         self.save_hyperparameters()
@@ -77,23 +83,19 @@ class YuccaLightningModule(L.LightningModule):
         loss = self.loss_fn(output.softmax(1), target)
         self.log("val_loss", loss)
 
-    def on_predict_batch_start(self, inputs)
-    def predict_step(self, 
-                     inputs, 
-                     preprocessor, 
-                     patch_size: list | tuple = None, 
-                     do_tta: bool = False):
-        
-        case, image_properties = preprocessor.preprocess_case_for_inference(inputs, patch_size)
-        
+    def on_predict_start(self):
+        self.preprocessor = YuccaPreprocessor(self.plans_path)
+    
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+        case, case_id = batch
+        case_preprocessed, case_properties = self.preprocessor.preprocess_case_for_inference(case, self.patch_size)
         logits = self.model.predict(mode=self.model_dimensions,
-                                    data=case,
-                                    patch_size=patch_size,
+                                    data=case_preprocessed,
+                                    patch_size=self.patch_size,
                                     overlap=self.sliding_window_overlap,
-                                    mirror=do_tta).detach().cpu().numpy()
-        logits = preprocessor.reverse_preprocessing(logits, image_properties)
-        return logits
-
+                                    mirror=self.test_time_augmentation).detach().cpu().numpy()
+        logits = self.preprocessor.reverse_preprocessing(logits, case_properties)
+        return {'logits': logits, 'properties': case_properties, 'case_id': case_id[0]}
 
     def configure_optimizers(self):
         # Initialize the loss function using relevant kwargs

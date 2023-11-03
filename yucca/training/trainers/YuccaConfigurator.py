@@ -29,6 +29,13 @@ class YuccaConfigurator:
     def run_setup(self):
         self.setup_paths_and_plans()
         self.setup_train_params()
+        print(
+            f"Using training data from: {self.train_data_dir} \n"
+            f"Saving model outputs in: {self.outpath} \n"
+            f"Using patch size: {self.patch_size} \n"
+            f"Using initial patch size: {self.initial_patch_size} \n"
+            f"Using batch size: {self.batch_size} \n"
+        )
         
     def setup_paths_and_plans(self):
         self.train_data_dir = join(yucca_preprocessed, self.task, self.planner)
@@ -62,7 +69,7 @@ class YuccaConfigurator:
                                                                         max_memory_usage_in_gb=self.max_vram)
         else:
             print("Cuda is not available, using tiny patch and batch")
-            self.batch_size = 2
-            self.patch_size = (32, 32, 32)
+        self.batch_size = 2
+        self.patch_size = (32, 32, 32)
         self.initial_patch_size = get_max_rotated_size(self.patch_size)
 
