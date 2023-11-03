@@ -274,7 +274,7 @@ class YuccaPreprocessor(object):
         
         return images
 
-    def preprocess_case_for_inference(self, images: list, patch_size: tuple, do_tta=False):
+    def preprocess_case_for_inference(self, images: list | tuple, patch_size: tuple):
         """
         Will reorient ONLY if we have valid qform or sform codes.
         with coded=True the methods will return {affine or None} and {0 or 1}.
@@ -287,11 +287,11 @@ class YuccaPreprocessor(object):
         Finally images are resampled to the required spacing/size and returned
         as torch tensors of the required shape (b, c, x, y, (z))
         """
-        assert isinstance(images, list), "image(s) should be a list, even if only one "\
+        assert isinstance(images, (list, tuple)), "image(s) should be a list or tuple, even if only one "\
             "image is passed"
         self.initialize_properties()
         image_properties = {}
-        images = [nib.load(image) for image in images]
+        images = [nib.load(image[0]) if isinstance(image, tuple) else nib.load(image) for image in images]
 
         image_properties['original_spacing'] = get_nib_spacing(images[0])
         image_properties['original_shape'] = np.array(images[0].shape)
@@ -359,7 +359,7 @@ class YuccaPreprocessor(object):
 
         The original orientation of the image will be re-applied when saving the prediction
         """
-
+    
         nclasses = len(self.plans['dataset_properties']['classes'])
         original_shape = image_properties['original_shape']
         canvas = np.zeros((1, nclasses, *image_properties['uncropped_shape']))
@@ -398,5 +398,4 @@ class YuccaPreprocessor(object):
                         slices = (slice(bbox[0], bbox[1]), slice(bbox[2], bbox[3]))
                     canvas[b, c][slices] = image
         return canvas
-
 

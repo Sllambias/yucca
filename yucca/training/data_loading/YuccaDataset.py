@@ -1,20 +1,21 @@
 import numpy as np
 import torchvision
 import nibabel as nib
+import os
 from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle, join
 from torch.utils.data import Dataset
 from yuccalib.image_processing.transforms.cropping_and_padding import CropPad
-
+from yucca.paths import yucca_raw_data
 
 class YuccaTrainDataset(Dataset):
 	def __init__(self, preprocessed_data_dir,
 			  	 keep_in_ram: bool = False,
-				 generator_patch_size: list | tuple = None,
+				 patch_size: list | tuple = None,
 				 composed_transforms: torchvision.transforms.Compose = None):
 		self.data_path = preprocessed_data_dir
-		self.files = np.array(subfiles(self.data_path, suffix='.npy', join=False))
+		self.all_cases = np.array(subfiles(self.data_path, suffix='.npy', join=False))
 		self.keep_in_ram = keep_in_ram
-		self.croppad = CropPad(patch_size=generator_patch_size, p_oversample_foreground=0.33)
+		self.croppad = CropPad(patch_size=patch_size, p_oversample_foreground=0.33)
 		self.composed_transforms = composed_transforms
 		self.already_loaded_cases = {}
 
@@ -52,10 +53,10 @@ class YuccaTrainDataset(Dataset):
 		return self.already_loaded_cases[path]
 
 	def __len__(self):
-		return len(self.files)
+		return len(self.all_cases)
 
 	def __getitem__(self, idx):
-		case = self.files[idx]
+		case = self.all_cases[idx]
 		data = self.load_and_maybe_keep_volume(join(self.data_path, case))
 		metadata = self.load_and_maybe_keep_pickle(join(self.data_path, case[:-len('.npy')] + '.pkl'))
 		data_dict = {'image': data[:-1], 'seg': data[-1:]}
@@ -65,14 +66,21 @@ class YuccaTrainDataset(Dataset):
 
 
 class YuccaTestDataset(Dataset):
-	def __init__(self, raw_data_dir):
+	def __init__(self, raw_data_dir, patch_size):
 		self.data_path = raw_data_dir
-		self.files = np.array(subfiles(self.data_path, suffix='.nii.gz', join=False))
-		self.already_loaded_cases = {}
+		self.unique_cases = np.unique([i[:-len('_000.nii.gz')] 
+								 for i in subfiles(self.data_path, suffix='.nii.gz', join=False)])
+		self.patch_size = patch_size
 
 	def __len__(self):
-		return len(self.files)
+		return len(self.unique_cases)
 
 	def __getitem__(self, idx):
-		case = self.files[idx]
-		return nib.load(join(self.data_path, case)).get_fdata()
+		# Here we generate the paths to the cases along with their ID which they will be saved as.
+		# we pass "case" as a list of strings and case_id as a string to the dataloader which 
+		# will convert them to a list of tuples of strings and a tuple of a string.
+		# i.e. ['path1', 'path2'] -> [('path1',), ('path2',)]
+		case_id = self.unique_cases[idx]
+		case = [impath for impath in subfiles(self.data_path, suffix='.nii.gz') 
+		  if os.path.split(impath)[-1][:-len('_000.nii.gz')] == case_id]
+		return case, case_id

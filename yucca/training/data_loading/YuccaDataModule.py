@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from batchgenerators.utilities.file_and_folder_operations import subfiles
 from yucca.training.data_loading.YuccaDataset import YuccaTrainDataset, YuccaTestDataset
 from yucca.training.data_loading.samplers import InfiniteRandomBatchSampler
-
+from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 
 class YuccaDataModule(pl.LightningDataModule):
 	def __init__(self, 
@@ -15,6 +15,7 @@ class YuccaDataModule(pl.LightningDataModule):
 			  batch_size: int = 2,
 			  composed_train_transforms: torchvision.transforms.Compose = None,
 			  composed_val_transforms: torchvision.transforms.Compose = None,
+			  patch_size: list | tuple = None,
 			  generator_patch_size: list | tuple = None
 			  ):
 		super().__init__()
@@ -23,6 +24,7 @@ class YuccaDataModule(pl.LightningDataModule):
 		self.pred_data_dir = pred_data_dir
 		self.composed_train_transforms = composed_train_transforms
 		self.composed_val_transforms = composed_val_transforms
+		self.patch_size = patch_size
 		self.generator_patch_size = generator_patch_size
 		self.sampler = InfiniteRandomBatchSampler
 		
@@ -40,16 +42,18 @@ class YuccaDataModule(pl.LightningDataModule):
 				self.train_data_dir, 
 				keep_in_ram=True,
 				composed_transforms=self.composed_train_transforms,
-				generator_patch_size=self.generator_patch_size)
+				patch_size=self.generator_patch_size)
 			
 			self.val_dataset = YuccaTrainDataset(
 				self.train_data_dir,
 				keep_in_ram=True,
 				composed_transforms=self.composed_val_transforms,
-				generator_patch_size=self.generator_patch_size)
+				patch_size=self.patch_size)
 			
 		if stage == 'predict':
-			self.pred_dataset = YuccaTestDataset(self.pred_data_dir)
+			self.pred_dataset = YuccaTestDataset(
+				self.pred_data_dir,
+				patch_size=self.patch_size)
 		
 	def train_dataloader(self):
 		train_sampler = self.sampler(self.train_dataset, batch_size=self.batch_size)
