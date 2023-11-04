@@ -1,6 +1,6 @@
 
 import torch
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, load_json
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, load_json, load_pickle
 from yucca.paths import yucca_models, yucca_preprocessed, yucca_raw_data
 from yuccalib.image_processing.matrix_ops import get_max_rotated_size
 from yuccalib.network_architectures.utils.model_memory_estimation import find_optimal_tensor_dims
@@ -25,9 +25,10 @@ class YuccaConfigurator:
         self.task = task
         self.max_vram = max_vram
         self.run_setup()
-        
+
     def run_setup(self):
         self.setup_paths_and_plans()
+        self.setup_splits()
         self.setup_train_params()
         print(
             f"Using training data from: {self.train_data_dir} \n"
@@ -36,17 +37,17 @@ class YuccaConfigurator:
             f"Using initial patch size: {self.initial_patch_size} \n"
             f"Using batch size: {self.batch_size} \n"
         )
-        
+
     def setup_paths_and_plans(self):
         self.train_data_dir = join(yucca_preprocessed, self.task, self.planner)
 
         self.outpath = join(
-            yucca_models, 
+            yucca_models,
             self.task,
-            self.model_name + '__' + self.planner, 
+            self.model_name + '__' + self.planner,
             self.model_dimensions,
             self.name, str(self.folds))
-        
+
         maybe_mkdir_p(self.outpath)
 
         self.plans_path = join(
@@ -54,8 +55,13 @@ class YuccaConfigurator:
             self.task,
             self.planner,
             self.planner + '_plans.json')
-        
+
         self.plans = load_json(self.plans_path)
+
+    def setup_splits(self):
+        splits_file = load_pickle(join(yucca_preprocessed, self.task, 'splits.pkl'))
+        self.train_split = splits_file[self.folds]['train']
+        self.val_split = splits_file[self.folds]['val']
 
     def setup_train_params(self):
         self.num_classes = len(self.plans['dataset_properties']['classes'])

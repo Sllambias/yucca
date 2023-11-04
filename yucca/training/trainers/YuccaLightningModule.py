@@ -51,12 +51,12 @@ class YuccaLightningModule(L.LightningModule):
         self.save_hyperparameters()
         self.initialize()
 
-
     def initialize(self):
-        self.model = recursive_find_python_class(folder=[join(yuccalib.__path__[0], 'network_architectures')],
-                                            class_name=self.model_name,
-                                            current_module='yuccalib.network_architectures')
-        
+        self.model = recursive_find_python_class(
+            folder=[join(yuccalib.__path__[0], 'network_architectures')],
+            class_name=self.model_name,
+            current_module='yuccalib.network_architectures')
+
         if self.model_dimensions == '3D':
             conv_op = torch.nn.Conv3d
             norm_op = torch.nn.InstanceNorm3d
@@ -76,16 +76,16 @@ class YuccaLightningModule(L.LightningModule):
         loss = self.loss_fn(output.softmax(1), target)
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
-    
+
     def validation_step(self, batch, batch_idx):
         inputs, target = batch['image'], batch['seg']
         output = self(inputs.float())
         loss = self.loss_fn(output.softmax(1), target)
-        self.log("val_loss", loss)
+        self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
     def on_predict_start(self):
         self.preprocessor = YuccaPreprocessor(self.plans_path)
-    
+
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         case, case_id = batch
         case_preprocessed, case_properties = self.preprocessor.preprocess_case_for_inference(case, self.patch_size)
