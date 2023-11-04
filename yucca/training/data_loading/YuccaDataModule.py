@@ -4,8 +4,8 @@ import numpy as np
 import torchvision
 from torch.utils.data import DataLoader
 from batchgenerators.utilities.file_and_folder_operations import subfiles, join
-from yucca.training.data_loading.YuccaDataset import YuccaTrainIterableDataset, YuccaTestDataset
-from yucca.training.data_loading.samplers import InfiniteRandomBatchSampler
+from yucca.training.data_loading.YuccaDataset import YuccaTrainIterableDataset, YuccaTestDataset, YuccaTrainDataset
+from yucca.training.data_loading.samplers import InfiniteRandomBatchSampler, InfiniteRandomSampler
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 
@@ -38,7 +38,8 @@ class YuccaDataModule(pl.LightningDataModule):
         self.pred_data_dir = pred_data_dir
 
         # Set default values
-        self.sampler = InfiniteRandomBatchSampler
+        self.num_workers = 8
+        self.sampler = InfiniteRandomSampler
 
     def prepare_data(self):
         self.train_samples = [join(self.train_data_dir, i) for i in self.train_split]
@@ -51,13 +52,13 @@ class YuccaDataModule(pl.LightningDataModule):
 
         # Assign train/val datasets for use in dataloaders
         if stage == 'fit':
-            self.train_dataset = YuccaTrainIterableDataset(
+            self.train_dataset = YuccaTrainDataset(
                 self.train_samples,
                 keep_in_ram=True,
                 composed_transforms=self.composed_train_transforms,
                 patch_size=self.initial_patch_size)
 
-            self.val_dataset = YuccaTrainIterableDataset(
+            self.val_dataset = YuccaTrainDataset(
                 self.val_samples,
                 keep_in_ram=True,
                 composed_transforms=self.composed_val_transforms,
@@ -69,12 +70,24 @@ class YuccaDataModule(pl.LightningDataModule):
                 patch_size=self.patch_size)
 
     def train_dataloader(self):
-        train_sampler = self.sampler(self.train_dataset, batch_size=self.batch_size)
-        return DataLoader(self.train_dataset, num_workers=8, batch_sampler=train_sampler)
+        train_sampler = self.sampler(self.train_dataset)
+        #return DataLoader(self.train_dataset, num_workers=2, batch_size=self.batch_size)
+        return DataLoader(
+            self.train_dataset,
+            num_workers=self.num_workers,
+            batch_size=self.batch_size,
+            persistent_workers=True,
+            sampler=train_sampler)
 
     def val_dataloader(self):
-        val_sampler = self.sampler(self.val_dataset, batch_size=self.batch_size)
-        return DataLoader(self.val_dataset, num_workers=4, batch_sampler=val_sampler)
+        val_sampler = self.sampler(self.val_dataset)
+        #return DataLoader(self.val_dataset, num_workers=2, batch_size=self.batch_size)
+        return DataLoader(
+            self.val_dataset,
+            num_workers=self.num_workers//2,
+            batch_size=self.batch_size,
+            persistent_workers=True,
+            sampler=val_sampler)
 
     def test_dataloader(self):
         return None

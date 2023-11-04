@@ -131,11 +131,13 @@ if __name__ == '__main__':
 #path ='/Users/zcr545/Desktop/Projects/repos/yucca_data/models/Task001_OASIS/UNet__YuccaPlanner/3D/YuccaConfigurator/0/lightning_logs/version_0/checkpoints/epoch=0-step=1.ckpt'
 #path = r'C:\Users\Sebastian\Desktop\work\YuccaData\yucca_models\Task001_OASIS\TinyUNet__YuccaPlanner\3D\YuccaConfigurator\0\lightning_logs\version_46\checkpoints\epoch=9-step=10.ckpt'
     path = None
-    Manager = YuccaLightningManager(task = 'Task001_OASIS', max_epochs=1000, min_steps=250, limit_val_batches=50,
-                                    max_epochs=10, ckpt_path=path)
-
+    Manager = YuccaLightningManager(task = 'Task001_OASIS',  limit_train_batches=50, limit_val_batches=10,
+                                    max_epochs=5, ckpt_path=path)
+    #import lightning as L
+    #L.Trainer()
+    #Manager.initialize()
+    
     Manager.run_training()
 
-#Manager.predict_folder(join(yucca_raw_data, 'Task001_OASIS/imagesTs'))
 
 # %%
