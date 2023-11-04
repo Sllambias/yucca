@@ -37,6 +37,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     'pytest>=7.3',
+    'flake8>=6.1.0',
 ]
 
 [project.scripts]
