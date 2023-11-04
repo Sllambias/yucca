@@ -60,8 +60,9 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         metadata = self.load_and_maybe_keep_pickle(case[:-len('.npy')] + '.pkl')
         data_dict = {'image': data[:-1], 'seg': data[-1:]}
         data_dict = self.croppad(data_dict, metadata)
-        return self.composed_transforms(data_dict)
-
+        if self.composed_transforms:
+            return self.composed_transforms(data_dict)
+        return data_dict
 
 class YuccaTrainIterableDataset(torch.utils.data.IterableDataset):
     def __init__(self,
@@ -113,18 +114,19 @@ class YuccaTrainIterableDataset(torch.utils.data.IterableDataset):
         return self.already_loaded_cases[path]
 
     def worker_fn(self, indices):
-        for idx in indices:
-            case = self.all_cases[idx]
-            data = self.load_and_maybe_keep_volume(case)
-            metadata = self.load_and_maybe_keep_pickle(case[:-len('.npy')] + '.pkl')
-            data_dict = {'image': data[:-1], 'seg': data[-1:]}
-            data_dict = self.croppad(data_dict, metadata)
-            if self.return_indices:
-                yield idx
-            else:
-                if self.composed_transforms:
-                    yield self.composed_transforms(data_dict)
-                yield data_dict
+        while True:
+            for idx in indices:
+                case = self.all_cases[idx]
+                data = self.load_and_maybe_keep_volume(case)
+                metadata = self.load_and_maybe_keep_pickle(case[:-len('.npy')] + '.pkl')
+                data_dict = {'image': data[:-1], 'seg': data[-1:], 'debug':(idx, indices)}
+                data_dict = self.croppad(data_dict, metadata)
+                if self.return_indices:
+                    yield idx
+                else:
+                    if self.composed_transforms:
+                        yield self.composed_transforms(data_dict)
+                    yield data_dict
 
     def __iter__(self):
         worker_info = torch.utils.data.get_worker_info()
@@ -137,7 +139,6 @@ class YuccaTrainIterableDataset(torch.utils.data.IterableDataset):
             worker_id = worker_info.id
             iter_start = self.start + worker_id * per_worker
             iter_end = min(iter_start + per_worker, self.num_samples)
-        #yield worker_id, np.random.choice(list(range(iter_start, iter_end)), 4, replace=True)
         yield from self.worker_fn(list(range(iter_start, iter_end)))
 
 
@@ -163,13 +164,21 @@ class YuccaTestDataset(torch.utils.data.Dataset):
         return case, case_id
 
 #%%
-files = subfiles('/home/zcr545/YuccaData/yucca_preprocessed/Task001_OASIS/YuccaPlanner', suffix='npy')
-ds = YuccaTrainIterableDataset(files, patch_size=(12, 12, 12), return_indices=True)
+if __name__ == '__main__':
+    import torch
+    from yucca.paths import yucca_preprocessed
+    from batchgenerators.utilities.file_and_folder_operations import subfiles, join
+    from yucca.training.data_loading.samplers import InfiniteRandomBatchSampler, InfiniteRandomSampler
 
-dl = torch.utils.data.DataLoader(ds, num_workers=2, batch_size=4)
-#for i in range(10):
-for i in dl:
-    print(i)
+    files = subfiles(join(yucca_preprocessed, 'Task001_OASIS/YuccaPlanner'), suffix='npy')
+    ds = YuccaTrainDataset(files, patch_size=(12, 12, 12))
+    sampler = InfiniteRandomSampler(ds)
+    dl = torch.utils.data.DataLoader(ds, num_workers=2, batch_size=2, sampler=sampler)
+    for i in range(10):
+        print(next(iter(dl)))
+    #print(next(iter(dl)))
+    #for i in dl:
+    #    print(i)
  #   print(next(iter(dl)))
     #print(list(dl))
     #print(list(dl)[0]['image'].shape)
