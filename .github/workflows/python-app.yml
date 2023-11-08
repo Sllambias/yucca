@@ -12,6 +12,9 @@ on:
 permissions:
   contents: read
 
+env:
+  YUCCA_RAW_DATA: "./yucca_raw_data"
+
 jobs:
   build:
 
