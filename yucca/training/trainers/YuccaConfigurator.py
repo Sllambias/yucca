@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-
+from time import localtime, strftime
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     maybe_mkdir_p,
@@ -25,7 +25,9 @@ class YuccaConfigurator:
     def __init__(
         self,
         folds: int = 0,
+        tiny_patch: bool = False,
         max_vram: int = 12,
+        manager_name: str = None,
         model_dimensions: str = "3D",
         model_name: str = "UNet",
         planner: str = "YuccaPlanner",
@@ -33,9 +35,10 @@ class YuccaConfigurator:
         task: str = None,
     ):
         self.folds = folds
+        self.tiny_patch = tiny_patch
         self.model_dimensions = model_dimensions
         self.model_name = model_name
-        self.name = self.__class__.__name__
+        self.manager_name = manager_name
         self.segmentation_output_dir = segmentation_output_dir
         self.planner = planner
         self.task = task
@@ -56,34 +59,15 @@ class YuccaConfigurator:
             f"Using batch size: {self.batch_size} \n"
         )
 
-    def setup_loggers(self):
-        wandb_logger = WandbLogger(
-            name="test",
-            save_dir=self.outpath,
-            project="Yucca",
-            group=self.task,
-            log_model="all",
-        )
-
-        csvlogger = CSVLogger(self.outpath, name="test")
-        txtlogger = TXTLogger(self.outpath, steps_per_epoch=250)
-        self.loggers = [csvlogger, wandb_logger, txtlogger]
-
-    def setup_callbacks(self):
-        pred_writer = WriteSegFromLogits(
-            output_dir=self.segmentation_output_dir, write_interval="batch"
-        )
-        self.callbacks = [pred_writer]
-
     def setup_paths_and_plans(self):
         self.train_data_dir = join(yucca_preprocessed, self.task, self.planner)
 
         self.outpath = join(
             yucca_models,
             self.task,
-            self.model_name + "__" + self.planner,
-            self.model_dimensions,
-            self.name,
+            self.model_name + "__" + self.model_dimensions,
+            self.planner,
+            self.manager_name,
             str(self.folds),
         )
 
@@ -105,10 +89,41 @@ class YuccaConfigurator:
         self.train_split = splits_file[self.folds]["train"]
         self.val_split = splits_file[self.folds]["val"]
 
+    def setup_loggers(self):
+        self.time_obj = strftime("%Y_%m_%d_%H_%M_%S", localtime())
+
+        csvlogger = CSVLogger(save_dir=self.outpath, name=None, version=self.time_obj)
+
+        wandb_logger = WandbLogger(
+            name=self.time_obj,
+            save_dir=join(self.outpath, self.time_obj),
+            project="Yucca",
+            group=self.task,
+            log_model="all",
+        )
+
+        txtlogger = TXTLogger(
+            save_dir=self.outpath,
+            name=self.time_obj,
+            steps_per_epoch=250,
+        )
+        self.loggers = [csvlogger, wandb_logger, txtlogger]
+
+    def setup_callbacks(self):
+        pred_writer = WriteSegFromLogits(
+            output_dir=self.segmentation_output_dir, write_interval="batch"
+        )
+        self.callbacks = [pred_writer]
+
     def setup_train_params(self):
         self.num_classes = len(self.plans["dataset_properties"]["classes"])
         self.num_modalities = len(self.plans["dataset_properties"]["modalities"])
-        if torch.cuda.is_available():
+        if self.tiny_patch or not torch.cuda.is_available():
+            self.batch_size = 2
+            self.patch_size = (
+                (32, 32) if self.model_dimensions == "2D" else (32, 32, 32)
+            )
+        else:
             self.batch_size, self.patch_size = find_optimal_tensor_dims(
                 dimensionality=self.model_dimensions,
                 num_classes=self.num_classes,
@@ -117,10 +132,6 @@ class YuccaConfigurator:
                 max_patch_size=self.plans["new_mean_size"],
                 max_memory_usage_in_gb=self.max_vram,
             )
-        else:
-            print("Cuda is not available, using tiny patch and batch")
-            self.batch_size = 2
-            self.patch_size = (32, 32, 32)
         self.initial_patch_size = get_max_rotated_size(self.patch_size)
 
     def split_data(self, splits_file):

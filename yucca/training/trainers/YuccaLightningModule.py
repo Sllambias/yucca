@@ -10,6 +10,7 @@ from torchmetrics.classification import Dice
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yuccalib.utils.files_and_folders import recursive_find_python_class
 from yuccalib.loss_and_optim.loss_functions.CE import CE
+from yuccalib.loss_and_optim.loss_functions.nnUNet_losses import DiceCE
 from yuccalib.utils.kwargs import filter_kwargs
 
 pl_logger = logging.getLogger("lightning")
@@ -20,7 +21,7 @@ class YuccaLightningModule(L.LightningModule):
     def __init__(
         self,
         learning_rate: float = 1e-3,
-        loss_fn: nn.Module = CE,
+        loss_fn: nn.Module = DiceCE,
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler = torch.optim.lr_scheduler.CosineAnnealingLR,
         model_name: str = "UNet",
         model_dimensions: str = "3D",
@@ -89,8 +90,8 @@ class YuccaLightningModule(L.LightningModule):
     def training_step(self, batch, batch_idx):
         inputs, target = batch["image"], batch["seg"]
         output = self(inputs)
-        loss = self.loss_fn(output.softmax(1), target)
-        metrics = self.train_metrics(output.argmax(1), target)
+        loss = self.loss_fn(output, target)
+        metrics = self.train_metrics(output, target)
         self.log(
             "train_loss",
             loss,
@@ -107,7 +108,7 @@ class YuccaLightningModule(L.LightningModule):
     def validation_step(self, batch, batch_idx):
         inputs, target = batch["image"], batch["seg"]
         output = self(inputs)
-        loss = self.loss_fn(output.softmax(1), target)
+        loss = self.loss_fn(output, target)
         self.log(
             "val_loss", loss, on_step=False, on_epoch=True, prog_bar=False, logger=True
         )

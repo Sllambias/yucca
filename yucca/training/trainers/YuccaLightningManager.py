@@ -71,11 +71,11 @@ class YuccaLightningManager:
         self.kwargs = kwargs
 
         # default settings
-        self.max_vram = 2
+        self.max_vram = 12
         self.is_initialized = False
 
         # Trainer settings
-        self.max_epochs = 5
+        self.max_epochs = 1000
         self.train_batches_per_step = 250
         self.val_batches_per_step = 50
         self.trainer = L.Trainer
@@ -90,7 +90,9 @@ class YuccaLightningManager:
         # along with the path to plans file which will also be loaded.
         print("initializing, train is:", train)
         configurator = YuccaConfigurator(
+            tiny_patch=True if self.model_name == "TinyUNet" else False,
             folds=self.folds,
+            manager_name=self.name,
             model_dimensions=self.model_dimensions,
             model_name=self.model_name,
             segmentation_output_dir=segmentation_output_dir,
@@ -169,6 +171,7 @@ if __name__ == "__main__":
     path = None
     Manager = YuccaLightningManager(
         task="Task001_OASIS",
+        model_name="UNet",
         ckpt_path=path,
     )
     # Manager.initialize()
