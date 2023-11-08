@@ -11,7 +11,9 @@ from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yuccalib.utils.files_and_folders import recursive_find_python_class
 from yuccalib.loss_and_optim.loss_functions.CE import CE
 from yuccalib.utils.kwargs import filter_kwargs
-import logging
+
+pl_logger = logging.getLogger("lightning")
+pl_logger.propagate = False
 
 
 class YuccaLightningModule(L.LightningModule):
@@ -19,6 +21,7 @@ class YuccaLightningModule(L.LightningModule):
         self,
         learning_rate: float = 1e-3,
         loss_fn: nn.Module = CE,
+        lr_scheduler: torch.optim.lr_scheduler._LRScheduler = torch.optim.lr_scheduler.CosineAnnealingLR,
         model_name: str = "UNet",
         model_dimensions: str = "3D",
         momentum: float = 0.9,
@@ -27,7 +30,6 @@ class YuccaLightningModule(L.LightningModule):
         optimizer: torch.optim.Optimizer = torch.optim.SGD,
         patch_size: list | tuple = None,
         plans_path: str = None,
-        scheduler: torch.optim.lr_scheduler.LRScheduler = torch.optim.lr_scheduler.CosineAnnealingLR,
         sliding_window_overlap: float = 0.5,
         test_time_augmentation: bool = False,
     ):
@@ -43,14 +45,14 @@ class YuccaLightningModule(L.LightningModule):
         self.loss_fn = loss_fn
         self.momentum = momentum
         self.optim = optimizer
-        self.scheduler = scheduler
+        self.lr_scheduler = lr_scheduler
 
         # Evaluation
         self.train_metrics = MetricCollection(
-            [Dice(num_classes=self.num_classes, ignore_index=0)]
+            {"Train Dice:": Dice(num_classes=self.num_classes, ignore_index=0)}
         )
         self.val_metrics = MetricCollection(
-            [Dice(num_classes=self.num_classes, ignore_index=0)]
+            {"Val Dice:": Dice(num_classes=self.num_classes, ignore_index=0)}
         )
 
         # Inference
@@ -86,9 +88,9 @@ class YuccaLightningModule(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         inputs, target = batch["image"], batch["seg"]
-        output = self(inputs.float())
-        loss = self.loss_fn(output.softmax(1), target.int())
-        metrics = self.train_metrics(output.argmax(1), target.int())
+        output = self(inputs)
+        loss = self.loss_fn(output.softmax(1), target)
+        metrics = self.train_metrics(output.argmax(1), target)
         self.log(
             "train_loss",
             loss,
@@ -104,7 +106,7 @@ class YuccaLightningModule(L.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         inputs, target = batch["image"], batch["seg"]
-        output = self(inputs.float())
+        output = self(inputs)
         loss = self.loss_fn(output.softmax(1), target)
         self.log(
             "val_loss", loss, on_step=False, on_epoch=True, prog_bar=False, logger=True
@@ -137,18 +139,21 @@ class YuccaLightningModule(L.LightningModule):
         return {"logits": logits, "properties": case_properties, "case_id": case_id[0]}
 
     def configure_optimizers(self):
-        # Initialize the loss function using relevant kwargs
+        # Initialize and configure the loss(es) here.
+        # loss_kwargs holds args for any scheduler class,
+        # but using filtering we only pass arguments relevant to the selected class.
         loss_kwargs = {
             # DCE
             "soft_dice_kwargs": {"apply_softmax": True},
         }
 
         loss_kwargs = filter_kwargs(self.loss_fn, loss_kwargs)
+
         self.loss_fn = self.loss_fn(**loss_kwargs)
 
-        # optim_kwargs holds arguments for all possible optimizers we could use.
-        # The subsequent filter_kwargs will select only the kwargs that can be passed
-        # to the chosen optimizer
+        # Initialize and configure the optimizer(s) here.
+        # optim_kwargs holds args for any scheduler class,
+        # but using filtering we only pass arguments relevant to the selected class.
         optim_kwargs = {
             # all
             "lr": self.lr,
@@ -159,22 +164,24 @@ class YuccaLightningModule(L.LightningModule):
         }
 
         optim_kwargs = filter_kwargs(self.optim, optim_kwargs)
-        self.optim(self.model.parameters(), **optim_kwargs)
 
-        # Set kwargs for all schedulers and then filter relevant ones based on scheduler class
-        self.lr_scheduler_kwargs = {
+        self.optim = self.optim(self.model.parameters(), **optim_kwargs)
+
+        # Initialize and configure LR scheduler(s) here
+        # lr_scheduler_kwargs holds args for any scheduler class,
+        # but using filtering we only pass arguments relevant to the selected class.
+        lr_scheduler_kwargs = {
             # Cosine Annealing
             "T_max": self.trainer.max_epochs,
             "eta_min": 1e-9,
         }
 
-        self.lr_scheduler_kwargs = filter_kwargs(
-            self.lr_scheduler, self.lr_scheduler_kwargs
-        )
+        lr_scheduler_kwargs = filter_kwargs(self.lr_scheduler, lr_scheduler_kwargs)
 
-        self.lr_scheduler = self.lr_scheduler(self.optim, **self.lr_scheduler_kwargs)
+        self.lr_scheduler = self.lr_scheduler(self.optim, **lr_scheduler_kwargs)
 
-        return {"optimizer": self.optim, "scheduler": self.lr_scheduler}
+        # Finally return the optimizer and scheduler - the loss is not returned.
+        return {"optimizer": self.optim, "lr_scheduler": self.lr_scheduler}
 
 
 if __name__ == "__main__":
