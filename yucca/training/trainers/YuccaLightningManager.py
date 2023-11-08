@@ -7,7 +7,6 @@ from yucca.training.data_loading.YuccaDataModule import YuccaDataModule
 from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 from yucca.training.trainers.YuccaLightningModule import YuccaLightningModule
 from yucca.paths import yucca_results
-from yuccalib.utils.files_and_folders import WriteSegFromLogits
 
 
 class YuccaLightningManager:
@@ -69,11 +68,16 @@ class YuccaLightningManager:
         self.planner = planner
         self.precision = precision
         self.task = task
+        self.kwargs = kwargs
 
         # default settings
         self.max_vram = 2
         self.is_initialized = False
-        self.kwargs = kwargs
+
+        # Trainer settings
+        self.max_epochs = 5
+        self.train_batches_per_step = 250
+        self.val_batches_per_step = 50
         self.trainer = L.Trainer
 
     def initialize(
@@ -89,12 +93,14 @@ class YuccaLightningManager:
             folds=self.folds,
             model_dimensions=self.model_dimensions,
             model_name=self.model_name,
+            segmentation_output_dir=segmentation_output_dir,
             planner=self.planner,
             task=self.task,
         )
 
         augmenter = YuccaAugmentationComposer(
-            patch_size=configurator.patch_size, is_2D=False
+            patch_size=configurator.patch_size,
+            is_2D=True if self.model_dimensions == "2D" else False,
         )
 
         self.model_module = YuccaLightningModule(
@@ -112,14 +118,15 @@ class YuccaLightningManager:
             composed_val_transforms=augmenter.val_transforms,
         )
 
-        pred_writer = WriteSegFromLogits(
-            output_dir=segmentation_output_dir, write_interval="batch"
-        )
-
         self.trainer = L.Trainer(
+            callbacks=configurator.callbacks,
             default_root_dir=configurator.outpath,
-            callbacks=[pred_writer],
+            limit_train_batches=self.train_batches_per_step,
+            limit_val_batches=self.val_batches_per_step,
+            logger=configurator.loggers,
             precision=self.precision,
+            enable_progress_bar=False,
+            max_epochs=self.max_epochs,
             **self.kwargs,
         )
 
@@ -154,18 +161,18 @@ class YuccaLightningManager:
 
 if __name__ == "__main__":
     import warnings
+    import logging
 
+    pl_logger = logging.getLogger("lightning")
+    pl_logger.propagate = False
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     path = None
     Manager = YuccaLightningManager(
         task="Task001_OASIS",
-        limit_train_batches=250,
-        limit_val_batches=50,
-        max_epochs=5,
         ckpt_path=path,
     )
-    Manager.initialize()
-    # Manager.run_training()
+    # Manager.initialize()
+    Manager.run_training()
 
 
 # %%

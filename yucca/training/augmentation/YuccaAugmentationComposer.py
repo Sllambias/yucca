@@ -2,6 +2,7 @@ from torchvision import transforms
 from yuccalib.image_processing.transforms.formatting import (
     AddBatchDimension,
     RemoveBatchDimension,
+    NumpyToTorch,
 )
 from yuccalib.image_processing.transforms.BiasField import BiasField
 from yuccalib.image_processing.transforms.Blur import Blur
@@ -167,6 +168,7 @@ class YuccaAugmentationComposer:
                 # DownsampleSegForDS() if self.deep_supervision else None,
                 # CopyImageToSeg() if self.CopyImageToSeg else None,
                 # Masking() if self.MaskImageForReconstruction else None,
+                NumpyToTorch(seg_dtype=self.seg_dtype),
                 RemoveBatchDimension(),
             ]
         )
@@ -178,6 +180,7 @@ class YuccaAugmentationComposer:
                 AddBatchDimension(),
                 # CopyImageToSeg() if self.CopyImageToSeg else None,
                 # Masking() if self.MaskImageForReconstruction else None,
+                NumpyToTorch(seg_dtype=self.seg_dtype),
                 RemoveBatchDimension(),
             ]
         )
