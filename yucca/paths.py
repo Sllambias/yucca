@@ -15,8 +15,8 @@ vars = ["YUCCA_RAW_DATA", "YUCCA_PREPROCESSED", "YUCCA_MODELS", "YUCCA_RESULTS"]
 vals = {}
 
 for var in vars:
-    if var is os.environ.keys():
-        vals[var] = os.environ(var)
+    if var in os.environ.keys():
+        vals[var] = os.environ[var]
         maybe_mkdir_p(vals[var])
     else:
         warnings.warn(f"Missing environment variable {var}.")
