@@ -1,7 +1,7 @@
 
 import torch
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, load_json, load_pickle
-from yucca.paths import yucca_models, yucca_preprocessed, yucca_raw_data
+from yucca.paths import yucca_models, yucca_preprocessed
 from yuccalib.image_processing.matrix_ops import get_max_rotated_size
 from yuccalib.network_architectures.utils.model_memory_estimation import find_optimal_tensor_dims
 
@@ -75,7 +75,6 @@ class YuccaConfigurator:
                                                                         max_memory_usage_in_gb=self.max_vram)
         else:
             print("Cuda is not available, using tiny patch and batch")
-        self.batch_size = 2
-        self.patch_size = (32, 32, 32)
+            self.batch_size = 2
+            self.patch_size = (32, 32, 32)
         self.initial_patch_size = get_max_rotated_size(self.patch_size)
-

@@ -26,9 +26,16 @@ class YuccaLoader(object):
     Finally, by default it will keep cases in RAM to save the time required to repeatedly load the
     image, however this should be avoided for very large datasets.
     """
-    def __init__(self, list_of_files, batch_size,
-                 gen_patch_size, p_oversample_foreground=.5,
-                 random_state=None, keep_in_ram=True):
+
+    def __init__(
+        self,
+        list_of_files,
+        batch_size,
+        gen_patch_size,
+        p_oversample_foreground=0.5,
+        random_state=None,
+        keep_in_ram=True,
+    ):
         self.batch_size = batch_size
         self.gen_patch_size = gen_patch_size
         self.files = list_of_files
@@ -40,7 +47,11 @@ class YuccaLoader(object):
     def determine_shapes(self):
         image = self.load_and_maybe_keep_volume(self.files[0])
         self.input_shape = image.shape
-        self.image_shape_for_aug = (self.batch_size, image.shape[0]-1, *self.gen_patch_size)
+        self.image_shape_for_aug = (
+            self.batch_size,
+            image.shape[0] - 1,
+            *self.gen_patch_size,
+        )
         self.seg_shape_for_aug = (self.batch_size, 1, *self.gen_patch_size)
         del image
 
@@ -52,7 +63,9 @@ class YuccaLoader(object):
         if len(self.gen_patch_size) == 2 and len(self.input_shape) == 3:
             return self.generate_2D_batch_from_2D()
         else:
-            print(f"patch size should be (x, y, z) or (x,y) but is: {self.gen_patch_size}")
+            print(
+                f"patch size should be (x, y, z) or (x,y) but is: {self.gen_patch_size}"
+            )
 
     def generate_3D_batch(self):
         """
@@ -67,18 +80,18 @@ class YuccaLoader(object):
         samples = np.random.choice(self.files, self.batch_size)
 
         for idx, sample in enumerate(samples):
-
             imseg = self.load_and_maybe_keep_volume(sample)
-            image_properties = self.load_and_maybe_keep_pickle(sample[:-4]+'.pkl')
+            image_properties = self.load_and_maybe_keep_pickle(sample[:-4] + ".pkl")
 
-            assert len(imseg.shape) == 4, "input should be (c, x, y, z)"\
-                f" but it is: {imseg.shape}"
+            assert len(imseg.shape) == 4, (
+                "input should be (c, x, y, z)" f" but it is: {imseg.shape}"
+            )
 
             # First we pad to ensure min size is met
             to_pad = []
             for d in range(3):
-                if imseg.shape[d+1] < self.gen_patch_size[d]:
-                    to_pad += [(self.gen_patch_size[d] - imseg.shape[d+1])]
+                if imseg.shape[d + 1] < self.gen_patch_size[d]:
+                    to_pad += [(self.gen_patch_size[d] - imseg.shape[d + 1])]
                 else:
                     to_pad += [0]
 
@@ -93,39 +106,83 @@ class YuccaLoader(object):
             # The final patch excted after augmentation will always be the center of this patch
             # as this is where artefacts are least present
             crop_start_idx = []
-            if len(image_properties['foreground_locations']) == 0 or np.random.uniform() >= self.p_oversample_foreground:
+            if (
+                len(image_properties["foreground_locations"]) == 0
+                or np.random.uniform() >= self.p_oversample_foreground
+            ):
                 for d in range(3):
-                    if imseg.shape[d+1] < self.gen_patch_size[d]:
+                    if imseg.shape[d + 1] < self.gen_patch_size[d]:
                         crop_start_idx += [0]
                     else:
-                        crop_start_idx += [np.random.randint(imseg.shape[d+1] - self.gen_patch_size[d] + 1)]
+                        crop_start_idx += [
+                            np.random.randint(
+                                imseg.shape[d + 1] - self.gen_patch_size[d] + 1
+                            )
+                        ]
             else:
-                locidx = np.random.choice(len(image_properties['foreground_locations']))
-                location = image_properties['foreground_locations'][locidx]
+                locidx = np.random.choice(len(image_properties["foreground_locations"]))
+                location = image_properties["foreground_locations"][locidx]
                 for d in range(3):
-                    if imseg.shape[d+1] < self.gen_patch_size[d]:
+                    if imseg.shape[d + 1] < self.gen_patch_size[d]:
                         crop_start_idx += [0]
                     else:
-                        crop_start_idx += [np.random.randint(max(0, location[d] - self.gen_patch_size[d]),
-                                                            min(location[d], imseg.shape[d+1]-self.gen_patch_size[d]) + 1)]
+                        crop_start_idx += [
+                            np.random.randint(
+                                max(0, location[d] - self.gen_patch_size[d]),
+                                min(
+                                    location[d],
+                                    imseg.shape[d + 1] - self.gen_patch_size[d],
+                                )
+                                + 1,
+                            )
+                        ]
 
-            image_batch[idx, :, :, :, :,] = np.pad(imseg[:-1,
-                                     crop_start_idx[0]: crop_start_idx[0] + self.gen_patch_size[0],
-                                     crop_start_idx[1]: crop_start_idx[1] + self.gen_patch_size[1],
-                                     crop_start_idx[2]: crop_start_idx[2] + self.gen_patch_size[2]],
-                                     ((0,0), (pad_lb_x, pad_ub_x), (pad_lb_y, pad_ub_y), 
-                                     (pad_lb_z, pad_ub_z)), mode='edge')
+            image_batch[
+                idx,
+                :,
+                :,
+                :,
+                :,
+            ] = np.pad(
+                imseg[
+                    :-1,
+                    crop_start_idx[0] : crop_start_idx[0] + self.gen_patch_size[0],
+                    crop_start_idx[1] : crop_start_idx[1] + self.gen_patch_size[1],
+                    crop_start_idx[2] : crop_start_idx[2] + self.gen_patch_size[2],
+                ],
+                (
+                    (0, 0),
+                    (pad_lb_x, pad_ub_x),
+                    (pad_lb_y, pad_ub_y),
+                    (pad_lb_z, pad_ub_z),
+                ),
+                mode="edge",
+            )
 
-            seg_batch[idx, :, :, :, :,] = np.pad(imseg[-1:,
-                                 crop_start_idx[0]: crop_start_idx[0] + self.gen_patch_size[0],
-                                 crop_start_idx[1]: crop_start_idx[1] + self.gen_patch_size[1],
-                                 crop_start_idx[2]: crop_start_idx[2] + self.gen_patch_size[2]],                                  
-                                 ((0,0), (pad_lb_x, pad_ub_x), (pad_lb_y, pad_ub_y), 
-                                 (pad_lb_z, pad_ub_z)))
+            seg_batch[
+                idx,
+                :,
+                :,
+                :,
+                :,
+            ] = np.pad(
+                imseg[
+                    -1:,
+                    crop_start_idx[0] : crop_start_idx[0] + self.gen_patch_size[0],
+                    crop_start_idx[1] : crop_start_idx[1] + self.gen_patch_size[1],
+                    crop_start_idx[2] : crop_start_idx[2] + self.gen_patch_size[2],
+                ],
+                (
+                    (0, 0),
+                    (pad_lb_x, pad_ub_x),
+                    (pad_lb_y, pad_ub_y),
+                    (pad_lb_z, pad_ub_z),
+                ),
+            )
 
         data_dict = {"image": image_batch, "seg": seg_batch}
         return data_dict
- 
+
     def generate_2D_batch_from_3D(self):
         """
         The possible input for this can be 2D or 3D data.
@@ -139,18 +196,18 @@ class YuccaLoader(object):
         samples = np.random.choice(self.files, self.batch_size)
 
         for idx, sample in enumerate(samples):
-
             imseg = self.load_and_maybe_keep_volume(sample)
-            image_properties = self.load_and_maybe_keep_pickle(sample[:-4]+'.pkl')
+            image_properties = self.load_and_maybe_keep_pickle(sample[:-4] + ".pkl")
 
-            assert len(imseg.shape) == 4, "input should be (c, x, y, z)"\
-                f" but it is: {imseg.shape}"
+            assert len(imseg.shape) == 4, (
+                "input should be (c, x, y, z)" f" but it is: {imseg.shape}"
+            )
 
             # First we pad to ensure min size is met
             to_pad = []
             for d in range(2):
-                if imseg.shape[d+2] < self.gen_patch_size[d]:
-                    to_pad += [(self.gen_patch_size[d] - imseg.shape[d+2])]
+                if imseg.shape[d + 2] < self.gen_patch_size[d]:
+                    to_pad += [(self.gen_patch_size[d] - imseg.shape[d + 2])]
                 else:
                     to_pad += [0]
 
@@ -163,36 +220,61 @@ class YuccaLoader(object):
             # The final patch extracted after augmentation will always be the center of this patch
             # as this is where augmentation-induced interpolation artefacts are least likely
             crop_start_idx = []
-            if len(image_properties['foreground_locations']) == 0 or np.random.uniform() >= self.p_oversample_foreground:
+            if (
+                len(image_properties["foreground_locations"]) == 0
+                or np.random.uniform() >= self.p_oversample_foreground
+            ):
                 x_idx = np.random.randint(imseg.shape[1])
                 for d in range(2):
-                    if imseg.shape[d+2] < self.gen_patch_size[d]:
+                    if imseg.shape[d + 2] < self.gen_patch_size[d]:
                         crop_start_idx += [0]
                     else:
-                        crop_start_idx += [np.random.randint(imseg.shape[d+2] - self.gen_patch_size[d] + 1)]
+                        crop_start_idx += [
+                            np.random.randint(
+                                imseg.shape[d + 2] - self.gen_patch_size[d] + 1
+                            )
+                        ]
             else:
-                locidx = np.random.choice(len(image_properties['foreground_locations']))
-                location = image_properties['foreground_locations'][locidx]
+                locidx = np.random.choice(len(image_properties["foreground_locations"]))
+                location = image_properties["foreground_locations"][locidx]
                 x_idx = location[0]
                 for d in range(2):
-                    if imseg.shape[d+2] < self.gen_patch_size[d]:
+                    if imseg.shape[d + 2] < self.gen_patch_size[d]:
                         crop_start_idx += [0]
                     else:
-                        crop_start_idx += [np.random.randint(max(0, location[d+1] - self.gen_patch_size[d]),
-                                                            min(location[d+1], imseg.shape[d+2]-self.gen_patch_size[d]) + 1)]
+                        crop_start_idx += [
+                            np.random.randint(
+                                max(0, location[d + 1] - self.gen_patch_size[d]),
+                                min(
+                                    location[d + 1],
+                                    imseg.shape[d + 2] - self.gen_patch_size[d],
+                                )
+                                + 1,
+                            )
+                        ]
 
-            image_batch[idx, :, :, :] = np.pad(imseg[:-1, x_idx,
-                                     crop_start_idx[0]: crop_start_idx[0] + self.gen_patch_size[0],
-                                     crop_start_idx[1]: crop_start_idx[1] + self.gen_patch_size[1]], 
-                                     ((0,0), (pad_lb_y, pad_ub_y), (pad_lb_z, pad_ub_z)), mode='edge')
-            seg_batch[idx, :, :, :] = np.pad(imseg[-1:, x_idx,
-                                 crop_start_idx[0]: crop_start_idx[0] + self.gen_patch_size[0],
-                                 crop_start_idx[1]: crop_start_idx[1] + self.gen_patch_size[1]], 
-                                 ((0,0), (pad_lb_y, pad_ub_y), (pad_lb_z, pad_ub_z)))
+            image_batch[idx, :, :, :] = np.pad(
+                imseg[
+                    :-1,
+                    x_idx,
+                    crop_start_idx[0] : crop_start_idx[0] + self.gen_patch_size[0],
+                    crop_start_idx[1] : crop_start_idx[1] + self.gen_patch_size[1],
+                ],
+                ((0, 0), (pad_lb_y, pad_ub_y), (pad_lb_z, pad_ub_z)),
+                mode="edge",
+            )
+            seg_batch[idx, :, :, :] = np.pad(
+                imseg[
+                    -1:,
+                    x_idx,
+                    crop_start_idx[0] : crop_start_idx[0] + self.gen_patch_size[0],
+                    crop_start_idx[1] : crop_start_idx[1] + self.gen_patch_size[1],
+                ],
+                ((0, 0), (pad_lb_y, pad_ub_y), (pad_lb_z, pad_ub_z)),
+            )
 
         data_dict = {"image": image_batch, "seg": seg_batch}
         return data_dict
-    
 
     def generate_2D_batch_from_2D(self):
         """
@@ -207,18 +289,18 @@ class YuccaLoader(object):
         samples = np.random.choice(self.files, self.batch_size)
 
         for idx, sample in enumerate(samples):
-
             imseg = self.load_and_maybe_keep_volume(sample)
-            image_properties = self.load_and_maybe_keep_pickle(sample[:-4]+'.pkl')
+            image_properties = self.load_and_maybe_keep_pickle(sample[:-4] + ".pkl")
 
-            assert len(imseg.shape) == 3, "input should be (c, x, y)"\
-                f" but it is: {imseg.shape}"
+            assert len(imseg.shape) == 3, (
+                "input should be (c, x, y)" f" but it is: {imseg.shape}"
+            )
 
             # First we pad to ensure min size is met
             to_pad = []
             for d in range(2):
-                if imseg.shape[d+1] < self.gen_patch_size[d]:
-                    to_pad += [(self.gen_patch_size[d] - imseg.shape[d+1])]
+                if imseg.shape[d + 1] < self.gen_patch_size[d]:
+                    to_pad += [(self.gen_patch_size[d] - imseg.shape[d + 1])]
                 else:
                     to_pad += [0]
 
@@ -231,31 +313,55 @@ class YuccaLoader(object):
             # The final patch extracted after augmentation will always be the center of this patch
             # as this is where artefacts are least present
             crop_start_idx = []
-            if len(image_properties['foreground_locations']) == 0 or np.random.uniform() >= self.p_oversample_foreground:
+            if (
+                len(image_properties["foreground_locations"]) == 0
+                or np.random.uniform() >= self.p_oversample_foreground
+            ):
                 for d in range(2):
-                    if imseg.shape[d+1] < self.gen_patch_size[d]:
+                    if imseg.shape[d + 1] < self.gen_patch_size[d]:
                         crop_start_idx += [0]
                     else:
-                        crop_start_idx += [np.random.randint(imseg.shape[d+1] - self.gen_patch_size[d] + 1)]            
+                        crop_start_idx += [
+                            np.random.randint(
+                                imseg.shape[d + 1] - self.gen_patch_size[d] + 1
+                            )
+                        ]
             else:
-                locidx = np.random.choice(len(image_properties['foreground_locations']))
-                location = image_properties['foreground_locations'][locidx]
+                locidx = np.random.choice(len(image_properties["foreground_locations"]))
+                location = image_properties["foreground_locations"][locidx]
                 for d in range(2):
-                    if imseg.shape[d+1] < self.gen_patch_size[d]:
+                    if imseg.shape[d + 1] < self.gen_patch_size[d]:
                         crop_start_idx += [0]
                     else:
-                        crop_start_idx += [np.random.randint(max(0, location[d] - self.gen_patch_size[d]),
-                                                            min(location[d], imseg.shape[d+1]-self.gen_patch_size[d]) + 1)]
+                        crop_start_idx += [
+                            np.random.randint(
+                                max(0, location[d] - self.gen_patch_size[d]),
+                                min(
+                                    location[d],
+                                    imseg.shape[d + 1] - self.gen_patch_size[d],
+                                )
+                                + 1,
+                            )
+                        ]
 
-            image_batch[idx, :, :, :] = np.pad(imseg[:-1,
-                                     crop_start_idx[0]: crop_start_idx[0] + self.gen_patch_size[0],
-                                     crop_start_idx[1]: crop_start_idx[1] + self.gen_patch_size[1]],
-                                     ((0, 0), (pad_lb_x, pad_ub_x), (pad_lb_y, pad_ub_y)), mode='edge')
-            
-            seg_batch[idx, :, :, :] = np.pad(imseg[-1:,
-                                        crop_start_idx[0]: crop_start_idx[0] + self.gen_patch_size[0],
-                                        crop_start_idx[1]: crop_start_idx[1] + self.gen_patch_size[1]],
-                                        ((0, 0), (pad_lb_x, pad_ub_x), (pad_lb_y, pad_ub_y)))
+            image_batch[idx, :, :, :] = np.pad(
+                imseg[
+                    :-1,
+                    crop_start_idx[0] : crop_start_idx[0] + self.gen_patch_size[0],
+                    crop_start_idx[1] : crop_start_idx[1] + self.gen_patch_size[1],
+                ],
+                ((0, 0), (pad_lb_x, pad_ub_x), (pad_lb_y, pad_ub_y)),
+                mode="edge",
+            )
+
+            seg_batch[idx, :, :, :] = np.pad(
+                imseg[
+                    -1:,
+                    crop_start_idx[0] : crop_start_idx[0] + self.gen_patch_size[0],
+                    crop_start_idx[1] : crop_start_idx[1] + self.gen_patch_size[1],
+                ],
+                ((0, 0), (pad_lb_x, pad_ub_x), (pad_lb_y, pad_ub_y)),
+            )
         data_dict = {"image": image_batch, "seg": seg_batch}
         return data_dict
 
@@ -272,28 +378,32 @@ class YuccaLoader(object):
             return self.already_loaded_cases[picklepath]
         self.already_loaded_cases[picklepath] = load_pickle(picklepath)
         return self.already_loaded_cases[picklepath]
-    
+
     def load_and_maybe_keep_volume(self, path):
         if not self.keep_in_ram:
-            if path[-3:] == 'npy':
-                return np.load(path, 'r')
+            if path[-3:] == "npy":
+                return np.load(path, "r")
             image = np.load(path)
-            assert len(image.files) == 1, "More than one entry in data array. "\
+            assert len(image.files) == 1, (
+                "More than one entry in data array. "
                 f"Should only be ['data'] but is {[key for key in image.files]}"
+            )
             return image[image.files[0]]
 
         if path in self.already_loaded_cases:
             return self.already_loaded_cases[path]
 
-        if path[-3:] == 'npy':
+        if path[-3:] == "npy":
             try:
-                self.already_loaded_cases[path] = np.load(path, 'r')
+                self.already_loaded_cases[path] = np.load(path, "r")
             except ValueError:
                 self.already_loaded_cases[path] = np.load(path, allow_pickle=True)
             return self.already_loaded_cases[path]
 
         image = np.load(path)
-        assert len(image.files) == 1, "More than one entry in data array. "\
+        assert len(image.files) == 1, (
+            "More than one entry in data array. "
             f"Should only be ['data'] but is {[key for key in image.files]}"
+        )
         self.already_loaded_cases = image[image.files[0]]
         return self.already_loaded_cases[path]

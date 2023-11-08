@@ -5,11 +5,17 @@ import wandb
 from sklearn.model_selection import KFold
 from torch import optim
 from torch.cuda.amp import GradScaler
-from batchgenerators.utilities.file_and_folder_operations import join, subfiles, save_pickle
+from batchgenerators.utilities.file_and_folder_operations import (
+    join,
+    subfiles,
+    save_pickle,
+)
 from yucca.paths import yucca_preprocessed
 from yucca.training.trainers.base_trainer import base_trainer
-from yuccalib.evaluation.confusion_matrix import torch_confusion_matrix_from_logits,\
-    torch_get_tp_fp_tn_fn
+from yuccalib.evaluation.confusion_matrix import (
+    torch_confusion_matrix_from_logits,
+    torch_get_tp_fp_tn_fn,
+)
 from yuccalib.evaluation.metrics import dice_per_label
 from yuccalib.loss_and_optim.loss_functions.nnUNet_losses import DiceCE
 from yuccalib.utils.files_and_folders import recursive_find_python_class
@@ -29,7 +35,7 @@ class YuccaTrainer(base_trainer):
           - Patch Size is automatically set based on the dataset.
         - Defines the Data Augmentation scheme
         - Initializes the network
-            - Input and output channels are derived from the # modalities and 
+            - Input and output channels are derived from the # modalities and
             # classes stored in the plans file of the dataset.
         - Loads the data
             - If no splits are provided it will automatically split the data.
@@ -50,19 +56,22 @@ class YuccaTrainer(base_trainer):
         best Dice on the validation set.
     After the last epoch the final model weights are saved and training is concluded.
     """
-    def __init__(self,
-                 model,
-                 model_dimensions: str,
-                 task: str,
-                 folds: str | int,
-                 plan_id: str,
-                 starting_lr: float = None,
-                 loss_fn: str = None,
-                 momentum: float = None,
-                 continue_training: bool = False,
-                 checkpoint: str = None,
-                 finetune: bool = False,
-                 fast_training: bool = False):
+
+    def __init__(
+        self,
+        model,
+        model_dimensions: str,
+        task: str,
+        folds: str | int,
+        plan_id: str,
+        starting_lr: float = None,
+        loss_fn: str = None,
+        momentum: float = None,
+        continue_training: bool = False,
+        checkpoint: str = None,
+        finetune: bool = False,
+        fast_training: bool = False,
+    ):
         super().__init__()
 
         # Trainer specific parameters
@@ -104,7 +113,7 @@ class YuccaTrainer(base_trainer):
         # The default is for the basic UNet.
         self.patch_size_3D = (96, 96, 96)
         self.patch_size_2D = (160, 160)
-        if self.model_name == 'MultiResUNet':
+        if self.model_name == "MultiResUNet":
             self.patch_size_3D = (96, 96, 80)
             self.patch_size_2D = (144, 144)
 
@@ -116,10 +125,15 @@ class YuccaTrainer(base_trainer):
 
     def comprehensive_eval(self, pred, seg):
         if not self.epoch_eval_dict:
-            self.epoch_eval_dict = {stat: [] for stat in ["Dice           :",
-                                                          "True Positives :",
-                                                          "False Positives:",
-                                                          "False Negatives:"]}
+            self.epoch_eval_dict = {
+                stat: []
+                for stat in [
+                    "Dice           :",
+                    "True Positives :",
+                    "False Positives:",
+                    "False Negatives:",
+                ]
+            }
 
         confusion_matrix = torch_confusion_matrix_from_logits(pred, seg)
         tp, fp, _, fn = torch_get_tp_fp_tn_fn(confusion_matrix, ignore_label=0)
@@ -131,9 +145,14 @@ class YuccaTrainer(base_trainer):
     def initialize(self):
         if not self.is_initialized:
             # Then we load the plans and set modalities and classes etc.
-            self.load_plans_from_path(join(yucca_preprocessed, self.task,
-                                           self.plan_id,
-                                           self.plan_id + '_plans.json'))
+            self.load_plans_from_path(
+                join(
+                    yucca_preprocessed,
+                    self.task,
+                    self.plan_id,
+                    self.plan_id + "_plans.json",
+                )
+            )
 
             # First we set the path based on the supplied parameters
             self.set_outpath()
@@ -149,8 +168,12 @@ class YuccaTrainer(base_trainer):
             # Load self.network based on the
             # dimensions (2D or 3D) and classes (number of output channels)
             self.initialize_network()
-            self.log(f'{"network:":20}', self.model_dimensions,
-                     self.network.__class__.__name__, time=False)
+            self.log(
+                f'{"network:":20}',
+                self.model_dimensions,
+                self.network.__class__.__name__,
+                time=False,
+            )
 
             # Load the data (and if necessary split it)
             # Before loading data, we set random seeds for reproducibility
@@ -165,8 +188,12 @@ class YuccaTrainer(base_trainer):
                 if self.checkpoint:
                     self.load_checkpoint(self.checkpoint, train=True)
                 else:
-                    latest = subfiles(self.outpath, suffix='latest.model', join=False)[0]
-                    assert latest, "Can not continue training. No latest checkpoint found."
+                    latest = subfiles(self.outpath, suffix="latest.model", join=False)[
+                        0
+                    ]
+                    assert (
+                        latest
+                    ), "Can not continue training. No latest checkpoint found."
 
                     self.load_checkpoint(join(self.outpath, latest), train=True)
 
@@ -179,8 +206,10 @@ class YuccaTrainer(base_trainer):
 
             self.is_initialized = True
         else:
-            print("Network is already initialized. \
-                  Calling initialize repeatedly should be avoided.")
+            print(
+                "Network is already initialized. \
+                  Calling initialize repeatedly should be avoided."
+            )
 
     def initialize_loss_optim_lr(self):
         # Define the gradscaler
@@ -191,20 +220,24 @@ class YuccaTrainer(base_trainer):
             self.loss_fn = self._DEFAULT_LOSS
 
         elif self.loss_fn:
-            self.loss_fn = recursive_find_python_class(folder=[join(yucca.__path__[0], 'training',
-                                                                    'loss_functions')],
-                                                       class_name=self.loss_fn,
-                                                       current_module='yucca.training.loss_functions'
-                                                       )
+            self.loss_fn = recursive_find_python_class(
+                folder=[join(yucca.__path__[0], "training", "loss_functions")],
+                class_name=self.loss_fn,
+                current_module="yucca.training.loss_functions",
+            )
 
         self.loss_fn_kwargs = {
-                            'soft_dice_kwargs': {'apply_softmax': True},    # DCE
-                            'hierarchical_kwargs': {'rootdict': self.plans['dataset_properties']['label_hierarchy']}, # Hierarchical Loss
-                            }
+            "soft_dice_kwargs": {"apply_softmax": True},  # DCE
+            "hierarchical_kwargs": {
+                "rootdict": self.plans["dataset_properties"]["label_hierarchy"]
+            },  # Hierarchical Loss
+        }
         self.loss_fn_kwargs = filter_kwargs(self.loss_fn, self.loss_fn_kwargs)
         self.loss_fn = self.loss_fn(**self.loss_fn_kwargs)
-        assert isinstance(self.loss_fn, torch.nn.Module), "Loss is not a torch.nn.Module. " \
+        assert isinstance(self.loss_fn, torch.nn.Module), (
+            "Loss is not a torch.nn.Module. "
             "Make sure the correct loss was found (check spelling)"
+        )
 
         self.log(f'{"loss function":20}', self.loss_fn.__class__.__name__, time=False)
 
@@ -224,22 +257,27 @@ class YuccaTrainer(base_trainer):
         # Set kwargs for all optimizers and then filter relevant ones based on optimizer class
 
         self.optim_kwargs = {
-                             'lr': float(self.starting_lr),                 # all
-                             'momentum': float(self.momentum),              # SGD
-                             'eps': 1e-4,
-                             'weight_decay': 3e-5,
-                             }
+            "lr": float(self.starting_lr),  # all
+            "momentum": float(self.momentum),  # SGD
+            "eps": 1e-4,
+            "weight_decay": 3e-5,
+        }
         self.optim_kwargs = filter_kwargs(self.optim, self.optim_kwargs)
         self.optim = self.optim(self.network.parameters(), **self.optim_kwargs)
         self.log(f'{"optimizer":20}', self.optim.__class__.__name__, time=False)
 
         # Set kwargs for all schedulers and then filter relevant ones based on scheduler class
         self.lr_scheduler_kwargs = {
-            'T_max': self.final_epoch, 'eta_min': 1e-9,                     # Cosine Annealing
-            }
-        self.lr_scheduler_kwargs = filter_kwargs(self.lr_scheduler, self.lr_scheduler_kwargs)
+            "T_max": self.final_epoch,
+            "eta_min": 1e-9,  # Cosine Annealing
+        }
+        self.lr_scheduler_kwargs = filter_kwargs(
+            self.lr_scheduler, self.lr_scheduler_kwargs
+        )
         self.lr_scheduler = self.lr_scheduler(self.optim, **self.lr_scheduler_kwargs)
-        self.log(f'{"LR scheduler":20}', self.lr_scheduler.__class__.__name__, time=False)
+        self.log(
+            f'{"LR scheduler":20}', self.lr_scheduler.__class__.__name__, time=False
+        )
 
     def run_training(self):
         self.initialize()
@@ -250,7 +288,10 @@ class YuccaTrainer(base_trainer):
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         else:
-            self.log("CUDA NOT AVAILABLE. YOU SHOULD REALLY NOT TRAIN WITHOUT CUDA!", time=False)
+            self.log(
+                "CUDA NOT AVAILABLE. YOU SHOULD REALLY NOT TRAIN WITHOUT CUDA!",
+                time=False,
+            )
 
         wandb.watch(self.network)
 
@@ -265,7 +306,9 @@ class YuccaTrainer(base_trainer):
             self.network.eval()
             with torch.no_grad():
                 for _ in range(self.val_batches_per_epoch):
-                    batch_loss = self.run_batch(next(self.val_gen), train=False, comprehensive_eval=True)
+                    batch_loss = self.run_batch(
+                        next(self.val_gen), train=False, comprehensive_eval=True
+                    )
                     self.epoch_val_loss.append(batch_loss)
 
             self.tr_losses.append(np.mean(self.epoch_tr_loss))
@@ -298,14 +341,20 @@ class YuccaTrainer(base_trainer):
     def split_data(self):
         splits = []
 
-        files = subfiles(self.folder_with_preprocessed_data, join=False, suffix='.npy')
+        files = subfiles(self.folder_with_preprocessed_data, join=False, suffix=".npy")
         if not files:
-            files = subfiles(self.folder_with_preprocessed_data, join=False, suffix='.npz')
+            files = subfiles(
+                self.folder_with_preprocessed_data, join=False, suffix=".npz"
+            )
             if files:
-                self.log("Only found compressed (.npz) files. This might increase runtime.",
-                         time=False)
+                self.log(
+                    "Only found compressed (.npz) files. This might increase runtime.",
+                    time=False,
+                )
 
-        assert files, f"Couldn't find any .npy or .npz files in {self.folder_with_preprocessed_data}"
+        assert (
+            files
+        ), f"Couldn't find any .npy or .npz files in {self.folder_with_preprocessed_data}"
 
         files = np.array(files)
         # We set this seed manually as multiple trainers might use this split,
@@ -314,6 +363,6 @@ class YuccaTrainer(base_trainer):
 
         kf = KFold(n_splits=5, shuffle=True, random_state=52189)
         for train, val in kf.split(files):
-            splits.append({'train': list(files[train]), 'val': list(files[val])})
+            splits.append({"train": list(files[train]), "val": list(files[val])})
 
         save_pickle(splits, self.splits_file)

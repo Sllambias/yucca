@@ -1,12 +1,9 @@
 import lightning as pl
-import random
-import numpy as np
 import torchvision
 from torch.utils.data import DataLoader
-from batchgenerators.utilities.file_and_folder_operations import subfiles, join
-from yucca.training.data_loading.YuccaDataset import YuccaTrainIterableDataset, YuccaTestDataset, YuccaTrainDataset
-from yucca.training.data_loading.samplers import InfiniteRandomBatchSampler, InfiniteRandomSampler
-from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
+from batchgenerators.utilities.file_and_folder_operations import join
+from yucca.training.data_loading.YuccaDataset import YuccaTestDataset, YuccaTrainDataset
+from yucca.training.data_loading.samplers import InfiniteRandomSampler
 from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 
 
@@ -71,7 +68,6 @@ class YuccaDataModule(pl.LightningDataModule):
 
     def train_dataloader(self):
         train_sampler = self.sampler(self.train_dataset)
-        #return DataLoader(self.train_dataset, num_workers=2, batch_size=self.batch_size)
         return DataLoader(
             self.train_dataset,
             num_workers=self.num_workers,
@@ -81,7 +77,6 @@ class YuccaDataModule(pl.LightningDataModule):
 
     def val_dataloader(self):
         val_sampler = self.sampler(self.val_dataset)
-        #return DataLoader(self.val_dataset, num_workers=2, batch_size=self.batch_size)
         return DataLoader(
             self.val_dataset,
             num_workers=self.num_workers//2,

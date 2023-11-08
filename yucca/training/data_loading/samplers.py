@@ -1,8 +1,8 @@
 import torch
 import numpy as np
-import itertools
 
-class InfiniteRandomBatchSampler(torch.utils.data.Sampler) :
+
+class RandomBatchSampler(torch.utils.data.Sampler) :
     def __init__(self, dataset: torch.utils.data.Dataset, batch_size: int = None):
         assert len(dataset) > 0
         self.dataset = dataset
@@ -14,7 +14,7 @@ class InfiniteRandomBatchSampler(torch.utils.data.Sampler) :
 
 class InfiniteRandomSampler(torch.utils.data.Sampler):
     """ Return random indices from [0-n) infinitely.
-    
+
     Arguments:
         dset_size (int): Size of the dataset to sample.
     """
@@ -27,10 +27,11 @@ class InfiniteRandomSampler(torch.utils.data.Sampler):
         seed = torch.empty((), dtype=torch.int64).random_().item()
         rng.manual_seed(seed)
         return _infinite_generator(self.dset_size, rng)
-    
+
     def __len__(self):
         return float('inf')
-        
+
+
 def _infinite_generator(n, rng):
     """ Inifinitely returns a number in [0, n)."""
     while True:
