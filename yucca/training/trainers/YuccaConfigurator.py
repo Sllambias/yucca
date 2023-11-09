@@ -100,16 +100,11 @@ class YuccaConfigurator:
         self.loggers = [csvlogger, wandb_logger, txtlogger]
 
     def setup_callbacks(self):
-<<<<<<< Updated upstream
-        pred_writer = WriteSegFromLogits(output_dir=self.segmentation_output_dir, write_interval="batch")
-        self.callbacks = [pred_writer]
-=======
         best_ckpt = ModelCheckpoint(monitor="val_dice", save_top_k=1, filename="model_best")
         interval_ckpt = ModelCheckpoint(every_n_epochs=250, filename="model_epoch_{epoch}")
         pred_writer = WriteSegFromLogits(output_dir=self.segmentation_output_dir, write_interval="batch")
 
         self.callbacks = [best_ckpt, interval_ckpt, pred_writer]
->>>>>>> Stashed changes
 
     def setup_train_params(self):
         self.num_classes = len(self.plans["dataset_properties"]["classes"])

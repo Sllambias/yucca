@@ -63,11 +63,8 @@ class YuccaDataModule(pl.LightningDataModule):
             )
 
         if stage == "predict":
-<<<<<<< Updated upstream
-=======
             # This dataset contains ONLY the images (and not the labels)
             # It will return a tuple of (case, case_id)
->>>>>>> Stashed changes
             self.pred_dataset = YuccaTestDataset(self.pred_data_dir, patch_size=self.patch_size)
 
     def train_dataloader(self):

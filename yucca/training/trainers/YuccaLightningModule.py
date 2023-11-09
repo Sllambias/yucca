@@ -46,13 +46,8 @@ class YuccaLightningModule(L.LightningModule):
         self.lr_scheduler = lr_scheduler
 
         # Evaluation
-<<<<<<< Updated upstream
-        self.train_metrics = MetricCollection({"Train Dice:": Dice(num_classes=self.num_classes, ignore_index=0)})
-        self.val_metrics = MetricCollection({"Val Dice:": Dice(num_classes=self.num_classes, ignore_index=0)})
-=======
         self.train_metrics = MetricCollection({"train_dice": Dice(num_classes=self.num_classes, ignore_index=0)})
         self.val_metrics = MetricCollection({"val_dice": Dice(num_classes=self.num_classes, ignore_index=0)})
->>>>>>> Stashed changes
 
         # Inference
         self.sliding_window_overlap = sliding_window_overlap
@@ -111,13 +106,9 @@ class YuccaLightningModule(L.LightningModule):
         inputs, target = batch["image"], batch["seg"]
         output = self(inputs)
         loss = self.loss_fn(output, target)
-<<<<<<< Updated upstream
-        self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=False, logger=True)
-=======
         metrics = self.val_metrics(output, target)
         self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=False, logger=True)
         self.log_dict(metrics, on_step=False, on_epoch=True, prog_bar=False, logger=True)
->>>>>>> Stashed changes
 
     def on_predict_start(self):
         self.preprocessor = YuccaPreprocessor(self.plans_path)

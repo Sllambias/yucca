@@ -44,21 +44,13 @@ def main():
         default="0",
     )
     parser.add_argument("-m", help="Model Architecture. Defaults to UNet.", default="UNet")
-<<<<<<< Updated upstream
-    parser.add_argument("-d", help="2D, 25D or 3D model. Defaults to 3D.", default="3D")
-=======
     parser.add_argument("-d", help="2D or 3D model. Defaults to 3D.", default="3D")
->>>>>>> Stashed changes
     parser.add_argument(
         "-tr",
         help="Full name of Trainer Class. \n" "e.g. 'YuccaTrainer_DCE' or 'YuccaTrainer'. Defaults to YuccaTrainer.",
         default="YuccaTrainer",
     )
-<<<<<<< Updated upstream
-    parser.add_argument("-pl", help="Plan ID. Defaults to YuccaPlanner", default="YuccaPlanner")
-=======
     parser.add_argument("-pl", help="Planner. Defaults to YuccaPlanner", default="YuccaPlanner")
->>>>>>> Stashed changes
     parser.add_argument(
         "-chk",
         help="Checkpoint to use for inference. Defaults to model_best.",
@@ -142,11 +134,7 @@ def main():
     folders_with_softmax = []
     if ensemble:
         print("Running ensemble inference on the default ensemble plans \n" "Save_softmax set to True.")
-<<<<<<< Updated upstream
-        plans = [plan_id + "X", plan_id + "Y", plan_id + "Z"]
-=======
         plans = [planner + "X", planner + "Y", planner + "Z"]
->>>>>>> Stashed changes
         save_softmax = True
     else:
         plans = [planner]
@@ -161,15 +149,6 @@ def main():
         modelfile = join(
             yucca_models,
             source_task,
-<<<<<<< Updated upstream
-            model,
-            dimensions,
-            trainer_name + "__" + plan,
-            folds,
-            checkpoint + ".model",
-        )
-        assert isfile(modelfile), "Can't find .model file with trained model weights. " f"Should be located at: {modelfile}"
-=======
             model + "__" + dimensions,
             manager_name + "__" + planner,
             f"folds_{folds}",
@@ -179,39 +158,16 @@ def main():
         )
 
         assert isfile(modelfile), "Can't find .cpkt file with trained model weights. " f"Should be located at: {modelfile}"
->>>>>>> Stashed changes
         print(
             f"######################################################################## \n" f"{'Using model: ':25} {modelfile}"
         )
 
-<<<<<<< Updated upstream
-        metafile = modelfile + ".json"
-        assert isfile(metafile), "Can't find .json file with model metadata. " f"Should be located at: {metafile}"
-        metafile = load_json(metafile)
-
-        """
-        We find the trainer using the name stored in the modelfile and NOT the "trainer_name" argument.
-        E.g. if the "--lr 1e-4" flag is used with the base YuccaTrainer the models will be saved as
-        YuccaTrainer_1e4 even though YuccaTrainer_1e4 might not exist. Therefore we refer to the
-        modelfile for the actual Trainer used.
-        """
-        trainer_class = metafile["trainer_class"]
-        trainer = recursive_find_python_class(
-=======
         manager = recursive_find_python_class(
->>>>>>> Stashed changes
             folder=[join(yucca.__path__[0], "training")],
             class_name=manager_name,
             current_module="yucca.training",
         )
 
-<<<<<<< Updated upstream
-        assert trainer, f"searching for {trainer_class} " f"but found: {trainer}"
-        assert issubclass(trainer, YuccaTrainer), "Trainer is not a subclass of YuccaTrainer."
-
-        print(f"{'Using trainer: ':25} {trainer}")
-        trainer = trainer(model, dimensions, task=source_task, folds=folds, plan_id=plan)
-=======
         assert manager, f"searching for {manager_class} " f"but found: {manager}"
         assert issubclass(manager, (YuccaManager, YuccaLightningManager)), "Trainer is not a subclass of YuccaTrainer."
 
@@ -219,7 +175,6 @@ def main():
         manager = manager(
             model_name=model, model_dimensions=dimensions, task=source_task, folds=folds, planner=planner, ckpt_path=modelfile
         )
->>>>>>> Stashed changes
 
         # Setting up input paths and output paths
         inpath = join(yucca_raw_data, target_task, "imagesTs")

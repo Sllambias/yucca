@@ -23,13 +23,9 @@ from weave.monitoring import StreamTable
 
 
 class YuccaEvaluator(object):
-<<<<<<< Updated upstream
-    def __init__(self, labels: list, folder_with_predictions, folder_with_ground_truth, do_object_eval=False, as_binary=False):
-=======
     def __init__(
         self, labels: list | int, folder_with_predictions, folder_with_ground_truth, do_object_eval=False, as_binary=False
     ):
->>>>>>> Stashed changes
         self.name = "results"
         self.metrics = {
             "Dice": dice,
@@ -91,11 +87,7 @@ class YuccaEvaluator(object):
             f"STARTING EVALUATION \n"
             f"Folder with predictions: {self.folder_with_predictions}\n"
             f"Folder with ground truth: {self.folder_with_ground_truth}\n"
-<<<<<<< Updated upstream
-            f"Evaluating performance on labels: {labels}"
-=======
             f"Evaluating performance on labels: {self.labels}"
->>>>>>> Stashed changes
         )
 
     def sanity_checks(self):
