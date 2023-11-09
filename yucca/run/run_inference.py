@@ -1,10 +1,10 @@
 import argparse
 import yucca
-import warnings
 from yucca.utils.task_ids import maybe_get_task_from_task_id
 from yucca.paths import yucca_raw_data, yucca_results, yucca_models
 from yucca.evaluation.YuccaEvaluator import YuccaEvaluator
-from yucca.training.trainers.YuccaTrainer import YuccaTrainer
+from yucca.training.trainers.YuccaManager import YuccaManager
+from yucca.training.trainers.YuccaLightningManager import YuccaLightningManager
 from yuccalib.utils.files_and_folders import (
     recursive_find_python_class,
     merge_softmax_from_folders,
@@ -15,10 +15,17 @@ from batchgenerators.utilities.file_and_folder_operations import (
     isfile,
     maybe_mkdir_p,
     isdir,
+    subdirs,
 )
+from warnings import filterwarnings
+
+filterwarnings("ignore")
 
 
 def main():
+    from warnings import filterwarnings
+
+    filterwarnings("ignore")
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-s",
@@ -37,17 +44,22 @@ def main():
         default="0",
     )
     parser.add_argument("-m", help="Model Architecture. Defaults to UNet.", default="UNet")
-    parser.add_argument("-d", help="2D, 25D or 3D model. Defaults to 3D.", default="3D")
+    parser.add_argument("-d", help="2D or 3D model. Defaults to 3D.", default="3D")
     parser.add_argument(
         "-tr",
         help="Full name of Trainer Class. \n" "e.g. 'YuccaTrainer_DCE' or 'YuccaTrainer'. Defaults to YuccaTrainer.",
         default="YuccaTrainer",
     )
-    parser.add_argument("-pl", help="Plan ID. Defaults to YuccaPlanner", default="YuccaPlanner")
+    parser.add_argument("-pl", help="Planner. Defaults to YuccaPlanner", default="YuccaPlanner")
     parser.add_argument(
         "-chk",
-        help="Checkpoint to use for inference. Defaults to checkpoint_best.",
-        default="checkpoint_best",
+        help="Checkpoint to use for inference. Defaults to model_best.",
+        default="model_best",
+    )
+    parser.add_argument(
+        "-v",
+        help="Version to use for inference. Defaults to the newest version.",
+        default=None,
     )
     parser.add_argument(
         "--ensemble",
@@ -104,67 +116,65 @@ def main():
 
     source_task = maybe_get_task_from_task_id(args.s)
     target_task = maybe_get_task_from_task_id(args.t)
-    trainer_name = args.tr
+    manager_name = args.tr
     model = args.m
     dimensions = args.d
     folds = args.f
-    plan_id = args.pl
+    planner = args.pl
     checkpoint = args.chk
+    version = args.v
     ensemble = args.ensemble
-    do_tta = args.do_tta
     not_strict = args.not_strict
     save_softmax = args.save_softmax
     overwrite = args.overwrite
-    predict_train = args.predict_train
     no_eval = args.no_eval
+    predict_train = args.predict_train
     # threads = args.threads
 
-    warnings.simplefilter("ignore", ResourceWarning)
     folders_with_softmax = []
     if ensemble:
         print("Running ensemble inference on the default ensemble plans \n" "Save_softmax set to True.")
-        plans = [plan_id + "X", plan_id + "Y", plan_id + "Z"]
+        plans = [planner + "X", planner + "Y", planner + "Z"]
         save_softmax = True
     else:
-        plans = [plan_id]
+        plans = [planner]
 
-    for plan in plans:
+    for planner in plans:
+        path_to_versions = join(
+            yucca_models, source_task, model + "__" + dimensions, manager_name + "__" + planner, f"folds_{folds}"
+        )
+        if version is None:
+            versions = [int(i.split("_")[-1]) for i in subdirs(path_to_versions, join=False)]
+            version = str(max(versions))
         modelfile = join(
             yucca_models,
             source_task,
-            model,
-            dimensions,
-            trainer_name + "__" + plan,
-            folds,
-            checkpoint + ".model",
+            model + "__" + dimensions,
+            manager_name + "__" + planner,
+            f"folds_{folds}",
+            f"version_{version}",
+            "checkpoints",
+            checkpoint + ".ckpt",
         )
-        assert isfile(modelfile), "Can't find .model file with trained model weights. " f"Should be located at: {modelfile}"
+
+        assert isfile(modelfile), "Can't find .cpkt file with trained model weights. " f"Should be located at: {modelfile}"
         print(
             f"######################################################################## \n" f"{'Using model: ':25} {modelfile}"
         )
 
-        metafile = modelfile + ".json"
-        assert isfile(metafile), "Can't find .json file with model metadata. " f"Should be located at: {metafile}"
-        metafile = load_json(metafile)
-
-        """
-        We find the trainer using the name stored in the modelfile and NOT the "trainer_name" argument.
-        E.g. if the "--lr 1e-4" flag is used with the base YuccaTrainer the models will be saved as
-        YuccaTrainer_1e4 even though YuccaTrainer_1e4 might not exist. Therefore we refer to the
-        modelfile for the actual Trainer used.
-        """
-        trainer_class = metafile["trainer_class"]
-        trainer = recursive_find_python_class(
+        manager = recursive_find_python_class(
             folder=[join(yucca.__path__[0], "training")],
-            class_name=trainer_class,
+            class_name=manager_name,
             current_module="yucca.training",
         )
 
-        assert trainer, f"searching for {trainer_class} " f"but found: {trainer}"
-        assert issubclass(trainer, YuccaTrainer), "Trainer is not a subclass of YuccaTrainer."
+        assert manager, f"searching for {manager_class} " f"but found: {manager}"
+        assert issubclass(manager, (YuccaManager, YuccaLightningManager)), "Trainer is not a subclass of YuccaTrainer."
 
-        print(f"{'Using trainer: ':25} {trainer}")
-        trainer = trainer(model, dimensions, task=source_task, folds=folds, plan_id=plan)
+        print(f"{'Using manager: ':25} {manager}")
+        manager = manager(
+            model_name=model, model_dimensions=dimensions, task=source_task, folds=folds, planner=planner, ckpt_path=modelfile
+        )
 
         # Setting up input paths and output paths
         inpath = join(yucca_raw_data, target_task, "imagesTs")
@@ -174,9 +184,11 @@ def main():
             yucca_results,
             target_task,
             source_task,
-            model + dimensions,
-            trainer_name + "__" + plan,
-            "fold_" + folds + "_" + checkpoint,
+            model + "__" + dimensions,
+            manager_name + "__" + planner,
+            folds,
+            version,
+            checkpoint,
         )
 
         if predict_train:
@@ -186,21 +198,18 @@ def main():
 
         maybe_mkdir_p(outpath)
 
-        trainer.load_checkpoint(modelfile)
-        trainer.predict_folder(
+        manager.predict_folder(
             inpath,
             outpath,
-            not_strict=not_strict,
             save_softmax=save_softmax,
             overwrite=overwrite,
-            do_tta=do_tta,
         )
 
         folders_with_softmax.append(outpath)
 
         if isdir(ground_truth) and not no_eval:
             evaluator = YuccaEvaluator(
-                trainer.classes,
+                manager.model_module.num_classes,
                 folder_with_predictions=outpath,
                 folder_with_ground_truth=ground_truth,
             )
@@ -212,14 +221,14 @@ def main():
             target_task,
             source_task,
             model + dimensions,
-            trainer_name + "__" + plan_id + "_Ensemble",
+            manager_name + "__" + planner + "_Ensemble",
             "fold_" + folds + "_" + checkpoint,
         )
         merge_softmax_from_folders(folders_with_softmax, ensemble_outpath)
 
         if isdir(ground_truth) and not no_eval:
             evaluator = YuccaEvaluator(
-                trainer.classes,
+                manager.classes,
                 folder_with_predictions=ensemble_outpath,
                 folder_with_ground_truth=ground_truth,
             )

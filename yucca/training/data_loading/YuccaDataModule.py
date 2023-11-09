@@ -63,6 +63,8 @@ class YuccaDataModule(pl.LightningDataModule):
             )
 
         if stage == "predict":
+            # This dataset contains ONLY the images (and not the labels)
+            # It will return a tuple of (case, case_id)
             self.pred_dataset = YuccaTestDataset(self.pred_data_dir, patch_size=self.patch_size)
 
     def train_dataloader(self):
@@ -89,4 +91,4 @@ class YuccaDataModule(pl.LightningDataModule):
         return None
 
     def predict_dataloader(self):
-        return DataLoader(self.pred_dataset, batch_size=1)
+        return DataLoader(self.pred_dataset, num_workers=self.num_workers, batch_size=1)

@@ -10,6 +10,7 @@ from batchgenerators.utilities.file_and_folder_operations import (
     save_pickle,
     subfiles,
 )
+from lightning.pytorch.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger, CSVLogger
 from sklearn.model_selection import KFold
 from yucca.paths import yucca_models, yucca_preprocessed
@@ -24,7 +25,7 @@ from yuccalib.evaluation.loggers import TXTLogger
 class YuccaConfigurator:
     def __init__(
         self,
-        folds: int = 0,
+        folds: str = "0",
         tiny_patch: bool = False,
         max_vram: int = 12,
         manager_name: str = None,
@@ -51,13 +52,6 @@ class YuccaConfigurator:
         self.setup_loggers()
         self.setup_callbacks()
         self.setup_train_params()
-        print(
-            f"Using training data from: {self.train_data_dir} \n"
-            f"Saving model outputs in: {self.outpath} \n"
-            f"Using patch size: {self.patch_size} \n"
-            f"Using initial patch size: {self.initial_patch_size} \n"
-            f"Using batch size: {self.batch_size} \n"
-        )
 
     def setup_paths_and_plans(self):
         self.train_data_dir = join(yucca_preprocessed, self.task, self.planner)
@@ -68,7 +62,7 @@ class YuccaConfigurator:
             self.model_name + "__" + self.model_dimensions,
             self.planner,
             self.manager_name,
-            str(self.folds),
+            f"fold_{self.folds}",
         )
 
         maybe_mkdir_p(self.outpath)
@@ -84,17 +78,15 @@ class YuccaConfigurator:
             self.split_data(splits_file)
 
         splits_file = load_pickle(join(yucca_preprocessed, self.task, "splits.pkl"))
-        self.train_split = splits_file[self.folds]["train"]
-        self.val_split = splits_file[self.folds]["val"]
+        self.train_split = splits_file[int(self.folds)]["train"]
+        self.val_split = splits_file[int(self.folds)]["val"]
 
     def setup_loggers(self):
-        self.time_obj = strftime("%Y_%m_%d_%H_%M_%S", localtime())
-
-        csvlogger = CSVLogger(save_dir=self.outpath, name=None, version=self.time_obj)
+        csvlogger = CSVLogger(save_dir=self.outpath, name=None)
 
         wandb_logger = WandbLogger(
-            name=self.time_obj,
-            save_dir=join(self.outpath, self.time_obj),
+            name=f"version_{csvlogger.version}",
+            save_dir=join(self.outpath, f"version_{csvlogger.version}"),
             project="Yucca",
             group=self.task,
             log_model="all",
@@ -102,14 +94,17 @@ class YuccaConfigurator:
 
         txtlogger = TXTLogger(
             save_dir=self.outpath,
-            name=self.time_obj,
+            name=f"version_{csvlogger.version}",
             steps_per_epoch=250,
         )
         self.loggers = [csvlogger, wandb_logger, txtlogger]
 
     def setup_callbacks(self):
+        best_ckpt = ModelCheckpoint(monitor="val_dice", save_top_k=1, filename="model_best")
+        interval_ckpt = ModelCheckpoint(every_n_epochs=250, filename="model_epoch_{epoch}")
         pred_writer = WriteSegFromLogits(output_dir=self.segmentation_output_dir, write_interval="batch")
-        self.callbacks = [pred_writer]
+
+        self.callbacks = [best_ckpt, interval_ckpt, pred_writer]
 
     def setup_train_params(self):
         self.num_classes = len(self.plans["dataset_properties"]["classes"])
@@ -152,3 +147,14 @@ class YuccaConfigurator:
             splits.append({"train": list(files[train]), "val": list(files[val])})
 
         save_pickle(splits, splits_file)
+
+
+# %%
+if __name__ == "__main__":
+    from pytorch_lightning.loggers import WandbLogger, CSVLogger
+
+    csvlogger = CSVLogger(
+        save_dir="/home/zcr545/YuccaData/yucca_models/Task001_OASIS/UNet__3D/YuccaLightningManager__YuccaPlanner/0", name=None
+    )
+
+# %%

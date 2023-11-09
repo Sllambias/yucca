@@ -38,7 +38,7 @@ from yuccalib.utils.torch_utils import maybe_to_cuda
 from yuccalib.image_processing.transforms.BiasField import BiasField
 from yuccalib.image_processing.transforms.Blur import Blur
 from yuccalib.image_processing.transforms.CopyImageToSeg import CopyImageToSeg
-from yuccalib.image_processing.transforms.Crop import CropPad
+from yuccalib.image_processing.transforms.cropping_and_padding import CropPad
 from yuccalib.image_processing.transforms.formatting import NumpyToTorch
 from yuccalib.image_processing.transforms.Gamma import Gamma
 from yuccalib.image_processing.transforms.Ghosting import MotionGhosting
@@ -54,7 +54,7 @@ from yuccalib.image_processing.transforms.SimulateLowres import SimulateLowres
 from yuccalib.image_processing.transforms.Spatial import Spatial
 
 
-class base_trainer(object):
+class base_manager(object):
     def __init__(self):
         __metaclass__ = ABCMeta
 
