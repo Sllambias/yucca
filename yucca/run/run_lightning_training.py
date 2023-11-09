@@ -86,8 +86,8 @@ def main():
                         continue_training=continue_training,
                         fast_training=fast_training)
 
-	trainer = pl.Trainer(fast_dev_run=2, max_epochs=1, default_root_dir=)
-	trainer.fit(model=model, train_dataloaders=tdl)
+    #trainer = pl.Trainer(fast_dev_run=2, max_epochs=1, default_root_dir=None)
+    #trainer.fit(model=model, train_dataloaders=tdl)
 
 
 if __name__ == '__main__':

@@ -25,6 +25,7 @@ dependencies = [
     "pandas",
     "scikit_image",
     "scikit_learn",
+    "lightning",
     "seaborn",
     "setuptools",
     "SimpleITK",
