@@ -11,7 +11,7 @@ from batchgenerators.utilities.file_and_folder_operations import (
     save_pickle,
 )
 from yucca.paths import yucca_preprocessed
-from yucca.training.trainers.base_trainer import base_trainer
+from yucca.training.trainers.base_manager import base_manager
 from yuccalib.evaluation.confusion_matrix import (
     torch_confusion_matrix_from_logits,
     torch_get_tp_fp_tn_fn,
@@ -22,7 +22,7 @@ from yuccalib.utils.files_and_folders import recursive_find_python_class
 from yuccalib.utils.kwargs import filter_kwargs
 
 
-class YuccaTrainer(base_trainer):
+class YuccaManager(base_manager):
     """
     This is the barebone functional trainer of the pipeline.
 
@@ -63,7 +63,7 @@ class YuccaTrainer(base_trainer):
         model_dimensions: str,
         task: str,
         folds: str | int,
-        plan_id: str,
+        planner: str,
         starting_lr: float = None,
         loss_fn: str = None,
         momentum: float = None,
@@ -98,7 +98,7 @@ class YuccaTrainer(base_trainer):
         self.model_dimensions = model_dimensions
         self.task = task
         self.folds = int(folds)
-        self.plan_id = plan_id
+        self.plan_id = planner
         self.continue_training = continue_training
         self.checkpoint = checkpoint
         self.fast_training = fast_training

@@ -1,10 +1,10 @@
-from yucca.training.trainers.YuccaTrainer import YuccaTrainer
+from yucca.training.trainers.YuccaManager import YuccaManager
 from torch import optim
 
 
-class YuccaTrainer_AdamW(YuccaTrainer):
+class YuccaManager_AdamW(YuccaManager):
     """
-    The difference from YuccaTrainerV2 --> YuccaTrainerV3 is:
+    The difference from YuccaManagerV2 --> YuccaManagerV3 is:
     - Introduces Deep Supervision
     - Uses data augmentation scheme V2
     """
