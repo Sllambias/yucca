@@ -7,9 +7,7 @@ from dotenv import load_dotenv
 
 from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p
 
-loaded = load_dotenv()
-if not loaded:
-    warnings.warn("dotenv not loaded and core functionality might not be available.")
+load_dotenv()
 
 vars = ["YUCCA_RAW_DATA", "YUCCA_PREPROCESSED", "YUCCA_MODELS", "YUCCA_RESULTS"]
 vals = {}
