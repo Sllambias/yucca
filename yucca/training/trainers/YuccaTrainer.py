@@ -188,12 +188,8 @@ class YuccaTrainer(base_trainer):
                 if self.checkpoint:
                     self.load_checkpoint(self.checkpoint, train=True)
                 else:
-                    latest = subfiles(self.outpath, suffix="latest.model", join=False)[
-                        0
-                    ]
-                    assert (
-                        latest
-                    ), "Can not continue training. No latest checkpoint found."
+                    latest = subfiles(self.outpath, suffix="latest.model", join=False)[0]
+                    assert latest, "Can not continue training. No latest checkpoint found."
 
                     self.load_checkpoint(join(self.outpath, latest), train=True)
 
@@ -228,15 +224,12 @@ class YuccaTrainer(base_trainer):
 
         self.loss_fn_kwargs = {
             "soft_dice_kwargs": {"apply_softmax": True},  # DCE
-            "hierarchical_kwargs": {
-                "rootdict": self.plans["dataset_properties"]["label_hierarchy"]
-            },  # Hierarchical Loss
+            "hierarchical_kwargs": {"rootdict": self.plans["dataset_properties"]["label_hierarchy"]},  # Hierarchical Loss
         }
         self.loss_fn_kwargs = filter_kwargs(self.loss_fn, self.loss_fn_kwargs)
         self.loss_fn = self.loss_fn(**self.loss_fn_kwargs)
         assert isinstance(self.loss_fn, torch.nn.Module), (
-            "Loss is not a torch.nn.Module. "
-            "Make sure the correct loss was found (check spelling)"
+            "Loss is not a torch.nn.Module. " "Make sure the correct loss was found (check spelling)"
         )
 
         self.log(f'{"loss function":20}', self.loss_fn.__class__.__name__, time=False)
@@ -271,13 +264,9 @@ class YuccaTrainer(base_trainer):
             "T_max": self.final_epoch,
             "eta_min": 1e-9,  # Cosine Annealing
         }
-        self.lr_scheduler_kwargs = filter_kwargs(
-            self.lr_scheduler, self.lr_scheduler_kwargs
-        )
+        self.lr_scheduler_kwargs = filter_kwargs(self.lr_scheduler, self.lr_scheduler_kwargs)
         self.lr_scheduler = self.lr_scheduler(self.optim, **self.lr_scheduler_kwargs)
-        self.log(
-            f'{"LR scheduler":20}', self.lr_scheduler.__class__.__name__, time=False
-        )
+        self.log(f'{"LR scheduler":20}', self.lr_scheduler.__class__.__name__, time=False)
 
     def run_training(self):
         self.initialize()
@@ -306,9 +295,7 @@ class YuccaTrainer(base_trainer):
             self.network.eval()
             with torch.no_grad():
                 for _ in range(self.val_batches_per_epoch):
-                    batch_loss = self.run_batch(
-                        next(self.val_gen), train=False, comprehensive_eval=True
-                    )
+                    batch_loss = self.run_batch(next(self.val_gen), train=False, comprehensive_eval=True)
                     self.epoch_val_loss.append(batch_loss)
 
             self.tr_losses.append(np.mean(self.epoch_tr_loss))
@@ -343,18 +330,14 @@ class YuccaTrainer(base_trainer):
 
         files = subfiles(self.folder_with_preprocessed_data, join=False, suffix=".npy")
         if not files:
-            files = subfiles(
-                self.folder_with_preprocessed_data, join=False, suffix=".npz"
-            )
+            files = subfiles(self.folder_with_preprocessed_data, join=False, suffix=".npz")
             if files:
                 self.log(
                     "Only found compressed (.npz) files. This might increase runtime.",
                     time=False,
                 )
 
-        assert (
-            files
-        ), f"Couldn't find any .npy or .npz files in {self.folder_with_preprocessed_data}"
+        assert files, f"Couldn't find any .npy or .npz files in {self.folder_with_preprocessed_data}"
 
         files = np.array(files)
         # We set this seed manually as multiple trainers might use this split,

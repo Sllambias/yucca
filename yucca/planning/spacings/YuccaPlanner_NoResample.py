@@ -7,7 +7,7 @@ from yucca.planning.YuccaPlanner import YuccaPlanner
 class YuccaPlanner_NoResample(YuccaPlanner):
     def __init__(self, task, threads=2, disable_unittests=False, view=None):
         super().__init__(task, threads, disable_unittests, view)
-        self.name = str(self.__class__.__name__) + str(view or '')
+        self.name = str(self.__class__.__name__) + str(view or "")
         self.view = view
 
     def determine_spacing(self):

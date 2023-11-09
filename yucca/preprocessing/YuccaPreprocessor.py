@@ -86,9 +86,7 @@ class YuccaPreprocessor(object):
         self.initialize_properties()
         self.initialize_paths()
         maybe_mkdir_p(self.target_dir)
-        subject_ids = subfiles(
-            join(self.input_dir, "labelsTr"), suffix=".nii.gz", join=False
-        )
+        subject_ids = subfiles(join(self.input_dir, "labelsTr"), suffix=".nii.gz", join=False)
 
         print(
             f"{'Preprocessing Task:':25.25} {self.task} \n"
@@ -118,11 +116,7 @@ class YuccaPreprocessor(object):
         # The '_' in the end is to avoid treating Case_4_000 AND Case_42_000 as different versions
         # of the seg named Case_4 as both would start with "Case_4", however only the correct one is
         # followed by an underscore
-        imagepaths = [
-            impath
-            for impath in self.imagepaths
-            if os.path.split(impath)[-1].startswith(subject_id + "_")
-        ]
+        imagepaths = [impath for impath in self.imagepaths if os.path.split(impath)[-1].startswith(subject_id + "_")]
         image_props["image files"] = imagepaths
         images = [nib.load(image) for image in imagepaths]
 
@@ -132,20 +126,15 @@ class YuccaPreprocessor(object):
         seg = nib.load(seg)
 
         if not self.disable_unittests:
-            assert len(images) > 0, (
-                f"found no images for {subject_id + '_'}, "
-                f"attempted imagepaths: {imagepaths}"
-            )
+            assert len(images) > 0, f"found no images for {subject_id + '_'}, " f"attempted imagepaths: {imagepaths}"
 
             assert (
-                len(images[0].shape)
-                == self.plans["dataset_properties"]["data_dimensions"]
+                len(images[0].shape) == self.plans["dataset_properties"]["data_dimensions"]
             ), f"image should be shape (x, y(, z)) but is {images[0].shape}"
 
             # make sure images and labels are correctly registered
             assert images[0].shape == seg.shape, (
-                f"Sizes do not match for {subject_id}"
-                f"Image is: {images[0].shape} while the seg is {seg.shape}"
+                f"Sizes do not match for {subject_id}" f"Image is: {images[0].shape} while the seg is {seg.shape}"
             )
 
             assert np.allclose(get_nib_spacing(images[0]), get_nib_spacing(seg)), (
@@ -162,20 +151,15 @@ class YuccaPreprocessor(object):
             if len(images) > 1:
                 for image in images:
                     assert images[0].shape == image.shape, (
-                        f"Sizes do not match for {subject_id}"
-                        f"One is: {images[0].shape} while another is {image.shape}"
+                        f"Sizes do not match for {subject_id}" f"One is: {images[0].shape} while another is {image.shape}"
                     )
 
-                    assert np.allclose(
-                        get_nib_spacing(images[0]), get_nib_spacing(image)
-                    ), (
+                    assert np.allclose(get_nib_spacing(images[0]), get_nib_spacing(image)), (
                         f"Spacings do not match for {subject_id}"
                         f"One is: {get_nib_spacing(images[0])} while another is {get_nib_spacing(image)}"
                     )
 
-                    assert get_nib_orientation(images[0]) == get_nib_orientation(
-                        image
-                    ), (
+                    assert get_nib_orientation(images[0]) == get_nib_orientation(image), (
                         f"Directions do not match for {subject_id}"
                         f"One is: {get_nib_orientation(images[0])} while another is {get_nib_orientation(image)}"
                     )
@@ -194,15 +178,8 @@ class YuccaPreprocessor(object):
         if images[0].get_qform(coded=True)[1] or images[0].get_sform(coded=True)[1]:
             original_orientation = get_nib_orientation(images[0])
             final_direction = self.plans["target_coordinate_system"]
-            images = [
-                nib_to_np(
-                    reorient_nib_image(image, original_orientation, final_direction)
-                )
-                for image in images
-            ]
-            seg = nib_to_np(
-                reorient_nib_image(seg, original_orientation, final_direction)
-            )
+            images = [nib_to_np(reorient_nib_image(image, original_orientation, final_direction)) for image in images]
+            seg = nib_to_np(reorient_nib_image(seg, original_orientation, final_direction))
         else:
             original_orientation = "INVALID"
             final_direction = "INVALID"
@@ -210,14 +187,10 @@ class YuccaPreprocessor(object):
             seg = nib_to_np(seg)
 
         # Check if the ground truth only contains expected values
-        expected_labels = np.array(
-            self.plans["dataset_properties"]["classes"], dtype=np.float32
-        )
+        expected_labels = np.array(self.plans["dataset_properties"]["classes"], dtype=np.float32)
         actual_labels = np.unique(seg).astype(np.float32)
         assert np.all(np.isin(actual_labels, expected_labels)), (
-            f"Unexpected labels found for {subject_id} \n"
-            f"expected: {expected_labels} \n"
-            f"found: {actual_labels}"
+            f"Unexpected labels found for {subject_id} \n" f"expected: {expected_labels} \n" f"found: {actual_labels}"
         )
 
         # Cropping is performed to save computational resources. We are only removing background.
@@ -246,16 +219,11 @@ class YuccaPreprocessor(object):
         # locations of foreground, that we will later use in the
         # oversampling of foreground classes
         foreground_locs = np.array(np.nonzero(images[-1])).T[::10]
-        numbered_ground_truth, ground_truth_numb_lesion = cc3d.connected_components(
-            images[-1], connectivity=26, return_N=True
-        )
+        numbered_ground_truth, ground_truth_numb_lesion = cc3d.connected_components(images[-1], connectivity=26, return_N=True)
         if ground_truth_numb_lesion == 0:
             object_sizes = 0
         else:
-            object_sizes = [
-                i * np.prod(target_spacing)
-                for i in np.unique(numbered_ground_truth, return_counts=True)[-1][1:]
-            ]
+            object_sizes = [i * np.prod(target_spacing) for i in np.unique(numbered_ground_truth, return_counts=True)[-1][1:]]
 
         final_size = list(images[0].shape)
 
@@ -302,9 +270,7 @@ class YuccaPreprocessor(object):
         )
 
         for i in range(len(images)):
-            images[i] = normalizer(
-                images[i], scheme=norm_op[i], intensities=self.intensities[i]
-            )
+            images[i] = normalizer(images[i], scheme=norm_op[i], intensities=self.intensities[i])
             assert len(images[i].shape) == len(transpose), (
                 "image and transpose axes do not match. \n"
                 f"images[i].shape == {images[i].shape} \n"
@@ -320,9 +286,7 @@ class YuccaPreprocessor(object):
         target_spacing_t = target_spacing[transpose]
 
         # Find new shape based on the target spacing
-        target_shape = np.round(
-            (original_spacing_t / target_spacing_t).astype(float) * shape_t
-        ).astype(int)
+        target_shape = np.round((original_spacing_t / target_spacing_t).astype(float) * shape_t).astype(int)
 
         # Resample to target shape and spacing
         for i in range(len(images)):
@@ -333,9 +297,7 @@ class YuccaPreprocessor(object):
         if seg is not None:
             seg = seg.transpose(transpose)
             try:
-                seg = resize(
-                    seg, output_shape=target_shape, order=0, anti_aliasing=False
-                )
+                seg = resize(seg, output_shape=target_shape, order=0, anti_aliasing=False)
             except OverflowError:
                 print("Unexpected values in either shape or seg for resize")
             return images, seg
@@ -355,15 +317,10 @@ class YuccaPreprocessor(object):
         Finally images are resampled to the required spacing/size and returned
         as torch tensors of the required shape (b, c, x, y, (z))
         """
-        assert isinstance(images, (list, tuple)), (
-            "image(s) should be a list or tuple, even if only one " "image is passed"
-        )
+        assert isinstance(images, (list, tuple)), "image(s) should be a list or tuple, even if only one " "image is passed"
         self.initialize_properties()
         image_properties = {}
-        images = [
-            nib.load(image[0]) if isinstance(image, tuple) else nib.load(image)
-            for image in images
-        ]
+        images = [nib.load(image[0]) if isinstance(image, tuple) else nib.load(image) for image in images]
 
         image_properties["original_spacing"] = get_nib_spacing(images[0])
         image_properties["original_shape"] = np.array(images[0].shape)
@@ -385,16 +342,11 @@ class YuccaPreprocessor(object):
             original_orientation = get_nib_orientation(images[0])
             image_properties["original_orientation"] = original_orientation
             images = [
-                reorient_nib_image(
-                    image, original_orientation, self.plans["target_coordinate_system"]
-                )
-                for image in images
+                reorient_nib_image(image, original_orientation, self.plans["target_coordinate_system"]) for image in images
             ]
             image_properties["new_orientation"] = get_nib_orientation(images[0])
         else:
-            print(
-                "Insufficient header information. Reorientation will not be attempted."
-            )
+            print("Insufficient header information. Reorientation will not be attempted.")
             image_properties["reoriented"] = False
 
         image_properties["affine"] = images[0].affine
@@ -470,20 +422,14 @@ class YuccaPreprocessor(object):
                         pad[4] : shape[2] - pad[5],
                     ]
                 elif len(pad) < 5:
-                    image = image[
-                        pad[0] : shape[0] - pad[1], pad[2] : shape[1] - pad[3]
-                    ]
+                    image = image[pad[0] : shape[0] - pad[1], pad[2] : shape[1] - pad[3]]
 
-                assert np.all(
-                    image.shape == image_properties["resampled_transposed_shape"]
-                ), (
+                assert np.all(image.shape == image_properties["resampled_transposed_shape"]), (
                     f"Reversing resampling and tranposition: "
                     f"image should be of shape: {image_properties['resampled_transposed_shape']}"
                     f"but is: {image.shape}"
                 )
-                image = resize(
-                    image, output_shape=shape_after_crop_transposed, order=3
-                ).transpose(self.transpose_backward)
+                image = resize(image, output_shape=shape_after_crop_transposed, order=3).transpose(self.transpose_backward)
 
                 assert np.all(image.shape == image_properties["cropped_shape"]), (
                     f"Reversing cropping: "

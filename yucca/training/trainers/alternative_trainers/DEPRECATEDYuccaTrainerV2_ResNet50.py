@@ -3,38 +3,38 @@ CURRENTLY NOT MODIFIED FOR THE MIGRATION TO YUCCA
 """
 
 #
-#import numpy as np
-#import torch
-#import torch.nn as nn
-#import wandb
-#import yucca
-#from torch import autocast
-#from torch.cuda.amp import GradScaler
-#from sklearn.model_selection import KFold
-#from yucca.training.trainers.YuccaTrainerV2 import YuccaTrainerV2
-#from yucca.paths import yucca_preprocessed
-#from yucca.image_processing.matrix_ops import get_max_rotated_size
-#from yucca.training.data_loading.YuccaLoader import YuccaLoader
-#from yucca.training.data_loading.alternative_loaders.YuccaLoader_Classification import YuccaLoader_Classification
-#from yucca.training.data_loading.alternative_loaders.YuccaLoader_NoSeg import YuccaLoader_NoSeg
-#from yucca.training.augmentation.YuccaAugmenterV2 import YuccaAugmenterV2
-#from yucca.training.augmentation.default_augmentation_params import default_3D_augmentation_paramsV2,\
+# import numpy as np
+# import torch
+# import torch.nn as nn
+# import wandb
+# import yucca
+# from torch import autocast
+# from torch.cuda.amp import GradScaler
+# from sklearn.model_selection import KFold
+# from yucca.training.trainers.YuccaTrainerV2 import YuccaTrainerV2
+# from yucca.paths import yucca_preprocessed
+# from yucca.image_processing.matrix_ops import get_max_rotated_size
+# from yucca.training.data_loading.YuccaLoader import YuccaLoader
+# from yucca.training.data_loading.alternative_loaders.YuccaLoader_Classification import YuccaLoader_Classification
+# from yucca.training.data_loading.alternative_loaders.YuccaLoader_NoSeg import YuccaLoader_NoSeg
+# from yucca.training.augmentation.YuccaAugmenterV2 import YuccaAugmenterV2
+# from yucca.training.augmentation.default_augmentation_params import default_3D_augmentation_paramsV2,\
 #    default_2D_augmentation_paramsV2
-#from yucca.training.augmentation.alternative_params.classification_augmentation_params import classification_2D_augmentation_params,\
+# from yucca.training.augmentation.alternative_params.classification_augmentation_params import classification_2D_augmentation_params,\
 #    classification_3D_augmentation_params
-#from yucca.training.augmentation.alternative_params.reconstruction_augmentation_params import reconstruction_3D_augmentation_params,\
+# from yucca.training.augmentation.alternative_params.reconstruction_augmentation_params import reconstruction_3D_augmentation_params,\
 #    reconstruction_2D_augmentation_params
-#from yucca.utils.files_and_folders import recursive_find_python_class, save_segmentation_from_logits
-#from yucca.utils.torch_utils import maybe_to_cuda
-#from yucca.training.loss_functions.CE import CE
-#from yucca.training.loss_functions.MSE import MSE
-#from yucca.utils.kwargs import filter_kwargs
-#from batchgenerators.utilities.file_and_folder_operations import save_json, join, load_json, \
+# from yucca.utils.files_and_folders import recursive_find_python_class, save_segmentation_from_logits
+# from yucca.utils.torch_utils import maybe_to_cuda
+# from yucca.training.loss_functions.CE import CE
+# from yucca.training.loss_functions.MSE import MSE
+# from yucca.utils.kwargs import filter_kwargs
+# from batchgenerators.utilities.file_and_folder_operations import save_json, join, load_json, \
 #    load_pickle, maybe_mkdir_p, isfile, subfiles, save_pickle
 #
 #
 #
-#class YuccaTrainer_ResNet50(YuccaTrainer):
+# class YuccaTrainer_ResNet50(YuccaTrainer):
 #    """
 #    The difference from YuccaTrainerV2 --> YuccaTrainerV3 is:
 #    - Introduces Deep Supervision
@@ -57,15 +57,15 @@ CURRENTLY NOT MODIFIED FOR THE MIGRATION TO YUCCA
 #        self._DEFAULT_LOSS = {"Classification": CE,
 #                            "Reconstruction": MSE,
 #                            "Segmentation": CE}
-#    
-#        
+#
+#
 #    def get_data_generators(self):
-#        # Here we wrap the augmenters so we can call one instance which will randomly select one 
+#        # Here we wrap the augmenters so we can call one instance which will randomly select one
 #        # each time next(self.tr_gen) is called
 #        self.cls_tr_gen, self.cls_val_gen = YuccaAugmenterV2(self.cls_tr_loader, self.cls_val_loader,
 #                                                          self.patch_size,
 #                                                          self.cls_augmentation_parameters)
-#                                                  
+#
 #        self.re_tr_gen, self.re_val_gen = YuccaAugmenterV2(self.re_tr_loader, self.re_val_loader,
 #                                                        self.patch_size,
 #                                                        self.re_augmentation_parameters)
@@ -156,7 +156,7 @@ CURRENTLY NOT MODIFIED FOR THE MIGRATION TO YUCCA
 #
 #        assert len(self.patch_size) in [2, 3], "Patch Size should be (x, y, z) or (x, y)"\
 #            f" but is: {self.patch_size}"
-#       
+#
 #        if not self.is_seeded:
 #            self.set_random_seeds()
 #
@@ -205,7 +205,7 @@ CURRENTLY NOT MODIFIED FOR THE MIGRATION TO YUCCA
 #                                                       self.patch_size,
 #                                                       p_oversample_foreground=self.p_force_foreground
 #                                                       )
-#        
+#
 #        self.re_tr_loader = YuccaLoader_NoSeg(self.re_train_samples,
 #                                            self.batch_size,
 #                                            self.initial_patch_size,
@@ -214,7 +214,7 @@ CURRENTLY NOT MODIFIED FOR THE MIGRATION TO YUCCA
 #                                     self.batch_size,
 #                                     self.patch_size,
 #                                     p_oversample_foreground=self.p_force_foreground)
-#        
+#
 #        self.seg_tr_loader = YuccaLoader(self.seg_train_samples,
 #                                    self.batch_size,
 #                                    self.initial_patch_size,
@@ -253,7 +253,7 @@ CURRENTLY NOT MODIFIED FOR THE MIGRATION TO YUCCA
 #            self.grad_scaler.update()
 #
 #        return loss.detach().cpu().numpy()
-#    
+#
 #    def run_training(self):
 #        self.initialize()
 #
@@ -343,4 +343,4 @@ CURRENTLY NOT MODIFIED FOR THE MIGRATION TO YUCCA
 #                splits[idx]['val'].extend(list(v[val]))
 #        save_pickle(splits, self.splits_file)
 #
-# 
+#

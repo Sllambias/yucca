@@ -9,12 +9,12 @@ from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 
 class YuccaDataModule(pl.LightningDataModule):
     def __init__(
-            self,
-            configurator: YuccaConfigurator,
-            pred_data_dir: str = None,
-            composed_train_transforms: torchvision.transforms.Compose = None,
-            composed_val_transforms: torchvision.transforms.Compose = None,
-            ):
+        self,
+        configurator: YuccaConfigurator,
+        pred_data_dir: str = None,
+        composed_train_transforms: torchvision.transforms.Compose = None,
+        composed_val_transforms: torchvision.transforms.Compose = None,
+    ):
         super().__init__()
         # First set our configurator object
         self.cfg = configurator
@@ -42,29 +42,28 @@ class YuccaDataModule(pl.LightningDataModule):
         self.train_samples = [join(self.train_data_dir, i) for i in self.train_split]
         self.val_samples = [join(self.train_data_dir, i) for i in self.val_split]
 
-    def setup(self, stage: str = 'fit'):
-        expected_stages = ['fit', 'test', 'predict']
-        assert stage in expected_stages, "unexpected stage. "\
-            f"Expected: {expected_stages} and found: {stage}"
+    def setup(self, stage: str = "fit"):
+        expected_stages = ["fit", "test", "predict"]
+        assert stage in expected_stages, "unexpected stage. " f"Expected: {expected_stages} and found: {stage}"
 
         # Assign train/val datasets for use in dataloaders
-        if stage == 'fit':
+        if stage == "fit":
             self.train_dataset = YuccaTrainDataset(
                 self.train_samples,
                 keep_in_ram=True,
                 composed_transforms=self.composed_train_transforms,
-                patch_size=self.initial_patch_size)
+                patch_size=self.initial_patch_size,
+            )
 
             self.val_dataset = YuccaTrainDataset(
                 self.val_samples,
                 keep_in_ram=True,
                 composed_transforms=self.composed_val_transforms,
-                patch_size=self.patch_size)
+                patch_size=self.patch_size,
+            )
 
-        if stage == 'predict':
-            self.pred_dataset = YuccaTestDataset(
-                self.pred_data_dir,
-                patch_size=self.patch_size)
+        if stage == "predict":
+            self.pred_dataset = YuccaTestDataset(self.pred_data_dir, patch_size=self.patch_size)
 
     def train_dataloader(self):
         train_sampler = self.sampler(self.train_dataset)
@@ -73,16 +72,18 @@ class YuccaDataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
             batch_size=self.batch_size,
             persistent_workers=True,
-            sampler=train_sampler)
+            sampler=train_sampler,
+        )
 
     def val_dataloader(self):
         val_sampler = self.sampler(self.val_dataset)
         return DataLoader(
             self.val_dataset,
-            num_workers=self.num_workers//2,
+            num_workers=self.num_workers // 2,
             batch_size=self.batch_size,
             persistent_workers=True,
-            sampler=val_sampler)
+            sampler=val_sampler,
+        )
 
     def test_dataloader(self):
         return None

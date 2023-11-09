@@ -73,9 +73,7 @@ class YuccaConfigurator:
 
         maybe_mkdir_p(self.outpath)
 
-        self.plans_path = join(
-            yucca_preprocessed, self.task, self.planner, self.planner + "_plans.json"
-        )
+        self.plans_path = join(yucca_preprocessed, self.task, self.planner, self.planner + "_plans.json")
 
         self.plans = load_json(self.plans_path)
 
@@ -110,9 +108,7 @@ class YuccaConfigurator:
         self.loggers = [csvlogger, wandb_logger, txtlogger]
 
     def setup_callbacks(self):
-        pred_writer = WriteSegFromLogits(
-            output_dir=self.segmentation_output_dir, write_interval="batch"
-        )
+        pred_writer = WriteSegFromLogits(output_dir=self.segmentation_output_dir, write_interval="batch")
         self.callbacks = [pred_writer]
 
     def setup_train_params(self):
@@ -120,9 +116,7 @@ class YuccaConfigurator:
         self.num_modalities = len(self.plans["dataset_properties"]["modalities"])
         if self.tiny_patch or not torch.cuda.is_available():
             self.batch_size = 2
-            self.patch_size = (
-                (32, 32) if self.model_dimensions == "2D" else (32, 32, 32)
-            )
+            self.patch_size = (32, 32) if self.model_dimensions == "2D" else (32, 32, 32)
         else:
             self.batch_size, self.patch_size = find_optimal_tensor_dims(
                 dimensionality=self.model_dimensions,

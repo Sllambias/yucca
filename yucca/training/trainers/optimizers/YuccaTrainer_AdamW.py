@@ -8,6 +8,7 @@ class YuccaTrainer_AdamW(YuccaTrainer):
     - Introduces Deep Supervision
     - Uses data augmentation scheme V2
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.optim = optim.AdamW

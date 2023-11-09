@@ -10,12 +10,12 @@ from yucca.utils.nib_utils import get_nib_direction, reorient_nib_image
 # Define input path and extension
 
 folder_with_images = "/home/zcr545/datasets/decathlon/Task01_BrainTumour"
-file_extension = '.nii.gz'
+file_extension = ".nii.gz"
 
 # OUTPUT DATA
 # Define the task name and prefix
-task_name = 'Task031_DC_BrainTumour'
-task_prefix = 'DC_BrainTumour'
+task_name = "Task031_DC_BrainTumour"
+task_prefix = "DC_BrainTumour"
 
 # Set target paths
 target_base = join(yucca_raw_data, task_name)
@@ -30,9 +30,9 @@ maybe_mkdir_p(target_imagesTs)
 maybe_mkdir_p(target_labelsTr)
 
 # Split data
-images_dir_tr = join(folder_with_images, 'imagesTr')
-labels_dir_tr = join(folder_with_images, 'labelsTr')
-images_dir_ts = join(folder_with_images, 'imagesTs')
+images_dir_tr = join(folder_with_images, "imagesTr")
+labels_dir_tr = join(folder_with_images, "labelsTr")
+images_dir_ts = join(folder_with_images, "imagesTs")
 train_samples = subfiles(images_dir_tr, join=False, suffix=file_extension)
 test_samples = subfiles(images_dir_ts, join=False, suffix=file_extension)
 
@@ -42,38 +42,42 @@ test_samples = subfiles(images_dir_ts, join=False, suffix=file_extension)
 for sTr in train_samples:
     image = nib.load(join(images_dir_tr, sTr))
     label = nib.load(join(labels_dir_tr, sTr))
-    sTr = sTr[:-len(file_extension)]
+    sTr = sTr[: -len(file_extension)]
 
     flair = image.slicer[:, :, :, 0]
     t1w = image.slicer[:, :, :, 1]
     t1gd = image.slicer[:, :, :, 2]
     t2w = image.slicer[:, :, :, 3]
 
-    nib.save(flair, filename=f'{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz')
-    nib.save(t1w, filename=f'{target_imagesTr}/{task_prefix}_{sTr}_001.nii.gz')
-    nib.save(t1gd, filename=f'{target_imagesTr}/{task_prefix}_{sTr}_002.nii.gz')
-    nib.save(t2w, filename=f'{target_imagesTr}/{task_prefix}_{sTr}_003.nii.gz')
+    nib.save(flair, filename=f"{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz")
+    nib.save(t1w, filename=f"{target_imagesTr}/{task_prefix}_{sTr}_001.nii.gz")
+    nib.save(t1gd, filename=f"{target_imagesTr}/{task_prefix}_{sTr}_002.nii.gz")
+    nib.save(t2w, filename=f"{target_imagesTr}/{task_prefix}_{sTr}_003.nii.gz")
 
-    nib.save(label, filename=f'{target_labelsTr}/{task_prefix}_{sTr}.nii.gz')
+    nib.save(label, filename=f"{target_labelsTr}/{task_prefix}_{sTr}.nii.gz")
 
 for sTs in test_samples:
     image = nib.load(join(images_dir_ts, sTs))
-    sTs = sTs[:-len(file_extension)]
+    sTs = sTs[: -len(file_extension)]
 
     flair = image.slicer[:, :, :, 0]
     t1w = image.slicer[:, :, :, 1]
     t1gd = image.slicer[:, :, :, 2]
     t2w = image.slicer[:, :, :, 3]
 
-    nib.save(flair, filename=f'{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz')
-    nib.save(t1w, filename=f'{target_imagesTs}/{task_prefix}_{sTs}_001.nii.gz')
-    nib.save(t1gd, filename=f'{target_imagesTs}/{task_prefix}_{sTs}_002.nii.gz')
-    nib.save(t2w, filename=f'{target_imagesTs}/{task_prefix}_{sTs}_003.nii.gz')
+    nib.save(flair, filename=f"{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz")
+    nib.save(t1w, filename=f"{target_imagesTs}/{task_prefix}_{sTs}_001.nii.gz")
+    nib.save(t1gd, filename=f"{target_imagesTs}/{task_prefix}_{sTs}_002.nii.gz")
+    nib.save(t2w, filename=f"{target_imagesTs}/{task_prefix}_{sTs}_003.nii.gz")
 
-generate_dataset_json(join(target_base, 'dataset.json'), target_imagesTr, target_imagesTs,
-                      modalities=('FLAIR', 'T1w', 't1gd', 'T2w'),
-                      labels={0: 'Background', 1: 'Edema', 2: 'Non-enhancing Tumor',
-                              3: 'Enhancing-tumor'},
-                      dataset_name=task_name, license='CC-BY-SA 4.0',
-                      dataset_description="Decathlon: Brain Tumour Segmentation",
-                      dataset_reference="King's College London")
+generate_dataset_json(
+    join(target_base, "dataset.json"),
+    target_imagesTr,
+    target_imagesTs,
+    modalities=("FLAIR", "T1w", "t1gd", "T2w"),
+    labels={0: "Background", 1: "Edema", 2: "Non-enhancing Tumor", 3: "Enhancing-tumor"},
+    dataset_name=task_name,
+    license="CC-BY-SA 4.0",
+    dataset_description="Decathlon: Brain Tumour Segmentation",
+    dataset_reference="King's College London",
+)

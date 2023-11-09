@@ -10,12 +10,12 @@ from yucca.utils.nib_utils import get_nib_direction, reorient_nib_image
 # Define input path and extension
 
 folder_with_images = "/home/zcr545/datasets/decathlon/Task10_Colon"
-file_extension = '.nii.gz'
+file_extension = ".nii.gz"
 
 # OUTPUT DATA
 # Define the task name and prefix
-task_name = 'Task040_DC_Colon'
-task_prefix = 'DC_Colon'
+task_name = "Task040_DC_Colon"
+task_prefix = "DC_Colon"
 
 # Set target paths
 target_base = join(yucca_raw_data, task_name)
@@ -30,9 +30,9 @@ maybe_mkdir_p(target_imagesTs)
 maybe_mkdir_p(target_labelsTr)
 
 # Split data
-images_dir_tr = join(folder_with_images, 'imagesTr')
-labels_dir_tr = join(folder_with_images, 'labelsTr')
-images_dir_ts = join(folder_with_images, 'imagesTs')
+images_dir_tr = join(folder_with_images, "imagesTr")
+labels_dir_tr = join(folder_with_images, "labelsTr")
+images_dir_ts = join(folder_with_images, "imagesTs")
 train_samples = subfiles(images_dir_tr, join=False, suffix=file_extension)
 test_samples = subfiles(images_dir_ts, join=False, suffix=file_extension)
 
@@ -43,20 +43,25 @@ test_samples = subfiles(images_dir_ts, join=False, suffix=file_extension)
 for sTr in train_samples:
     image = nib.load(join(images_dir_tr, sTr))
     label = nib.load(join(labels_dir_tr, sTr))
-    sTr = sTr[:-len(file_extension)]
+    sTr = sTr[: -len(file_extension)]
 
-    nib.save(image, filename=f'{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz')
-    nib.save(label, filename=f'{target_labelsTr}/{task_prefix}_{sTr}.nii.gz')
+    nib.save(image, filename=f"{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz")
+    nib.save(label, filename=f"{target_labelsTr}/{task_prefix}_{sTr}.nii.gz")
 
 for sTs in test_samples:
     image = nib.load(join(images_dir_ts, sTs))
-    sTs = sTs[:-len(file_extension)]
+    sTs = sTs[: -len(file_extension)]
 
-    nib.save(image, filename=f'{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz')
+    nib.save(image, filename=f"{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz")
 
-generate_dataset_json(join(target_base, 'dataset.json'), target_imagesTr, target_imagesTs,
-                      modalities=('CT', ),
-                      labels={0: 'Background', 1: 'Colon Cancer Primaries'},
-                      dataset_name=task_name, license='CC-BY-SA 4.0',
-                      dataset_description="Decathlon: Colon",
-                      dataset_reference="King's College London")
+generate_dataset_json(
+    join(target_base, "dataset.json"),
+    target_imagesTr,
+    target_imagesTs,
+    modalities=("CT",),
+    labels={0: "Background", 1: "Colon Cancer Primaries"},
+    dataset_name=task_name,
+    license="CC-BY-SA 4.0",
+    dataset_description="Decathlon: Colon",
+    dataset_reference="King's College London",
+)

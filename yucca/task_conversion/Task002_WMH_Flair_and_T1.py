@@ -8,15 +8,15 @@ import nibabel.processing as nibpro
 ###INPUT DATA###
 # Input path and names
 base_in = "/home/zcr545/datasets/WMH"
-file_suffix = '.nii.gz'
+file_suffix = ".nii.gz"
 
 datasets = ["Amsterdam", "Singapore", "Utrecht"]
 site = ""
 
 ###OUTPUT DATA
 # Target names
-task_name = 'Task002_WMH_Flair_and_T1'
-prefix = 'WMH_FT1'
+task_name = "Task002_WMH_Flair_and_T1"
+prefix = "WMH_FT1"
 
 # Target paths
 target_base = join(yucca_raw_data, task_name)
@@ -35,13 +35,13 @@ maybe_mkdir_p(target_labelsTr)
 ###Populate Target Directory###
 for dataset in datasets:
     dataset_path = join(base_in, dataset)
-    if dataset == 'Amsterdam':
-        tr_folder = 'Train_GE3T'
+    if dataset == "Amsterdam":
+        tr_folder = "Train_GE3T"
     else:
-        tr_folder = 'Train'
+        tr_folder = "Train"
 
     train_folder = join(dataset_path, tr_folder)
-    test_folder = join(dataset_path, 'Test')
+    test_folder = join(dataset_path, "Test")
 
     training_samples = subfolders(train_folder, join=False)
     test_samples = subfolders(test_folder, join=False)
@@ -49,62 +49,65 @@ for dataset in datasets:
     # First we sort the training data
     for sTr in training_samples:
         # Loading relevant modalities and the ground truth
-        flair_file = nib.load(join(train_folder, sTr, 'pre', 'FLAIR.nii.gz'))
-        t1_file = nib.load(join(train_folder, sTr, 'pre', 'T1.nii.gz'))
+        flair_file = nib.load(join(train_folder, sTr, "pre", "FLAIR.nii.gz"))
+        t1_file = nib.load(join(train_folder, sTr, "pre", "T1.nii.gz"))
 
-        mask = nib.load(join(train_folder, sTr, 'pre', 'wmh.nii.gz'))
+        mask = nib.load(join(train_folder, sTr, "pre", "wmh.nii.gz"))
 
         # Aligning modalities and masks
         orig_ornt = get_nib_orientation(flair_file)
-        flair_file = reorient_nib_image(flair_file, original_orientation=orig_ornt,
-                                        target_orientation='RAS')
+        flair_file = reorient_nib_image(flair_file, original_orientation=orig_ornt, target_orientation="RAS")
         t1_file = nibpro.resample_from_to(t1_file, flair_file, order=3)
         mask = nibpro.resample_from_to(mask, flair_file, order=0)
 
-        nib.save(flair_file, filename=f'{target_imagesTr}/{prefix}_{sTr}_000.nii.gz')
-        nib.save(t1_file, filename=f'{target_imagesTr}/{prefix}_{sTr}_001.nii.gz')
-        nib.save(mask, filename=f'{target_labelsTr}/{prefix}_{sTr}.nii.gz')
+        nib.save(flair_file, filename=f"{target_imagesTr}/{prefix}_{sTr}_000.nii.gz")
+        nib.save(t1_file, filename=f"{target_imagesTr}/{prefix}_{sTr}_001.nii.gz")
+        nib.save(mask, filename=f"{target_labelsTr}/{prefix}_{sTr}.nii.gz")
 
     # Now we sort the test data
-    if dataset == 'Amsterdam':
+    if dataset == "Amsterdam":
         for site in test_samples:
             samples = subfolders(join(test_folder, site), join=False)
             for sTs in samples:
-                flair_file = nib.load(join(test_folder, site, sTs, 'pre', 'FLAIR.nii.gz'))
-                t1_file = nib.load(join(test_folder, site, sTs, 'pre', 'T1.nii.gz'))
+                flair_file = nib.load(join(test_folder, site, sTs, "pre", "FLAIR.nii.gz"))
+                t1_file = nib.load(join(test_folder, site, sTs, "pre", "T1.nii.gz"))
 
-                mask = nib.load(join(test_folder, site, sTs, 'pre', 'wmh.nii.gz'))
+                mask = nib.load(join(test_folder, site, sTs, "pre", "wmh.nii.gz"))
 
                 # Aligning modalities and masks
                 orig_ornt = get_nib_orientation(flair_file)
-                flair_file = reorient_nib_image(flair_file, original_orientation=orig_ornt,
-                                                target_orientation='RAS')
+                flair_file = reorient_nib_image(flair_file, original_orientation=orig_ornt, target_orientation="RAS")
                 t1_file = nibpro.resample_from_to(t1_file, flair_file, order=3)
                 mask = nibpro.resample_from_to(mask, flair_file, order=0)
 
-                nib.save(flair_file, filename=f'{target_imagesTs}/{prefix}_{sTs}_000.nii.gz')
-                nib.save(t1_file, filename=f'{target_imagesTs}/{prefix}_{sTs}_001.nii.gz')
-                nib.save(mask, filename=f'{target_labelsTs}/{prefix}_{sTs}.nii.gz')
+                nib.save(flair_file, filename=f"{target_imagesTs}/{prefix}_{sTs}_000.nii.gz")
+                nib.save(t1_file, filename=f"{target_imagesTs}/{prefix}_{sTs}_001.nii.gz")
+                nib.save(mask, filename=f"{target_labelsTs}/{prefix}_{sTs}.nii.gz")
     else:
         for sTs in test_samples:
-            flair_file = nib.load(join(test_folder, sTs, 'pre', 'FLAIR.nii.gz'))
-            t1_file = nib.load(join(test_folder, sTs, 'pre', 'T1.nii.gz'))
+            flair_file = nib.load(join(test_folder, sTs, "pre", "FLAIR.nii.gz"))
+            t1_file = nib.load(join(test_folder, sTs, "pre", "T1.nii.gz"))
 
-            mask = nib.load(join(test_folder, sTs, 'pre', 'wmh.nii.gz'))
+            mask = nib.load(join(test_folder, sTs, "pre", "wmh.nii.gz"))
 
             # Aligning modalities and masks
             orig_ornt = get_nib_orientation(flair_file)
-            flair_file = reorient_nib_image(flair_file, original_orientation=orig_ornt,
-                                            target_orientation='RAS')
+            flair_file = reorient_nib_image(flair_file, original_orientation=orig_ornt, target_orientation="RAS")
             t1_file = nibpro.resample_from_to(t1_file, flair_file, order=3)
             mask = nibpro.resample_from_to(mask, flair_file, order=0)
 
-            nib.save(flair_file, filename=f'{target_imagesTs}/{prefix}_{sTs}_000.nii.gz')
-            nib.save(t1_file, filename=f'{target_imagesTs}/{prefix}_{sTs}_001.nii.gz')
-            nib.save(mask, filename=f'{target_labelsTs}/{prefix}_{sTs}.nii.gz')
+            nib.save(flair_file, filename=f"{target_imagesTs}/{prefix}_{sTs}_000.nii.gz")
+            nib.save(t1_file, filename=f"{target_imagesTs}/{prefix}_{sTs}_001.nii.gz")
+            nib.save(mask, filename=f"{target_labelsTs}/{prefix}_{sTs}.nii.gz")
 
-generate_dataset_json(join(target_base, 'dataset.json'), target_imagesTr, target_imagesTs, ('Flair','T1'),
-                      labels={0: 'background', 1: 'WMH', 2: 'Other Pathology'},
-                      dataset_name=task_name, license='hands off!',
-                      dataset_description="OASIS Dataset",
-                      dataset_reference="")
+generate_dataset_json(
+    join(target_base, "dataset.json"),
+    target_imagesTr,
+    target_imagesTs,
+    ("Flair", "T1"),
+    labels={0: "background", 1: "WMH", 2: "Other Pathology"},
+    dataset_name=task_name,
+    license="hands off!",
+    dataset_description="OASIS Dataset",
+    dataset_reference="",
+)

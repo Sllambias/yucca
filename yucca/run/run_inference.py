@@ -22,14 +22,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-s",
-        help="Name of the source task i.e. what the model is trained on. "
-        "Should be of format: TaskXXX_MYTASK",
+        help="Name of the source task i.e. what the model is trained on. " "Should be of format: TaskXXX_MYTASK",
         required=True,
     )
     parser.add_argument(
         "-t",
-        help="Name of the target task i.e. the data to be predicted. "
-        "Should be of format: TaskXXX_MYTASK",
+        help="Name of the target task i.e. the data to be predicted. " "Should be of format: TaskXXX_MYTASK",
         required=True,
     )
     parser.add_argument(
@@ -38,19 +36,14 @@ def main():
         "Defaults to looking for a model trained on fold 0.",
         default="0",
     )
-    parser.add_argument(
-        "-m", help="Model Architecture. Defaults to UNet.", default="UNet"
-    )
+    parser.add_argument("-m", help="Model Architecture. Defaults to UNet.", default="UNet")
     parser.add_argument("-d", help="2D, 25D or 3D model. Defaults to 3D.", default="3D")
     parser.add_argument(
         "-tr",
-        help="Full name of Trainer Class. \n"
-        "e.g. 'YuccaTrainer_DCE' or 'YuccaTrainer'. Defaults to YuccaTrainer.",
+        help="Full name of Trainer Class. \n" "e.g. 'YuccaTrainer_DCE' or 'YuccaTrainer'. Defaults to YuccaTrainer.",
         default="YuccaTrainer",
     )
-    parser.add_argument(
-        "-pl", help="Plan ID. Defaults to YuccaPlanner", default="YuccaPlanner"
-    )
+    parser.add_argument("-pl", help="Plan ID. Defaults to YuccaPlanner", default="YuccaPlanner")
     parser.add_argument(
         "-chk",
         help="Checkpoint to use for inference. Defaults to checkpoint_best.",
@@ -129,10 +122,7 @@ def main():
     warnings.simplefilter("ignore", ResourceWarning)
     folders_with_softmax = []
     if ensemble:
-        print(
-            "Running ensemble inference on the default ensemble plans \n"
-            "Save_softmax set to True."
-        )
+        print("Running ensemble inference on the default ensemble plans \n" "Save_softmax set to True.")
         plans = [plan_id + "X", plan_id + "Y", plan_id + "Z"]
         save_softmax = True
     else:
@@ -148,26 +138,19 @@ def main():
             folds,
             checkpoint + ".model",
         )
-        assert isfile(modelfile), (
-            "Can't find .model file with trained model weights. "
-            f"Should be located at: {modelfile}"
-        )
+        assert isfile(modelfile), "Can't find .model file with trained model weights. " f"Should be located at: {modelfile}"
         print(
-            f"######################################################################## \n"
-            f"{'Using model: ':25} {modelfile}"
+            f"######################################################################## \n" f"{'Using model: ':25} {modelfile}"
         )
 
         metafile = modelfile + ".json"
-        assert isfile(metafile), (
-            "Can't find .json file with model metadata. "
-            f"Should be located at: {metafile}"
-        )
+        assert isfile(metafile), "Can't find .json file with model metadata. " f"Should be located at: {metafile}"
         metafile = load_json(metafile)
 
         """
         We find the trainer using the name stored in the modelfile and NOT the "trainer_name" argument.
-        E.g. if the "--lr 1e-4" flag is used with the base YuccaTrainer the models will be saved as 
-        YuccaTrainer_1e4 even though YuccaTrainer_1e4 might not exist. Therefore we refer to the 
+        E.g. if the "--lr 1e-4" flag is used with the base YuccaTrainer the models will be saved as
+        YuccaTrainer_1e4 even though YuccaTrainer_1e4 might not exist. Therefore we refer to the
         modelfile for the actual Trainer used.
         """
         trainer_class = metafile["trainer_class"]
@@ -178,14 +161,10 @@ def main():
         )
 
         assert trainer, f"searching for {trainer_class} " f"but found: {trainer}"
-        assert issubclass(
-            trainer, YuccaTrainer
-        ), "Trainer is not a subclass of YuccaTrainer."
+        assert issubclass(trainer, YuccaTrainer), "Trainer is not a subclass of YuccaTrainer."
 
         print(f"{'Using trainer: ':25} {trainer}")
-        trainer = trainer(
-            model, dimensions, task=source_task, folds=folds, plan_id=plan
-        )
+        trainer = trainer(model, dimensions, task=source_task, folds=folds, plan_id=plan)
 
         # Setting up input paths and output paths
         inpath = join(yucca_raw_data, target_task, "imagesTs")

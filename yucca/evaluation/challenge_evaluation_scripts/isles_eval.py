@@ -1,5 +1,5 @@
 __author__ = "Ezequiel de la Rosa"
-#%%
+# %%
 import numpy as np
 import warnings
 import cc3d
@@ -167,9 +167,7 @@ def compute_lesion_f1_score(ground_truth, prediction, empty_value=1.0, connectiv
 
     # Check if ground-truth connected-components are detected or missed (tp and fn respectively).
     intersection = np.logical_and(ground_truth, prediction)
-    labeled_ground_truth, N = cc3d.connected_components(
-        ground_truth, connectivity=connectivity, return_N=True
-    )
+    labeled_ground_truth, N = cc3d.connected_components(ground_truth, connectivity=connectivity, return_N=True)
 
     # Iterate over ground_truth clusters to find tp and fn.
     # tp and fn are only computed if the ground-truth is not empty.
@@ -182,9 +180,7 @@ def compute_lesion_f1_score(ground_truth, prediction, empty_value=1.0, connectiv
 
     # iterate over prediction clusters to find fp.
     # fp are only computed if the prediction image is not empty.
-    labeled_prediction, N = cc3d.connected_components(
-        prediction, connectivity=connectivity, return_N=True
-    )
+    labeled_prediction, N = cc3d.connected_components(prediction, connectivity=connectivity, return_N=True)
     if N > 0:
         for _, binary_cluster_image in cc3d.each(labeled_prediction, binary=True, in_place=True):
             if not np.logical_and(binary_cluster_image, ground_truth).any():
@@ -200,19 +196,25 @@ def compute_lesion_f1_score(ground_truth, prediction, empty_value=1.0, connectiv
 
     return f1_score
 
+
 import nibabel as nib
-gts = ['/home/zcr545/YuccaData/yucca_raw_data/Task049_3BrainLesion3Labels/labelsTs/3BL3L_1.nii.gz',
-       '/home/zcr545/YuccaData/yucca_raw_data/Task049_3BrainLesion3Labels/labelsTs/3BL3L_sub-strokecase0049.nii.gz',
-       '/home/zcr545/YuccaData/yucca_raw_data/Task049_3BrainLesion3Labels/labelsTs/3BL3L_UNC_train_Case09.nii.gz']
-preds = ['/home/zcr545/YuccaData/yucca_segmentations/Task049_3BrainLesion3Labels/Task049_3BrainLesion3Labels/UNet2D/YuccaTrainerV2__YuccaPlannerV2_Ensemble/fold_0_checkpoint_best/3BL3L_1.nii.gz',
-         '/home/zcr545/YuccaData/yucca_segmentations/Task049_3BrainLesion3Labels/Task049_3BrainLesion3Labels/UNet2D/YuccaTrainerV2__YuccaPlannerV2_Ensemble/fold_0_checkpoint_best/3BL3L_sub-strokecase0049.nii.gz',
-         '/home/zcr545/YuccaData/yucca_segmentations/Task049_3BrainLesion3Labels/Task049_3BrainLesion3Labels/UNet2D/YuccaTrainerV2__YuccaPlannerV2_Ensemble/fold_0_checkpoint_best/3BL3L_UNC_train_Case09.nii.gz']
+
+gts = [
+    "/home/zcr545/YuccaData/yucca_raw_data/Task049_3BrainLesion3Labels/labelsTs/3BL3L_1.nii.gz",
+    "/home/zcr545/YuccaData/yucca_raw_data/Task049_3BrainLesion3Labels/labelsTs/3BL3L_sub-strokecase0049.nii.gz",
+    "/home/zcr545/YuccaData/yucca_raw_data/Task049_3BrainLesion3Labels/labelsTs/3BL3L_UNC_train_Case09.nii.gz",
+]
+preds = [
+    "/home/zcr545/YuccaData/yucca_segmentations/Task049_3BrainLesion3Labels/Task049_3BrainLesion3Labels/UNet2D/YuccaTrainerV2__YuccaPlannerV2_Ensemble/fold_0_checkpoint_best/3BL3L_1.nii.gz",
+    "/home/zcr545/YuccaData/yucca_segmentations/Task049_3BrainLesion3Labels/Task049_3BrainLesion3Labels/UNet2D/YuccaTrainerV2__YuccaPlannerV2_Ensemble/fold_0_checkpoint_best/3BL3L_sub-strokecase0049.nii.gz",
+    "/home/zcr545/YuccaData/yucca_segmentations/Task049_3BrainLesion3Labels/Task049_3BrainLesion3Labels/UNet2D/YuccaTrainerV2__YuccaPlannerV2_Ensemble/fold_0_checkpoint_best/3BL3L_UNC_train_Case09.nii.gz",
+]
 fp = 0
 tp = 0
 fn = 0
 tplog = []
 fnlog = []
-labelarr = np.array([1,2,3])
+labelarr = np.array([1, 2, 3])
 for i in range(1):
     gt = nib.load(gts[i]).get_fdata()
     pred = nib.load(preds[i]).get_fdata()
@@ -236,9 +238,9 @@ for i in range(1):
                 if not np.logical_and(binary_cluster_image, gt_cc).any():
                     fp += 1
 print(tp, fp, fn, gt_cc_n, pred_cc_n)
-   
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--pred", required=True)
     parser.add_argument("--gt", required=True)
@@ -247,7 +249,7 @@ if __name__ == '__main__':
     pred = args.pred
     gt = args.gt
 
-    predfiles = subfiles(pred, join=False, suffix='.nii.gz')
+    predfiles = subfiles(pred, join=False, suffix=".nii.gz")
     metrics = {}
     all_dice = []
     all_abs = []
@@ -256,19 +258,19 @@ if __name__ == '__main__':
         metrics[sub] = {}
         im1 = nib.load(join(gt, sub)).get_fdata()
         im2 = nib.load(join(pred, sub)).get_fdata()
-        
+
         dice = compute_dice(im1, im2)
         abs_les_diff = compute_absolute_lesion_difference(im1, im2)
         les_f1 = compute_lesion_f1_score(im1, im2)
-        metrics[sub]['dice'] = dice
+        metrics[sub]["dice"] = dice
         all_dice.append(dice)
-        metrics[sub]['absolute lesion difference'] = abs_les_diff
+        metrics[sub]["absolute lesion difference"] = abs_les_diff
         all_abs.append(abs_les_diff)
-        metrics[sub]['lesion f1 score'] = les_f1
+        metrics[sub]["lesion f1 score"] = les_f1
         all_f1.append(les_f1)
-        
-    metrics['mean'] = {}
-    metrics['mean']['dice'] = float(np.mean(all_dice))
-    metrics['mean']['absolute lesion difference'] = float(np.mean(all_abs))
-    metrics['mean']['lesion f1 score'] = float(np.mean(all_f1))
-    save_json(metrics, join(pred, 'results_isles_eval.json'))
+
+    metrics["mean"] = {}
+    metrics["mean"]["dice"] = float(np.mean(all_dice))
+    metrics["mean"]["absolute lesion difference"] = float(np.mean(all_abs))
+    metrics["mean"]["lesion f1 score"] = float(np.mean(all_f1))
+    save_json(metrics, join(pred, "results_isles_eval.json"))

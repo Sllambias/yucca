@@ -13,24 +13,22 @@ def normalizer(array, scheme, intensities):
     Clip = for contrast clipping. This will clip values to the 0.01 and 99.99th percentiles
         and then perform 0-1 normalization.
     """
-    accepted_schemes = ['clipping', 'minmax', 'no_norm', 'standardize']
+    accepted_schemes = ["clipping", "minmax", "no_norm", "standardize"]
 
-    assert scheme in accepted_schemes, "invalid normalization scheme inserted" \
-        f"attempted scheme: {scheme}"
+    assert scheme in accepted_schemes, "invalid normalization scheme inserted" f"attempted scheme: {scheme}"
 
-    if scheme == 'no_norm':
+    if scheme == "no_norm":
         return array
 
-    if scheme == 'minmax':
+    if scheme == "minmax":
         print("not yet implemented returns un-normalized arrays")
         return array
 
-    if scheme == 'standardize':
+    if scheme == "standardize":
         assert intensities is not None, "ERROR: dataset wide stats are required for standardize"
-        return (array - intensities['mean']) / intensities['std']
+        return (array - intensities["mean"]) / intensities["std"]
 
-    if scheme == 'clip':
+    if scheme == "clip":
         lower_bound, upper_bound = np.percentile(array, (0.01, 99.99))
-        array = exposure.rescale_intensity(array, in_range=(lower_bound, upper_bound),
-                                           out_range=(0, 1))
+        array = exposure.rescale_intensity(array, in_range=(lower_bound, upper_bound), out_range=(0, 1))
         return array

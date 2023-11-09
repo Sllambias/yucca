@@ -95,11 +95,7 @@ class base_trainer(object):
             self.model_dimensions
         ) = (
             self.model_name
-        ) = (
-            self.outpath
-        ) = (
-            self.patch_size_2D
-        ) = self.patch_size_3D = self.task = self.plan_id = self.name = None
+        ) = self.outpath = self.patch_size_2D = self.patch_size_3D = self.task = self.plan_id = self.name = None
 
         # These can be set by the individual Trainer
         # Using optional arguments supplied by run_training
@@ -123,20 +119,12 @@ class base_trainer(object):
             self.random_seed
         ) = (
             self.fast_training
-        ) = (
-            self.finetune
-        ) = (
-            self.fast_train_batches_per_epoch
-        ) = self.fast_val_batches_per_epoch = self.fast_final_epoch = None
+        ) = self.finetune = self.fast_train_batches_per_epoch = self.fast_val_batches_per_epoch = self.fast_final_epoch = None
 
         # These will always be set by the plans file
         self.classes = (
             self.nclasses
-        ) = (
-            self.modalities
-        ) = (
-            self.nmodalities
-        ) = self.folder_with_preprocessed_data = self.plans = self.plans_path = None
+        ) = self.modalities = self.nmodalities = self.folder_with_preprocessed_data = self.plans = self.plans_path = None
 
         # These will be used during training
         self.tr_losses = []
@@ -264,9 +252,7 @@ class base_trainer(object):
         if self.epoch_eval_dict:
             epoch_eval_dict_per_label = {}
             for key in self.epoch_eval_dict:
-                self.epoch_eval_dict[key] = np.round(
-                    np.nanmean(self.epoch_eval_dict[key], 0), 4
-                )
+                self.epoch_eval_dict[key] = np.round(np.nanmean(self.epoch_eval_dict[key], 0), 4)
                 self.log(f"{key:20}", self.epoch_eval_dict[key])
                 for i, val in enumerate(self.epoch_eval_dict[key]):
                     epoch_eval_dict_per_label[f"{key}_{i+1}"] = val
@@ -336,13 +322,8 @@ class base_trainer(object):
             class_name=self.plans["preprocessor"],
             current_module="yucca.preprocessing",
         )
-        assert preprocessor_class, (
-            f"searching for {self.plans['preprocessor']}"
-            f"but found: {preprocessor_class}"
-        )
-        assert issubclass(preprocessor_class, YuccaPreprocessor), (
-            "Preprocessor is not a subclass " "of YuccaPreprocesor"
-        )
+        assert preprocessor_class, f"searching for {self.plans['preprocessor']}" f"but found: {preprocessor_class}"
+        assert issubclass(preprocessor_class, YuccaPreprocessor), "Preprocessor is not a subclass " "of YuccaPreprocesor"
         print(f"{'Using preprocessor: ':25} {preprocessor_class}")
         self.preprocessor = preprocessor_class(self.plans_path)
 
@@ -351,11 +332,7 @@ class base_trainer(object):
             project="Yucca",
             group=self.task,
             dir=self.outpath,
-            name=join(
-                os.path.split(self.outpath)[-1]
-                + "_"
-                + strftime("%Y_%m_%d_%H_%M_%S", self.initial_time_obj)
-            ),
+            name=join(os.path.split(self.outpath)[-1] + "_" + strftime("%Y_%m_%d_%H_%M_%S", self.initial_time_obj)),
             config=self.param_dict,
         )
 
@@ -379,19 +356,13 @@ class base_trainer(object):
             state_dict = {
                 k: v
                 for k, v in chk["model_state_dict"].items()
-                if k in self.network.state_dict().keys()
-                and v.shape == self.network.state_dict()[k].shape
+                if k in self.network.state_dict().keys() and v.shape == self.network.state_dict()[k].shape
             }
             # Then make sure optimizer layers are appropriate, otherwise re-initialize them
             # with appropriate dimensions
             for idx, layer in enumerate(self.network.parameters()):
-                if (
-                    layer.shape
-                    != chk["optimizer_state_dict"]["state"][idx]["momentum_buffer"]
-                ):
-                    chk["optimizer_state_dict"]["state"][idx][
-                        "momentum_buffer"
-                    ] = torch.zeros(layer.shape)
+                if layer.shape != chk["optimizer_state_dict"]["state"][idx]["momentum_buffer"]:
+                    chk["optimizer_state_dict"]["state"][idx]["momentum_buffer"] = torch.zeros(layer.shape)
         else:
             state_dict = chk["model_state_dict"]
 
@@ -428,16 +399,12 @@ class base_trainer(object):
             self.network.cuda()
 
     def load_data(self):
-        assert len(self.patch_size) in [2, 3], (
-            "Patch Size should be (x, y, z) or (x, y)" f" but is: {self.patch_size}"
-        )
+        assert len(self.patch_size) in [2, 3], "Patch Size should be (x, y, z) or (x, y)" f" but is: {self.patch_size}"
 
         if not self.is_seeded:
             self.set_random_seeds()
 
-        self.folder_with_preprocessed_data = join(
-            yucca_preprocessed, self.task, self.plan_id
-        )
+        self.folder_with_preprocessed_data = join(yucca_preprocessed, self.task, self.plan_id)
         self.splits_file = join(yucca_preprocessed, self.task, "splits.pkl")
         self.log(f'{"data folder:":20}', self.folder_with_preprocessed_data, time=False)
 
@@ -446,14 +413,8 @@ class base_trainer(object):
 
         self.splits = load_pickle(self.splits_file)[self.folds]
 
-        self.train_samples = [
-            join(self.folder_with_preprocessed_data, sample)
-            for sample in self.splits["train"]
-        ]
-        self.val_samples = [
-            join(self.folder_with_preprocessed_data, sample)
-            for sample in self.splits["val"]
-        ]
+        self.train_samples = [join(self.folder_with_preprocessed_data, sample) for sample in self.splits["train"]]
+        self.val_samples = [join(self.folder_with_preprocessed_data, sample) for sample in self.splits["val"]]
         """Here we want to calculate a larger-than-final patch size
         to avoid cropping out parts that would be rotated into inclusion
         and to avoid large interpolation artefacts near the borders of our final patch
@@ -466,9 +427,7 @@ class base_trainer(object):
         self.log(f'{"classes":20}', self.classes, time=False)
         self.log(f'{"modalities:":20}', self.modalities, time=False)
         self.log(f'{"fold:":20}', self.folds, time=False)
-        self.log(
-            f'{"train batches/epoch:":20}', self.train_batches_per_epoch, time=False
-        )
+        self.log(f'{"train batches/epoch:":20}', self.train_batches_per_epoch, time=False)
         self.log(f'{"val batches/epoch:":20}', self.val_batches_per_epoch, time=False)
 
         self.tr_loader = YuccaLoader(
@@ -580,9 +539,7 @@ class base_trainer(object):
         )
 
         if not self.EarlyCrop:
-            train_transforms.append(
-                CropPad(patch_size=self.patch_size, random_crop=self.RandomCrop)
-            )
+            train_transforms.append(CropPad(patch_size=self.patch_size, random_crop=self.RandomCrop))
 
         if self.deep_supervision:
             train_transforms.append(DownsampleSegForDS())
@@ -658,9 +615,7 @@ class base_trainer(object):
             )
             with open(self.log_file, "w") as f:
                 f.write("Starting model training")
-                print(
-                    "Starting model training \n" f'{"log file:":20} {self.log_file} \n'
-                )
+                print("Starting model training \n" f'{"log file:":20} {self.log_file} \n')
                 f.write("\n")
                 f.write(f'{"log file:":20} {self.log_file}')
                 f.write("\n")
@@ -696,12 +651,8 @@ class base_trainer(object):
             # This allows us to handle different modalities
             # of the same subject, rather than treating them as individual cases.
             expected_modalities = self.plans["dataset_properties"]["modalities"]
-            subject_ids, counts = np.unique(
-                [i[: -len("_000.nii.gz")] for i in files], return_counts=True
-            )
-            assert all(
-                counts == len(expected_modalities)
-            ), "Aborting. Modalities are missing for some samples"
+            subject_ids, counts = np.unique([i[: -len("_000.nii.gz")] for i in files], return_counts=True)
+            assert all(counts == len(expected_modalities)), "Aborting. Modalities are missing for some samples"
         else:
             subject_ids = np.unique([i[: -len(".nii.gz")] for i in files])
 
@@ -730,9 +681,7 @@ class base_trainer(object):
         for case_info in all_cases:
             self.preprocess_predict_test_case(*case_info)
 
-    def preprocess_predict_test_case(
-        self, case, outpath, save_softmax=False, overwrite=False, do_tta=False
-    ):
+    def preprocess_predict_test_case(self, case, outpath, save_softmax=False, overwrite=False, do_tta=False):
         """
         Load the preprocessor if not already loaded (e.g. in single prediction cases)
         Preprocessor will apply the same type of preprocessing that was applied to training data,
@@ -756,9 +705,7 @@ class base_trainer(object):
             self.initialize_preprocessor_for_inference()
 
         print(f"{'Predicting case: ':25} {case}")
-        case, image_properties = self.preprocessor.preprocess_case_for_inference(
-            case, self.patch_size
-        )
+        case, image_properties = self.preprocessor.preprocess_case_for_inference(case, self.patch_size)
 
         logits = (
             self.network.predict(
@@ -869,18 +816,14 @@ class base_trainer(object):
         # Paths
         self.param_dict["output folder"] = self.outpath
         self.param_dict["log file"] = self.log_file
-        self.param_dict[
-            "folder with preprocessed files"
-        ] = self.folder_with_preprocessed_data
+        self.param_dict["folder with preprocessed files"] = self.folder_with_preprocessed_data
 
         # Experiment
         self.param_dict["task"] = self.task
         self.param_dict["name"] = self.name
         self.param_dict["random seed"] = self.random_seed
         self.param_dict["command used"] = self.train_command
-        save_json(
-            self.param_dict, join(self.outpath, "parameters.json"), sort_keys=False
-        )
+        save_json(self.param_dict, join(self.outpath, "parameters.json"), sort_keys=False)
 
     def set_batch_and_patch_sizes(self):
         self.batch_size, self.patch_size = find_optimal_tensor_dims(

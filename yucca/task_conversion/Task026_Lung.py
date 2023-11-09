@@ -10,12 +10,12 @@ from yucca.utils.nib_utils import get_nib_direction, reorient_nib_image
 # Define input path and extension
 
 folder_with_images = "/home/zcr545/datasets/decathlon/Task06_Lung"
-file_extension = '.nii.gz'
+file_extension = ".nii.gz"
 
 # OUTPUT DATA
 # Define the task name and prefix
-task_name = 'Task026_Lung'
-task_prefix = 'Lung'
+task_name = "Task026_Lung"
+task_prefix = "Lung"
 
 # Set target paths
 target_base = join(yucca_raw_data, task_name)
@@ -30,8 +30,8 @@ maybe_mkdir_p(target_imagesTs)
 maybe_mkdir_p(target_labelsTr)
 
 # Split data
-images_dir = join(folder_with_images, 'imagesTr')
-labels_dir = join(folder_with_images, 'labelsTr')
+images_dir = join(folder_with_images, "imagesTr")
+labels_dir = join(folder_with_images, "labelsTr")
 samples = subfiles(labels_dir, join=False, suffix=file_extension)
 train_samples, test_samples = train_test_split(samples, test_size=0.2, random_state=1243)
 images_dir_tr = images_dir_ts = images_dir
@@ -44,34 +44,37 @@ labels_dir_tr = labels_dir_ts = labels_dir
 for sTr in train_samples:
     image = nib.load(join(images_dir_tr, sTr))
     label = nib.load(join(labels_dir_tr, sTr))
-    sTr = sTr[:-len(file_extension)]
+    sTr = sTr[: -len(file_extension)]
 
     # Orient to RAS and register image-label, using the image as reference.
     orig_ornt = get_nib_direction(image)
-    image = reorient_nib_image(image, original_orientation=orig_ornt,
-                               target_orientation='RAS')
+    image = reorient_nib_image(image, original_orientation=orig_ornt, target_orientation="RAS")
     label = nibpro.resample_from_to(label, image, order=0)
 
-    nib.save(image, filename=f'{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz')
-    nib.save(label, filename=f'{target_labelsTr}/{task_prefix}_{sTr}.nii.gz')
+    nib.save(image, filename=f"{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz")
+    nib.save(label, filename=f"{target_labelsTr}/{task_prefix}_{sTr}.nii.gz")
 
 for sTs in test_samples:
     image = nib.load(join(images_dir_ts, sTs))
     label = nib.load(join(labels_dir_ts, sTs))
-    sTs = sTs[:-len(file_extension)]
+    sTs = sTs[: -len(file_extension)]
 
     # Orient to RAS and register image-label, using the image as reference.
     orig_ornt = get_nib_direction(image)
-    image = reorient_nib_image(image, original_orientation=orig_ornt,
-                               target_orientation='RAS')
+    image = reorient_nib_image(image, original_orientation=orig_ornt, target_orientation="RAS")
     label = nibpro.resample_from_to(label, image, order=0)
 
-    nib.save(image, filename=f'{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz')
-    nib.save(label, filename=f'{target_labelsTs}/{task_prefix}_{sTs}.nii.gz')
+    nib.save(image, filename=f"{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz")
+    nib.save(label, filename=f"{target_labelsTs}/{task_prefix}_{sTs}.nii.gz")
 
-generate_dataset_json(join(target_base, 'dataset.json'), target_imagesTr, target_imagesTs,
-                      modalities=('CT', ),
-                      labels={0: 'Background', 1: 'Cancer'},
-                      dataset_name=task_name, license='CC-BY-SA 4.0',
-                      dataset_description="Decathlon: Lung and cancer segmentation",
-                      dataset_reference="The Cancer Imaging Archive")
+generate_dataset_json(
+    join(target_base, "dataset.json"),
+    target_imagesTr,
+    target_imagesTs,
+    modalities=("CT",),
+    labels={0: "Background", 1: "Cancer"},
+    dataset_name=task_name,
+    license="CC-BY-SA 4.0",
+    dataset_description="Decathlon: Lung and cancer segmentation",
+    dataset_reference="The Cancer Imaging Archive",
+)

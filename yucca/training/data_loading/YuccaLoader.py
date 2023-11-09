@@ -63,9 +63,7 @@ class YuccaLoader(object):
         if len(self.gen_patch_size) == 2 and len(self.input_shape) == 3:
             return self.generate_2D_batch_from_2D()
         else:
-            print(
-                f"patch size should be (x, y, z) or (x,y) but is: {self.gen_patch_size}"
-            )
+            print(f"patch size should be (x, y, z) or (x,y) but is: {self.gen_patch_size}")
 
     def generate_3D_batch(self):
         """
@@ -83,9 +81,7 @@ class YuccaLoader(object):
             imseg = self.load_and_maybe_keep_volume(sample)
             image_properties = self.load_and_maybe_keep_pickle(sample[:-4] + ".pkl")
 
-            assert len(imseg.shape) == 4, (
-                "input should be (c, x, y, z)" f" but it is: {imseg.shape}"
-            )
+            assert len(imseg.shape) == 4, "input should be (c, x, y, z)" f" but it is: {imseg.shape}"
 
             # First we pad to ensure min size is met
             to_pad = []
@@ -106,19 +102,12 @@ class YuccaLoader(object):
             # The final patch excted after augmentation will always be the center of this patch
             # as this is where artefacts are least present
             crop_start_idx = []
-            if (
-                len(image_properties["foreground_locations"]) == 0
-                or np.random.uniform() >= self.p_oversample_foreground
-            ):
+            if len(image_properties["foreground_locations"]) == 0 or np.random.uniform() >= self.p_oversample_foreground:
                 for d in range(3):
                     if imseg.shape[d + 1] < self.gen_patch_size[d]:
                         crop_start_idx += [0]
                     else:
-                        crop_start_idx += [
-                            np.random.randint(
-                                imseg.shape[d + 1] - self.gen_patch_size[d] + 1
-                            )
-                        ]
+                        crop_start_idx += [np.random.randint(imseg.shape[d + 1] - self.gen_patch_size[d] + 1)]
             else:
                 locidx = np.random.choice(len(image_properties["foreground_locations"]))
                 location = image_properties["foreground_locations"][locidx]
@@ -199,9 +188,7 @@ class YuccaLoader(object):
             imseg = self.load_and_maybe_keep_volume(sample)
             image_properties = self.load_and_maybe_keep_pickle(sample[:-4] + ".pkl")
 
-            assert len(imseg.shape) == 4, (
-                "input should be (c, x, y, z)" f" but it is: {imseg.shape}"
-            )
+            assert len(imseg.shape) == 4, "input should be (c, x, y, z)" f" but it is: {imseg.shape}"
 
             # First we pad to ensure min size is met
             to_pad = []
@@ -220,20 +207,13 @@ class YuccaLoader(object):
             # The final patch extracted after augmentation will always be the center of this patch
             # as this is where augmentation-induced interpolation artefacts are least likely
             crop_start_idx = []
-            if (
-                len(image_properties["foreground_locations"]) == 0
-                or np.random.uniform() >= self.p_oversample_foreground
-            ):
+            if len(image_properties["foreground_locations"]) == 0 or np.random.uniform() >= self.p_oversample_foreground:
                 x_idx = np.random.randint(imseg.shape[1])
                 for d in range(2):
                     if imseg.shape[d + 2] < self.gen_patch_size[d]:
                         crop_start_idx += [0]
                     else:
-                        crop_start_idx += [
-                            np.random.randint(
-                                imseg.shape[d + 2] - self.gen_patch_size[d] + 1
-                            )
-                        ]
+                        crop_start_idx += [np.random.randint(imseg.shape[d + 2] - self.gen_patch_size[d] + 1)]
             else:
                 locidx = np.random.choice(len(image_properties["foreground_locations"]))
                 location = image_properties["foreground_locations"][locidx]
@@ -292,9 +272,7 @@ class YuccaLoader(object):
             imseg = self.load_and_maybe_keep_volume(sample)
             image_properties = self.load_and_maybe_keep_pickle(sample[:-4] + ".pkl")
 
-            assert len(imseg.shape) == 3, (
-                "input should be (c, x, y)" f" but it is: {imseg.shape}"
-            )
+            assert len(imseg.shape) == 3, "input should be (c, x, y)" f" but it is: {imseg.shape}"
 
             # First we pad to ensure min size is met
             to_pad = []
@@ -313,19 +291,12 @@ class YuccaLoader(object):
             # The final patch extracted after augmentation will always be the center of this patch
             # as this is where artefacts are least present
             crop_start_idx = []
-            if (
-                len(image_properties["foreground_locations"]) == 0
-                or np.random.uniform() >= self.p_oversample_foreground
-            ):
+            if len(image_properties["foreground_locations"]) == 0 or np.random.uniform() >= self.p_oversample_foreground:
                 for d in range(2):
                     if imseg.shape[d + 1] < self.gen_patch_size[d]:
                         crop_start_idx += [0]
                     else:
-                        crop_start_idx += [
-                            np.random.randint(
-                                imseg.shape[d + 1] - self.gen_patch_size[d] + 1
-                            )
-                        ]
+                        crop_start_idx += [np.random.randint(imseg.shape[d + 1] - self.gen_patch_size[d] + 1)]
             else:
                 locidx = np.random.choice(len(image_properties["foreground_locations"]))
                 location = image_properties["foreground_locations"][locidx]
@@ -385,8 +356,7 @@ class YuccaLoader(object):
                 return np.load(path, "r")
             image = np.load(path)
             assert len(image.files) == 1, (
-                "More than one entry in data array. "
-                f"Should only be ['data'] but is {[key for key in image.files]}"
+                "More than one entry in data array. " f"Should only be ['data'] but is {[key for key in image.files]}"
             )
             return image[image.files[0]]
 
@@ -402,8 +372,7 @@ class YuccaLoader(object):
 
         image = np.load(path)
         assert len(image.files) == 1, (
-            "More than one entry in data array. "
-            f"Should only be ['data'] but is {[key for key in image.files]}"
+            "More than one entry in data array. " f"Should only be ['data'] but is {[key for key in image.files]}"
         )
         self.already_loaded_cases = image[image.files[0]]
         return self.already_loaded_cases[path]
