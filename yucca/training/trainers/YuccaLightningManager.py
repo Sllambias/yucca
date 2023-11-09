@@ -170,11 +170,10 @@ if __name__ == "__main__":
     Manager = YuccaLightningManager(
         task="Task001_OASIS",
         model_name="UNet",
-        model_dimensions="2D",
+        model_dimensions="3D",
+        folds="1",
         ckpt_path=path,
     )
-    Manager.initialize()
-
     Manager.run_training()
     # Manager.predict_folder(
     #    input_folder="/home/zcr545/YuccaData/yucca_raw_data/Task001_OASIS/imagesTs",

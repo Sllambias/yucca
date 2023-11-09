@@ -60,7 +60,7 @@ class YuccaConfigurator:
             yucca_models,
             self.task,
             self.model_name + "__" + self.model_dimensions,
-            self.planner,
+            self.manager_name "__" + self.planner,
             self.manager_name,
             f"fold_{self.folds}",
         )
@@ -103,7 +103,6 @@ class YuccaConfigurator:
         best_ckpt = ModelCheckpoint(monitor="val_dice", save_top_k=1, filename="model_best")
         interval_ckpt = ModelCheckpoint(every_n_epochs=250, filename="model_epoch_{epoch}")
         pred_writer = WriteSegFromLogits(output_dir=self.segmentation_output_dir, write_interval="batch")
-
         self.callbacks = [best_ckpt, interval_ckpt, pred_writer]
 
     def setup_train_params(self):
