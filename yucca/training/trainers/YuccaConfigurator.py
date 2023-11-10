@@ -10,6 +10,7 @@ from batchgenerators.utilities.file_and_folder_operations import (
     isfile,
     save_pickle,
     subfiles,
+    subdirs,
 )
 from lightning.pytorch.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger, CSVLogger
@@ -19,13 +20,14 @@ from yuccalib.image_processing.matrix_ops import get_max_rotated_size
 from yuccalib.network_architectures.utils.model_memory_estimation import (
     find_optimal_tensor_dims,
 )
-from yuccalib.utils.files_and_folders import WriteSegFromLogits
+from yuccalib.utils.files_and_folders import WriteSegFromLogits, load_yaml
 from yuccalib.evaluation.loggers import TXTLogger
 
 
 class YuccaConfigurator:
     def __init__(
         self,
+        continue_from_newest_version: bool = True,
         folds: str = "0",
         logging: bool = True,
         max_vram: int = 12,
@@ -37,6 +39,7 @@ class YuccaConfigurator:
         task: str = None,
         tiny_patch: bool = False,
     ):
+        self.continue_from_newest_version = continue_from_newest_version
         self.folds = folds
         self.logging = logging
         self.max_vram = max_vram
@@ -47,16 +50,17 @@ class YuccaConfigurator:
         self.planner = planner
         self.task = task
         self.tiny_patch = tiny_patch
-
-        self.run_setup()
-
-    def run_setup(self):
         self.setup_paths_and_plans()
         self.setup_train_params()
 
+        # Attributes set upon calling
+        self._train_split = None
+        self._val_split = None
+        self._loggers = []
+        self._callbacks = []
+
     def setup_paths_and_plans(self):
         self.train_data_dir = join(yucca_preprocessed, self.task, self.planner)
-
         self.outpath = join(
             yucca_models,
             self.task,
@@ -64,11 +68,8 @@ class YuccaConfigurator:
             self.manager_name + "__" + self.planner,
             f"fold_{self.folds}",
         )
-
         maybe_mkdir_p(self.outpath)
-
         self.plans_path = join(yucca_preprocessed, self.task, self.planner, self.planner + "_plans.json")
-
         self.plans = load_json(self.plans_path)
 
     @property
@@ -109,8 +110,7 @@ class YuccaConfigurator:
         best_ckpt = ModelCheckpoint(monitor="val_dice", save_top_k=1, filename="model_best")
         interval_ckpt = ModelCheckpoint(every_n_epochs=250, filename="model_epoch_{epoch}")
         pred_writer = WriteSegFromLogits(output_dir=self.segmentation_output_dir, write_interval="batch")
-        self._callbacks = [best_ckpt, interval_ckpt, pred_writer]
-        return self._callbacks
+        return [best_ckpt, interval_ckpt, pred_writer]
 
     def setup_splits(self):
         # Load splits file or create it if not found (see: "split_data").
@@ -123,6 +123,12 @@ class YuccaConfigurator:
         self._val_split = splits_file[int(self.folds)]["val"]
 
     def setup_train_params(self):
+        # First check if we want to continue from newest version and if any versions exist
+        previous_versions = subdirs(self.outpath)
+        if len(previous_versions) and self.continue_from_newest_version:
+            if isfile(join(self.outpath, "hparams.yaml")):
+                hparams = load_yaml(join(self.outpath, "hparams.yaml"))
+                self.num_classes = hparams["cfg"]["num_classes"]
         self.num_classes = len(self.plans["dataset_properties"]["classes"])
         self.num_modalities = len(self.plans["dataset_properties"]["modalities"])
         if self.tiny_patch or not torch.cuda.is_available():
@@ -170,5 +176,5 @@ if __name__ == "__main__":
     from pytorch_lightning.loggers import WandbLogger, CSVLogger
 
     x = YuccaConfigurator(task="Task001_OASIS", manager_name="stuff")
-
+    # x.val_split
 # %%

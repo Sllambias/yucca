@@ -87,6 +87,13 @@ class YuccaLightningManager:
         pred_data_dir: str = None,
         segmentation_output_dir: str = "./",
     ):
+        if stage == "fit":
+            checkpoint_to_load = "last"
+        if stage == "test":
+            raise NotImplementedError
+        if stage == "predict":
+            checkpoint_to_load = "best"
+
         # Here we configure the outpath we will use to store model files and metadata
         # along with the path to plans file which will also be loaded.
         configurator = YuccaConfigurator(
@@ -107,12 +114,6 @@ class YuccaLightningManager:
 
         self.model_module = YuccaLightningModule(
             configurator=configurator,
-            model_name=self.model_name,
-            model_dimensions=self.model_dimensions,
-            num_classes=configurator.num_classes,
-            num_modalities=configurator.num_modalities,
-            patch_size=configurator.patch_size,
-            plans_path=configurator.plans_path,
             test_time_augmentation=bool(augmenter.mirror_p_per_sample),
         )
 
@@ -132,11 +133,12 @@ class YuccaLightningManager:
             precision=self.precision,
             enable_progress_bar=False,
             max_epochs=self.max_epochs,
+            ckpt_path=checkpoint_to_load,
             **self.kwargs,
         )
 
     def run_training(self):
-        self.initialize()
+        self.initialize(stage="fit")
         self.trainer.fit(
             model=self.model_module,
             datamodule=self.data_module,
@@ -151,6 +153,7 @@ class YuccaLightningManager:
         overwrite=False,  # Not used currently
     ):
         self.initialize(
+            stage="predict",
             pred_data_dir=input_folder,
             segmentation_output_dir=output_folder,
         )
@@ -162,18 +165,12 @@ class YuccaLightningManager:
 
 
 if __name__ == "__main__":
-    import warnings
-    import logging
-
-    pl_logger = logging.getLogger("lightning")
-    pl_logger.propagate = False
-    warnings.filterwarnings("ignore", category=DeprecationWarning)
     # path = "/home/zcr545/YuccaData/yucca_models/Task001_OASIS/UNet__3D/YuccaPlanner/YuccaLightningManager/0/2023_11_08_15_19_14/checkpoints/test_ckpt.ckpt"
     path = None
     Manager = YuccaLightningManager(
         task="Task001_OASIS",
-        model_name="UNet",
-        model_dimensions="3D",
+        model_name="TinyUNet",
+        model_dimensions="2D",
         folds="0",
         ckpt_path=path,
     )

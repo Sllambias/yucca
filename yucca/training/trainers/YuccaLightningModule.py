@@ -18,7 +18,7 @@ from yuccalib.utils.kwargs import filter_kwargs
 class YuccaLightningModule(L.LightningModule):
     def __init__(
         self,
-        cfg=YuccaConfigurator,
+        configurator=YuccaConfigurator,
         learning_rate: float = 1e-3,
         loss_fn: nn.Module = DiceCE,
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler = torch.optim.lr_scheduler.CosineAnnealingLR,
@@ -29,7 +29,7 @@ class YuccaLightningModule(L.LightningModule):
     ):
         super().__init__()
         # Model parameters
-        self.cfg = cfg
+        self.cfg = configurator
 
         # Loss, optimizer and scheduler parameters
         self.lr = learning_rate
