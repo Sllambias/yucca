@@ -133,7 +133,6 @@ class YuccaLightningManager:
             precision=self.precision,
             enable_progress_bar=False,
             max_epochs=self.max_epochs,
-            ckpt_path=checkpoint_to_load,
             **self.kwargs,
         )
 

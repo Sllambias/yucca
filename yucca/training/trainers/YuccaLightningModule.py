@@ -28,8 +28,14 @@ class YuccaLightningModule(L.LightningModule):
         test_time_augmentation: bool = False,
     ):
         super().__init__()
-        # Model parameters
-        self.cfg = configurator
+        # Extract parameters from the configurator
+        self.num_classes = configurator.num_classes
+        self.num_modalities = configurator.num_modalities
+        self.plans_path = configurator.plans_path
+        self.model_name = configurator.model_name
+        self.model_dimensions = configurator.model_dimensions
+        self.patch_size = configurator.patch_size
+        self.initial_patch_size = configurator.initial_patch_size
 
         # Loss, optimizer and scheduler parameters
         self.lr = learning_rate
@@ -39,8 +45,8 @@ class YuccaLightningModule(L.LightningModule):
         self.lr_scheduler = lr_scheduler
 
         # Evaluation
-        self.train_metrics = MetricCollection({"train_dice": Dice(num_classes=self.cfg.num_classes, ignore_index=0)})
-        self.val_metrics = MetricCollection({"val_dice": Dice(num_classes=self.cfg.num_classes, ignore_index=0)})
+        self.train_metrics = MetricCollection({"train_dice": Dice(num_classes=self.num_classes, ignore_index=0)})
+        self.val_metrics = MetricCollection({"val_dice": Dice(num_classes=self.num_classes, ignore_index=0)})
 
         # Inference
         self.sliding_window_overlap = sliding_window_overlap
@@ -53,11 +59,11 @@ class YuccaLightningModule(L.LightningModule):
     def load_model(self):
         self.model = recursive_find_python_class(
             folder=[join(yuccalib.__path__[0], "network_architectures")],
-            class_name=self.cfg.model_name,
+            class_name=self.model_name,
             current_module="yuccalib.network_architectures",
         )
 
-        if self.cfg.model_dimensions == "3D":
+        if self.model_dimensions == "3D":
             conv_op = torch.nn.Conv3d
             norm_op = torch.nn.InstanceNorm3d
         else:
@@ -65,10 +71,10 @@ class YuccaLightningModule(L.LightningModule):
             norm_op = torch.nn.BatchNorm2d
 
         self.model = self.model(
-            input_channels=self.cfg.num_modalities,
+            input_channels=self.num_modalities,
             conv_op=conv_op,
             norm_op=norm_op,
-            num_classes=self.cfg.num_classes,
+            num_classes=self.num_classes,
         )
 
     def forward(self, inputs):
@@ -102,7 +108,7 @@ class YuccaLightningModule(L.LightningModule):
         self.log_dict(metrics, on_step=False, on_epoch=True, prog_bar=False, logger=True)
 
     def on_predict_start(self):
-        self.preprocessor = YuccaPreprocessor(self.cfg.plans_path)
+        self.preprocessor = YuccaPreprocessor(self.plans_path)
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         case, case_id = batch
@@ -110,13 +116,13 @@ class YuccaLightningModule(L.LightningModule):
         (
             case_preprocessed,
             case_properties,
-        ) = self.preprocessor.preprocess_case_for_inference(case, self.cfg.patch_size)
+        ) = self.preprocessor.preprocess_case_for_inference(case, self.patch_size)
 
         logits = (
             self.model.predict(
-                mode=self.cfg.model_dimensions,
+                mode=self.model_dimensions,
                 data=case_preprocessed,
-                patch_size=self.cfg.patch_size,
+                patch_size=self.patch_size,
                 overlap=self.sliding_window_overlap,
                 mirror=self.test_time_augmentation,
             )

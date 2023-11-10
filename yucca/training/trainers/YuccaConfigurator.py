@@ -22,6 +22,7 @@ from yuccalib.network_architectures.utils.model_memory_estimation import (
 )
 from yuccalib.utils.files_and_folders import WriteSegFromLogits, load_yaml
 from yuccalib.evaluation.loggers import TXTLogger
+from typing import Union
 
 
 class YuccaConfigurator:
@@ -50,14 +51,15 @@ class YuccaConfigurator:
         self.planner = planner
         self.task = task
         self.tiny_patch = tiny_patch
-        self.setup_paths_and_plans()
-        self.setup_train_params()
 
         # Attributes set upon calling
         self._train_split = None
         self._val_split = None
-        self._loggers = []
-        self._callbacks = []
+        self._version = None
+
+        # Now run the setup
+        self.setup_paths_and_plans()
+        self.setup_train_params()
 
     def setup_paths_and_plans(self):
         self.train_data_dir = join(yucca_preprocessed, self.task, self.planner)
@@ -85,10 +87,22 @@ class YuccaConfigurator:
         return self._train_split
 
     @property
+    def version(self) -> Union[None, int]:
+        # Here we check if we want to continue from the newest version
+        # And if it exists. If so the number of the newest version is returned
+        # Otherwise None is returned.
+        # If None is returned we create a new version.
+        if self.continue_from_newest_version:
+            previous_versions = subdirs(self.outpath, join=False)
+            if previous_versions:
+                self._version = int(max([i.split("_")[-1] for i in previous_versions]))
+        return self._version
+
+    @property
     def loggers(self):
         if not self.logging:
             return []
-        csvlogger = CSVLogger(save_dir=self.outpath, name=None)
+        csvlogger = CSVLogger(save_dir=self.outpath, name=None, version=self.version)
 
         wandb_logger = WandbLogger(
             name=f"version_{csvlogger.version}",
@@ -124,26 +138,38 @@ class YuccaConfigurator:
 
     def setup_train_params(self):
         # First check if we want to continue from newest version and if any versions exist
-        previous_versions = subdirs(self.outpath)
-        if len(previous_versions) and self.continue_from_newest_version:
-            if isfile(join(self.outpath, "hparams.yaml")):
-                hparams = load_yaml(join(self.outpath, "hparams.yaml"))
-                self.num_classes = hparams["cfg"]["num_classes"]
-        self.num_classes = len(self.plans["dataset_properties"]["classes"])
-        self.num_modalities = len(self.plans["dataset_properties"]["modalities"])
-        if self.tiny_patch or not torch.cuda.is_available():
-            self.batch_size = 2
-            self.patch_size = (32, 32) if self.model_dimensions == "2D" else (32, 32, 32)
+        print(self.version)
+        print(isfile(join(self.outpath, f"version_{self.version}", "hparams.yaml")))
+
+        if (
+            self.version is not None
+            and self.continue_from_newest_version
+            and isfile(join(self.outpath, f"version_{self.version}", "hparams.yaml"))
+        ):
+            print("Loading hparams.yaml")
+            hparams = load_yaml(join(self.outpath, f"version_{self.version}", "hparams.yaml"))
+            self.num_classes = hparams["configurator"]["num_classes"]
+            self.num_modalities = hparams["num_modalities"]
+            self.batch_size = hparams["batch_size"]
+            self.patch_size = hparams["patch_size"]
+            self.initial_patch_size = hparams["initial_patch_size"]
         else:
-            self.batch_size, self.patch_size = find_optimal_tensor_dims(
-                dimensionality=self.model_dimensions,
-                num_classes=self.num_classes,
-                modalities=self.num_modalities,
-                model_name=self.model_name,
-                max_patch_size=self.plans["new_mean_size"],
-                max_memory_usage_in_gb=self.max_vram,
-            )
-        self.initial_patch_size = get_max_rotated_size(self.patch_size)
+            print("constructing new params")
+            self.num_classes = len(self.plans["dataset_properties"]["classes"])
+            self.num_modalities = len(self.plans["dataset_properties"]["modalities"])
+            if self.tiny_patch or not torch.cuda.is_available():
+                self.batch_size = 2
+                self.patch_size = (32, 32) if self.model_dimensions == "2D" else (32, 32, 32)
+            else:
+                self.batch_size, self.patch_size = find_optimal_tensor_dims(
+                    dimensionality=self.model_dimensions,
+                    num_classes=self.num_classes,
+                    modalities=self.num_modalities,
+                    model_name=self.model_name,
+                    max_patch_size=self.plans["new_mean_size"],
+                    max_memory_usage_in_gb=self.max_vram,
+                )
+            self.initial_patch_size = get_max_rotated_size(self.patch_size)
 
     def split_data(self, splits_file):
         splits = []
@@ -175,6 +201,8 @@ class YuccaConfigurator:
 if __name__ == "__main__":
     from pytorch_lightning.loggers import WandbLogger, CSVLogger
 
-    x = YuccaConfigurator(task="Task001_OASIS", manager_name="stuff")
+    x = YuccaConfigurator(
+        task="Task001_OASIS", model_name="TinyUNet", model_dimensions="2D", manager_name="YuccaLightningManager"
+    )
     # x.val_split
 # %%
