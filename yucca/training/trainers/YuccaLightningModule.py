@@ -8,6 +8,7 @@ from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Dice
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
+from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 from yuccalib.utils.files_and_folders import recursive_find_python_class
 from yuccalib.loss_and_optim.loss_functions.CE import CE
 from yuccalib.loss_and_optim.loss_functions.nnUNet_losses import DiceCE
@@ -17,26 +18,18 @@ from yuccalib.utils.kwargs import filter_kwargs
 class YuccaLightningModule(L.LightningModule):
     def __init__(
         self,
+        cfg=YuccaConfigurator,
         learning_rate: float = 1e-3,
         loss_fn: nn.Module = DiceCE,
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler = torch.optim.lr_scheduler.CosineAnnealingLR,
-        model_name: str = "UNet",
-        model_dimensions: str = "3D",
         momentum: float = 0.9,
-        num_modalities: int = 1,
-        num_classes: int = 1,
         optimizer: torch.optim.Optimizer = torch.optim.SGD,
-        patch_size: list | tuple = None,
-        plans_path: str = None,
         sliding_window_overlap: float = 0.5,
         test_time_augmentation: bool = False,
     ):
         super().__init__()
         # Model parameters
-        self.model_name = model_name
-        self.model_dimensions = model_dimensions
-        self.num_classes = num_classes
-        self.num_modalities = num_modalities
+        self.cfg = cfg
 
         # Loss, optimizer and scheduler parameters
         self.lr = learning_rate
@@ -46,27 +39,25 @@ class YuccaLightningModule(L.LightningModule):
         self.lr_scheduler = lr_scheduler
 
         # Evaluation
-        self.train_metrics = MetricCollection({"train_dice": Dice(num_classes=self.num_classes, ignore_index=0)})
-        self.val_metrics = MetricCollection({"val_dice": Dice(num_classes=self.num_classes, ignore_index=0)})
+        self.train_metrics = MetricCollection({"train_dice": Dice(num_classes=self.cfg.num_classes, ignore_index=0)})
+        self.val_metrics = MetricCollection({"val_dice": Dice(num_classes=self.cfg.num_classes, ignore_index=0)})
 
         # Inference
         self.sliding_window_overlap = sliding_window_overlap
-        self.patch_size = patch_size
-        self.plans_path = plans_path
         self.test_time_augmentation = test_time_augmentation
 
         # Save params and start training
         self.save_hyperparameters()
-        self.initialize()
+        self.load_model()
 
-    def initialize(self):
+    def load_model(self):
         self.model = recursive_find_python_class(
             folder=[join(yuccalib.__path__[0], "network_architectures")],
-            class_name=self.model_name,
+            class_name=self.cfg.model_name,
             current_module="yuccalib.network_architectures",
         )
 
-        if self.model_dimensions == "3D":
+        if self.cfg.model_dimensions == "3D":
             conv_op = torch.nn.Conv3d
             norm_op = torch.nn.InstanceNorm3d
         else:
@@ -74,10 +65,10 @@ class YuccaLightningModule(L.LightningModule):
             norm_op = torch.nn.BatchNorm2d
 
         self.model = self.model(
-            input_channels=self.num_modalities,
+            input_channels=self.cfg.num_modalities,
             conv_op=conv_op,
             norm_op=norm_op,
-            num_classes=self.num_classes,
+            num_classes=self.cfg.num_classes,
         )
 
     def forward(self, inputs):
@@ -111,7 +102,7 @@ class YuccaLightningModule(L.LightningModule):
         self.log_dict(metrics, on_step=False, on_epoch=True, prog_bar=False, logger=True)
 
     def on_predict_start(self):
-        self.preprocessor = YuccaPreprocessor(self.plans_path)
+        self.preprocessor = YuccaPreprocessor(self.cfg.plans_path)
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         case, case_id = batch
@@ -119,13 +110,13 @@ class YuccaLightningModule(L.LightningModule):
         (
             case_preprocessed,
             case_properties,
-        ) = self.preprocessor.preprocess_case_for_inference(case, self.patch_size)
+        ) = self.preprocessor.preprocess_case_for_inference(case, self.cfg.patch_size)
 
         logits = (
             self.model.predict(
-                mode=self.model_dimensions,
+                mode=self.cfg.model_dimensions,
                 data=case_preprocessed,
-                patch_size=self.patch_size,
+                patch_size=self.cfg.patch_size,
                 overlap=self.sliding_window_overlap,
                 mirror=self.test_time_augmentation,
             )

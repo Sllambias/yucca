@@ -1,3 +1,4 @@
+# %%
 import torch
 import numpy as np
 from time import localtime, strftime
@@ -26,7 +27,7 @@ class YuccaConfigurator:
     def __init__(
         self,
         folds: str = "0",
-        tiny_patch: bool = False,
+        logging: bool = True,
         max_vram: int = 12,
         manager_name: str = None,
         model_dimensions: str = "3D",
@@ -34,23 +35,23 @@ class YuccaConfigurator:
         planner: str = "YuccaPlanner",
         segmentation_output_dir: str = "./",
         task: str = None,
+        tiny_patch: bool = False,
     ):
         self.folds = folds
-        self.tiny_patch = tiny_patch
+        self.logging = logging
+        self.max_vram = max_vram
         self.model_dimensions = model_dimensions
         self.model_name = model_name
         self.manager_name = manager_name
         self.segmentation_output_dir = segmentation_output_dir
         self.planner = planner
         self.task = task
-        self.max_vram = max_vram
+        self.tiny_patch = tiny_patch
+
         self.run_setup()
 
     def run_setup(self):
         self.setup_paths_and_plans()
-        self.setup_splits()
-        self.setup_loggers()
-        self.setup_callbacks()
         self.setup_train_params()
 
     def setup_paths_and_plans(self):
@@ -60,8 +61,7 @@ class YuccaConfigurator:
             yucca_models,
             self.task,
             self.model_name + "__" + self.model_dimensions,
-            self.manager_name "__" + self.planner,
-            self.manager_name,
+            self.manager_name + "__" + self.planner,
             f"fold_{self.folds}",
         )
 
@@ -71,17 +71,22 @@ class YuccaConfigurator:
 
         self.plans = load_json(self.plans_path)
 
-    def setup_splits(self):
-        # Load splits file or create it if not found (see: "split_data").
-        splits_file = join(yucca_preprocessed, self.task, "splits.pkl")
-        if not isfile(splits_file):
-            self.split_data(splits_file)
+    @property
+    def val_split(self):
+        if not self._val_split:
+            self.setup_splits()
+        return self._val_split
 
-        splits_file = load_pickle(join(yucca_preprocessed, self.task, "splits.pkl"))
-        self.train_split = splits_file[int(self.folds)]["train"]
-        self.val_split = splits_file[int(self.folds)]["val"]
+    @property
+    def train_split(self):
+        if not self._train_split:
+            self.setup_splits()
+        return self._train_split
 
-    def setup_loggers(self):
+    @property
+    def loggers(self):
+        if not self.logging:
+            return []
         csvlogger = CSVLogger(save_dir=self.outpath, name=None)
 
         wandb_logger = WandbLogger(
@@ -97,13 +102,25 @@ class YuccaConfigurator:
             name=f"version_{csvlogger.version}",
             steps_per_epoch=250,
         )
-        self.loggers = [csvlogger, wandb_logger, txtlogger]
+        return [csvlogger, wandb_logger, txtlogger]
 
-    def setup_callbacks(self):
+    @property
+    def callbacks(self):
         best_ckpt = ModelCheckpoint(monitor="val_dice", save_top_k=1, filename="model_best")
         interval_ckpt = ModelCheckpoint(every_n_epochs=250, filename="model_epoch_{epoch}")
         pred_writer = WriteSegFromLogits(output_dir=self.segmentation_output_dir, write_interval="batch")
-        self.callbacks = [best_ckpt, interval_ckpt, pred_writer]
+        self._callbacks = [best_ckpt, interval_ckpt, pred_writer]
+        return self._callbacks
+
+    def setup_splits(self):
+        # Load splits file or create it if not found (see: "split_data").
+        splits_file = join(yucca_preprocessed, self.task, "splits.pkl")
+        if not isfile(splits_file):
+            self.split_data(splits_file)
+
+        splits_file = load_pickle(join(yucca_preprocessed, self.task, "splits.pkl"))
+        self._train_split = splits_file[int(self.folds)]["train"]
+        self._val_split = splits_file[int(self.folds)]["val"]
 
     def setup_train_params(self):
         self.num_classes = len(self.plans["dataset_properties"]["classes"])
@@ -152,8 +169,6 @@ class YuccaConfigurator:
 if __name__ == "__main__":
     from pytorch_lightning.loggers import WandbLogger, CSVLogger
 
-    csvlogger = CSVLogger(
-        save_dir="/home/zcr545/YuccaData/yucca_models/Task001_OASIS/UNet__3D/YuccaLightningManager__YuccaPlanner/0", name=None
-    )
+    x = YuccaConfigurator(task="Task001_OASIS", manager_name="stuff")
 
 # %%

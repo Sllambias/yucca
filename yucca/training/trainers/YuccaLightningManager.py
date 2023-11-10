@@ -1,5 +1,6 @@
 # %%
 import lightning as L
+from typing import Literal
 from yucca.training.augmentation.YuccaAugmentationComposer import (
     YuccaAugmentationComposer,
 )
@@ -82,6 +83,7 @@ class YuccaLightningManager:
 
     def initialize(
         self,
+        stage: Literal["fit", "test", "predict"],
         pred_data_dir: str = None,
         segmentation_output_dir: str = "./",
     ):
@@ -104,6 +106,7 @@ class YuccaLightningManager:
         )
 
         self.model_module = YuccaLightningModule(
+            configurator=configurator,
             model_name=self.model_name,
             model_dimensions=self.model_dimensions,
             num_classes=configurator.num_classes,
@@ -171,7 +174,7 @@ if __name__ == "__main__":
         task="Task001_OASIS",
         model_name="UNet",
         model_dimensions="3D",
-        folds="1",
+        folds="0",
         ckpt_path=path,
     )
     Manager.run_training()
