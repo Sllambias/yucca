@@ -121,10 +121,11 @@ class YuccaConfigurator:
             self.loggers = [csvlogger, wandb_logger, txtlogger]
 
     def setup_callbacks(self):
-        best_ckpt = ModelCheckpoint(monitor="val_dice", save_top_k=1, filename="model_best")
-        interval_ckpt = ModelCheckpoint(every_n_epochs=250, filename="model_{epoch}")
+        best_ckpt = ModelCheckpoint(monitor="val_dice", save_top_k=1, filename="best")
+        interval_ckpt = ModelCheckpoint(every_n_epochs=250, filename="{epoch}")
+        latest_ckpt = ModelCheckpoint(every_n_epochs=10, save_top_k=1, filename="last")
         pred_writer = WriteSegFromLogits(output_dir=self.segmentation_output_dir, write_interval="batch")
-        self.callbacks = [best_ckpt, interval_ckpt, pred_writer]
+        self.callbacks = [best_ckpt, interval_ckpt, latest_ckpt, pred_writer]
 
     def setup_paths_and_plans(self):
         self.train_data_dir = join(yucca_preprocessed, self.task, self.planner)
