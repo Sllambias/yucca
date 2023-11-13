@@ -30,7 +30,7 @@ class YuccaConfigurator:
         self,
         continue_from_newest_version: bool = True,
         folds: str = "0",
-        logging: bool = True,
+        enable_logging: bool = True,
         max_vram: int = 12,
         manager_name: str = None,
         model_dimensions: str = "3D",
@@ -42,7 +42,7 @@ class YuccaConfigurator:
     ):
         self.continue_from_newest_version = continue_from_newest_version
         self.folds = folds
-        self.logging = logging
+        self.enable_logging = enable_logging
         self.max_vram = max_vram
         self.model_dimensions = model_dimensions
         self.model_name = model_name
@@ -60,8 +60,8 @@ class YuccaConfigurator:
         # Now run the setup
         self.setup_paths_and_plans()
         self.setup_data_params()
-        self.setup_loggers()
         self.setup_callbacks()
+        self.setup_loggers()
 
     @property
     def train_split(self):
@@ -90,7 +90,7 @@ class YuccaConfigurator:
         return self._version
 
     def setup_loggers(self):
-        if not self.logging:
+        if not self.enable_logging:
             self.loggers = []
         else:
             csvlogger = CSVLogger(save_dir=self.outpath, name=None, version=self.version)

@@ -48,7 +48,9 @@ class YuccaLightningManager:
 
     def __init__(
         self,
+        ckpt_path: str = None,
         continue_training: bool = None,
+        enable_logging: bool = True,
         deep_supervision: bool = False,
         folds: str = "0",
         model_dimensions: str = "3D",
@@ -56,11 +58,11 @@ class YuccaLightningManager:
         planner: str = "YuccaPlanner",
         precision: str = "16-mixed",
         task: str = None,
-        ckpt_path: str = None,
         **kwargs,
     ):
         self.continue_training = continue_training
         self.ckpt_path = ckpt_path
+        self.enable_logging = enable_logging
         self.deep_supervision = deep_supervision
         self.folds = folds
         self.model_dimensions = model_dimensions
@@ -97,13 +99,14 @@ class YuccaLightningManager:
         # Here we configure the outpath we will use to store model files and metadata
         # along with the path to plans file which will also be loaded.
         configurator = YuccaConfigurator(
-            tiny_patch=True if self.model_name == "TinyUNet" else False,
+            enable_logging=self.enable_logging,
             folds=self.folds,
             manager_name=self.name,
             model_dimensions=self.model_dimensions,
             model_name=self.model_name,
-            segmentation_output_dir=segmentation_output_dir,
             planner=self.planner,
+            segmentation_output_dir=segmentation_output_dir,
+            tiny_patch=True if self.model_name == "TinyUNet" else False,
             task=self.task,
         )
 
