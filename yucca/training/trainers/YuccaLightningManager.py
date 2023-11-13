@@ -55,6 +55,7 @@ class YuccaLightningManager:
         folds: str = "0",
         model_dimensions: str = "3D",
         model_name: str = "TinyUNet",
+        num_workers: int = 8,
         planner: str = "YuccaPlanner",
         precision: str = "16-mixed",
         task: str = None,
@@ -68,6 +69,7 @@ class YuccaLightningManager:
         self.model_dimensions = model_dimensions
         self.model_name = model_name
         self.name = self.__class__.__name__
+        self.num_workers = num_workers
         self.planner = planner
         self.precision = precision
         self.task = task
@@ -121,10 +123,11 @@ class YuccaLightningManager:
         )
 
         self.data_module = YuccaDataModule(
-            configurator=configurator,
-            pred_data_dir=pred_data_dir,
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
+            configurator=configurator,
+            num_workers=self.num_workers,
+            pred_data_dir=pred_data_dir,
         )
 
         self.trainer = L.Trainer(
@@ -134,7 +137,7 @@ class YuccaLightningManager:
             limit_val_batches=self.val_batches_per_step,
             logger=configurator.loggers,
             precision=self.precision,
-            enable_progress_bar=False,
+            enable_progress_bar=not self.enable_logging,
             max_epochs=self.max_epochs,
             **self.kwargs,
         )
@@ -170,9 +173,11 @@ if __name__ == "__main__":
     # path = "/home/zcr545/YuccaData/yucca_models/Task001_OASIS/UNet__3D/YuccaPlanner/YuccaLightningManager/0/2023_11_08_15_19_14/checkpoints/test_ckpt.ckpt"
     path = None
     Manager = YuccaLightningManager(
+        enable_logging=False,
         task="Task001_OASIS",
         model_name="TinyUNet",
         model_dimensions="2D",
+        num_workers=0,
         folds="0",
         ckpt_path=path,
     )

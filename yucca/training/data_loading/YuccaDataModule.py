@@ -12,9 +12,10 @@ class YuccaDataModule(pl.LightningDataModule):
     def __init__(
         self,
         configurator: YuccaConfigurator,
-        pred_data_dir: str = None,
         composed_train_transforms: torchvision.transforms.Compose = None,
         composed_val_transforms: torchvision.transforms.Compose = None,
+        num_workers: int = 8,
+        pred_data_dir: str = None,
     ):
         super().__init__()
         # First set our configurator object
@@ -36,7 +37,8 @@ class YuccaDataModule(pl.LightningDataModule):
         self.pred_data_dir = pred_data_dir
 
         # Set default values
-        self.num_workers = 8
+        self.num_workers = num_workers
+        self.val_num_workers = num_workers // 2 if num_workers > 0 else num_workers
         self.sampler = InfiniteRandomSampler
 
     def prepare_data(self):
@@ -74,7 +76,7 @@ class YuccaDataModule(pl.LightningDataModule):
             self.train_dataset,
             num_workers=self.num_workers,
             batch_size=self.batch_size,
-            persistent_workers=True,
+            persistent_workers=bool(self.num_workers),
             sampler=train_sampler,
         )
 
@@ -82,9 +84,9 @@ class YuccaDataModule(pl.LightningDataModule):
         val_sampler = self.sampler(self.val_dataset)
         return DataLoader(
             self.val_dataset,
-            num_workers=self.num_workers // 2,
+            num_workers=self.val_num_workers,
             batch_size=self.batch_size,
-            persistent_workers=True,
+            persistent_workers=bool(self.val_num_workers),
             sampler=val_sampler,
         )
 

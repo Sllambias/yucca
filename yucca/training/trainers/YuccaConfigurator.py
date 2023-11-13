@@ -80,13 +80,23 @@ class YuccaConfigurator:
 
     @property
     def version(self) -> Union[None, int]:
-        # Check if we want to continue from the newest version and if any previous version exists.
-        # If so the number of the newest version is returned. Otherwise None is returned.
-        # If None is returned a new version will be created.
-        if self.continue_from_newest_version:
-            previous_versions = subdirs(self.outpath, join=False)
+        # We only want to get the version once.
+        if not self._version:
+            # Check if any previous version exists.
+            previous_versions = subdirs(self.base_outpath, join=False)
+
+            # If no previous version exists we just return version 0
+            if not previous_versions:
+                self._version = 0
+
+            # If previous version(s) exists we can either (1) continue from the newest or
+            # (2) create the next version
             if previous_versions:
-                self._version = int(max([i.split("_")[-1] for i in previous_versions]))
+                newest_version = int(max([i.split("_")[-1] for i in previous_versions]))
+                if self.continue_from_newest_version:
+                    self._version = newest_version
+                else:
+                    self._version = newest_version + 1
         return self._version
 
     def setup_loggers(self):
@@ -96,8 +106,8 @@ class YuccaConfigurator:
             csvlogger = CSVLogger(save_dir=self.outpath, name=None, version=self.version)
 
             wandb_logger = WandbLogger(
-                name=f"version_{csvlogger.version}",
-                save_dir=join(self.outpath, f"version_{csvlogger.version}"),
+                name=f"version_{self.version}",
+                save_dir=join(self.outpath, f"version_{self.version}"),
                 project="Yucca",
                 group=self.task,
                 log_model="all",
@@ -105,7 +115,7 @@ class YuccaConfigurator:
 
             txtlogger = TXTLogger(
                 save_dir=self.outpath,
-                name=f"version_{csvlogger.version}",
+                name=f"version_{self.version}",
                 steps_per_epoch=250,
             )
             self.loggers = [csvlogger, wandb_logger, txtlogger]
@@ -118,13 +128,14 @@ class YuccaConfigurator:
 
     def setup_paths_and_plans(self):
         self.train_data_dir = join(yucca_preprocessed, self.task, self.planner)
-        self.outpath = join(
+        self.base_outpath = join(
             yucca_models,
             self.task,
             self.model_name + "__" + self.model_dimensions,
             self.manager_name + "__" + self.planner,
             f"fold_{self.folds}",
         )
+        self.outpath = join(self.base_outpath, f"version_{self.version}")
         maybe_mkdir_p(self.outpath)
         self.plans_path = join(yucca_preprocessed, self.task, self.planner, self.planner + "_plans.json")
         self.plans = load_json(self.plans_path)
