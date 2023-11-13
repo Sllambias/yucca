@@ -100,28 +100,33 @@ class YuccaConfigurator:
         return self._version
 
     def setup_loggers(self):
-        if not self.enable_logging:
-            self.loggers = []
-        else:
-            csvlogger = CSVLogger(save_dir=self.outpath, name=None, version=self.version)
+        # The CSVLogger is the barebones logger needed to save hparams.yaml and set the proper
+        # outpath that will be expected by the pipeline for continued training etc.
+        # It should generally never be disabled.
+        self.loggers = []
+        self.loggers.append(CSVLogger(save_dir=self.base_outpath, name=None, version=self.version))
 
-            wandb_logger = WandbLogger(
-                name=f"version_{self.version}",
-                save_dir=join(self.outpath, f"version_{self.version}"),
-                project="Yucca",
-                group=self.task,
-                log_model="all",
+        if self.enable_logging:
+            self.loggers.append(
+                WandbLogger(
+                    name=f"version_{self.version}",
+                    save_dir=join(self.base_outpath, f"version_{self.version}"),
+                    project="Yucca",
+                    group=self.task,
+                    log_model="all",
+                )
             )
 
-            txtlogger = TXTLogger(
-                save_dir=self.outpath,
-                name=f"version_{self.version}",
-                steps_per_epoch=250,
+            self.loggers.append(
+                txtlogger=TXTLogger(
+                    save_dir=self.base_outpath,
+                    name=f"version_{self.version}",
+                    steps_per_epoch=250,
+                )
             )
-            self.loggers = [csvlogger, wandb_logger, txtlogger]
 
     def setup_callbacks(self):
-        best_ckpt = ModelCheckpoint(monitor="val_dice", save_top_k=1, filename="best")
+        best_ckpt = ModelCheckpoint(monitor="val_dice", mode="max", save_top_k=1, filename="best")
         interval_ckpt = ModelCheckpoint(every_n_epochs=250, filename="{epoch}")
         latest_ckpt = ModelCheckpoint(every_n_epochs=10, save_top_k=1, filename="last")
         pred_writer = WriteSegFromLogits(output_dir=self.segmentation_output_dir, write_interval="batch")

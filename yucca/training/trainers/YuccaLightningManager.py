@@ -181,7 +181,8 @@ if __name__ == "__main__":
         folds="0",
         ckpt_path=path,
     )
-    Manager.run_training()
+
+    # Manager.run_training()
     # Manager.predict_folder(
     #    input_folder="/home/zcr545/YuccaData/yucca_raw_data/Task001_OASIS/imagesTs",
     #    output_folder="/home/zcr545/YuccaData/yucca_predictions",
