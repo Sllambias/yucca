@@ -141,7 +141,7 @@ class YuccaLightningManager:
         self.trainer.fit(
             model=self.model_module,
             datamodule=self.data_module,
-            ckpt_path=self.ckpt_path,
+            ckpt_path="last",
         )
 
     def predict_folder(

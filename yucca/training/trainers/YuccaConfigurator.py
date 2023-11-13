@@ -59,7 +59,62 @@ class YuccaConfigurator:
 
         # Now run the setup
         self.setup_paths_and_plans()
-        self.setup_train_params()
+        self.setup_data_params()
+        self.setup_loggers()
+        self.setup_callbacks()
+
+    @property
+    def train_split(self):
+        # We do not want to make "self.load_splits" a part of the default pipeline, since many
+        # test sets will not have a training set and thus no splits. E.g. training on
+        # DatasetA with a training set and running inference on DatasetB with no training set.
+        if not self._train_split:
+            self.load_splits()
+        return self._train_split
+
+    @property
+    def val_split(self):
+        if not self._val_split:
+            self.load_splits()
+        return self._val_split
+
+    @property
+    def version(self) -> Union[None, int]:
+        # Check if we want to continue from the newest version and if any previous version exists.
+        # If so the number of the newest version is returned. Otherwise None is returned.
+        # If None is returned a new version will be created.
+        if self.continue_from_newest_version:
+            previous_versions = subdirs(self.outpath, join=False)
+            if previous_versions:
+                self._version = int(max([i.split("_")[-1] for i in previous_versions]))
+        return self._version
+
+    def setup_loggers(self):
+        if not self.logging:
+            self.loggers = []
+        else:
+            csvlogger = CSVLogger(save_dir=self.outpath, name=None, version=self.version)
+
+            wandb_logger = WandbLogger(
+                name=f"version_{csvlogger.version}",
+                save_dir=join(self.outpath, f"version_{csvlogger.version}"),
+                project="Yucca",
+                group=self.task,
+                log_model="all",
+            )
+
+            txtlogger = TXTLogger(
+                save_dir=self.outpath,
+                name=f"version_{csvlogger.version}",
+                steps_per_epoch=250,
+            )
+            self.loggers = [csvlogger, wandb_logger, txtlogger]
+
+    def setup_callbacks(self):
+        best_ckpt = ModelCheckpoint(monitor="val_dice", save_top_k=1, filename="model_best")
+        interval_ckpt = ModelCheckpoint(every_n_epochs=250, filename="model_{epoch}")
+        pred_writer = WriteSegFromLogits(output_dir=self.segmentation_output_dir, write_interval="batch")
+        self.callbacks = [best_ckpt, interval_ckpt, pred_writer]
 
     def setup_paths_and_plans(self):
         self.train_data_dir = join(yucca_preprocessed, self.task, self.planner)
@@ -74,73 +129,10 @@ class YuccaConfigurator:
         self.plans_path = join(yucca_preprocessed, self.task, self.planner, self.planner + "_plans.json")
         self.plans = load_json(self.plans_path)
 
-    @property
-    def val_split(self):
-        if not self._val_split:
-            self.setup_splits()
-        return self._val_split
-
-    @property
-    def train_split(self):
-        if not self._train_split:
-            self.setup_splits()
-        return self._train_split
-
-    @property
-    def version(self) -> Union[None, int]:
-        # Here we check if we want to continue from the newest version
-        # And if it exists. If so the number of the newest version is returned
-        # Otherwise None is returned.
-        # If None is returned we create a new version.
-        if self.continue_from_newest_version:
-            previous_versions = subdirs(self.outpath, join=False)
-            if previous_versions:
-                self._version = int(max([i.split("_")[-1] for i in previous_versions]))
-        return self._version
-
-    @property
-    def loggers(self):
-        if not self.logging:
-            return []
-        csvlogger = CSVLogger(save_dir=self.outpath, name=None, version=self.version)
-
-        wandb_logger = WandbLogger(
-            name=f"version_{csvlogger.version}",
-            save_dir=join(self.outpath, f"version_{csvlogger.version}"),
-            project="Yucca",
-            group=self.task,
-            log_model="all",
-        )
-
-        txtlogger = TXTLogger(
-            save_dir=self.outpath,
-            name=f"version_{csvlogger.version}",
-            steps_per_epoch=250,
-        )
-        return [csvlogger, wandb_logger, txtlogger]
-
-    @property
-    def callbacks(self):
-        best_ckpt = ModelCheckpoint(monitor="val_dice", save_top_k=1, filename="model_best")
-        interval_ckpt = ModelCheckpoint(every_n_epochs=250, filename="model_epoch_{epoch}")
-        pred_writer = WriteSegFromLogits(output_dir=self.segmentation_output_dir, write_interval="batch")
-        return [best_ckpt, interval_ckpt, pred_writer]
-
-    def setup_splits(self):
-        # Load splits file or create it if not found (see: "split_data").
-        splits_file = join(yucca_preprocessed, self.task, "splits.pkl")
-        if not isfile(splits_file):
-            self.split_data(splits_file)
-
-        splits_file = load_pickle(join(yucca_preprocessed, self.task, "splits.pkl"))
-        self._train_split = splits_file[int(self.folds)]["train"]
-        self._val_split = splits_file[int(self.folds)]["val"]
-
-    def setup_train_params(self):
-        # First check if we want to continue from newest version and if any versions exist
-        print(self.version)
-        print(isfile(join(self.outpath, f"version_{self.version}", "hparams.yaml")))
-
+    def setup_data_params(self):
+        # (1) check if previous versions exist
+        # (2) check if we want to continue from this
+        # (3) check if hparams were created for the previous version
         if (
             self.version is not None
             and self.continue_from_newest_version
@@ -148,11 +140,11 @@ class YuccaConfigurator:
         ):
             print("Loading hparams.yaml")
             hparams = load_yaml(join(self.outpath, f"version_{self.version}", "hparams.yaml"))
-            self.num_classes = hparams["configurator"]["num_classes"]
-            self.num_modalities = hparams["num_modalities"]
-            self.batch_size = hparams["batch_size"]
-            self.patch_size = hparams["patch_size"]
-            self.initial_patch_size = hparams["initial_patch_size"]
+            self.num_classes = int(hparams["configurator"]["num_classes"])
+            self.num_modalities = int(hparams["configurator"]["num_modalities"])
+            self.batch_size = int(hparams["configurator"]["batch_size"])
+            self.patch_size = [int(p) for p in hparams["configurator"]["patch_size"]]
+            self.initial_patch_size = [int(p) for p in hparams["configurator"]["initial_patch_size"]]
         else:
             print("constructing new params")
             self.num_classes = len(self.plans["dataset_properties"]["classes"])
@@ -170,6 +162,16 @@ class YuccaConfigurator:
                     max_memory_usage_in_gb=self.max_vram,
                 )
             self.initial_patch_size = get_max_rotated_size(self.patch_size)
+
+    def load_splits(self):
+        # Load splits file or create it if not found (see: "split_data").
+        splits_file = join(yucca_preprocessed, self.task, "splits.pkl")
+        if not isfile(splits_file):
+            self.split_data(splits_file)
+
+        splits_file = load_pickle(join(yucca_preprocessed, self.task, "splits.pkl"))
+        self._train_split = splits_file[int(self.folds)]["train"]
+        self._val_split = splits_file[int(self.folds)]["val"]
 
     def split_data(self, splits_file):
         splits = []
