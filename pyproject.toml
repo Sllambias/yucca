@@ -43,6 +43,11 @@ test = [
     'mypy>=1.6.0',
 ]
 
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+
 [project.scripts]
 yucca_preprocess = 'yucca.run.run_preprocessing:main'
 yucca_train = 'yucca.run.run_training:main'
@@ -62,4 +67,4 @@ build-backend = "setuptools.build_meta"
 line-length = 127
 
 [tool.setuptools]
-packages = ["yucca", "tests"]
+packages = ["yucca"]
