@@ -68,3 +68,6 @@ line-length = 127
 
 [tool.setuptools]
 packages = ["yucca"]
+
+[tool.pytest.ini_options]
+pythonpath = "yucca"
