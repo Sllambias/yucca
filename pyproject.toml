@@ -62,4 +62,4 @@ build-backend = "setuptools.build_meta"
 line-length = 127
 
 [tool.setuptools]
-packages = ["yucca"]
+packages = ["yucca", "tests"]
