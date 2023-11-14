@@ -168,7 +168,7 @@ def main():
             current_module="yucca.training",
         )
 
-        assert manager, f"searching for {manager_class} " f"but found: {manager}"
+        assert manager, f"searching for {manager_name} " f"but found: {manager}"
         assert issubclass(manager, (YuccaManager, YuccaLightningManager)), "Trainer is not a subclass of YuccaTrainer."
 
         print(f"{'Using manager: ':25} {manager}")
