@@ -8,6 +8,7 @@ from batchgenerators.utilities.file_and_folder_operations import (
     load_json,
     load_pickle,
     isfile,
+    isdir,
     save_pickle,
     subfiles,
     subdirs,
@@ -21,7 +22,7 @@ from yuccalib.network_architectures.utils.model_memory_estimation import (
     find_optimal_tensor_dims,
 )
 from yuccalib.utils.files_and_folders import WriteSegFromLogits, load_yaml
-from yuccalib.evaluation.loggers import TXTLogger
+from yuccalib.evaluation.loggers import YuccaLogger
 from typing import Union
 
 
@@ -29,8 +30,8 @@ class YuccaConfigurator:
     def __init__(
         self,
         continue_from_newest_version: bool = True,
+        disable_logging: bool = False,
         folds: str = "0",
-        enable_logging: bool = True,
         max_vram: int = 12,
         manager_name: str = None,
         model_dimensions: str = "3D",
@@ -42,7 +43,7 @@ class YuccaConfigurator:
     ):
         self.continue_from_newest_version = continue_from_newest_version
         self.folds = folds
-        self.enable_logging = enable_logging
+        self.disable_logging = disable_logging
         self.max_vram = max_vram
         self.model_dimensions = model_dimensions
         self.model_name = model_name
@@ -80,68 +81,80 @@ class YuccaConfigurator:
 
     @property
     def version(self) -> Union[None, int]:
-        # We only want to get the version once.
-        if not self._version:
-            # Check if any previous version exists.
-            previous_versions = subdirs(self.base_outpath, join=False)
+        if self._version:
+            return self._version
 
-            # If no previous version exists we just return version 0
-            if not previous_versions:
-                self._version = 0
+        # If the dir doesn't exist we return version 0
+        if not isdir(self.outpath):
+            self._version = 0
+            return self._version
 
-            # If previous version(s) exists we can either (1) continue from the newest or
-            # (2) create the next version
-            if previous_versions:
-                newest_version = int(max([i.split("_")[-1] for i in previous_versions]))
-                if self.continue_from_newest_version:
-                    self._version = newest_version
-                else:
-                    self._version = newest_version + 1
-        return self._version
+        # The dir exists. Check if any previous version exists in dir.
+        previous_versions = subdirs(self.outpath, join=False)
+
+        # If no previous version exists we return version 0
+        if not previous_versions:
+            self._version = 0
+            return self._version
+
+        # If previous version(s) exists we can either (1) continue from the newest or
+        # (2) create the next version
+        if previous_versions:
+            newest_version = int(max([i.split("_")[-1] for i in previous_versions]))
+            if self.continue_from_newest_version:
+                self._version = newest_version
+            else:
+                self._version = newest_version + 1
+            return self._version
 
     def setup_loggers(self):
         # The CSVLogger is the barebones logger needed to save hparams.yaml and set the proper
         # outpath that will be expected by the pipeline for continued training etc.
         # It should generally never be disabled.
         self.loggers = []
-        self.loggers.append(CSVLogger(save_dir=self.base_outpath, name=None, version=self.version))
-
-        if self.enable_logging:
+        # self.loggers.append(CSVLogger(save_dir=self.outpath, name=None, version=self.version))
+        self.loggers.append(
+            YuccaLogger(
+                disable_logging=self.disable_logging,
+                save_dir=self.outpath,
+                name=None,
+                version=self.version,
+                steps_per_epoch=250,
+            )
+        )
+        if not self.disable_logging:
             self.loggers.append(
                 WandbLogger(
                     name=f"version_{self.version}",
-                    save_dir=join(self.base_outpath, f"version_{self.version}"),
+                    save_dir=join(self.outpath, f"version_{self.version}"),
+                    version=self.version,
                     project="Yucca",
                     group=self.task,
                     log_model="all",
                 )
             )
 
-            self.loggers.append(
-                txtlogger=TXTLogger(
-                    save_dir=self.base_outpath,
-                    name=f"version_{self.version}",
-                    steps_per_epoch=250,
-                )
-            )
-
     def setup_callbacks(self):
-        best_ckpt = ModelCheckpoint(monitor="val_dice", mode="max", save_top_k=1, filename="best")
-        interval_ckpt = ModelCheckpoint(every_n_epochs=250, filename="{epoch}")
-        latest_ckpt = ModelCheckpoint(every_n_epochs=10, save_top_k=1, filename="last")
+        best_ckpt = ModelCheckpoint(monitor="val_loss", mode="min", save_top_k=1, filename="best", enable_version_counter=True)
+        interval_ckpt = ModelCheckpoint(every_n_epochs=250, filename="{epoch}", enable_version_counter=False)
+        latest_ckpt = ModelCheckpoint(
+            every_n_epochs=3,
+            save_top_k=1,
+            filename="last",
+            enable_version_counter=False,
+        )
         pred_writer = WriteSegFromLogits(output_dir=self.segmentation_output_dir, write_interval="batch")
         self.callbacks = [best_ckpt, interval_ckpt, latest_ckpt, pred_writer]
 
     def setup_paths_and_plans(self):
         self.train_data_dir = join(yucca_preprocessed, self.task, self.planner)
-        self.base_outpath = join(
+        self.outpath = join(
             yucca_models,
             self.task,
             self.model_name + "__" + self.model_dimensions,
             self.manager_name + "__" + self.planner,
             f"fold_{self.folds}",
         )
-        self.outpath = join(self.base_outpath, f"version_{self.version}")
         maybe_mkdir_p(self.outpath)
         self.plans_path = join(yucca_preprocessed, self.task, self.planner, self.planner + "_plans.json")
         self.plans = load_json(self.plans_path)

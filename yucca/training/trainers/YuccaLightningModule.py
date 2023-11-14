@@ -62,7 +62,6 @@ class YuccaLightningModule(L.LightningModule):
             class_name=self.model_name,
             current_module="yuccalib.network_architectures",
         )
-
         if self.model_dimensions == "3D":
             conv_op = torch.nn.Conv3d
             norm_op = torch.nn.InstanceNorm3d

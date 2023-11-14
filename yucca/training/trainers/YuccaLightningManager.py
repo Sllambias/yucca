@@ -50,8 +50,8 @@ class YuccaLightningManager:
         self,
         ckpt_path: str = None,
         continue_training: bool = None,
-        enable_logging: bool = True,
         deep_supervision: bool = False,
+        disable_logging: bool = False,
         folds: str = "0",
         model_dimensions: str = "3D",
         model_name: str = "TinyUNet",
@@ -63,8 +63,8 @@ class YuccaLightningManager:
     ):
         self.continue_training = continue_training
         self.ckpt_path = ckpt_path
-        self.enable_logging = enable_logging
         self.deep_supervision = deep_supervision
+        self.disable_logging = disable_logging
         self.folds = folds
         self.model_dimensions = model_dimensions
         self.model_name = model_name
@@ -101,7 +101,7 @@ class YuccaLightningManager:
         # Here we configure the outpath we will use to store model files and metadata
         # along with the path to plans file which will also be loaded.
         configurator = YuccaConfigurator(
-            enable_logging=self.enable_logging,
+            disable_logging=self.disable_logging,
             folds=self.folds,
             manager_name=self.name,
             model_dimensions=self.model_dimensions,
@@ -137,7 +137,7 @@ class YuccaLightningManager:
             limit_val_batches=self.val_batches_per_step,
             logger=configurator.loggers,
             precision=self.precision,
-            enable_progress_bar=not self.enable_logging,
+            enable_progress_bar=not self.disable_logging,
             max_epochs=self.max_epochs,
             **self.kwargs,
         )
@@ -173,16 +173,16 @@ if __name__ == "__main__":
     # path = "/home/zcr545/YuccaData/yucca_models/Task001_OASIS/UNet__3D/YuccaPlanner/YuccaLightningManager/0/2023_11_08_15_19_14/checkpoints/test_ckpt.ckpt"
     path = None
     Manager = YuccaLightningManager(
-        enable_logging=False,
-        task="Task001_OASIS",
+        disable_logging=True,
+        ckpt_path=path,
+        folds="0",
         model_name="TinyUNet",
         model_dimensions="2D",
         num_workers=0,
-        folds="0",
-        ckpt_path=path,
+        task="Task001_OASIS",
     )
 
-    # Manager.run_training()
+    Manager.run_training()
     # Manager.predict_folder(
     #    input_folder="/home/zcr545/YuccaData/yucca_raw_data/Task001_OASIS/imagesTs",
     #    output_folder="/home/zcr545/YuccaData/yucca_predictions",
