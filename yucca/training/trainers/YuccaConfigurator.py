@@ -138,7 +138,7 @@ class YuccaConfigurator:
         best_ckpt = ModelCheckpoint(monitor="val_loss", mode="min", save_top_k=1, filename="best", enable_version_counter=True)
         interval_ckpt = ModelCheckpoint(every_n_epochs=250, filename="{epoch}", enable_version_counter=False)
         latest_ckpt = ModelCheckpoint(
-            every_n_epochs=3,
+            every_n_epochs=15,
             save_top_k=1,
             filename="last",
             enable_version_counter=False,
