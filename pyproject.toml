@@ -14,7 +14,6 @@ classifiers = [
 ]
 keywords = ['deep learning', 'image segmentation', 'medical image analysis','medical image segmentation']
 
-
 dependencies = [
     "yuccalib@git+https://github.com/Sllambias/yuccalib",
     "batchgenerators>=0.23",
@@ -44,6 +43,7 @@ test = [
 ]
 
 [tool.pytest.ini_options]
+pythonpath = "yucca"
 addopts = [
     "--import-mode=importlib",
 ]
@@ -68,6 +68,3 @@ line-length = 127
 
 [tool.setuptools]
 packages = ["yucca"]
-
-[tool.pytest.ini_options]
-pythonpath = "yucca"
