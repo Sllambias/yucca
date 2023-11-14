@@ -92,11 +92,14 @@ class YuccaLightningManager:
         segmentation_output_dir: str = "./",
     ):
         if stage == "fit":
-            checkpoint_to_load = "last"
+            # do something training related
+            # the stage param will disappear if nothing is found to be relevant here
+            pass
         if stage == "test":
             raise NotImplementedError
         if stage == "predict":
-            checkpoint_to_load = "best"
+            # do something inference related
+            pass
 
         # Here we configure the outpath we will use to store model files and metadata
         # along with the path to plans file which will also be loaded.
