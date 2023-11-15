@@ -3,15 +3,7 @@ import numpy as np
 import torch
 import os
 from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle
-
-
 from yuccalib.image_processing.transforms.cropping_and_padding import CropPad
-from torchvision import transforms
-from yuccalib.image_processing.transforms.formatting import (
-    AddBatchDimension,
-    RemoveBatchDimension,
-    NumpyToTorch,
-)
 from torchvision import transforms
 from yuccalib.image_processing.transforms.formatting import (
     AddBatchDimension,
@@ -85,7 +77,6 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
 
     def _transform(self, data_dict, case):
         metadata = self.load_and_maybe_keep_pickle(case[: -len(".npy")] + ".pkl")
-
         data_dict = self.croppad(data_dict, metadata)
         if self.composed_transforms is not None:
             data_dict = self.composed_transforms(data_dict)

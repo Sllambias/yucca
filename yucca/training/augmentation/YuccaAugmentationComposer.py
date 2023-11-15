@@ -1,4 +1,4 @@
-#%%
+# %%
 from torchvision import transforms
 from yuccalib.image_processing.transforms.formatting import (
     AddBatchDimension,
@@ -183,8 +183,10 @@ class YuccaAugmentationComposer:
             ]
         )
         return val_transforms
-#%%
-if __name__ == '__main__':
+
+
+# %%
+if __name__ == "__main__":
     x = YuccaAugmentationComposer()
 
 # %%
