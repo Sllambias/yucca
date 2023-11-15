@@ -69,13 +69,13 @@ class YuccaConfigurator:
         # We do not want to make "self.load_splits" a part of the default pipeline, since many
         # test sets will not have a training set and thus no splits. E.g. training on
         # DatasetA with a training set and running inference on DatasetB with no training set.
-        if not self._train_split:
+        if self._train_split is None:
             self.load_splits()
         return self._train_split
 
     @property
     def val_split(self):
-        if not self._val_split:
+        if self._val_split is None:
             self.load_splits()
         return self._val_split
 

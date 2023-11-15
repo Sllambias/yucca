@@ -66,6 +66,7 @@ class YuccaDataModule(pl.LightningDataModule):
             )
 
         if stage == "predict":
+            assert self.pred_data_dir is not None, "set a pred_data_dir for inference to work"
             # This dataset contains ONLY the images (and not the labels)
             # It will return a tuple of (case, case_id)
             self.pred_dataset = YuccaTestDataset(self.pred_data_dir, patch_size=self.patch_size)
