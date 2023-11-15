@@ -27,7 +27,6 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         self.already_loaded_cases = {}
 
         self.patch_size = patch_size
-        self.seg_dtype = seg_dtype
         self.composed_transforms = composed_transforms
 
     def load_and_maybe_keep_pickle(self, picklepath):

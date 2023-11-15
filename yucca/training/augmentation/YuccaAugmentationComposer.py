@@ -2,7 +2,6 @@ from torchvision import transforms
 from yuccalib.image_processing.transforms.formatting import (
     AddBatchDimension,
     RemoveBatchDimension,
-    NumpyToTorch,
 )
 from yuccalib.image_processing.transforms.BiasField import BiasField
 from yuccalib.image_processing.transforms.Blur import Blur
