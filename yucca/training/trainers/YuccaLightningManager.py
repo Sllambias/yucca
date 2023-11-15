@@ -1,5 +1,6 @@
 # %%
 import lightning as L
+from typing import Literal
 from yucca.training.augmentation.YuccaAugmentationComposer import (
     YuccaAugmentationComposer,
 )
@@ -47,24 +48,28 @@ class YuccaLightningManager:
 
     def __init__(
         self,
+        ckpt_path: str = None,
         continue_training: bool = None,
         deep_supervision: bool = False,
+        disable_logging: bool = False,
         folds: str = "0",
         model_dimensions: str = "3D",
         model_name: str = "TinyUNet",
+        num_workers: int = 8,
         planner: str = "YuccaPlanner",
         precision: str = "16-mixed",
         task: str = None,
-        ckpt_path: str = None,
         **kwargs,
     ):
         self.continue_training = continue_training
         self.ckpt_path = ckpt_path
         self.deep_supervision = deep_supervision
+        self.disable_logging = disable_logging
         self.folds = folds
         self.model_dimensions = model_dimensions
         self.model_name = model_name
         self.name = self.__class__.__name__
+        self.num_workers = num_workers
         self.planner = planner
         self.precision = precision
         self.task = task
@@ -82,19 +87,31 @@ class YuccaLightningManager:
 
     def initialize(
         self,
+        stage: Literal["fit", "test", "predict"],
         pred_data_dir: str = None,
         segmentation_output_dir: str = "./",
     ):
+        if stage == "fit":
+            # do something training related
+            # the stage param will disappear if nothing is found to be relevant here
+            pass
+        if stage == "test":
+            raise NotImplementedError
+        if stage == "predict":
+            # do something inference related
+            pass
+
         # Here we configure the outpath we will use to store model files and metadata
         # along with the path to plans file which will also be loaded.
         configurator = YuccaConfigurator(
-            tiny_patch=True if self.model_name == "TinyUNet" else False,
+            disable_logging=self.disable_logging,
             folds=self.folds,
             manager_name=self.name,
             model_dimensions=self.model_dimensions,
             model_name=self.model_name,
-            segmentation_output_dir=segmentation_output_dir,
             planner=self.planner,
+            segmentation_output_dir=segmentation_output_dir,
+            tiny_patch=True if self.model_name == "TinyUNet" else False,
             task=self.task,
         )
 
@@ -104,20 +121,16 @@ class YuccaLightningManager:
         )
 
         self.model_module = YuccaLightningModule(
-            model_name=self.model_name,
-            model_dimensions=self.model_dimensions,
-            num_classes=configurator.num_classes,
-            num_modalities=configurator.num_modalities,
-            patch_size=configurator.patch_size,
-            plans_path=configurator.plans_path,
+            configurator=configurator,
             test_time_augmentation=bool(augmenter.mirror_p_per_sample),
         )
 
         self.data_module = YuccaDataModule(
-            configurator=configurator,
-            pred_data_dir=pred_data_dir,
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
+            configurator=configurator,
+            num_workers=self.num_workers,
+            pred_data_dir=pred_data_dir,
         )
 
         self.trainer = L.Trainer(
@@ -127,17 +140,17 @@ class YuccaLightningManager:
             limit_val_batches=self.val_batches_per_step,
             logger=configurator.loggers,
             precision=self.precision,
-            enable_progress_bar=False,
+            enable_progress_bar=not self.disable_logging,
             max_epochs=self.max_epochs,
             **self.kwargs,
         )
 
     def run_training(self):
-        self.initialize()
+        self.initialize(stage="fit")
         self.trainer.fit(
             model=self.model_module,
             datamodule=self.data_module,
-            ckpt_path=self.ckpt_path,
+            ckpt_path="last",
         )
 
     def predict_folder(
@@ -148,6 +161,7 @@ class YuccaLightningManager:
         overwrite=False,  # Not used currently
     ):
         self.initialize(
+            stage="predict",
             pred_data_dir=input_folder,
             segmentation_output_dir=output_folder,
         )
@@ -159,21 +173,17 @@ class YuccaLightningManager:
 
 
 if __name__ == "__main__":
-    import warnings
-    import logging
-
-    pl_logger = logging.getLogger("lightning")
-    pl_logger.propagate = False
-    warnings.filterwarnings("ignore", category=DeprecationWarning)
     # path = "/home/zcr545/YuccaData/yucca_models/Task001_OASIS/UNet__3D/YuccaPlanner/YuccaLightningManager/0/2023_11_08_15_19_14/checkpoints/test_ckpt.ckpt"
     path = None
     Manager = YuccaLightningManager(
-        task="Task001_OASIS",
-        model_name="UNet",
-        model_dimensions="2D",
+        disable_logging=True,
         ckpt_path=path,
+        folds="0",
+        model_name="TinyUNet",
+        model_dimensions="2D",
+        num_workers=0,
+        task="Task001_OASIS",
     )
-    Manager.initialize()
 
     Manager.run_training()
     # Manager.predict_folder(

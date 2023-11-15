@@ -1,5 +1,6 @@
 import lightning as pl
 import torchvision
+from typing import Literal
 from torch.utils.data import DataLoader
 from batchgenerators.utilities.file_and_folder_operations import join
 from yucca.training.data_loading.YuccaDataset import YuccaTestDataset, YuccaTrainDataset
@@ -11,9 +12,10 @@ class YuccaDataModule(pl.LightningDataModule):
     def __init__(
         self,
         configurator: YuccaConfigurator,
-        pred_data_dir: str = None,
         composed_train_transforms: torchvision.transforms.Compose = None,
         composed_val_transforms: torchvision.transforms.Compose = None,
+        num_workers: int = 8,
+        pred_data_dir: str = None,
     ):
         super().__init__()
         # First set our configurator object
@@ -35,14 +37,15 @@ class YuccaDataModule(pl.LightningDataModule):
         self.pred_data_dir = pred_data_dir
 
         # Set default values
-        self.num_workers = 8
+        self.num_workers = num_workers
+        self.val_num_workers = num_workers // 2 if num_workers > 0 else num_workers
         self.sampler = InfiniteRandomSampler
 
     def prepare_data(self):
         self.train_samples = [join(self.train_data_dir, i) for i in self.train_split]
         self.val_samples = [join(self.train_data_dir, i) for i in self.val_split]
 
-    def setup(self, stage: str = "fit"):
+    def setup(self, stage: Literal["fit", "test", "predict"]):
         expected_stages = ["fit", "test", "predict"]
         assert stage in expected_stages, "unexpected stage. " f"Expected: {expected_stages} and found: {stage}"
 
@@ -63,6 +66,7 @@ class YuccaDataModule(pl.LightningDataModule):
             )
 
         if stage == "predict":
+            assert self.pred_data_dir is not None, "set a pred_data_dir for inference to work"
             # This dataset contains ONLY the images (and not the labels)
             # It will return a tuple of (case, case_id)
             self.pred_dataset = YuccaTestDataset(self.pred_data_dir, patch_size=self.patch_size)
@@ -73,7 +77,7 @@ class YuccaDataModule(pl.LightningDataModule):
             self.train_dataset,
             num_workers=self.num_workers,
             batch_size=self.batch_size,
-            persistent_workers=True,
+            persistent_workers=bool(self.num_workers),
             sampler=train_sampler,
         )
 
@@ -81,9 +85,9 @@ class YuccaDataModule(pl.LightningDataModule):
         val_sampler = self.sampler(self.val_dataset)
         return DataLoader(
             self.val_dataset,
-            num_workers=self.num_workers // 2,
+            num_workers=self.val_num_workers,
             batch_size=self.batch_size,
-            persistent_workers=True,
+            persistent_workers=bool(self.val_num_workers),
             sampler=val_sampler,
         )
 

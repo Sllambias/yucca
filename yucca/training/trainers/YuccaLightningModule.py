@@ -8,6 +8,7 @@ from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Dice
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
+from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 from yuccalib.utils.files_and_folders import recursive_find_python_class
 from yuccalib.loss_and_optim.loss_functions.CE import CE
 from yuccalib.loss_and_optim.loss_functions.nnUNet_losses import DiceCE
@@ -17,26 +18,24 @@ from yuccalib.utils.kwargs import filter_kwargs
 class YuccaLightningModule(L.LightningModule):
     def __init__(
         self,
+        configurator=YuccaConfigurator,
         learning_rate: float = 1e-3,
         loss_fn: nn.Module = DiceCE,
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler = torch.optim.lr_scheduler.CosineAnnealingLR,
-        model_name: str = "UNet",
-        model_dimensions: str = "3D",
         momentum: float = 0.9,
-        num_modalities: int = 1,
-        num_classes: int = 1,
         optimizer: torch.optim.Optimizer = torch.optim.SGD,
-        patch_size: list | tuple = None,
-        plans_path: str = None,
         sliding_window_overlap: float = 0.5,
         test_time_augmentation: bool = False,
     ):
         super().__init__()
-        # Model parameters
-        self.model_name = model_name
-        self.model_dimensions = model_dimensions
-        self.num_classes = num_classes
-        self.num_modalities = num_modalities
+        # Extract parameters from the configurator
+        self.num_classes = configurator.num_classes
+        self.num_modalities = configurator.num_modalities
+        self.plans_path = configurator.plans_path
+        self.model_name = configurator.model_name
+        self.model_dimensions = configurator.model_dimensions
+        self.patch_size = configurator.patch_size
+        self.initial_patch_size = configurator.initial_patch_size
 
         # Loss, optimizer and scheduler parameters
         self.lr = learning_rate
@@ -51,21 +50,18 @@ class YuccaLightningModule(L.LightningModule):
 
         # Inference
         self.sliding_window_overlap = sliding_window_overlap
-        self.patch_size = patch_size
-        self.plans_path = plans_path
         self.test_time_augmentation = test_time_augmentation
 
         # Save params and start training
         self.save_hyperparameters()
-        self.initialize()
+        self.load_model()
 
-    def initialize(self):
+    def load_model(self):
         self.model = recursive_find_python_class(
             folder=[join(yuccalib.__path__[0], "network_architectures")],
             class_name=self.model_name,
             current_module="yuccalib.network_architectures",
         )
-
         if self.model_dimensions == "3D":
             conv_op = torch.nn.Conv3d
             norm_op = torch.nn.InstanceNorm3d
