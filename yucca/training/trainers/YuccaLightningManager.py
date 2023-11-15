@@ -58,6 +58,7 @@ class YuccaLightningManager:
         num_workers: int = 8,
         planner: str = "YuccaPlanner",
         precision: str = "16-mixed",
+        step_logging: bool = False,
         task: str = None,
         **kwargs,
     ):
@@ -72,6 +73,7 @@ class YuccaLightningManager:
         self.num_workers = num_workers
         self.planner = planner
         self.precision = precision
+        self.step_logging = step_logging
         self.task = task
         self.kwargs = kwargs
 
@@ -122,6 +124,7 @@ class YuccaLightningManager:
 
         self.model_module = YuccaLightningModule(
             configurator=configurator,
+            step_logging=self.step_logging,
             test_time_augmentation=bool(augmenter.mirror_p_per_sample),
         )
 
@@ -176,7 +179,8 @@ if __name__ == "__main__":
     # path = "/home/zcr545/YuccaData/yucca_models/Task001_OASIS/UNet__3D/YuccaPlanner/YuccaLightningManager/0/2023_11_08_15_19_14/checkpoints/test_ckpt.ckpt"
     path = None
     Manager = YuccaLightningManager(
-        disable_logging=True,
+        disable_logging=False,
+        step_logging=True,
         ckpt_path=path,
         folds="0",
         model_name="TinyUNet",
