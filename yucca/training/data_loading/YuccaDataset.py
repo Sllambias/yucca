@@ -3,16 +3,32 @@ import numpy as np
 import torch
 import os
 from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle
+
 from yuccalib.image_processing.transforms.cropping_and_padding import CropPad
+from torchvision import transforms
+from yuccalib.image_processing.transforms.formatting import (
+    AddBatchDimension,
+    RemoveBatchDimension,
+    NumpyToTorch,
+)
 
 
 class YuccaTrainDataset(torch.utils.data.Dataset):
-    def __init__(self, preprocessed_data_dir: list, patch_size: list | tuple, keep_in_ram=False, composed_transforms=None):
+    def __init__(
+        self,
+        preprocessed_data_dir: list,
+        patch_size: list | tuple,
+        keep_in_ram=False,
+        seg_dtype: type = int,
+        composed_transforms=None,
+    ):
         self.all_cases = preprocessed_data_dir
         self.keep_in_ram = keep_in_ram
-        self.croppad = CropPad(patch_size=patch_size, p_oversample_foreground=0.33)
-        self.composed_transforms = composed_transforms
         self.already_loaded_cases = {}
+
+        self.patch_size = patch_size
+        self.seg_dtype = seg_dtype
+        self.composed_transforms = composed_transforms
 
     def load_and_maybe_keep_pickle(self, picklepath):
         if not self.keep_in_ram:
@@ -55,12 +71,19 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         case = self.all_cases[idx]
         data = self.load_and_maybe_keep_volume(case)
-        metadata = self.load_and_maybe_keep_pickle(case[: -len(".npy")] + ".pkl")
         data_dict = {"image": data[:-1], "seg": data[-1:]}
-        data_dict = self.croppad(data_dict, metadata)
-        if self.composed_transforms:
-            return self.composed_transforms(data_dict)
-        return data_dict
+        return self._transform(data_dict, case)
+
+    def _transform(self, data_dict, case):
+        metadata = self.load_and_maybe_keep_pickle(case[: -len(".npy")] + ".pkl")
+        croppad = CropPad(patch_size=self.patch_size, p_oversample_foreground=0.33)
+        to_torch = NumpyToTorch(seg_dtype=self.seg_dtype)
+
+        data_dict = croppad(data_dict, metadata)
+        if self.composed_transforms is None:
+            data_dict = self.composed_transforms(data_dict)
+
+        return to_torch(data_dict)
 
 
 class YuccaTestDataset(torch.utils.data.Dataset):

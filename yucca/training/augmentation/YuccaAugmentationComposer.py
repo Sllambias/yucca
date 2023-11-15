@@ -27,7 +27,7 @@ from yuccalib.network_architectures.utils.model_memory_estimation import (
 class YuccaAugmentationComposer:
     def __init__(
         self,
-        patch_size: list | tuple = None,
+        patch_size: list | tuple,
         is_2D: bool = False,
         parameter_dict: dict = {},
     ):
@@ -168,7 +168,6 @@ class YuccaAugmentationComposer:
                 # DownsampleSegForDS() if self.deep_supervision else None,
                 # CopyImageToSeg() if self.CopyImageToSeg else None,
                 # Masking() if self.MaskImageForReconstruction else None,
-                NumpyToTorch(seg_dtype=self.seg_dtype),
                 RemoveBatchDimension(),
             ]
         )
@@ -177,11 +176,10 @@ class YuccaAugmentationComposer:
     def compose_val_transforms(self):
         val_transforms = transforms.Compose(
             [
-                AddBatchDimension(),
+                # AddBatchDimension(),
                 # CopyImageToSeg() if self.CopyImageToSeg else None,
                 # Masking() if self.MaskImageForReconstruction else None,
-                NumpyToTorch(seg_dtype=self.seg_dtype),
-                RemoveBatchDimension(),
+                # RemoveBatchDimension(),
             ]
         )
         return val_transforms
