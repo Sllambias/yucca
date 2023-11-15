@@ -91,6 +91,7 @@ class YuccaLightningManager:
         self,
         stage: Literal["fit", "test", "predict"],
         pred_data_dir: str = None,
+        save_softmax: bool = False,
         segmentation_output_dir: str = "./",
     ):
         if stage == "fit":
@@ -113,6 +114,7 @@ class YuccaLightningManager:
             model_name=self.model_name,
             planner=self.planner,
             segmentation_output_dir=segmentation_output_dir,
+            save_softmax=save_softmax,
             tiny_patch=True if self.model_name == "TinyUNet" else False,
             task=self.task,
         )
@@ -160,13 +162,13 @@ class YuccaLightningManager:
         self,
         input_folder,
         output_folder: str = yucca_results,
-        save_softmax=False,  # Not used currently
-        overwrite=False,  # Not used currently
+        save_softmax=False,
     ):
         self.initialize(
             stage="predict",
             pred_data_dir=input_folder,
             segmentation_output_dir=output_folder,
+            save_softmax=save_softmax,
         )
         self.trainer.predict(
             model=self.model_module,

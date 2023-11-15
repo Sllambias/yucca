@@ -38,6 +38,7 @@ class YuccaConfigurator:
         model_name: str = "UNet",
         planner: str = "YuccaPlanner",
         segmentation_output_dir: str = "./",
+        save_softmax: bool = False,
         task: str = None,
         tiny_patch: bool = False,
     ):
@@ -48,6 +49,7 @@ class YuccaConfigurator:
         self.model_dimensions = model_dimensions
         self.model_name = model_name
         self.manager_name = manager_name
+        self.save_softmax = save_softmax
         self.segmentation_output_dir = segmentation_output_dir
         self.planner = planner
         self.task = task
@@ -143,7 +145,9 @@ class YuccaConfigurator:
             filename="last",
             enable_version_counter=False,
         )
-        pred_writer = WriteSegFromLogits(output_dir=self.segmentation_output_dir, write_interval="batch")
+        pred_writer = WriteSegFromLogits(
+            output_dir=self.segmentation_output_dir, save_softmax=self.save_softmax, write_interval="batch"
+        )
         self.callbacks = [best_ckpt, interval_ckpt, latest_ckpt, pred_writer]
 
     def setup_paths_and_plans(self):
