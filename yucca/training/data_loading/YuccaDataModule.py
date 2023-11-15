@@ -55,7 +55,7 @@ class YuccaDataModule(pl.LightningDataModule):
                 self.train_samples,
                 keep_in_ram=True,
                 composed_transforms=self.composed_train_transforms,
-                patch_size=self.initial_patch_size,
+                patch_size=self.pre_aug_patch_size,
             )
 
             self.val_dataset = YuccaTrainDataset(
