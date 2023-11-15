@@ -60,8 +60,8 @@ build-backend = "setuptools.build_meta"
 [tool.black]
 line-length = 127
 
-[tool.setuptools]
-packages = ["yucca"]
+# [tool.setuptools]
+# packages = ["yucca"]
 
-[tool.pytest.ini_options]
-pythonpath = "yucca"
+# [tool.pytest.ini_options]
+# pythonpath = "yucca"
