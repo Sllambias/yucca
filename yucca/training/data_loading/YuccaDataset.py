@@ -23,11 +23,14 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         composed_transforms=None,
     ):
         self.all_cases = preprocessed_data_dir
-        self.keep_in_ram = keep_in_ram
-        self.already_loaded_cases = {}
-
-        self.patch_size = patch_size
         self.composed_transforms = composed_transforms
+        self.keep_in_ram = keep_in_ram
+        self.patch_size = patch_size
+        self.seg_dtype = seg_dtype
+
+        self.already_loaded_cases = {}
+        self.croppad = CropPad(patch_size=self.patch_size, p_oversample_foreground=0.33)
+        self.to_torch = NumpyToTorch(seg_dtype=self.seg_dtype)
 
     def load_and_maybe_keep_pickle(self, picklepath):
         if not self.keep_in_ram:
@@ -75,14 +78,12 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
 
     def _transform(self, data_dict, case):
         metadata = self.load_and_maybe_keep_pickle(case[: -len(".npy")] + ".pkl")
-        croppad = CropPad(patch_size=self.patch_size, p_oversample_foreground=0.33)
-        to_torch = NumpyToTorch(seg_dtype=self.seg_dtype)
 
-        data_dict = croppad(data_dict, metadata)
-        if self.composed_transforms is None:
+        data_dict = self.croppad(data_dict, metadata)
+        if self.composed_transforms is not None:
             data_dict = self.composed_transforms(data_dict)
-
-        return to_torch(data_dict)
+        print(data_dict['image'].shape)
+        return self.to_torch(data_dict)
 
 
 class YuccaTestDataset(torch.utils.data.Dataset):
