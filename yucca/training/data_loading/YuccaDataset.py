@@ -4,7 +4,14 @@ import torch
 import os
 from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle
 
+
 from yuccalib.image_processing.transforms.cropping_and_padding import CropPad
+from torchvision import transforms
+from yuccalib.image_processing.transforms.formatting import (
+    AddBatchDimension,
+    RemoveBatchDimension,
+    NumpyToTorch,
+)
 from torchvision import transforms
 from yuccalib.image_processing.transforms.formatting import (
     AddBatchDimension,
@@ -22,6 +29,14 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         seg_dtype: type = int,
         composed_transforms=None,
     ):
+    def __init__(
+        self,
+        preprocessed_data_dir: list,
+        patch_size: list | tuple,
+        keep_in_ram=False,
+        seg_dtype: type = int,
+        composed_transforms=None,
+    ):
         self.all_cases = preprocessed_data_dir
         self.composed_transforms = composed_transforms
         self.keep_in_ram = keep_in_ram
@@ -31,6 +46,9 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         self.already_loaded_cases = {}
         self.croppad = CropPad(patch_size=self.patch_size, p_oversample_foreground=0.33)
         self.to_torch = NumpyToTorch(seg_dtype=self.seg_dtype)
+
+        self.patch_size = patch_size
+        self.composed_transforms = composed_transforms
 
     def load_and_maybe_keep_pickle(self, picklepath):
         if not self.keep_in_ram:
@@ -73,6 +91,10 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         case = self.all_cases[idx]
         data = self.load_and_maybe_keep_volume(case)
+        data_dict = {"image": data[:-1], "seg": data[-1:]}
+        return self._transform(data_dict, case)
+
+    def _transform(self, data_dict, case):
         data_dict = {"image": data[:-1], "seg": data[-1:]}
         return self._transform(data_dict, case)
 
