@@ -1,5 +1,5 @@
 import numpy as np
-from yucca.training.data_loading.samplers import RandomBatchSampler
+from training.data_loading.samplers import RandomBatchSampler
 
 
 def test_inifite_random_sampler():
