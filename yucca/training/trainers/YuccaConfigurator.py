@@ -38,6 +38,7 @@ class YuccaConfigurator:
         model_name: str = "UNet",
         planner: str = "YuccaPlanner",
         segmentation_output_dir: str = "./",
+        save_softmax: bool = False,
         task: str = None,
         tiny_patch: bool = False,
     ):
@@ -48,6 +49,7 @@ class YuccaConfigurator:
         self.model_dimensions = model_dimensions
         self.model_name = model_name
         self.manager_name = manager_name
+        self.save_softmax = save_softmax
         self.segmentation_output_dir = segmentation_output_dir
         self.planner = planner
         self.task = task
@@ -143,7 +145,9 @@ class YuccaConfigurator:
             filename="last",
             enable_version_counter=False,
         )
-        pred_writer = WriteSegFromLogits(output_dir=self.segmentation_output_dir, write_interval="batch")
+        pred_writer = WriteSegFromLogits(
+            output_dir=self.segmentation_output_dir, save_softmax=self.save_softmax, write_interval="batch"
+        )
         self.callbacks = [best_ckpt, interval_ckpt, latest_ckpt, pred_writer]
 
     def setup_paths_and_plans(self):
@@ -174,7 +178,7 @@ class YuccaConfigurator:
             self.num_modalities = int(hparams["configurator"]["num_modalities"])
             self.batch_size = int(hparams["configurator"]["batch_size"])
             self.patch_size = [int(p) for p in hparams["configurator"]["patch_size"]]
-            self.initial_patch_size = [int(p) for p in hparams["configurator"]["initial_patch_size"]]
+            self.pre_aug_patch_size = [int(p) for p in hparams["configurator"]["pre_aug_patch_size"]]
         else:
             print("constructing new params")
             self.num_classes = len(self.plans["dataset_properties"]["classes"])
@@ -191,7 +195,7 @@ class YuccaConfigurator:
                     max_patch_size=self.plans["new_mean_size"],
                     max_memory_usage_in_gb=self.max_vram,
                 )
-            self.initial_patch_size = get_max_rotated_size(self.patch_size)
+            self.pre_aug_patch_size = get_max_rotated_size(self.patch_size)
 
     def load_splits(self):
         # Load splits file or create it if not found (see: "split_data").

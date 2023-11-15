@@ -31,7 +31,11 @@ def main():
         help="Dimensionality of the Model. Can be 3D or 2D. "
         "Defaults to 3D. Note that this will always be 2D if ensemble is enabled.",
     )
-    parser.add_argument("-tr", help="Trainer Class to be used. " "Defaults to the basic YuccaTrainer", default="YuccaTrainer")
+    parser.add_argument(
+        "-man",
+        help="Manager Class to be used. " "Defaults to the basic YuccaLightningManager",
+        default="YuccaLightningManager",
+    )
     parser.add_argument(
         "-pl",
         help="Plan ID to be used. "
@@ -77,10 +81,10 @@ def main():
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
-    model = args.m
+    model_name = args.m
     dimensions = args.d
-    trainer_name = args.tr
-    plans = args.pl
+    manager_name = args.man
+    planner = args.pl
     folds = args.f
     ensemble = args.ensemble
     fast_training = args.fast
@@ -90,36 +94,39 @@ def main():
     continue_training = args.continue_train
     # checkpoint = args.chk
 
-    assert model in [
+    assert model_name in [
         "MedNeXt",
         "MultiResUNet",
         "UNet",
         "UNetR",
         "UXNet",
         "ResNet50",
-    ], f"{model} is an invalid model name. This is case sensitive."
+        "TinyUNet",
+    ], f"{model_name} is an invalid model name. This is case sensitive."
 
     if lr:
         assert "e" in lr, f"Learning Rate should be in scientific notation e.g. 1e-4, but is {lr}"
 
-    trainer = recursive_find_python_class(
+    manager = recursive_find_python_class(
         folder=[join(yucca.__path__[0], "training", "trainers")],
-        class_name=trainer_name,
+        class_name=manager_name,
         current_module="yucca.training.trainers",
     )
-    model = trainer(
-        model=model,
-        model_dimensions=dimensions,
-        task=task,
+    manager = manager(
+        ckpt_path=None,
+        continue_training=False,
+        deep_supervision=False,
+        disable_logging=True,
         folds=folds,
-        plan_id=plans,
-        starting_lr=lr,
-        loss_fn=loss,
-        momentum=momentum,
-        continue_training=continue_training,
-        fast_training=fast_training,
+        model_dimensions=dimensions,
+        model_name=model_name,
+        num_workers=8,
+        planner=planner,
+        precision="16-mixed",
+        step_logging=False,
+        task=task,
     )
-
+    manager.run_training()
     # trainer = pl.Trainer(fast_dev_run=2, max_epochs=1, default_root_dir=None)
     # trainer.fit(model=model, train_dataloaders=tdl)
 

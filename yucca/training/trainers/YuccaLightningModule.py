@@ -25,6 +25,7 @@ class YuccaLightningModule(L.LightningModule):
         momentum: float = 0.9,
         optimizer: torch.optim.Optimizer = torch.optim.SGD,
         sliding_window_overlap: float = 0.5,
+        step_logging: bool = False,
         test_time_augmentation: bool = False,
     ):
         super().__init__()
@@ -35,7 +36,7 @@ class YuccaLightningModule(L.LightningModule):
         self.model_name = configurator.model_name
         self.model_dimensions = configurator.model_dimensions
         self.patch_size = configurator.patch_size
-        self.initial_patch_size = configurator.initial_patch_size
+        self.pre_aug_patch_size = configurator.pre_aug_patch_size
 
         # Loss, optimizer and scheduler parameters
         self.lr = learning_rate
@@ -44,7 +45,8 @@ class YuccaLightningModule(L.LightningModule):
         self.optim = optimizer
         self.lr_scheduler = lr_scheduler
 
-        # Evaluation
+        # Evaluation and logging
+        self.step_logging = step_logging
         self.train_metrics = MetricCollection({"train_dice": Dice(num_classes=self.num_classes, ignore_index=0)})
         self.val_metrics = MetricCollection({"val_dice": Dice(num_classes=self.num_classes, ignore_index=0)})
 
@@ -90,12 +92,12 @@ class YuccaLightningModule(L.LightningModule):
         self.log(
             "train_loss",
             loss,
-            on_step=False,
+            on_step=self.step_logging,
             on_epoch=True,
             prog_bar=False,
             logger=True,
         )
-        self.log_dict(metrics, on_step=False, on_epoch=True, prog_bar=False, logger=True)
+        self.log_dict(metrics, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -103,8 +105,8 @@ class YuccaLightningModule(L.LightningModule):
         output = self(inputs)
         loss = self.loss_fn(output, target)
         metrics = self.val_metrics(output, target)
-        self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=False, logger=True)
-        self.log_dict(metrics, on_step=False, on_epoch=True, prog_bar=False, logger=True)
+        self.log("val_loss", loss, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
+        self.log_dict(metrics, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
 
     def on_predict_start(self):
         self.preprocessor = YuccaPreprocessor(self.plans_path)

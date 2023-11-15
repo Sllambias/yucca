@@ -23,7 +23,7 @@ class YuccaDataModule(pl.LightningDataModule):
 
         # Now extract parameters from the cfg
         self.batch_size = self.cfg.batch_size
-        self.initial_patch_size = self.cfg.initial_patch_size
+        self.pre_aug_patch_size = self.cfg.pre_aug_patch_size
         self.patch_size = self.cfg.patch_size
         self.train_data_dir = self.cfg.train_data_dir
         self.train_split = self.cfg.train_split
@@ -55,7 +55,7 @@ class YuccaDataModule(pl.LightningDataModule):
                 self.train_samples,
                 keep_in_ram=True,
                 composed_transforms=self.composed_train_transforms,
-                patch_size=self.initial_patch_size,
+                patch_size=self.pre_aug_patch_size,
             )
 
             self.val_dataset = YuccaTrainDataset(

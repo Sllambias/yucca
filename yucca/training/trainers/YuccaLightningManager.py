@@ -58,6 +58,7 @@ class YuccaLightningManager:
         num_workers: int = 8,
         planner: str = "YuccaPlanner",
         precision: str = "16-mixed",
+        step_logging: bool = False,
         task: str = None,
         **kwargs,
     ):
@@ -72,6 +73,7 @@ class YuccaLightningManager:
         self.num_workers = num_workers
         self.planner = planner
         self.precision = precision
+        self.step_logging = step_logging
         self.task = task
         self.kwargs = kwargs
 
@@ -89,6 +91,7 @@ class YuccaLightningManager:
         self,
         stage: Literal["fit", "test", "predict"],
         pred_data_dir: str = None,
+        save_softmax: bool = False,
         segmentation_output_dir: str = "./",
     ):
         if stage == "fit":
@@ -111,6 +114,7 @@ class YuccaLightningManager:
             model_name=self.model_name,
             planner=self.planner,
             segmentation_output_dir=segmentation_output_dir,
+            save_softmax=save_softmax,
             tiny_patch=True if self.model_name == "TinyUNet" else False,
             task=self.task,
         )
@@ -122,6 +126,7 @@ class YuccaLightningManager:
 
         self.model_module = YuccaLightningModule(
             configurator=configurator,
+            step_logging=self.step_logging,
             test_time_augmentation=bool(augmenter.mirror_p_per_sample),
         )
 
@@ -157,13 +162,13 @@ class YuccaLightningManager:
         self,
         input_folder,
         output_folder: str = yucca_results,
-        save_softmax=False,  # Not used currently
-        overwrite=False,  # Not used currently
+        save_softmax=False,
     ):
         self.initialize(
             stage="predict",
             pred_data_dir=input_folder,
             segmentation_output_dir=output_folder,
+            save_softmax=save_softmax,
         )
         self.trainer.predict(
             model=self.model_module,
@@ -176,7 +181,8 @@ if __name__ == "__main__":
     # path = "/home/zcr545/YuccaData/yucca_models/Task001_OASIS/UNet__3D/YuccaPlanner/YuccaLightningManager/0/2023_11_08_15_19_14/checkpoints/test_ckpt.ckpt"
     path = None
     Manager = YuccaLightningManager(
-        disable_logging=True,
+        disable_logging=False,
+        step_logging=True,
         ckpt_path=path,
         folds="0",
         model_name="TinyUNet",
