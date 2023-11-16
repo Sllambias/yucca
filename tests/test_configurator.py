@@ -9,6 +9,7 @@ def test_manager_works():
     print(os.path.isdir("/home/runner/work/yucca"))
     print(os.path.isdir("/home/runner/work/yucca/tests"))
     print(os.path.isdir("/home/runner/work/yucca/tests/data"))
+    print(os.listdir("/home/runner/work/yucca/tests/data"))
     print(os.path.isdir("/home/runner/work/yucca/tests/data/Task000_Test"))
     print(os.path.isdir("/home/runner/work/yucca/tests/data/Task000_Test/YuccaPlanner"))
     print(os.getcwd())
