@@ -4,7 +4,6 @@ def test_manager_works():
     from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 
     print(os.getcwd())
-    print("")
 
     configurator = YuccaConfigurator(task="Task000_Test")
     assert configurator is not None
