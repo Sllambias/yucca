@@ -62,7 +62,7 @@ class YuccaConfigurator:
         self._version = None
 
         # Now run the setup
-        self.setup_paths_and_plans()
+        self.setup_paths()
         self.setup_data_params()
         self.setup_callbacks()
         self.setup_loggers()
@@ -157,7 +157,7 @@ class YuccaConfigurator:
         )
         self.callbacks = [best_ckpt, interval_ckpt, latest_ckpt, pred_writer]
 
-    def setup_paths_and_plans(self):
+    def setup_paths(self):
         self.train_data_dir = join(yucca_preprocessed, self.task, self.planner)
         self.outpath = join(
             yucca_models,
