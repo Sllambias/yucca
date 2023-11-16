@@ -14,9 +14,9 @@ permissions:
 
 env:
   YUCCA_RAW_DATA: "./yucca_raw_data"
-  YUCCA_PREPROCESSED: "../tests/data"
-  YUCCA_MODELS: "../tests/data"
-  YUCCA_RESULTS: "../tests/data/"
+  YUCCA_PREPROCESSED: "/home/runner/work/yucca/tests/data"
+  YUCCA_MODELS: "/home/runner/work/yucca/tests/data"
+  YUCCA_RESULTS: "/home/runner/work/yucca/tests/data/"
 
 jobs:
   build:
