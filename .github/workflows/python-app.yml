@@ -14,6 +14,7 @@ permissions:
 
 env:
   YUCCA_RAW_DATA: "./yucca_raw_data"
+  YUCCA_PREPROCESSED: "./data"
 
 jobs:
   build:
