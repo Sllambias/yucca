@@ -36,7 +36,6 @@ class YuccaLightningModule(L.LightningModule):
         self.model_name = configurator.model_name
         self.model_dimensions = configurator.model_dimensions
         self.patch_size = configurator.patch_size
-        self.pre_aug_patch_size = configurator.pre_aug_patch_size
 
         # Loss, optimizer and scheduler parameters
         self.lr = learning_rate

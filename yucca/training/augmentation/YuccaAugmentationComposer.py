@@ -1,5 +1,6 @@
 # %%
 from torchvision import transforms
+from yuccalib.image_processing.matrix_ops import get_max_rotated_size
 from yuccalib.image_processing.transforms.formatting import (
     AddBatchDimension,
     RemoveBatchDimension,
@@ -31,6 +32,8 @@ class YuccaAugmentationComposer:
         is_2D: bool = False,
         parameter_dict: dict = {},
     ):
+        self._pre_aug_patch_size = None
+
         self.setup_default_params(is_2D, patch_size)
         self.overwrite_params(parameter_dict)
         self.train_transforms = self.compose_train_transforms()
@@ -96,6 +99,13 @@ class YuccaAugmentationComposer:
         self.simulate_lowres_p_per_channel = 0.5
         self.simulate_lowres_p_per_axis = 0.33
         self.simulate_lowres_zoom_range = (0.5, 1.0)
+
+    @property
+    def pre_aug_patch_size(self):
+        # First check if any spatial transforms are included
+        if self.elastic_deform_p_per_sample > 0 or self.rotation_p_per_sample > 0 or self.scale_p_per_sample > 0:
+            self._pre_aug_patch_size = get_max_rotated_size(self.patch_size)
+        return self._pre_aug_patch_size
 
     def overwrite_params(self, parameter_dict):
         for key, value in parameter_dict.items():

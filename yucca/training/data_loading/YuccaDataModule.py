@@ -16,6 +16,7 @@ class YuccaDataModule(pl.LightningDataModule):
         composed_val_transforms: torchvision.transforms.Compose = None,
         num_workers: int = 8,
         pred_data_dir: str = None,
+        pre_aug_patch_size: list | tuple = None,
     ):
         super().__init__()
         # First set our configurator object
@@ -23,11 +24,11 @@ class YuccaDataModule(pl.LightningDataModule):
 
         # Now extract parameters from the cfg
         self.batch_size = self.cfg.batch_size
-        self.pre_aug_patch_size = self.cfg.pre_aug_patch_size
         self.patch_size = self.cfg.patch_size
         self.train_data_dir = self.cfg.train_data_dir
         self.train_split = self.cfg.train_split
         self.val_split = self.cfg.val_split
+        self.pre_aug_patch_size = pre_aug_patch_size
 
         # Set by initialize()
         self.composed_train_transforms = composed_train_transforms
@@ -55,7 +56,7 @@ class YuccaDataModule(pl.LightningDataModule):
                 self.train_samples,
                 keep_in_ram=True,
                 composed_transforms=self.composed_train_transforms,
-                patch_size=self.pre_aug_patch_size if self.composed_train_transforms is not None else self.patch_size,
+                patch_size=self.pre_aug_patch_size if self.pre_aug_patch_size is not None else self.patch_size,
             )
 
             self.val_dataset = YuccaTrainDataset(

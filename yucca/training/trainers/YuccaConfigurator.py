@@ -17,7 +17,6 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger, CSVLogger
 from sklearn.model_selection import KFold
 from yucca.paths import yucca_models, yucca_preprocessed
-from yuccalib.image_processing.matrix_ops import get_max_rotated_size
 from yuccalib.network_architectures.utils.model_memory_estimation import (
     find_optimal_tensor_dims,
 )
@@ -178,7 +177,6 @@ class YuccaConfigurator:
             self.num_modalities = int(hparams["configurator"]["num_modalities"])
             self.batch_size = int(hparams["configurator"]["batch_size"])
             self.patch_size = [int(p) for p in hparams["configurator"]["patch_size"]]
-            self.pre_aug_patch_size = [int(p) for p in hparams["configurator"]["pre_aug_patch_size"]]
         else:
             print("constructing new params")
             self.num_classes = len(self.plans["dataset_properties"]["classes"])
@@ -195,7 +193,6 @@ class YuccaConfigurator:
                     max_patch_size=self.plans["new_mean_size"],
                     max_memory_usage_in_gb=self.max_vram,
                 )
-            self.pre_aug_patch_size = get_max_rotated_size(self.patch_size)
 
     def load_splits(self):
         # Load splits file or create it if not found (see: "split_data").

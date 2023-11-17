@@ -136,6 +136,7 @@ class YuccaLightningManager:
             configurator=configurator,
             num_workers=self.num_workers,
             pred_data_dir=pred_data_dir,
+            pre_aug_patch_size=augmenter.pre_aug_patch_size,
         )
 
         self.trainer = L.Trainer(
@@ -181,7 +182,7 @@ if __name__ == "__main__":
     # path = "/home/zcr545/YuccaData/yucca_models/Task001_OASIS/UNet__3D/YuccaPlanner/YuccaLightningManager/0/2023_11_08_15_19_14/checkpoints/test_ckpt.ckpt"
     path = None
     Manager = YuccaLightningManager(
-        disable_logging=False,
+        disable_logging=True,
         step_logging=True,
         ckpt_path=path,
         folds="0",
@@ -196,6 +197,5 @@ if __name__ == "__main__":
     #    input_folder="/home/zcr545/YuccaData/yucca_raw_data/Task001_OASIS/imagesTs",
     #    output_folder="/home/zcr545/YuccaData/yucca_predictions",
     # )
-
 
 # %%
