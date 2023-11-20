@@ -15,7 +15,6 @@ class YuccaLightningManager:
     The YuccaLightningManager class provides a convenient way to manage the training and inference processes in the Yucca project.
     It encapsulates the configuration, setup, and execution steps, making it easier to conduct experiments and predictions with consistent settings.
 
-
     The initialize method of the YuccaLightningManager class is responsible for setting up the necessary components for either training or inference.
     This method performs the configuration of paths, creates data augmentation objects, and sets up the PyTorch Lightning modules (model and data module)
     based on the specified stage in the pipeline. The stages can be "fit" (training), "test" (testing), or "predict" (inference).
@@ -41,7 +40,7 @@ class YuccaLightningManager:
     def __init__(
         self,
         ckpt_path: str = None,
-        continue_training: bool = None,
+        continue_from_most_recent: bool = True,
         deep_supervision: bool = False,
         disable_logging: bool = False,
         folds: str = "0",
@@ -55,7 +54,7 @@ class YuccaLightningManager:
         task: str = None,
         **kwargs,
     ):
-        self.continue_training = continue_training
+        self.continue_from_most_recent = continue_from_most_recent
         self.ckpt_path = ckpt_path
         self.deep_supervision = deep_supervision
         self.disable_logging = disable_logging
@@ -100,6 +99,7 @@ class YuccaLightningManager:
         # Here we configure the outpath we will use to store model files and metadata
         # along with the path to plans file which will also be loaded.
         configurator = YuccaConfigurator(
+            continue_from_most_recent=self.continue_from_most_recent,
             disable_logging=self.disable_logging,
             folds=self.folds,
             manager_name=self.name,

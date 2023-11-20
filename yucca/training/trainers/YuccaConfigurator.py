@@ -33,7 +33,7 @@ class YuccaConfigurator:
 
     task (str): The task or dataset name (e.g., "Task001_OASIS").
 
-    continue_from_newest_version (bool, optional): Whether to continue training from the newest version. Default is True.
+    continue_from_most_recent (bool, optional): Whether to continue training from the newest version. Default is True.
         - When this is True the Configurator will look for previous trainings and resume the latest version.
         - When this is False the Configurator will look for previous trainings and start a new training with a
         version one higher than the latest
@@ -66,7 +66,7 @@ class YuccaConfigurator:
     def __init__(
         self,
         task: str,
-        continue_from_newest_version: bool = True,
+        continue_from_most_recent: bool = True,
         disable_logging: bool = False,
         folds: str = "0",
         max_vram: int = 12,
@@ -78,7 +78,7 @@ class YuccaConfigurator:
         save_softmax: bool = False,
         tiny_patch: bool = False,
     ):
-        self.continue_from_newest_version = continue_from_newest_version
+        self.continue_from_most_recent = continue_from_most_recent
         self.folds = folds
         self.disable_logging = disable_logging
         self.max_vram = max_vram
@@ -146,7 +146,7 @@ class YuccaConfigurator:
         # (2) create the next version
         if previous_versions:
             newest_version = int(max([i.split("_")[-1] for i in previous_versions]))
-            if self.continue_from_newest_version:
+            if self.continue_from_most_recent:
                 self._version = newest_version
             else:
                 self._version = newest_version + 1
@@ -211,7 +211,7 @@ class YuccaConfigurator:
         # (3) check if hparams were created for the previous version
         if (
             self.version is not None
-            and self.continue_from_newest_version
+            and self.continue_from_most_recent
             and isfile(join(self.outpath, f"version_{self.version}", "hparams.yaml"))
         ):
             print("Loading hparams.yaml")
