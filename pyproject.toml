@@ -48,6 +48,7 @@ yucca_train = 'yucca.run.run_training:main'
 yucca_inference = 'yucca.run.run_inference:main'
 yucca_evaluation = 'yucca.run.run_evaluation:main'
 yucca_finetune = 'yucca.run.run_finetune:main'
+yucca_convert_task = 'yucca.run.run_task_conversion:main'
 
 [project.urls]
 "Homepage" = "https://github.com/sllambias/yuccalib"
