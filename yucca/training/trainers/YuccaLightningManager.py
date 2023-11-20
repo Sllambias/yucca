@@ -12,38 +12,30 @@ from yucca.paths import yucca_results
 
 class YuccaLightningManager:
     """
-    The YuccaLightningWrapper is the one to rule them all.
-    This will take ALL the arguments you need for training and apply them accordingly.
+    The YuccaLightningManager class provides a convenient way to manage the training and inference processes in the Yucca project.
+    It encapsulates the configuration, setup, and execution steps, making it easier to conduct experiments and predictions with consistent settings.
 
-    First it automatically configure a host of parameters for you - such as batch size,
-    patch size, modalities, classes, augmentations (and their hyperparameters) and formatting.
-    It also instantiates the PyTorch Lightning trainer.
 
-    Then, it will instantiate the YuccaLightningModule - containing the model, optimizers,
-    loss functions and learning rates.
+    The initialize method of the YuccaLightningManager class is responsible for setting up the necessary components for either training or inference.
+    This method performs the configuration of paths, creates data augmentation objects, and sets up the PyTorch Lightning modules (model and data module)
+    based on the specified stage in the pipeline. The stages can be "fit" (training), "test" (testing), or "predict" (inference).
 
-    Then, it will call the YuccaLightningDataModule. The DataModule creates the dataloaders that
-    we use iterate over the chosen Task, which is wrapped in a YuccaDataset.
+    It performs the following steps:
+        (1) Configure Paths: The YuccaConfigurator class is used to set up paths for training,
+        including the training data directory, output path, and plans file path.
 
-    YuccaLightningTrainer
-    ├── model_params
-    ├── data_params
-    ├── aug_params
-    ├── pl.Trainer
-    |
-    ├── YuccaLightningModule(model_params) -> model
-    |   ├── network(model_params)
-    |   ├── optim
-    |   ├── loss_fn
-    |   ├── scheduler
-    |
-    ├── YuccaLightningDataModule(data_params, aug_params) -> train_dataloader, val_dataloader
-    |   ├── YuccaDataset(data_params, aug_params)
-    |   ├── InfiniteRandomSampler
-    |   ├── DataLoaders(YuccaDataset, InfiniteRandomSampler)
-    |
-    ├── pl.Trainer.fit(model, train_dataloader, val_dataloader)
-    |
+        (2) Create Augmentation Objects: The YuccaAugmentationComposer class is used to create data augmentation objects
+        (augmenter.train_transforms and augmenter.val_transforms) based on the specified patch size and model dimensionality.
+
+        (3) Set Up PyTorch Lightning Modules: The YuccaLightningModule class is initialized with the appropriate configuration
+        using the YuccaConfigurator object. This module is responsible for defining the neural network architecture, loss functions,
+        and optimization strategies.
+
+        (4) Set Up PyTorch Lightning Data Module: The YuccaDataModule class is initialized with the composed training and validation transforms,
+        along with the YuccaConfigurator object. This module handles the loading and preprocessing of the training, validation, and prediction datasets.
+
+        (5) Initialize PyTorch Lightning Trainer: The PyTorch Lightning Trainer is configured with the necessary settings, including callbacks,
+        output directory, precision, and other specified parameters.
     """
 
     def __init__(

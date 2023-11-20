@@ -16,6 +16,14 @@ from yuccalib.utils.kwargs import filter_kwargs
 
 
 class YuccaLightningModule(L.LightningModule):
+    """
+    The YuccaLightningModule class is an implementation of the PyTorch Lightning module designed for the Yucca project.
+    It extends the LightningModule class and encapsulates the neural network model, loss functions, and optimization logic.
+    This class is responsible for handling training, validation, and inference steps within the Yucca machine learning pipeline.
+
+
+    """
+
     def __init__(
         self,
         configurator=YuccaConfigurator,

@@ -26,6 +26,43 @@ from typing import Union
 
 
 class YuccaConfigurator:
+    """
+    The YuccaConfigurator class is a configuration manager designed for the Yucca project.
+    It is responsible for handling various configurations related to training, logging, model checkpoints, and data loading.
+    This class streamlines the setup of essential components for training a neural network using PyTorch Lightning.
+
+    task (str): The task or dataset name (e.g., "Task001_OASIS").
+
+    continue_from_newest_version (bool, optional): Whether to continue training from the newest version. Default is True.
+        - When this is True the Configurator will look for previous trainings and resume the latest version.
+        - When this is False the Configurator will look for previous trainings and start a new training with a
+        version one higher than the latest
+
+    disable_logging (bool, optional): Whether to disable logging. Default is False.
+        - This disables both the training log file and WandB logging. hparams.yaml will still be saved.
+
+    folds (str, optional): Fold identifier for cross-validation. Default is "0".
+
+    max_vram (int, optional): Maximum VRAM (Video RAM) usage in gigabytes. Default is 12.
+
+    manager_name (str, optional): Name of the manager associated with the pipeline. Default is "YuccaLightningManager".
+
+    model_dimensions (str, optional): Model dimensionality ("2D" or "3D"). Default is "3D".
+
+    model_name (str, optional): Model architecture name. Default is "UNet".
+
+    planner (str, optional): Name of the planner associated with the dataset. Default is "YuccaPlanner".
+
+    segmentation_output_dir (str, optional): Output directory for segmentation results. Default is "./".
+        - Only used during inference.
+
+    save_softmax (bool, optional): Whether to save softmax predictions during inference. Default is False.
+        - Only used during inference. Used to save the softmax predictions combined by model ensembles.
+
+    tiny_patch (bool, optional): Whether to use a tiny patch size. Default is False.
+        - Mainly useful for debugging and/or running on CPU.
+    """
+
     def __init__(
         self,
         task: str,
