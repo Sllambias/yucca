@@ -20,12 +20,12 @@ def main():
     parser.add_argument(
         "-t", "--task", help="Name of the task to preprocess. " "Should be of format: TaskXXX_MYTASK", required=True
     )
-    parser.add_argument("-p", "--path", help="Path to raw data", default=yucca_source)
+    parser.add_argument("-p", "--path", help="Path to source data", default=yucca_source)
     args = parser.parse_args()
 
-    task_name = remove_task_prefix(args.task)
+    dataset_name = remove_task_prefix(args.task)
     task_converter = importlib.import_module(f"yucca.task_conversion.{args.task}")
-    task_converter.convert(f"{args.path}/{task_name}")
+    task_converter.convert(f"{args.path}/{dataset_name}")
 
 
 if __name__ == "__main__":
