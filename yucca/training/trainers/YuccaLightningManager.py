@@ -53,6 +53,7 @@ class YuccaLightningManager:
         deep_supervision: bool = False,
         disable_logging: bool = False,
         folds: str = "0",
+        max_epochs: int = 1000,
         model_dimensions: str = "3D",
         model_name: str = "TinyUNet",
         num_workers: int = 8,
@@ -67,6 +68,7 @@ class YuccaLightningManager:
         self.deep_supervision = deep_supervision
         self.disable_logging = disable_logging
         self.folds = folds
+        self.max_epochs = max_epochs
         self.model_dimensions = model_dimensions
         self.model_name = model_name
         self.name = self.__class__.__name__
@@ -82,7 +84,6 @@ class YuccaLightningManager:
         self.is_initialized = False
 
         # Trainer settings
-        self.max_epochs = 1000
         self.train_batches_per_step = 250
         self.val_batches_per_step = 50
         self.trainer = L.Trainer
