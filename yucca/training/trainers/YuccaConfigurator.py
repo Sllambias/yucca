@@ -29,17 +29,17 @@ from typing import Union
 class YuccaConfigurator:
     def __init__(
         self,
+        task: str,
         continue_from_newest_version: bool = True,
         disable_logging: bool = False,
         folds: str = "0",
         max_vram: int = 12,
-        manager_name: str = None,
+        manager_name: str = "YuccaLightningManager",
         model_dimensions: str = "3D",
         model_name: str = "UNet",
         planner: str = "YuccaPlanner",
         segmentation_output_dir: str = "./",
         save_softmax: bool = False,
-        task: str = None,
         tiny_patch: bool = False,
     ):
         self.continue_from_newest_version = continue_from_newest_version
@@ -56,15 +56,22 @@ class YuccaConfigurator:
         self.tiny_patch = tiny_patch
 
         # Attributes set upon calling
+        self._plans = None
         self._train_split = None
         self._val_split = None
         self._version = None
 
         # Now run the setup
-        self.setup_paths_and_plans()
+        self.setup_paths()
         self.setup_data_params()
         self.setup_callbacks()
         self.setup_loggers()
+
+    @property
+    def plans(self):
+        if self._plans is None:
+            self._plans = load_json(self.plans_path)
+        return self._plans
 
     @property
     def train_split(self):
@@ -150,7 +157,7 @@ class YuccaConfigurator:
         )
         self.callbacks = [best_ckpt, interval_ckpt, latest_ckpt, pred_writer]
 
-    def setup_paths_and_plans(self):
+    def setup_paths(self):
         self.train_data_dir = join(yucca_preprocessed, self.task, self.planner)
         self.outpath = join(
             yucca_models,
@@ -161,7 +168,6 @@ class YuccaConfigurator:
         )
         maybe_mkdir_p(self.outpath)
         self.plans_path = join(yucca_preprocessed, self.task, self.planner, self.planner + "_plans.json")
-        self.plans = load_json(self.plans_path)
 
     def setup_data_params(self):
         # (1) check if previous versions exist
@@ -173,12 +179,12 @@ class YuccaConfigurator:
             and isfile(join(self.outpath, f"version_{self.version}", "hparams.yaml"))
         ):
             print("Loading hparams.yaml")
-            hparams = load_yaml(join(self.outpath, f"version_{self.version}", "hparams.yaml"))
-            self.num_classes = int(hparams["configurator"]["num_classes"])
-            self.num_modalities = int(hparams["configurator"]["num_modalities"])
-            self.batch_size = int(hparams["configurator"]["batch_size"])
-            self.patch_size = [int(p) for p in hparams["configurator"]["patch_size"]]
-            self.pre_aug_patch_size = [int(p) for p in hparams["configurator"]["pre_aug_patch_size"]]
+            self.hparams = load_yaml(join(self.outpath, f"version_{self.version}", "hparams.yaml"))
+            self.num_classes = int(self.hparams["configurator"]["num_classes"])
+            self.num_modalities = int(self.hparams["configurator"]["num_modalities"])
+            self.batch_size = int(self.hparams["configurator"]["batch_size"])
+            self.patch_size = [int(p) for p in self.hparams["configurator"]["patch_size"]]
+            self.pre_aug_patch_size = [int(p) for p in self.hparams["configurator"]["pre_aug_patch_size"]]
         else:
             print("constructing new params")
             self.num_classes = len(self.plans["dataset_properties"]["classes"])
