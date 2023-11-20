@@ -3,7 +3,6 @@ import yucca
 from yucca.utils.task_ids import maybe_get_task_from_task_id
 from yuccalib.utils.files_and_folders import recursive_find_python_class
 from batchgenerators.utilities.file_and_folder_operations import join
-import lightning as pl
 
 
 def main():
@@ -31,11 +30,7 @@ def main():
         help="Dimensionality of the Model. Can be 3D or 2D. "
         "Defaults to 3D. Note that this will always be 2D if ensemble is enabled.",
     )
-    parser.add_argument(
-        "-man",
-        help="Manager Class to be used. " "Defaults to the basic YuccaLightningManager",
-        default="YuccaLightningManager",
-    )
+    parser.add_argument("-tr", help="Trainer Class to be used. " "Defaults to the basic YuccaTrainer", default="YuccaTrainer")
     parser.add_argument(
         "-pl",
         help="Plan ID to be used. "
@@ -81,10 +76,10 @@ def main():
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
-    model_name = args.m
+    model = args.m
     dimensions = args.d
-    manager_name = args.man
-    planner = args.pl
+    trainer_name = args.tr
+    plans = args.pl
     folds = args.f
     ensemble = args.ensemble
     fast_training = args.fast
@@ -92,43 +87,72 @@ def main():
     loss = args.loss
     momentum = args.mom
     continue_training = args.continue_train
+    threads = args.threads
     # checkpoint = args.chk
 
-    assert model_name in [
+    assert model in [
         "MedNeXt",
         "MultiResUNet",
         "UNet",
         "UNetR",
         "UXNet",
         "ResNet50",
-        "TinyUNet",
-    ], f"{model_name} is an invalid model name. This is case sensitive."
+    ], f"{model} is an invalid model name. This is case sensitive."
 
     if lr:
         assert "e" in lr, f"Learning Rate should be in scientific notation e.g. 1e-4, but is {lr}"
 
-    manager = recursive_find_python_class(
-        folder=[join(yucca.__path__[0], "training", "trainers")],
-        class_name=manager_name,
-        current_module="yucca.training.trainers",
-    )
-    manager = manager(
-        ckpt_path=None,
-        continue_training=False,
-        deep_supervision=False,
-        disable_logging=True,
-        folds=folds,
-        model_dimensions=dimensions,
-        model_name=model_name,
-        num_workers=8,
-        planner=planner,
-        precision="16-mixed",
-        step_logging=False,
-        task=task,
-    )
-    manager.run_training()
-    # trainer = pl.Trainer(fast_dev_run=2, max_epochs=1, default_root_dir=None)
-    # trainer.fit(model=model, train_dataloaders=tdl)
+    if not ensemble:
+        trainer = recursive_find_python_class(
+            folder=[join(yucca.__path__[0], "training", "trainers")],
+            class_name=trainer_name,
+            current_module="yucca.training.trainers",
+        )
+        trainer = trainer(
+            model=model,
+            model_dimensions=dimensions,
+            task=task,
+            folds=folds,
+            plan_id=plans,
+            starting_lr=lr,
+            loss_fn=loss,
+            momentum=momentum,
+            continue_training=continue_training,
+            fast_training=fast_training,
+        )
+
+        command_used = "yucca_train " + " ".join(f"-{k} {v}" for k, v in vars(args).items())
+        trainer.set_train_command(command_used)
+
+        trainer.run_training()
+    if ensemble:
+        print("Starting ensemble training. Model dimensions will automatically be set to 2D.")
+        dimensions = "2D"
+        views = ["X", "Y", "Z"]
+        for view in views:
+            trainer = recursive_find_python_class(
+                folder=[join(yucca.__path__[0], "training", "trainers")],
+                class_name=trainer_name,
+                current_module="yucca.training.trainers",
+            )
+            plan_and_view = plans + view
+            trainer = trainer(
+                model=model,
+                model_dimensions=dimensions,
+                task=task,
+                folds=folds,
+                plan_id=plan_and_view,
+                starting_lr=lr,
+                loss_fn=loss,
+                momentum=momentum,
+                continue_training=continue_training,
+                fast_training=fast_training,
+            )
+
+            command_used = "yucca_train " + " ".join(f"-{k} {v}" for k, v in vars(args).items())
+            trainer.set_train_command(command_used)
+
+            trainer.run_training()
 
 
 if __name__ == "__main__":

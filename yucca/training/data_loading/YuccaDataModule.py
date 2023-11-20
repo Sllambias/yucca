@@ -9,6 +9,39 @@ from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 
 
 class YuccaDataModule(pl.LightningDataModule):
+    """
+    The YuccaDataModule class is a PyTorch Lightning DataModule designed for handling data loading
+    and preprocessing in the context of the Yucca project.
+
+    It extends the pl.LightningDataModule class and provides methods for preparing data, setting up
+    datasets for training, validation, and prediction, as well as creating data loaders for these stages.
+
+    configurator (YuccaConfigurator): An instance of the YuccaConfigurator class containing configuration parameters.
+
+    composed_train_transforms (torchvision.transforms.Compose, optional): A composition of transforms to be applied to the training dataset. Default is None.
+    composed_val_transforms (torchvision.transforms.Compose, optional): A composition of transforms to be applied to the validation dataset. Default is None.
+
+    num_workers (int, optional): Number of workers for data loading. Default is 8.
+
+    pred_data_dir (str, optional): Directory containing data for prediction. Required only during the "predict" stage.
+
+    pre_aug_patch_size (list or tuple, optional): Patch size before data augmentation. Default is None.
+        - The purpose of the pre_aug_patch_size is to increase computational efficiency while not losing important information.
+        If we have a volume of 512x512x512 and our model only works with patches of 128x128x128 there's no reason to
+        apply the transform to the full volume. To avoid this we crop the volume before transforming it.
+
+        But, we do not want to crop it to 128x128x128 before transforming it. Especially not before applying spatial transforms.
+        Both because
+        (1) the edges will contain a lot of border interpolation artifacts, and
+        (2) if we crop to 128x128x128 and then rotate the image 45 degrees or downscale it (zoom out effect)
+        we suddenly introduce dark areas where they should not be. We could've simply kept more of the original
+        volume BEFORE scaling or rotating, then our 128x128x128 wouldn't be part-black.
+
+        Therefore the pre_aug_patch_size parameter allows users to specify a patch size before augmentation is applied.
+        This can potentially avoid dark or low-intensity areas at the borders and it also helps mitigate the risk of
+        introducing artifacts during data augmentation, especially in regions where interpolation may have a significant impact.
+    """
+
     def __init__(
         self,
         configurator: YuccaConfigurator,
@@ -16,6 +49,7 @@ class YuccaDataModule(pl.LightningDataModule):
         composed_val_transforms: torchvision.transforms.Compose = None,
         num_workers: int = 8,
         pred_data_dir: str = None,
+        pre_aug_patch_size: list | tuple = None,
     ):
         super().__init__()
         # First set our configurator object
@@ -23,11 +57,11 @@ class YuccaDataModule(pl.LightningDataModule):
 
         # Now extract parameters from the cfg
         self.batch_size = self.cfg.batch_size
-        self.pre_aug_patch_size = self.cfg.pre_aug_patch_size
         self.patch_size = self.cfg.patch_size
         self.train_data_dir = self.cfg.train_data_dir
         self.train_split = self.cfg.train_split
         self.val_split = self.cfg.val_split
+        self.pre_aug_patch_size = pre_aug_patch_size
 
         # Set by initialize()
         self.composed_train_transforms = composed_train_transforms
@@ -55,7 +89,7 @@ class YuccaDataModule(pl.LightningDataModule):
                 self.train_samples,
                 keep_in_ram=True,
                 composed_transforms=self.composed_train_transforms,
-                patch_size=self.pre_aug_patch_size if self.composed_train_transforms is not None else self.patch_size,
+                patch_size=self.pre_aug_patch_size if self.pre_aug_patch_size is not None else self.patch_size,
             )
 
             self.val_dataset = YuccaTrainDataset(

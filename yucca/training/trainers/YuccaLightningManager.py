@@ -12,44 +12,35 @@ from yucca.paths import yucca_results
 
 class YuccaLightningManager:
     """
-    The YuccaLightningWrapper is the one to rule them all.
-    This will take ALL the arguments you need for training and apply them accordingly.
+    The YuccaLightningManager class provides a convenient way to manage the training and inference processes in the Yucca project.
+    It encapsulates the configuration, setup, and execution steps, making it easier to conduct experiments and predictions with consistent settings.
 
-    First it automatically configure a host of parameters for you - such as batch size,
-    patch size, modalities, classes, augmentations (and their hyperparameters) and formatting.
-    It also instantiates the PyTorch Lightning trainer.
+    The initialize method of the YuccaLightningManager class is responsible for setting up the necessary components for either training or inference.
+    This method performs the configuration of paths, creates data augmentation objects, and sets up the PyTorch Lightning modules (model and data module)
+    based on the specified stage in the pipeline. The stages can be "fit" (training), "test" (testing), or "predict" (inference).
 
-    Then, it will instantiate the YuccaLightningModule - containing the model, optimizers,
-    loss functions and learning rates.
+    It performs the following steps:
+        (1) Configure Paths: The YuccaConfigurator class is used to set up paths for training,
+        including the training data directory, output path, and plans file path.
 
-    Then, it will call the YuccaLightningDataModule. The DataModule creates the dataloaders that
-    we use iterate over the chosen Task, which is wrapped in a YuccaDataset.
+        (2) Create Augmentation Objects: The YuccaAugmentationComposer class is used to create data augmentation objects
+        (augmenter.train_transforms and augmenter.val_transforms) based on the specified patch size and model dimensionality.
 
-    YuccaLightningTrainer
-    ├── model_params
-    ├── data_params
-    ├── aug_params
-    ├── pl.Trainer
-    |
-    ├── YuccaLightningModule(model_params) -> model
-    |   ├── network(model_params)
-    |   ├── optim
-    |   ├── loss_fn
-    |   ├── scheduler
-    |
-    ├── YuccaLightningDataModule(data_params, aug_params) -> train_dataloader, val_dataloader
-    |   ├── YuccaDataset(data_params, aug_params)
-    |   ├── InfiniteRandomSampler
-    |   ├── DataLoaders(YuccaDataset, InfiniteRandomSampler)
-    |
-    ├── pl.Trainer.fit(model, train_dataloader, val_dataloader)
-    |
+        (3) Set Up PyTorch Lightning Modules: The YuccaLightningModule class is initialized with the appropriate configuration
+        using the YuccaConfigurator object. This module is responsible for defining the neural network architecture, loss functions,
+        and optimization strategies.
+
+        (4) Set Up PyTorch Lightning Data Module: The YuccaDataModule class is initialized with the composed training and validation transforms,
+        along with the YuccaConfigurator object. This module handles the loading and preprocessing of the training, validation, and prediction datasets.
+
+        (5) Initialize PyTorch Lightning Trainer: The PyTorch Lightning Trainer is configured with the necessary settings, including callbacks,
+        output directory, precision, and other specified parameters.
     """
 
     def __init__(
         self,
         ckpt_path: str = None,
-        continue_training: bool = None,
+        continue_from_most_recent: bool = True,
         deep_supervision: bool = False,
         disable_logging: bool = False,
         folds: str = "0",
@@ -63,7 +54,7 @@ class YuccaLightningManager:
         task: str = None,
         **kwargs,
     ):
-        self.continue_training = continue_training
+        self.continue_from_most_recent = continue_from_most_recent
         self.ckpt_path = ckpt_path
         self.deep_supervision = deep_supervision
         self.disable_logging = disable_logging
@@ -108,6 +99,7 @@ class YuccaLightningManager:
         # Here we configure the outpath we will use to store model files and metadata
         # along with the path to plans file which will also be loaded.
         configurator = YuccaConfigurator(
+            continue_from_most_recent=self.continue_from_most_recent,
             disable_logging=self.disable_logging,
             folds=self.folds,
             manager_name=self.name,
@@ -137,6 +129,7 @@ class YuccaLightningManager:
             configurator=configurator,
             num_workers=self.num_workers,
             pred_data_dir=pred_data_dir,
+            pre_aug_patch_size=augmenter.pre_aug_patch_size,
         )
 
         self.trainer = L.Trainer(
@@ -182,7 +175,7 @@ if __name__ == "__main__":
     # path = "/home/zcr545/YuccaData/yucca_models/Task001_OASIS/UNet__3D/YuccaPlanner/YuccaLightningManager/0/2023_11_08_15_19_14/checkpoints/test_ckpt.ckpt"
     path = None
     Manager = YuccaLightningManager(
-        disable_logging=False,
+        disable_logging=True,
         step_logging=True,
         ckpt_path=path,
         folds="0",
@@ -197,6 +190,5 @@ if __name__ == "__main__":
     #    input_folder="/home/zcr545/YuccaData/yucca_raw_data/Task001_OASIS/imagesTs",
     #    output_folder="/home/zcr545/YuccaData/yucca_predictions",
     # )
-
 
 # %%

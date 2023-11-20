@@ -27,23 +27,27 @@ from batchgenerators.utilities.file_and_folder_operations import (
 
 class YuccaPreprocessor(object):
     """
-    The default preprocesser. This takes in a plans file (created by an YuccaPlanner) and carries
-    out preprocessing according to rules set by the plan.
+    The YuccaPreprocessor class is designed to preprocess medical images for the Yucca project.
+    It implements various preprocessing steps, such as reorientation, cropping, normalization, and resizing,
+    based on the plans specified in an YuccaPlanner.
+
+    For training the _preprocess_train_subject method prepares input images for the Yucca model.
+    The preprocess_case_for_inference method prepares input images for the Yucca model during the inference phase,
+    ensuring that they match the requirements specified during training.
+    The reverse_preprocessing method is then used to revert the processed images back to their original form,
+    allowing for a meaningful interpretation of the model's predictions.
+    These methods collectively provide a consistent and reversible preprocessing pipeline for both training and inference.
 
     The operations that can be enabled/defined in the YuccaPlanner and carried out by the
     YuccaPreprocessor are:
 
-    The starting orientation - defaults to RAS (for medical images).
-
-    The cropping operation - defaults to crop to nonzero bounding box
-
-    The Transposition operation (along with the reverse transpose operation,
+    (1) The starting orientation - defaults to RAS (for medical images).
+    (2) The cropping operation - defaults to crop to nonzero bounding box
+    (3) The Transposition operation (along with the reverse transpose operation,
     to be used during inference) - defaults to no transposition if image dimensions and spacings
     are not too anisotropic.
-
-    The Resample operation - defaults to resampling to the median spacing of the dataset.
-
-    The Normalization operation - defaults to standardization = (image - mean) / std
+    (4) The Resample operation - defaults to resampling to the median spacing of the dataset.
+    (5) The Normalization operation - defaults to standardization = (image - mean) / std
     per modality to preserve ranges to account for CT pixel values representing specific physical
     attributes.
 
@@ -102,6 +106,44 @@ class YuccaPreprocessor(object):
         p.join()
 
     def _preprocess_train_subject(self, subject_id):
+        """
+        This is the bread and butter of the preprocessor.
+        The following steps are taken:
+
+        (1) Load Images:
+        Extract relevant image files associated with the given subject_id.
+        Load the images using the nibabel library.
+
+        (2) Reorientation (Optional):
+        Check if valid qform or sform codes are present in the header.
+        If valid, reorient the images to the target orientation specified in the plans.
+        Update the original and new orientation information in the image_props dictionary.
+
+        (3) Normalization and Transposition:
+        Normalize each image based on the specified normalization scheme and intensities.
+        Transpose the images according to the forward transpose axes specified in the plans.
+
+        (4) Cropping (Optional):
+        If the crop_to_nonzero option is enabled in the plans, crop the images to the nonzero bounding box.
+        Update the image_props dictionary with cropping information.
+
+        (5) Resampling:
+        Resample images to the target spacing specified in the plans.
+        Update the image_props dictionary with original and new spacing information.
+
+        (6) Foreground Locations:
+        Extract some locations of the foreground, which will be used in oversampling of foreground classes.
+        Determine the number and sizes of connected components in the ground truth segmentation (can be used in analysis).
+
+        (7) Save Preprocessed Data:
+        Stack the preprocessed images and segmentation.
+        Save the preprocessed data as a NumPy array in a .npy file.
+        Save relevant metadata as a .pkl file.
+
+        (8) Print Information:
+        Print information about the size and spacing before and after preprocessing.
+        Print the path where the preprocessed data is saved.
+        """
         image_props = {}
         subject_id = subject_id[: -len(".nii.gz")]
         print(f"Preprocessing: {subject_id}")
@@ -385,16 +427,15 @@ class YuccaPreprocessor(object):
 
     def reverse_preprocessing(self, images: np.ndarray, image_properties: dict):
         """
-        At this point images are potentially: cropped, transposed, resized and padded (in this order).
-
-        First we undo the padding
-        Then we reverse resizing to ensure correct spacing
-        Then we transpose back to the original view
-        Finally we re-seat the cropped out part (if cropping is enabled)
-
         Expected shape of images are:
         (b, c, x, y(, z))
 
+        (1) Initialization: Extract relevant properties from the image_properties dictionary.
+        (2) Padding Reversion: Reverse the padding applied during preprocessing.
+        (3) Resampling and Transposition Reversion: Resize the images to revert the resampling operation.
+        Transpose the images back to the original orientation.
+        (4) Cropping Reversion (Optional): If cropping to the nonzero bounding box was applied, revert the cropping operation.
+        (5) Return: Return the reverted images as a NumPy array.
         The original orientation of the image will be re-applied when saving the prediction
         """
 

@@ -17,7 +17,6 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger, CSVLogger
 from sklearn.model_selection import KFold
 from yucca.paths import yucca_models, yucca_preprocessed
-from yuccalib.image_processing.matrix_ops import get_max_rotated_size
 from yuccalib.network_architectures.utils.model_memory_estimation import (
     find_optimal_tensor_dims,
 )
@@ -27,10 +26,47 @@ from typing import Union
 
 
 class YuccaConfigurator:
+    """
+    The YuccaConfigurator class is a configuration manager designed for the Yucca project.
+    It is responsible for handling various configurations related to training, logging, model checkpoints, and data loading.
+    This class streamlines the setup of essential components for training a neural network using PyTorch Lightning.
+
+    task (str): The task or dataset name (e.g., "Task001_OASIS").
+
+    continue_from_most_recent (bool, optional): Whether to continue training from the newest version. Default is True.
+        - When this is True the Configurator will look for previous trainings and resume the latest version.
+        - When this is False the Configurator will look for previous trainings and start a new training with a
+        version one higher than the latest
+
+    disable_logging (bool, optional): Whether to disable logging. Default is False.
+        - This disables both the training log file and WandB logging. hparams.yaml will still be saved.
+
+    folds (str, optional): Fold identifier for cross-validation. Default is "0".
+
+    max_vram (int, optional): Maximum VRAM (Video RAM) usage in gigabytes. Default is 12.
+
+    manager_name (str, optional): Name of the manager associated with the pipeline. Default is "YuccaLightningManager".
+
+    model_dimensions (str, optional): Model dimensionality ("2D" or "3D"). Default is "3D".
+
+    model_name (str, optional): Model architecture name. Default is "UNet".
+
+    planner (str, optional): Name of the planner associated with the dataset. Default is "YuccaPlanner".
+
+    segmentation_output_dir (str, optional): Output directory for segmentation results. Default is "./".
+        - Only used during inference.
+
+    save_softmax (bool, optional): Whether to save softmax predictions during inference. Default is False.
+        - Only used during inference. Used to save the softmax predictions combined by model ensembles.
+
+    tiny_patch (bool, optional): Whether to use a tiny patch size. Default is False.
+        - Mainly useful for debugging and/or running on CPU.
+    """
+
     def __init__(
         self,
         task: str,
-        continue_from_newest_version: bool = True,
+        continue_from_most_recent: bool = True,
         disable_logging: bool = False,
         folds: str = "0",
         max_vram: int = 12,
@@ -42,7 +78,7 @@ class YuccaConfigurator:
         save_softmax: bool = False,
         tiny_patch: bool = False,
     ):
-        self.continue_from_newest_version = continue_from_newest_version
+        self.continue_from_most_recent = continue_from_most_recent
         self.folds = folds
         self.disable_logging = disable_logging
         self.max_vram = max_vram
@@ -110,7 +146,7 @@ class YuccaConfigurator:
         # (2) create the next version
         if previous_versions:
             newest_version = int(max([i.split("_")[-1] for i in previous_versions]))
-            if self.continue_from_newest_version:
+            if self.continue_from_most_recent:
                 self._version = newest_version
             else:
                 self._version = newest_version + 1
@@ -175,16 +211,15 @@ class YuccaConfigurator:
         # (3) check if hparams were created for the previous version
         if (
             self.version is not None
-            and self.continue_from_newest_version
+            and self.continue_from_most_recent
             and isfile(join(self.outpath, f"version_{self.version}", "hparams.yaml"))
         ):
             print("Loading hparams.yaml")
-            self.hparams = load_yaml(join(self.outpath, f"version_{self.version}", "hparams.yaml"))
-            self.num_classes = int(self.hparams["configurator"]["num_classes"])
-            self.num_modalities = int(self.hparams["configurator"]["num_modalities"])
-            self.batch_size = int(self.hparams["configurator"]["batch_size"])
-            self.patch_size = [int(p) for p in self.hparams["configurator"]["patch_size"]]
-            self.pre_aug_patch_size = [int(p) for p in self.hparams["configurator"]["pre_aug_patch_size"]]
+            hparams = load_yaml(join(self.outpath, f"version_{self.version}", "hparams.yaml"))
+            self.num_classes = int(hparams["configurator"]["num_classes"])
+            self.num_modalities = int(hparams["configurator"]["num_modalities"])
+            self.batch_size = int(hparams["configurator"]["batch_size"])
+            self.patch_size = [int(p) for p in hparams["configurator"]["patch_size"]]
         else:
             print("constructing new params")
             self.num_classes = len(self.plans["dataset_properties"]["classes"])
@@ -201,7 +236,6 @@ class YuccaConfigurator:
                     max_patch_size=self.plans["new_mean_size"],
                     max_memory_usage_in_gb=self.max_vram,
                 )
-            self.pre_aug_patch_size = get_max_rotated_size(self.patch_size)
 
     def load_splits(self):
         # Load splits file or create it if not found (see: "split_data").
