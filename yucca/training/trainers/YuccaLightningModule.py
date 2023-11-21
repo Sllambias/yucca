@@ -87,6 +87,10 @@ class YuccaLightningModule(L.LightningModule):
             "conv_op": conv_op,
             # Applies to most CNN-based architectures (exceptions: UXNet)
             "norm_op": norm_op,
+            # UNetR
+            "patch_size": self.patch_size,
+            # MedNeXt
+            "checkpoint_style": None,
         }
         model_kwargs = filter_kwargs(self.model, model_kwargs)
 
