@@ -31,6 +31,8 @@ All-Purpose Segmentation Framework. Yucca is designed to be plug-and-play while 
 
 # Installation
 
+## Install the project after clone using Conda
+
 Create a python=3.10 environment for Yucca to avoid conflicts with other projects. 
 
 IMPORTANT: First install Pytorch for GPU following appropriate instructions from e.g. https://pytorch.org/get-started/locally/.
@@ -51,6 +53,14 @@ To use other CUDA or PyTorch versions refer to 1. for the current PyTorch instal
 1. https://pytorch.org/get-started/locally/
 2. https://pytorch.org/get-started/previous-versions/
 3. https://anaconda.org/nvidia/cuda-toolkit
+
+## Install the package as a dependency in another project
+If you just want to install Yucca locally on your computer, use
+```
+pip install git+https://github.com/Sllambias/yucca.git
+```
+this will install the code from github, not an eventual local clone.
+
 
 # Weights & Biases
 Navigate to https://wandb.ai/home and log in or sign up for Weights and Biases.
