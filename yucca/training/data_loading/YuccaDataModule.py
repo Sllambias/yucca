@@ -80,6 +80,7 @@ class YuccaDataModule(pl.LightningDataModule):
         self.val_samples = [join(self.train_data_dir, i) for i in self.val_split]
 
     def setup(self, stage: Literal["fit", "test", "predict"]):
+        print(f"Setting up data for stage: {stage}")
         expected_stages = ["fit", "test", "predict"]
         assert stage in expected_stages, "unexpected stage. " f"Expected: {expected_stages} and found: {stage}"
 
@@ -106,6 +107,7 @@ class YuccaDataModule(pl.LightningDataModule):
             self.pred_dataset = YuccaTestDataset(self.pred_data_dir, patch_size=self.patch_size)
 
     def train_dataloader(self):
+        print("Starting training")
         train_sampler = self.sampler(self.train_dataset)
         return DataLoader(
             self.train_dataset,
@@ -129,4 +131,5 @@ class YuccaDataModule(pl.LightningDataModule):
         return None
 
     def predict_dataloader(self):
+        print("Starting inference")
         return DataLoader(self.pred_dataset, num_workers=self.num_workers, batch_size=1)

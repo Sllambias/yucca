@@ -66,6 +66,7 @@ class YuccaLightningModule(L.LightningModule):
         self.load_model()
 
     def load_model(self):
+        print("Loading Model")
         self.model = recursive_find_python_class(
             folder=[join(yuccalib.__path__[0], "network_architectures")],
             class_name=self.model_name,
@@ -78,12 +79,22 @@ class YuccaLightningModule(L.LightningModule):
             conv_op = torch.nn.Conv2d
             norm_op = torch.nn.BatchNorm2d
 
-        self.model = self.model(
-            input_channels=self.num_modalities,
-            conv_op=conv_op,
-            norm_op=norm_op,
-            num_classes=self.num_classes,
-        )
+        model_kwargs = {
+            # Applies to all models
+            "input_channels": self.num_modalities,
+            "num_classes": self.num_classes,
+            # Applies to most CNN-based architectures
+            "conv_op": conv_op,
+            # Applies to most CNN-based architectures (exceptions: UXNet)
+            "norm_op": norm_op,
+            # UNetR
+            "patch_size": self.patch_size,
+            # MedNeXt
+            "checkpoint_style": None,
+        }
+        model_kwargs = filter_kwargs(self.model, model_kwargs)
+
+        self.model = self.model(**model_kwargs)
 
     def forward(self, inputs):
         return self.model(inputs)
