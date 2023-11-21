@@ -78,12 +78,18 @@ class YuccaLightningModule(L.LightningModule):
             conv_op = torch.nn.Conv2d
             norm_op = torch.nn.BatchNorm2d
 
-        self.model = self.model(
-            input_channels=self.num_modalities,
-            conv_op=conv_op,
-            norm_op=norm_op,
-            num_classes=self.num_classes,
-        )
+        model_kwargs = {
+            # Applies to all models
+            "input_channels": self.num_modalities,
+            "num_classes": self.num_classes,
+            # Applies to most CNN-based architectures
+            "conv_op": conv_op,
+            # Applies to most CNN-based architectures (exceptions: UXNet)
+            "norm_op": norm_op,
+        }
+        model_kwargs = filter_kwargs(self.model, model_kwargs)
+
+        self.model = self.model(**model_kwargs)
 
     def forward(self, inputs):
         return self.model(inputs)
