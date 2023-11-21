@@ -80,6 +80,7 @@ class YuccaDataModule(pl.LightningDataModule):
         self.val_samples = [join(self.train_data_dir, i) for i in self.val_split]
 
     def setup(self, stage: Literal["fit", "test", "predict"]):
+        print(f"Setting up data for stage: {stage}")
         expected_stages = ["fit", "test", "predict"]
         assert stage in expected_stages, "unexpected stage. " f"Expected: {expected_stages} and found: {stage}"
 

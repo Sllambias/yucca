@@ -40,6 +40,7 @@ class YuccaAugmentationComposer:
         self.val_transforms = self.compose_val_transforms()
 
     def setup_default_params(self, is_2d, patch_size):
+        print("Composing Transforms")
         # Define whether we crop before or after applying augmentations
         # Define if cropping is random or always centered
         self.random_crop = True

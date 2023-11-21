@@ -66,6 +66,7 @@ class YuccaLightningModule(L.LightningModule):
         self.load_model()
 
     def load_model(self):
+        print("Loading Model")
         self.model = recursive_find_python_class(
             folder=[join(yuccalib.__path__[0], "network_architectures")],
             class_name=self.model_name,
