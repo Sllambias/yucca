@@ -10,91 +10,80 @@ from yucca.paths import yucca_raw_data, yucca_source
 from sklearn.model_selection import train_test_split
 
 
-parser = argparse.ArgumentParser()
+def convert(path: str, subdir: str = "ISLES-2022"):
+    # INPUT DATA
+    path = f"{path}/{subdir}"
+    file_suffix = ".nii.gz"
 
-parser.add_argument("-p", "--path", help="Path to OASIS dataset", default=None)
+    # Train/Test Splits
+    images_dir = join(base_in, "images")
+    labels_dir = join(base_in, "labels_derivatives")
 
-args = parser.parse_args()
+    training_samples, test_samples = train_test_split(subdirs(labels_dir, join=False), random_state=859032)
 
-###INPUT DATA###
-# Input path and names
-base_in = args.path
-file_suffix = ".nii.gz"
+    ###OUTPUT DATA
+    # Target names
+    task_name = "Task005_ISLES22_FULL"
+    prefix = "ISLES22_FULL"
 
-if base_in is None:
-    default_dataset_dir = "ISLES-2022"
-    base_in = os.path.join(yucca_source, default_dataset_dir)
-    print(f"no path specified, defaulting to: {base_in}")
+    # Target paths
+    target_base = join(yucca_raw_data, task_name)
 
-# Train/Test Splits
-images_dir = join(base_in, "images")
-labels_dir = join(base_in, "labels_derivatives")
+    target_imagesTr = join(target_base, "imagesTr")
+    target_labelsTr = join(target_base, "labelsTr")
 
-training_samples, test_samples = train_test_split(subdirs(labels_dir, join=False), random_state=859032)
+    target_imagesTs = join(target_base, "imagesTs")
+    target_labelsTs = join(target_base, "labelsTs")
 
-###OUTPUT DATA
-# Target names
-task_name = "Task005_ISLES22_FULL"
-prefix = "ISLES22_FULL"
+    maybe_mkdir_p(target_imagesTr)
+    maybe_mkdir_p(target_labelsTs)
+    maybe_mkdir_p(target_imagesTs)
+    maybe_mkdir_p(target_labelsTr)
 
-# Target paths
-target_base = join(yucca_raw_data, task_name)
+    ###Populate Target Directory###
+    # This is likely also the place to apply any re-orientation, resampling and/or label correction.
+    for sTr in tqdm(training_samples, desc="Train"):
+        label = nib.load(join(labels_dir, sTr, "ses-0001", sTr + "_ses-0001_msk" + file_suffix))
 
-target_imagesTr = join(target_base, "imagesTr")
-target_labelsTr = join(target_base, "labelsTr")
+        dwi_file = nib.load(join(images_dir, sTr, "ses-0001", "dwi", sTr + "_ses-0001_dwi" + file_suffix))
+        dwi_file = nibpro.resample_from_to(dwi_file, label, order=3)
 
-target_imagesTs = join(target_base, "imagesTs")
-target_labelsTs = join(target_base, "labelsTs")
+        flair_file = nib.load(join(images_dir, sTr, "ses-0001", "anat", sTr + "_ses-0001_FLAIR" + file_suffix))
+        flair_file = nibpro.resample_from_to(flair_file, label, order=3)
 
-maybe_mkdir_p(target_imagesTr)
-maybe_mkdir_p(target_labelsTs)
-maybe_mkdir_p(target_imagesTs)
-maybe_mkdir_p(target_labelsTr)
+        adc_file = nib.load(join(images_dir, sTr, "ses-0001", "dwi", sTr + "_ses-0001_adc" + file_suffix))
+        adc_file = nibpro.resample_from_to(adc_file, label, order=3)
 
-###Populate Target Directory###
-# This is likely also the place to apply any re-orientation, resampling and/or label correction.
-for sTr in tqdm(training_samples, desc="Train"):
-    label = nib.load(join(labels_dir, sTr, "ses-0001", sTr + "_ses-0001_msk" + file_suffix))
+        nib.save(flair_file, f"{target_imagesTr}/{prefix}_{sTr}_000.nii.gz")
+        nib.save(dwi_file, f"{target_imagesTr}/{prefix}_{sTr}_001.nii.gz")
+        nib.save(adc_file, f"{target_imagesTr}/{prefix}_{sTr}_002.nii.gz")
+        nib.save(label, f"{target_labelsTr}/{prefix}_{sTr}.nii.gz")
 
-    dwi_file = nib.load(join(images_dir, sTr, "ses-0001", "dwi", sTr + "_ses-0001_dwi" + file_suffix))
-    dwi_file = nibpro.resample_from_to(dwi_file, label, order=3)
+    for sTs in tqdm(test_samples, desc="test"):
+        label = nib.load(join(labels_dir, sTs, "ses-0001", sTs + "_ses-0001_msk" + file_suffix))
 
-    flair_file = nib.load(join(images_dir, sTr, "ses-0001", "anat", sTr + "_ses-0001_FLAIR" + file_suffix))
-    flair_file = nibpro.resample_from_to(flair_file, label, order=3)
+        dwi_file = nib.load(join(images_dir, sTs, "ses-0001", "dwi", sTs + "_ses-0001_dwi" + file_suffix))
+        dwi_file = nibpro.resample_from_to(dwi_file, label, order=3)
 
-    adc_file = nib.load(join(images_dir, sTr, "ses-0001", "dwi", sTr + "_ses-0001_adc" + file_suffix))
-    adc_file = nibpro.resample_from_to(adc_file, label, order=3)
+        flair_file = nib.load(join(images_dir, sTs, "ses-0001", "anat", sTs + "_ses-0001_FLAIR" + file_suffix))
+        flair_file = nibpro.resample_from_to(flair_file, label, order=3)
 
-    nib.save(flair_file, f"{target_imagesTr}/{prefix}_{sTr}_000.nii.gz")
-    nib.save(dwi_file, f"{target_imagesTr}/{prefix}_{sTr}_001.nii.gz")
-    nib.save(adc_file, f"{target_imagesTr}/{prefix}_{sTr}_002.nii.gz")
-    nib.save(label, f"{target_labelsTr}/{prefix}_{sTr}.nii.gz")
+        adc_file = nib.load(join(images_dir, sTs, "ses-0001", "dwi", sTs + "_ses-0001_adc" + file_suffix))
+        adc_file = nibpro.resample_from_to(adc_file, label, order=3)
 
-for sTs in tqdm(test_samples, desc="test"):
-    label = nib.load(join(labels_dir, sTs, "ses-0001", sTs + "_ses-0001_msk" + file_suffix))
+        nib.save(flair_file, f"{target_imagesTs}/{prefix}_{sTs}_000.nii.gz")
+        nib.save(dwi_file, f"{target_imagesTs}/{prefix}_{sTs}_001.nii.gz")
+        nib.save(adc_file, f"{target_imagesTs}/{prefix}_{sTs}_002.nii.gz")
+        nib.save(label, f"{target_labelsTs}/{prefix}_{sTs}.nii.gz")
 
-    dwi_file = nib.load(join(images_dir, sTs, "ses-0001", "dwi", sTs + "_ses-0001_dwi" + file_suffix))
-    dwi_file = nibpro.resample_from_to(dwi_file, label, order=3)
-
-    flair_file = nib.load(join(images_dir, sTs, "ses-0001", "anat", sTs + "_ses-0001_FLAIR" + file_suffix))
-    flair_file = nibpro.resample_from_to(flair_file, label, order=3)
-
-    adc_file = nib.load(join(images_dir, sTs, "ses-0001", "dwi", sTs + "_ses-0001_adc" + file_suffix))
-    adc_file = nibpro.resample_from_to(adc_file, label, order=3)
-
-    nib.save(flair_file, f"{target_imagesTs}/{prefix}_{sTs}_000.nii.gz")
-    nib.save(dwi_file, f"{target_imagesTs}/{prefix}_{sTs}_001.nii.gz")
-    nib.save(adc_file, f"{target_imagesTs}/{prefix}_{sTs}_002.nii.gz")
-    nib.save(label, f"{target_labelsTs}/{prefix}_{sTs}.nii.gz")
-
-generate_dataset_json(
-    join(target_base, "dataset.json"),
-    target_imagesTr,
-    target_imagesTs,
-    ("Flair", "DWI", "ADC"),
-    labels={0: "background", 1: "Infarct (ischemic stroke lesion)"},
-    dataset_name=task_name,
-    license="hands off!",
-    dataset_description="ISLES-2022",
-    dataset_reference="https://arxiv.org/abs/2206.06694",
-)
+    generate_dataset_json(
+        join(target_base, "dataset.json"),
+        target_imagesTr,
+        target_imagesTs,
+        ("Flair", "DWI", "ADC"),
+        labels={0: "background", 1: "Infarct (ischemic stroke lesion)"},
+        dataset_name=task_name,
+        license="hands off!",
+        dataset_description="ISLES-2022",
+        dataset_reference="https://arxiv.org/abs/2206.06694",
+    )
