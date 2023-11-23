@@ -9,7 +9,7 @@ from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p
 
 load_dotenv()
 
-vars = ["YUCCA_RAW_DATA", "YUCCA_PREPROCESSED", "YUCCA_MODELS", "YUCCA_RESULTS"]
+vars = ["YUCCA_SOURCE", "YUCCA_RAW_DATA", "YUCCA_PREPROCESSED", "YUCCA_MODELS", "YUCCA_RESULTS"]
 vals = {}
 
 for var in vars:
@@ -20,6 +20,7 @@ for var in vars:
         warnings.warn(f"Missing environment variable {var}.")
         vals[var] = None
 
+yucca_source = vals["YUCCA_SOURCE"]
 yucca_raw_data = vals["YUCCA_RAW_DATA"]
 yucca_preprocessed = vals["YUCCA_PREPROCESSED"]
 yucca_models = vals["YUCCA_MODELS"]
