@@ -8,7 +8,7 @@ from batchgenerators.utilities.file_and_folder_operations import save_json, subf
 from tqdm import tqdm
 
 
-def combine_imagesTr_from_tasks(tasks: Union[list, tuple], task_name, target_dir):
+def combine_imagesTr_from_tasks(tasks: Union[list, tuple], target_dir):
     assert len(tasks) > 0, "list of tasks empty"
     for task in tasks:
         source_dir = os.path.join(yucca_raw_data, task, "imagesTr")
