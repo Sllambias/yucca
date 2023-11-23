@@ -31,7 +31,6 @@ Task_conversion file for a dataset with 1 modality.
 """
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.task_conversion.utils import generate_dataset_json
-from yucca.utils.task_ids import maybe_get_task_from_task_id
 import shutil
 import gzip
 from yucca.paths import yucca_raw_data
@@ -39,9 +38,9 @@ from tqdm import tqdm
 
 
 def convert(path: str, subdir: str = "OASIS"):
+    
     # INPUT DATA
-
-    path = f"{path}/{subdir}"
+    path = join(path, subdir)
     file_suffix = ".nii"
 
     # Train/Test Splits

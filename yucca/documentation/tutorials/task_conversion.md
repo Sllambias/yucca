@@ -12,7 +12,7 @@ Yucca expects raw data to be located in subdirectories of the `raw_data` directo
 
 ### Task Names 
 Datasets must be assigned a Task Name of the format `TaskXXX_MYTASK` where `XXX` is a unique 3-digit identifier and `MYTASK` is a freely chosen dataset name. 
-For instance, the OASIS hippocampus segmentation dataset is called [Task001_OASIS](/yucca/yucca/task_conversion/Task001_OASIS.py). Which means that Yucca will assume the raw data is found at; `raw_data/Task001_OASIS`
+For instance, the OASIS hippocampus segmentation dataset is called `Task001_OASIS`. Which means that Yucca will assume the raw data is found at; `raw_data/Task001_OASIS`
 
 ### Train/Test Split
 Inside the task directory (e.g. `raw_data/Task001_OASIS`) data should be split into Train and Test splits (subdirectories) in almost all cases. However, to completely avoid any data leakage, Yucca will NOT do this for you. To ensure a clear division between training and testing data Yucca will automatically only train on data placed in subdirectories called `imagesTr` (training). Therefore, you have to save training and testing samples in appropriately named directories. Training images and labels should be in placed in the subdirectories `imagesTr` and `labelsTr` respectively. And, if they exist, testing images and labels should be placed in the subdirectories `imagesTs` and `labelsTs` respectively.
@@ -51,6 +51,10 @@ raw_data/
 |   |   ├── ...
 ├── Task002_OtherTask/
 ```
+
+### Task Conversion Scripts
+Task conversion can be performed by running the [`run_task_conversion.py`](/yucca/yucca/run/run_task_conversion.py) which executes a task conversion according to one of the files in `yucca/yucca/task_conversion`. For some tasks a task conversion file already exists (e.g. [`Task001_OASIS`](/yucca/yucca/task_conversion/Task001_OASIS.py)) but otherwise a task conversion file must be created. A template for task conversion files can be found [here](/yucca/yucca/task_conversion/template.py).
+
 
 # Preprocessing
 
