@@ -7,7 +7,7 @@ import nibabel as nib
 import os
 import cc3d
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
-from yucca.paths import yucca_preprocessed, yucca_raw_data
+from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from yucca.preprocessing.normalization import normalizer
 from yuccalib.utils.nib_utils import get_nib_spacing, get_nib_orientation, reorient_nib_image
 from yuccalib.utils.type_conversions import nib_to_np
@@ -46,7 +46,7 @@ class YuccaMultiTaskPreprocessor(YuccaPreprocessor):
         self.target_spacing = []
 
     def initialize_paths(self):
-        self.target_dir = join(yucca_preprocessed, self.task, self.plans["plans_name"])
+        self.target_dir = join(yucca_preprocessed_data, self.task, self.plans["plans_name"])
         self.input_dir = join(yucca_raw_data, self.task)
         self.imagedirs = join(self.input_dir, "imagesTr")
         self.labeldirs = join(self.input_dir, "labelsTr")

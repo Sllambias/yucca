@@ -23,7 +23,7 @@ from batchgenerators.dataloading.nondet_multi_threaded_augmenter import (
     NonDetMultiThreadedAugmenter,
 )
 from batchgenerators.transforms.abstract_transforms import Compose
-from yucca.paths import yucca_preprocessed, yucca_models
+from yucca.paths import yucca_preprocessed_data, yucca_models
 from yucca.training.data_loading.YuccaLoader import YuccaLoader
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yuccalib.image_processing.matrix_ops import get_max_rotated_size
@@ -404,8 +404,8 @@ class base_manager(object):
         if not self.is_seeded:
             self.set_random_seeds()
 
-        self.folder_with_preprocessed_data = join(yucca_preprocessed, self.task, self.plan_id)
-        self.splits_file = join(yucca_preprocessed, self.task, "splits.pkl")
+        self.folder_with_preprocessed_data = join(yucca_preprocessed_data, self.task, self.plan_id)
+        self.splits_file = join(yucca_preprocessed_data, self.task, "splits.pkl")
         self.log(f'{"data folder:":20}', self.folder_with_preprocessed_data, time=False)
 
         if not isfile(self.splits_file):
