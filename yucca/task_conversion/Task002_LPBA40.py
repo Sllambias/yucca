@@ -14,8 +14,8 @@ def convert(path: str, subdir: str = "OASIS"):
     file_suffix = ".nii"
 
     # Train/Test Splits
-    labels_dir = join(base_in, "Labels")
-    images_dir = join(base_in, "Images")
+    labels_dir = join(path, "Labels")
+    images_dir = join(path, "Images")
 
     # S01 to S30 are used as training samples
     # S31 to S40 are used as test samples

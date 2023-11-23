@@ -6,7 +6,7 @@ import argparse
 from tqdm import tqdm
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subdirs
 from yucca.task_conversion.utils import generate_dataset_json
-from yucca.paths import yucca_raw_data, yucca_source
+from yucca.paths import yucca_raw_data
 from sklearn.model_selection import train_test_split
 
 
@@ -16,8 +16,8 @@ def convert(path: str, subdir: str = "ISLES-2022"):
     file_suffix = ".nii.gz"
 
     # Train/Test Splits
-    images_dir = join(base_in, "images")
-    labels_dir = join(base_in, "labels_derivatives")
+    images_dir = join(path, "images")
+    labels_dir = join(path, "labels_derivatives")
 
     training_samples, test_samples = train_test_split(subdirs(labels_dir, join=False), random_state=859032)
 
