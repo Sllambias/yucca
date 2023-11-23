@@ -4,12 +4,11 @@ from sklearn.model_selection import train_test_split
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data
-from yucca.utils.nib_utils import get_nib_direction, reorient_nib_image
 
 # INPUT DATA
 # Define input path and extension
 
-folder_with_images = "/home/zcr545/datasets/decathlon/Task02_Heart"
+folder_with_images = "/home/gks462/datasets/decathlon/Task02_Heart"
 file_extension = ".nii.gz"
 
 # OUTPUT DATA
@@ -47,9 +46,7 @@ for sTr in train_samples:
     sTr = sTr[: -len(file_extension)]
 
     # Orient to RAS and register image-label, using the image as reference.
-    orig_ornt = get_nib_direction(image)
-    image = reorient_nib_image(image, original_orientation=orig_ornt, target_orientation="RAS")
-    label = nibpro.resample_from_to(label, image, order=0)
+    #image = nibpro.resample_from_to(image, label, order=3)
 
     nib.save(image, filename=f"{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz")
     nib.save(label, filename=f"{target_labelsTr}/{task_prefix}_{sTr}.nii.gz")
@@ -60,9 +57,7 @@ for sTs in test_samples:
     sTs = sTs[: -len(file_extension)]
 
     # Orient to RAS and register image-label, using the image as reference.
-    orig_ornt = get_nib_direction(image)
-    image = reorient_nib_image(image, original_orientation=orig_ornt, target_orientation="RAS")
-    label = nibpro.resample_from_to(label, image, order=0)
+    #image = nibpro.resample_from_to(image, label, order=3)
 
     nib.save(image, filename=f"{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz")
     nib.save(label, filename=f"{target_labelsTs}/{task_prefix}_{sTs}.nii.gz")
