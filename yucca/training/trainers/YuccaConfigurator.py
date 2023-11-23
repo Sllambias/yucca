@@ -214,14 +214,14 @@ class YuccaConfigurator:
             and self.continue_from_most_recent
             and isfile(join(self.outpath, f"version_{self.version}", "hparams.yaml"))
         ):
-            print("Loading hparams.yaml")
+            print("Found hparams.yaml, loading parameters")
             hparams = load_yaml(join(self.outpath, f"version_{self.version}", "hparams.yaml"))
             self.num_classes = int(hparams["configurator"]["num_classes"])
             self.num_modalities = int(hparams["configurator"]["num_modalities"])
             self.batch_size = int(hparams["configurator"]["batch_size"])
             self.patch_size = [int(p) for p in hparams["configurator"]["patch_size"]]
         else:
-            print("constructing new params")
+            print("Constructing new parameters")
             self.num_classes = len(self.plans["dataset_properties"]["classes"])
             self.num_modalities = len(self.plans["dataset_properties"]["modalities"])
             if self.tiny_patch or not torch.cuda.is_available():
