@@ -25,7 +25,7 @@ test_samples = [sample for sample in all_samples if sample[: -len(file_suffix)] 
 
 ###OUTPUT DATA
 # Target names
-task_name = "Task006_Hammers"
+task_name = "Task003_Hammers"
 prefix = "Hammers"
 
 # Target paths
