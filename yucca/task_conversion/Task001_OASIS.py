@@ -39,8 +39,9 @@ from tqdm import tqdm
 
 
 def convert(path: str):
-    ###INPUT DATA###
+    # INPUT DATA
 
+    path = f"{path}/OASIS"
     file_suffix = ".nii"
 
     # Train/Test Splits
@@ -52,7 +53,7 @@ def convert(path: str):
     images_dir_ts = join(path, "Images", "Test")
     test_samples = subfiles(labels_dir_ts, join=False, suffix=file_suffix)
 
-    ###OUTPUT DATA
+    # OUTPUT DATA
     # Target names
     task_name = "Task001_OASIS"
     prefix = "OASIS"

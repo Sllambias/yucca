@@ -6,7 +6,7 @@ import re
 
 def remove_task_prefix(str):
     """
-    Removes the "TaskXXX_" prefix from string. Number is arbitrary, and T must be capitalized.
+    Removes the "TaskXXX_" prefix from string. Number is arbitrary, and T need not be capitalized.
     Example:
       Input: "Task001_OASIS_IS_COOL"
       Output: "OASIS_IS_COOL"
@@ -21,11 +21,11 @@ def main():
         "-t", "--task", help="Name of the task to preprocess. " "Should be of format: TaskXXX_MYTASK", required=True
     )
     parser.add_argument("-p", "--path", help="Path to source data", default=yucca_source)
+
     args = parser.parse_args()
 
-    dataset_name = remove_task_prefix(args.task)
     task_converter = importlib.import_module(f"yucca.task_conversion.{args.task}")
-    task_converter.convert(f"{args.path}/{dataset_name}")
+    task_converter.convert(args.path)
 
 
 if __name__ == "__main__":
