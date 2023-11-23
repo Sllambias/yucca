@@ -1,5 +1,6 @@
 # %%
 import lightning as L
+import torch
 from typing import Literal
 from yucca.training.augmentation.YuccaAugmentationComposer import (
     YuccaAugmentationComposer,
@@ -50,12 +51,13 @@ class YuccaLightningManager:
         num_workers: int = 8,
         planner: str = "YuccaPlanner",
         precision: str = "16-mixed",
+        profile: bool = False,
         step_logging: bool = False,
         task: str = None,
         **kwargs,
     ):
-        self.continue_from_most_recent = continue_from_most_recent
         self.ckpt_path = ckpt_path
+        self.continue_from_most_recent = continue_from_most_recent
         self.deep_supervision = deep_supervision
         self.disable_logging = disable_logging
         self.folds = folds
@@ -66,6 +68,7 @@ class YuccaLightningManager:
         self.num_workers = num_workers
         self.planner = planner
         self.precision = precision
+        self.profile = profile
         self.step_logging = step_logging
         self.task = task
         self.kwargs = kwargs
@@ -106,6 +109,7 @@ class YuccaLightningManager:
             model_dimensions=self.model_dimensions,
             model_name=self.model_name,
             planner=self.planner,
+            profile=self.profile,
             segmentation_output_dir=segmentation_output_dir,
             save_softmax=save_softmax,
             tiny_patch=True if self.model_name == "TinyUNet" else False,
@@ -139,6 +143,7 @@ class YuccaLightningManager:
             limit_val_batches=self.val_batches_per_step,
             logger=configurator.loggers,
             precision=self.precision,
+            profiler=configurator.profiler,
             enable_progress_bar=not self.disable_logging,
             max_epochs=self.max_epochs,
             **self.kwargs,
@@ -175,7 +180,7 @@ if __name__ == "__main__":
     # path = "/home/zcr545/YuccaData/yucca_models/Task001_OASIS/UNet__3D/YuccaPlanner/YuccaLightningManager/0/2023_11_08_15_19_14/checkpoints/test_ckpt.ckpt"
     path = None
     Manager = YuccaLightningManager(
-        disable_logging=True,
+        disable_logging=False,
         step_logging=True,
         ckpt_path=path,
         folds="0",

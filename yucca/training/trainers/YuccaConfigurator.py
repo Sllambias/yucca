@@ -14,6 +14,7 @@ from batchgenerators.utilities.file_and_folder_operations import (
     subdirs,
 )
 from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.profilers import SimpleProfiler
 from pytorch_lightning.loggers import WandbLogger, CSVLogger
 from sklearn.model_selection import KFold
 from yucca.paths import yucca_models, yucca_preprocessed
@@ -74,6 +75,7 @@ class YuccaConfigurator:
         model_dimensions: str = "3D",
         model_name: str = "UNet",
         planner: str = "YuccaPlanner",
+        profile: bool = False,
         segmentation_output_dir: str = "./",
         save_softmax: bool = False,
         tiny_patch: bool = False,
@@ -88,6 +90,7 @@ class YuccaConfigurator:
         self.save_softmax = save_softmax
         self.segmentation_output_dir = segmentation_output_dir
         self.planner = planner
+        self.profile = profile
         self.task = task
         self.tiny_patch = tiny_patch
 
@@ -96,6 +99,7 @@ class YuccaConfigurator:
         self._train_split = None
         self._val_split = None
         self._version = None
+        self._profiler = None
 
         # Now run the setup
         self.setup_paths()
@@ -108,6 +112,12 @@ class YuccaConfigurator:
         if self._plans is None:
             self._plans = load_json(self.plans_path)
         return self._plans
+
+    @property
+    def profiler(self):
+        if self.profile and self._profiler is None:
+            self._profiler = SimpleProfiler(dirpath=join(self.outpath, f"version_{self.version}"), filename="simple_profile")
+        return self._profiler
 
     @property
     def train_split(self):
@@ -145,7 +155,7 @@ class YuccaConfigurator:
         # If previous version(s) exists we can either (1) continue from the newest or
         # (2) create the next version
         if previous_versions:
-            newest_version = int(max([i.split("_")[-1] for i in previous_versions]))
+            newest_version = max([int(i.split("_")[-1]) for i in previous_versions])
             if self.continue_from_most_recent:
                 self._version = newest_version
             else:

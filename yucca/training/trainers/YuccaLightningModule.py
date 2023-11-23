@@ -107,15 +107,7 @@ class YuccaLightningModule(L.LightningModule):
         output = self(inputs)
         loss = self.loss_fn(output, target)
         metrics = self.train_metrics(output, target)
-        self.log(
-            "train_loss",
-            loss,
-            on_step=self.step_logging,
-            on_epoch=True,
-            prog_bar=False,
-            logger=True,
-        )
-        self.log_dict(metrics, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
+        self.log_dict({"train_loss": loss} | metrics, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -123,8 +115,7 @@ class YuccaLightningModule(L.LightningModule):
         output = self(inputs)
         loss = self.loss_fn(output, target)
         metrics = self.val_metrics(output, target)
-        self.log("val_loss", loss, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
-        self.log_dict(metrics, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
+        self.log_dict({"val_loss": loss} | metrics, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
 
     def on_predict_start(self):
         self.preprocessor = YuccaPreprocessor(self.plans_path)
