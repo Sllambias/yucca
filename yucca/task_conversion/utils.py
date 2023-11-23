@@ -15,7 +15,7 @@ def combine_imagesTr_from_tasks(tasks: Union[list, tuple], target_dir):
         assert os.path.isdir(source_dir)
         for sTr in tqdm(os.listdir(source_dir), task):
             image_file = open(os.path.join(source_dir, sTr), "rb")
-            shutil.copyfileobj(image_file, gzip.open(f"{target_dir}/{sTr}", "wb"))
+            shutil.copy2(image_file, f"{target_dir}/{sTr}")
 
 
 def get_identifiers_from_splitted_files(folder: str, tasks: list):
