@@ -9,7 +9,7 @@ from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p
 
 load_dotenv()
 
-vars = ["YUCCA_RAW_DATA", "YUCCA_PREPROCESSED", "YUCCA_MODELS", "YUCCA_RESULTS"]
+vars = ["YUCCA_RAW_DATA", "YUCCA_PREPROCESSED", "YUCCA_MODELS", "YUCCA_RESULTS", "YUCCA_SOURCE"]
 vals = {}
 
 for var in vars:
@@ -24,3 +24,4 @@ yucca_raw_data = vals["YUCCA_RAW_DATA"]
 yucca_preprocessed = vals["YUCCA_PREPROCESSED"]
 yucca_models = vals["YUCCA_MODELS"]
 yucca_results = vals["YUCCA_RESULTS"]
+yucca_source = vals["YUCCA_SOURCE"]
