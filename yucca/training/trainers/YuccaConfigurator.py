@@ -236,6 +236,7 @@ class YuccaConfigurator:
                     max_patch_size=self.plans["new_mean_size"],
                     max_memory_usage_in_gb=self.max_vram,
                 )
+        print(f"Using batch size: {self.batch_size} and patch size: {self.patch_size}")
 
     def load_splits(self):
         # Load splits file or create it if not found (see: "split_data").
