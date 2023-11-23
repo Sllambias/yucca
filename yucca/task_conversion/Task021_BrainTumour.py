@@ -8,11 +8,11 @@ from yucca.utils.nib_utils import get_nib_direction, reorient_nib_image
 from tqdm import tqdm
 
 
-def convert(path: str):
+def convert(path: str, subdir: str = "decathlon/Task01_BrainTumour"):
     # INPUT DATA
     # Define input path and extension
 
-    folder_with_images = f"{path}/decathlon/Task01_BrainTumour"
+    folder_with_images = f"{path}/{subdir}"
     file_extension = ".nii.gz"
 
     # OUTPUT DATA

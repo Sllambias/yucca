@@ -38,10 +38,10 @@ from yucca.paths import yucca_raw_data
 from tqdm import tqdm
 
 
-def convert(path: str):
+def convert(path: str, subdir: str = "OASIS"):
     # INPUT DATA
 
-    path = f"{path}/OASIS"
+    path = f"{path}/{subdir}"
     file_suffix = ".nii"
 
     # Train/Test Splits

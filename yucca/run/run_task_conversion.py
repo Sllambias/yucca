@@ -21,11 +21,16 @@ def main():
         "-t", "--task", help="Name of the task to preprocess. " "Should be of format: TaskXXX_MYTASK", required=True
     )
     parser.add_argument("-p", "--path", help="Path to source data", default=yucca_source)
+    parser.add_argument("-d", "--subdir", help="Directory of data inside source data")
 
     args = parser.parse_args()
 
     task_converter = importlib.import_module(f"yucca.task_conversion.{args.task}")
-    task_converter.convert(args.path)
+
+    if args.subdir is None:
+        task_converter.convert(args.path)
+    else:
+        task_converter.convert(args.path, args.subdir)
 
 
 if __name__ == "__main__":
