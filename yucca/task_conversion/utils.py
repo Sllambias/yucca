@@ -14,8 +14,7 @@ def combine_imagesTr_from_tasks(tasks: Union[list, tuple], target_dir):
         source_dir = os.path.join(yucca_raw_data, task, "imagesTr")
         assert os.path.isdir(source_dir)
         for sTr in tqdm(os.listdir(source_dir), task):
-            image_file = open(os.path.join(source_dir, sTr), "rb")
-            shutil.copy2(image_file, f"{target_dir}/{sTr}")
+            shutil.copy2(os.path.join(source_dir, sTr), f"{target_dir}/{sTr}")
 
 
 def get_identifiers_from_splitted_files(folder: str, tasks: list):
