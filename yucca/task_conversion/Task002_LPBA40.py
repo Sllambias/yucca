@@ -4,10 +4,17 @@ from yucca.task_conversion.utils import generate_dataset_json
 import shutil
 import gzip
 from yucca.paths import yucca_raw_data
+import argparse
+from tqdm import tqdm
 
-# INPUT DATA
+parser = argparse.ArgumentParser()
+
+parser.add_argument("-p", "--path", help="Path to the dataset")
+args = parser.parse_args()
+
+###INPUT DATA###
 # Input path and names
-base_in = "/maps/projects/image/people/zcr545/datasets/LPBA40"
+base_in = args.path
 file_suffix = ".nii"
 
 # Train/Test Splits
@@ -43,14 +50,14 @@ maybe_mkdir_p(target_labelsTr)
 
 ###Populate Target Directory###
 # This is likely also the place to apply any re-orientation, resampling and/or label correction.
-for sTr in training_samples:
+for sTr in tqdm(training_samples, desc="Train"):
     serial_number = sTr[:-4]
     image_file = open(join(images_dir, sTr), "rb")
     label = open(join(labels_dir, sTr), "rb")
     shutil.copyfileobj(image_file, gzip.open(f"{target_imagesTr}/{prefix}_{serial_number}_000.nii.gz", "wb"))
     shutil.copyfileobj(label, gzip.open(f"{target_labelsTr}/{prefix}_{serial_number}.nii.gz", "wb"))
 
-for sTs in test_samples:
+for sTs in tqdm(test_samples, desc="Test"):
     serial_number = sTs[:-4]
     image_file = open(join(images_dir, sTs), "rb")
     label = open(join(labels_dir, sTs), "rb")

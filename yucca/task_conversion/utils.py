@@ -1,7 +1,21 @@
-from typing import Tuple
 import numpy as np
-from batchgenerators.utilities.file_and_folder_operations import save_json, subfiles, join
 import os
+import shutil
+import gzip
+from yucca.paths import yucca_raw_data
+from typing import Tuple, Union
+from batchgenerators.utilities.file_and_folder_operations import save_json, subfiles, join
+from tqdm import tqdm
+
+
+def combine_imagesTr_from_tasks(tasks: Union[list, tuple], task_name, target_dir):
+    assert len(tasks) > 0, "list of tasks empty"
+    for task in tasks:
+        source_dir = os.path.join(yucca_raw_data, task, "imagesTr")
+        assert os.path.isdir(source_dir)
+        for sTr in tqdm(os.listdir(source_dir), task):
+            image_file = open(os.path.join(source_dir, sTr), "rb")
+            shutil.copyfileobj(image_file, gzip.open(f"{target_dir}/{sTr}", "wb"))
 
 
 def get_identifiers_from_splitted_files(folder: str, tasks: list):
