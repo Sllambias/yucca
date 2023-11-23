@@ -3,6 +3,7 @@
 To setup environment variables add the following `.env` file to the root Yucca folder:
 
 ```
+YUCCA_SOURCE=<path-to-non-converted-datasets>
 YUCCA_RAW_DATA=<path-to-yucca-data-diretory>/raw_data
 YUCCA_PREPROCESSED_DATA=<path-to-yucca-data-diretory>/preprocessed_data
 YUCCA_MODELS=<path-to-yucca-data-diretory>/models
