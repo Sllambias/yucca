@@ -8,7 +8,7 @@ from yucca.paths import yucca_raw_data
 
 # INPUT DATA
 # Input path and names
-base_in = "/maps/projects/image/people/zcr545/datasets/LPBA40"
+base_in = "/maps/projects/image/people/zcr545/datasets/HarP"
 file_suffix = ".nii"
 
 # Train/Test Splits
@@ -18,15 +18,15 @@ images_dir = join(base_in, "Images")
 # S01 to S30 are used as training samples
 # S31 to S40 are used as test samples
 all_samples = subfiles(labels_dir, join=False, suffix=file_suffix)
-tr_ids = ["S" + f"{id:02}" for id in range(1, 31)]
-training_samples = [sample for sample in all_samples if sample[: -len(file_suffix)] in tr_ids]
-ts_ids = ["S" + f"{id:02}" for id in range(31, 41)]
-test_samples = [sample for sample in all_samples if sample[: -len(file_suffix)] in ts_ids]
+tr_ids = ["ADNI_" + f"{id:03}" for id in range(2, 99)]
+training_samples = [sample for sample in all_samples if sample[:8] in tr_ids]
+ts_ids = ["ADNI_" + f"{id:03}" for id in range(100, 137)]
+test_samples = [sample for sample in all_samples if sample[:8] in ts_ids]
 
 ###OUTPUT DATA
 # Target names
-task_name = "Task005_LPBA40"
-prefix = "LPBA40"
+task_name = "Task004_HarP"
+prefix = "HarP"
 
 # Target paths
 target_base = join(yucca_raw_data, task_name)
@@ -66,6 +66,6 @@ generate_dataset_json(
     labels={0: "background", 1: "Left Hippocampus", 2: "Right Hippocampus"},
     dataset_name=task_name,
     license="hands off!",
-    dataset_description="LPBA40 Dataset",
+    dataset_description="HarP Dataset",
     dataset_reference="",
 )
