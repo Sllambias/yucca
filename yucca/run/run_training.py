@@ -50,49 +50,49 @@ def main():
         "Defaults to training on fold 0",
         default=0,
     )
-    parser.add_argument(
-        "--ensemble",
-        help="Used to train ensemble/2.5D models. Will run 3 consecutive trainings.",
-        default=False,
-        action="store_true",
-    )
-    parser.add_argument(
-        "--fast", help="Used to speed up training, possibly at the expense of performance", default=False, action="store_true"
-    )
-
+    parser.add_argument("--epochs", help="Used to specify the number of epochs for training. Default is 1000")
     # The following can be changed to run training with alternative LR, Loss and/or Momentum ###
     parser.add_argument(
         "--lr",
-        help="Should only be used to employ alternative Learning Rate. " "Format should be scientific notation e.g. 1e-4.",
+        help="Should only be used to employ alternative Learning Rate. Format should be scientific notation e.g. 1e-4.",
         default=None,
     )
     parser.add_argument("--loss", help="Should only be used to employ alternative Loss Function", default=None)
     parser.add_argument("--mom", help="Should only be used to employ alternative Momentum.", default=None)
 
-    # Only touch the following if you know what you're doing #
     parser.add_argument(
-        "--continue_train", help="continue training a previously saved checkpoint. ", action="store_true", default=False
+        "--new_version",
+        help="Start a new version, instead of continuing from the most recent. ",
+        action="store_true",
+        default=False,
     )
-    # parser.add_argument("--chk", help="used to specify checkpoint to continue training from "
-    #                    "when --continue_train is supplied. "
-    #                    "The default is the latest model.", default='latest')
-    parser.add_argument("--threads", help="number of threads/processes", default=2)
+    parser.add_argument(
+        "--profile",
+        help="Enable profiling.",
+        action="store_true",
+        default=False,
+    )
 
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
     model_name = args.m
     dimensions = args.d
+    epochs = args.epochs
     manager_name = args.man
-    planner = args.pl
     folds = args.f
-    ensemble = args.ensemble
-    fast_training = args.fast
     lr = args.lr
     loss = args.loss
     momentum = args.mom
-    continue_training = args.continue_train
+    new_version = args.new_version
+    planner = args.pl
+    profile = args.profile
+
     # checkpoint = args.chk
+    kwargs = {}
+
+    if epochs:
+        kwargs["max_epochs"] = int(epochs)
 
     assert model_name in [
         "MedNeXt",
@@ -104,9 +104,6 @@ def main():
         "TinyUNet",
     ], f"{model_name} is an invalid model name. This is case sensitive."
 
-    if lr:
-        assert "e" in lr, f"Learning Rate should be in scientific notation e.g. 1e-4, but is {lr}"
-
     manager = recursive_find_python_class(
         folder=[join(yucca.__path__[0], "training", "trainers")],
         class_name=manager_name,
@@ -114,7 +111,7 @@ def main():
     )
     manager = manager(
         ckpt_path=None,
-        continue_from_most_recent=True,
+        continue_from_most_recent=not new_version,
         deep_supervision=False,
         disable_logging=True,
         folds=folds,
@@ -123,8 +120,10 @@ def main():
         num_workers=8,
         planner=planner,
         precision="16-mixed",
+        profile=profile,
         step_logging=False,
         task=task,
+        **kwargs,
     )
     manager.run_training()
 
