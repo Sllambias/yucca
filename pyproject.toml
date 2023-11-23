@@ -28,6 +28,7 @@ dependencies = [
     "seaborn",
     "setuptools",
     "SimpleITK",
+    "tqdm",
     "wandb",
     "weave",
     "torchmetrics",
