@@ -107,7 +107,7 @@ class YuccaDataModule(pl.LightningDataModule):
             self.pred_dataset = YuccaTestDataset(self.pred_data_dir, patch_size=self.patch_size)
 
     def train_dataloader(self):
-        print("Starting training")
+        print(f"Starting training with data from: {self.train_data_dir}")
         train_sampler = self.sampler(self.train_dataset)
         return DataLoader(
             self.train_dataset,
