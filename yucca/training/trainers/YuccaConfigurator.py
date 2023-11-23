@@ -155,7 +155,7 @@ class YuccaConfigurator:
         # If previous version(s) exists we can either (1) continue from the newest or
         # (2) create the next version
         if previous_versions:
-            newest_version = int(max([i.split("_")[-1] for i in previous_versions]))
+            newest_version = max([int(i.split("_")[-1]) for i in previous_versions])
             if self.continue_from_most_recent:
                 self._version = newest_version
             else:
