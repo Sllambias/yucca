@@ -13,6 +13,7 @@ from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkd
 from yucca.paths import yucca_raw_data
 from yucca.task_conversion.utils import generate_dataset_json
 
+
 def convert(path: str, subdir: str = "FETAL_PLANES_DB"):
     # INPUT DATA
 
@@ -43,21 +44,21 @@ def convert(path: str, subdir: str = "FETAL_PLANES_DB"):
 
     # collect labels
     data_df = pd.read_csv(join(path, "FETAL_PLANES_DB_data.csv"), delimiter=";")
-    labels = list(data_df['Plane'].unique())
+    labels = list(data_df["Plane"].unique())
 
     # Populate Target Directory
     # This is likely also the place to apply any re-orientation, resampling and/or label correction.
     for index, row in tqdm(data_df.iterrows(), total=len(data_df)):
         serial_number = index
         image_file_path = join(images_dir, f"{row['Image_name']}.png")
-        label = np.array([int(labels.index(row['Plane']))], dtype=np.int64)
-        is_train_split = row['Train'] == 1
+        label = np.array([int(labels.index(row["Plane"]))], dtype=np.int64)
+        is_train_split = row["Train"] == 1
         if is_train_split:
             shutil.copyfile(image_file_path, f"{target_imagesTr}/{prefix}_{serial_number}_000.png")
-            np.savetxt(f"{target_labelsTr}/{prefix}_{serial_number}.txt", label, fmt='%d') 
+            np.savetxt(f"{target_labelsTr}/{prefix}_{serial_number}.txt", label, fmt="%d")
         else:
             shutil.copyfile(image_file_path, f"{target_imagesTs}/{prefix}_{serial_number}_000.png")
-            np.savetxt(f"{target_labelsTs}/{prefix}_{serial_number}.txt", label, fmt='%d')
+            np.savetxt(f"{target_labelsTs}/{prefix}_{serial_number}.txt", label, fmt="%d")
 
     generate_dataset_json(
         join(target_base, "dataset.json"),

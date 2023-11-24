@@ -4,7 +4,6 @@ from yuccalib.utils.type_conversions import nib_to_np, read_any_file
 import nibabel as nib
 import numpy as np
 import sys
-import os
 
 
 def create_properties_pkl(data_dir, save_dir, suffix=".nii.gz"):
