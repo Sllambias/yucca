@@ -34,10 +34,14 @@ def create_properties_pkl(data_dir, save_dir, suffix=".nii.gz"):
     spacings = []
     intensity_results = []
 
+    means = []
+    min = np.inf
+    max = -np.inf
+    stds = []
+
     for mod_id, mod_name in properties["modalities"].items():
         mod_id = int(mod_id)
         intensity_results.append({})
-        intensities_for_modality = []
 
         subjects = subfiles(join(data_dir, "imagesTr"), suffix=f"_{mod_id:03}.{im_ext}")
         if len(dataset_json["tasks"]) > 0:
@@ -70,16 +74,16 @@ def create_properties_pkl(data_dir, save_dir, suffix=".nii.gz"):
                 spacings.append([1.0, 1.0, 1.0])
             image = nib_to_np(image)
             mask = image >= background_pixel_value
-            # In order to not run into memory issues we only take every 10th value
-            # And no more than 25.000 values per scan.
-            intensities_for_modality.append(list(np.random.choice(image[mask][::10], size=25000).astype(float)))
 
-        intensities_for_modality = sum(intensities_for_modality, [])
-        intensity_results[mod_id]["mean"] = np.mean(intensities_for_modality)
-        intensity_results[mod_id]["median"] = np.median(intensities_for_modality)
-        intensity_results[mod_id]["min"] = np.min(intensities_for_modality)
-        intensity_results[mod_id]["max"] = np.max(intensities_for_modality)
-        intensity_results[mod_id]["std"] = np.std(intensities_for_modality)
+            means.append(np.mean(image[mask]))
+            stds.append(np.std(image[mask]))
+            min = np.min([min, np.min(image[mask])])
+            max = np.max([max, np.max(image[mask])])
+
+        intensity_results[mod_id]["mean"] = float(np.mean(means))
+        intensity_results[mod_id]["min"] = float(min)
+        intensity_results[mod_id]["max"] = float(max)
+        intensity_results[mod_id]["std"] = float(np.mean(stds))
 
     assert all([len(size) == len(sizes[0]) for size in sizes]), "not all volumes have the same" " number of dimensions"
 
