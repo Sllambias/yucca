@@ -41,9 +41,6 @@ class YuccaPreprocessor_CLS(YuccaPreprocessor):
         # The '_' in the end is to avoid treating Case_4_000 AND Case_42_000 as different versions
         # of the seg named Case_4 as both would start with "Case_4", however only the correct one is
         # followed by an underscore
-        print(self.imagepaths)
-        print(os.path.split(self.imagepaths[0])[-1])
-        print(subject_id)
         imagepaths = [impath for impath in self.imagepaths if os.path.split(impath)[-1].startswith(subject_id + "_")]
 
         image_props["image files"] = imagepaths
@@ -172,7 +169,6 @@ class YuccaPreprocessor_CLS(YuccaPreprocessor):
         print(f"Normalized with: {norm_op[0]} \n" f"Transposed with: {transpose}")
 
         shape_t = images[0].shape
-        print(transpose, original_spacing)
         original_spacing_t = original_spacing[transpose]
         target_spacing_t = target_spacing[transpose]
 

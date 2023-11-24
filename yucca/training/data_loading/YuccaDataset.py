@@ -72,7 +72,10 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         case = self.all_cases[idx]
         data = self.load_and_maybe_keep_volume(case)
-        data_dict = {"image": data[:-1], "seg": data[-1:]}
+        if data.dtype == "O":
+            data_dict = {"image": data[:-1][0], "seg": data[-1:][0]}
+        else:
+            data_dict = {"image": data[:-1], "seg": data[-1:]}
         return self._transform(data_dict, case)
 
     def _transform(self, data_dict, case):
