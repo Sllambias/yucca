@@ -1,3 +1,4 @@
+# %%
 import numpy as np
 import os
 import shutil
@@ -17,11 +18,11 @@ def combine_imagesTr_from_tasks(tasks: Union[list, tuple], target_dir):
             shutil.copy2(os.path.join(source_dir, sTr), f"{target_dir}/{sTr}")
 
 
-def get_identifiers_from_splitted_files(folder: str, tasks: list):
+def get_identifiers_from_splitted_files(folder: str, ext, tasks: list):
     if len(tasks) > 0:
-        uniques = np.unique([i[:-11] for task in tasks for i in subfiles(join(folder, task), suffix=".nii.gz", join=False)])
+        uniques = np.unique([i[: -len("_000." + ext)] for task in tasks for i in subfiles(join(folder, task), join=False)])
     else:
-        uniques = np.unique([i[:-11] for i in subfiles(folder, suffix=".nii.gz", join=False)])
+        uniques = np.unique([i[: -len("_000." + ext)] for i in subfiles(folder, join=False)])
     return uniques
 
 
@@ -56,10 +57,11 @@ def generate_dataset_json(
     :param dataset_release:
     :return:
     """
-    train_identifiers = get_identifiers_from_splitted_files(imagesTr_dir, tasks)
+    im_ext = os.path.split(subfiles(imagesTr_dir)[0])[-1].split(os.extsep, 1)[-1]
+    train_identifiers = get_identifiers_from_splitted_files(imagesTr_dir, im_ext, tasks)
 
     if imagesTs_dir is not None:
-        test_identifiers = get_identifiers_from_splitted_files(imagesTs_dir, tasks)
+        test_identifiers = get_identifiers_from_splitted_files(imagesTs_dir, im_ext, tasks)
     else:
         test_identifiers = []
 
@@ -70,16 +72,15 @@ def generate_dataset_json(
     json_dict["reference"] = dataset_reference
     json_dict["licence"] = license
     json_dict["release"] = dataset_release
+    json_dict["image_extension"] = im_ext
     json_dict["modality"] = {str(i): modalities[i] for i in range(len(modalities))}
     json_dict["labels"] = {str(i): labels[i] for i in labels.keys()}
     json_dict["label_hierarchy"] = label_hierarchy
     json_dict["tasks"] = tasks
     json_dict["numTraining"] = len(train_identifiers)
     json_dict["numTest"] = len(test_identifiers)
-    json_dict["training"] = [
-        {"image": "./imagesTr/%s.nii.gz" % i, "label": "./labelsTr/%s.nii.gz" % i} for i in train_identifiers
-    ]
-    json_dict["test"] = ["./imagesTs/%s.nii.gz" % i for i in test_identifiers]
+    json_dict["training"] = [{"image": f"./imagesTr/{i}.{im_ext}", "label": f"./labelsTr/{i}"} for i in train_identifiers]
+    json_dict["test"] = [f"./imagesTs/{i}.{im_ext}" for i in test_identifiers]
 
     if not output_file.endswith("dataset.json"):
         print(

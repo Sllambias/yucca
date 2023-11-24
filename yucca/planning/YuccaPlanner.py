@@ -30,7 +30,7 @@ class YuccaPlanner(object):
     this means 2D models will be trained on sagittal slices with this planner.
     """
 
-    def __init__(self, task, threads=2, disable_unittests=False, view=None, multi_task=False):
+    def __init__(self, task, preprocessor="YuccaPreprocessor", threads=2, disable_unittests=False, view=None):
         # Required arguments
         self.task = task
 
@@ -42,10 +42,7 @@ class YuccaPlanner(object):
 
         # Don't change the remaining variables unless you know what you're doing
         # Threading speeds up the process. Unittests should by default be enabled.
-        self.preprocessor = "YuccaPreprocessor"
-        if multi_task:
-            self.preprocessor += "_MultiTask"
-
+        self.preprocessor = preprocessor
         self.threads = threads
         self.disable_unittests = disable_unittests
 
@@ -157,13 +154,15 @@ class YuccaPlanner(object):
 
         mean_size = np.mean(new_sizes, 0, dtype=int).tolist()
         min_size = np.min(new_sizes, 0).tolist()
-        mean_cc = np.mean(size_cc, dtype=int).tolist()
-        min_cc = np.min(size_cc).tolist()
-        max_cc = np.max(size_cc).tolist()
-
-        mean_n_cc = np.mean(n_cc, dtype=int).tolist()
-        min_n_cc = np.min(n_cc).tolist()
-        max_n_cc = np.max(n_cc).tolist()
+        if len(size_cc) > 0:
+            mean_cc = np.mean(size_cc, dtype=int).tolist()
+            min_cc = np.min(size_cc).tolist()
+            max_cc = np.max(size_cc).tolist()
+            mean_n_cc = np.mean(n_cc, dtype=int).tolist()
+            min_n_cc = np.min(n_cc, initial=-1).tolist()
+            max_n_cc = np.max(n_cc, initial=-1).tolist()
+        else:
+            mean_cc = min_cc = max_cc = mean_n_cc = min_n_cc = max_n_cc = 0
 
         self.plans["new_sizes"] = new_sizes
         self.plans["new_spacings"] = new_spacings

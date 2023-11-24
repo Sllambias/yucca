@@ -11,7 +11,13 @@ def main():
         "-t", "--task", help="Name of the task to preprocess. " "Should be of format: TaskXXX_MYTASK", required=True
     )
     parser.add_argument(
-        "-pl", help="Experiment Planner Class to employ. " "Defaults to the YuccaPlannerV2", default="YuccaPlanner"
+        "-pl", help="Experiment Planner Class to employ. " "Defaults to the YuccaPlanner", default="YuccaPlanner"
+    )
+    parser.add_argument(
+        "-pr",
+        help="Preprocessor Class to employ. "
+        "Defaults to the YuccaPreprocessor, but can be YuccaPreprocessor_CLS for classification tasks",
+        default="YuccaPreprocessor",
     )
     parser.add_argument(
         "-v",
@@ -26,7 +32,6 @@ def main():
         action="store_true",
     )
     parser.add_argument("--disable_unit_tests", help="Enable or disable unittesting", default=False)
-    parser.add_argument("--multi_task", help="Enable multi task preprocessing", default=False, action="store_true")
 
     # parser.add_argument("--threads", help="Number of threads/processes. \n"
     #                    "Don't touch this unless you know what you're doing.", default=2)
@@ -35,17 +40,17 @@ def main():
 
     task = maybe_get_task_from_task_id(args.task)
     planner_name = args.pl
+    preprocessor_name = args.pr
     view = args.v
     disable_testing = args.disable_unit_tests
     ensemble = args.ensemble
-    multi_task = args.multi_task
     # threads = args.threads
 
     if not ensemble:
         planner = recursive_find_python_class(
             folder=[join(yucca.__path__[0], "planning")], class_name=planner_name, current_module="yucca.planning"
         )
-        planner = planner(task, 2, disable_testing, view=view, multi_task=multi_task)
+        planner = planner(task, preprocessor_name, 2, disable_testing, view=view)
         planner.plan()
         planner.preprocess()
     if ensemble:
@@ -54,7 +59,7 @@ def main():
             planner = recursive_find_python_class(
                 folder=[join(yucca.__path__[0], "planning")], class_name=planner_name, current_module="yucca.planning"
             )
-            planner = planner(task, 2, disable_testing, view=view)
+            planner = planner(task, preprocessor_name, 2, disable_testing, view=view)
             planner.plan()
             planner.preprocess()
 

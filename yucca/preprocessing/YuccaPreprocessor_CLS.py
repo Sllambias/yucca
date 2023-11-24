@@ -1,18 +1,17 @@
+"""
+Takes raw data conforming with Yucca standards and preprocesses according to the generic scheme
+"""
 import numpy as np
 import torch
 import nibabel as nib
 import os
-import cc3d
-from yuccalib.image_processing.objects.BoundingBox import get_bbox_for_foreground
-from yuccalib.image_processing.cropping_and_padding import crop_to_box, pad_to_size
-from yuccalib.utils.nib_utils import (
-    get_nib_spacing,
-    get_nib_orientation,
-    reorient_nib_image,
-)
-from yuccalib.utils.type_conversions import nib_to_np
+from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yucca.paths import yucca_preprocessed, yucca_raw_data
 from yucca.preprocessing.normalization import normalizer
+from yuccalib.utils.nib_utils import get_nib_spacing, get_nib_orientation, reorient_nib_image
+from yuccalib.utils.type_conversions import nib_to_np, read_any_file
+from yuccalib.image_processing.objects.BoundingBox import get_bbox_for_foreground
+from yuccalib.image_processing.cropping_and_padding import crop_to_box, pad_to_size
 from multiprocessing import Pool
 from skimage.transform import resize
 from batchgenerators.utilities.file_and_folder_operations import (
@@ -22,129 +21,12 @@ from batchgenerators.utilities.file_and_folder_operations import (
     save_pickle,
     maybe_mkdir_p,
     isfile,
+    subdirs,
 )
 
 
-class YuccaPreprocessor(object):
-    """
-    The YuccaPreprocessor class is designed to preprocess medical images for the Yucca project.
-    It implements various preprocessing steps, such as reorientation, cropping, normalization, and resizing,
-    based on the plans specified in an YuccaPlanner.
-
-    For training the _preprocess_train_subject method prepares input images for the Yucca model.
-    The preprocess_case_for_inference method prepares input images for the Yucca model during the inference phase,
-    ensuring that they match the requirements specified during training.
-    The reverse_preprocessing method is then used to revert the processed images back to their original form,
-    allowing for a meaningful interpretation of the model's predictions.
-    These methods collectively provide a consistent and reversible preprocessing pipeline for both training and inference.
-
-    The operations that can be enabled/defined in the YuccaPlanner and carried out by the
-    YuccaPreprocessor are:
-
-    (1) The starting orientation - defaults to RAS (for medical images).
-    (2) The cropping operation - defaults to crop to nonzero bounding box
-    (3) The Transposition operation (along with the reverse transpose operation,
-    to be used during inference) - defaults to no transposition if image dimensions and spacings
-    are not too anisotropic.
-    (4) The Resample operation - defaults to resampling to the median spacing of the dataset.
-    (5) The Normalization operation - defaults to standardization = (image - mean) / std
-    per modality to preserve ranges to account for CT pixel values representing specific physical
-    attributes.
-
-    Additionally it carries out a number of tests and analyzes each image for foreground locations
-    which is used later to oversample foreground.
-    """
-
-    def __init__(self, plans_path, task=None, threads=12, disable_unittests=False):
-        self.name = str(self.__class__.__name__)
-        self.task = task
-        self.plans_path = plans_path
-        self.plans = load_json(plans_path)
-        self.threads = threads
-        self.disable_unittests = disable_unittests
-
-        # lists for information we would like to attain
-        self.transpose_forward = []
-        self.transpose_backward = []
-        self.target_spacing = []
-
-    def initialize_paths(self):
-        self.target_dir = join(yucca_preprocessed, self.task, self.plans["plans_name"])
-        self.input_dir = join(yucca_raw_data, self.task)
-        self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
-
-    def initialize_properties(self):
-        """
-        here we basically set up things that are needed for preprocessing during training,
-        but that aren't necessary during inference
-        """
-        self.dataset_properties = self.plans["dataset_properties"]
-        self.intensities = self.dataset_properties["intensities"]
-        self.image_extension = self.dataset_properties["image_extension"]
-
-        # op values
-        self.transpose_forward = np.array(self.plans["transpose_forward"])
-        self.transpose_backward = np.array(self.plans["transpose_backward"])
-        self.target_spacing = np.array(self.plans["target_spacing"])
-
-    def run(self):
-        self.initialize_properties()
-        self.initialize_paths()
-        maybe_mkdir_p(self.target_dir)
-        subject_ids = subfiles(join(self.input_dir, "labelsTr"), join=False)
-
-        print(
-            f"{'Preprocessing Task:':25.25} {self.task} \n"
-            f"{'Using Planner:':25.25} {self.plans_path} \n"
-            f"{'Crop to nonzero:':25.25} {self.plans['crop_to_nonzero']} \n"
-            f"{'Normalization scheme:':25.25} {self.plans['normalization_scheme']} \n"
-            f"{'Transpose Forward:':25.25} {self.transpose_forward} \n"
-            f"{'Transpose Backward:':25.25} {self.transpose_backward} \n"
-        )
-        p = Pool(self.threads)
-        p.map(self._preprocess_train_subject, subject_ids)
-        p.close()
-        p.join()
-
+class YuccaPreprocessor_CLS(YuccaPreprocessor):
     def _preprocess_train_subject(self, subject_id):
-        """
-        This is the bread and butter of the preprocessor.
-        The following steps are taken:
-
-        (1) Load Images:
-        Extract relevant image files associated with the given subject_id.
-        Load the images using the nibabel library.
-
-        (2) Reorientation (Optional):
-        Check if valid qform or sform codes are present in the header.
-        If valid, reorient the images to the target orientation specified in the plans.
-        Update the original and new orientation information in the image_props dictionary.
-
-        (3) Normalization and Transposition:
-        Normalize each image based on the specified normalization scheme and intensities.
-        Transpose the images according to the forward transpose axes specified in the plans.
-
-        (4) Cropping (Optional):
-        If the crop_to_nonzero option is enabled in the plans, crop the images to the nonzero bounding box.
-        Update the image_props dictionary with cropping information.
-
-        (5) Resampling:
-        Resample images to the target spacing specified in the plans.
-        Update the image_props dictionary with original and new spacing information.
-
-        (6) Foreground Locations:
-        Extract some locations of the foreground, which will be used in oversampling of foreground classes.
-        Determine the number and sizes of connected components in the ground truth segmentation (can be used in analysis).
-
-        (7) Save Preprocessed Data:
-        Stack the preprocessed images and segmentation.
-        Save the preprocessed data as a NumPy array in a .npy file.
-        Save relevant metadata as a .pkl file.
-
-        (8) Print Information:
-        Print information about the size and spacing before and after preprocessing.
-        Print the path where the preprocessed data is saved.
-        """
         image_props = {}
         subject_id = subject_id.split(os.extsep, 1)[0]
         print(f"Preprocessing: {subject_id}")
@@ -159,36 +41,29 @@ class YuccaPreprocessor(object):
         # The '_' in the end is to avoid treating Case_4_000 AND Case_42_000 as different versions
         # of the seg named Case_4 as both would start with "Case_4", however only the correct one is
         # followed by an underscore
+        print(self.imagepaths)
+        print(os.path.split(self.imagepaths[0])[-1])
+        print(subject_id)
         imagepaths = [impath for impath in self.imagepaths if os.path.split(impath)[-1].startswith(subject_id + "_")]
+
         image_props["image files"] = imagepaths
-        images = [nib.load(image) for image in imagepaths]
+        images = [read_any_file(image) for image in imagepaths]
 
         # Do the same with segmentation
-        seg = join(self.input_dir, "labelsTr", subject_id + ".nii.gz")
-        image_props["segmentation file"] = seg
-        seg = nib.load(seg)
+        seg = [
+            segpath
+            for segpath in subfiles(join(self.input_dir, "labelsTr"))
+            if os.path.split(segpath)[-1].startswith(subject_id + ".")
+        ]
+        assert len(seg) < 2, f"unexpected number of segmentations found. Expected 1 or 0 and found {len(seg)}"
+        image_props["segmentation file"] = seg[0]
+        seg = read_any_file(seg[0], dtype=np.uint8)
 
         if not self.disable_unittests:
             assert len(images) > 0, f"found no images for {subject_id + '_'}, " f"attempted imagepaths: {imagepaths}"
-
             assert (
                 len(images[0].shape) == self.plans["dataset_properties"]["data_dimensions"]
             ), f"image should be shape (x, y(, z)) but is {images[0].shape}"
-
-            # make sure images and labels are correctly registered
-            assert images[0].shape == seg.shape, (
-                f"Sizes do not match for {subject_id}" f"Image is: {images[0].shape} while the seg is {seg.shape}"
-            )
-
-            assert np.allclose(get_nib_spacing(images[0]), get_nib_spacing(seg)), (
-                f"Spacings do not match for {subject_id}"
-                f"Image is: {get_nib_spacing(images[0])} while the seg is {get_nib_spacing(seg)}"
-            )
-
-            assert get_nib_orientation(images[0]) == get_nib_orientation(seg), (
-                f"Directions do not match for {subject_id}"
-                f"Image is: {get_nib_orientation(images[0])} while the seg is {get_nib_orientation(seg)}"
-            )
 
             # Make sure all modalities are correctly registered
             if len(images) > 1:
@@ -197,44 +72,34 @@ class YuccaPreprocessor(object):
                         f"Sizes do not match for {subject_id}" f"One is: {images[0].shape} while another is {image.shape}"
                     )
 
-                    assert np.allclose(get_nib_spacing(images[0]), get_nib_spacing(image)), (
-                        f"Spacings do not match for {subject_id}"
-                        f"One is: {get_nib_spacing(images[0])} while another is {get_nib_spacing(image)}"
-                    )
-
-                    assert get_nib_orientation(images[0]) == get_nib_orientation(image), (
-                        f"Directions do not match for {subject_id}"
-                        f"One is: {get_nib_orientation(images[0])} while another is {get_nib_orientation(image)}"
-                    )
-
-        original_spacing = get_nib_spacing(images[0])
         original_size = np.array(images[0].shape)
-
-        if self.target_spacing.size:
-            target_spacing = self.target_spacing
-        else:
-            target_spacing = original_spacing
 
         # If qform and sform are both missing the header is corrupt and we do not trust the
         # direction from the affine
         # Make sure you know what you're doing
-        if images[0].get_qform(coded=True)[1] or images[0].get_sform(coded=True)[1]:
+        valid_header = False
+        if isinstance(images[0], nib.Nifti1Image):
+            if images[0].get_qform(coded=True)[1] or images[0].get_sform(coded=True)[1]:
+                valid_header = True
+
+        if valid_header:
+            original_spacing = get_nib_spacing(images[0])
             original_orientation = get_nib_orientation(images[0])
             final_direction = self.plans["target_coordinate_system"]
             images = [nib_to_np(reorient_nib_image(image, original_orientation, final_direction)) for image in images]
-            seg = nib_to_np(reorient_nib_image(seg, original_orientation, final_direction))
+            if isinstance(seg, nib.Nifti1Image):
+                seg = nib_to_np(reorient_nib_image(seg, original_orientation, final_direction))
         else:
+            original_spacing = np.array([1.0] * len(original_size))
             original_orientation = "INVALID"
             final_direction = "INVALID"
             images = [nib_to_np(image) for image in images]
             seg = nib_to_np(seg)
 
-        # Check if the ground truth only contains expected values
-        expected_labels = np.array(self.plans["dataset_properties"]["classes"], dtype=np.float32)
-        actual_labels = np.unique(seg).astype(np.float32)
-        assert np.all(np.isin(actual_labels, expected_labels)), (
-            f"Unexpected labels found for {subject_id} \n" f"expected: {expected_labels} \n" f"found: {actual_labels}"
-        )
+        if self.target_spacing.size:
+            target_spacing = self.target_spacing
+        else:
+            target_spacing = original_spacing
 
         # Cropping is performed to save computational resources. We are only removing background.
         if self.plans["crop_to_nonzero"]:
@@ -242,33 +107,21 @@ class YuccaPreprocessor(object):
             image_props["crop_to_nonzero"] = nonzero_box
             for i in range(len(images)):
                 images[i] = crop_to_box(images[i], nonzero_box)
-            seg = crop_to_box(seg, nonzero_box)
         else:
             image_props["crop_to_nonzero"] = self.plans["crop_to_nonzero"]
 
-        images, seg = self._resample_and_normalize_case(
-            images,
-            seg,
-            self.plans["normalization_scheme"],
-            self.transpose_forward,
-            original_spacing,
-            target_spacing,
+        images = self._resample_and_normalize_case(
+            images, None, self.plans["normalization_scheme"], self.transpose_forward, original_spacing, target_spacing
         )
 
-        # Stack and fix dimensions
-        images = np.vstack((np.array(images), np.array(seg)[np.newaxis]))
+        images = np.array((np.array(images).T, seg), dtype="object")
+        images[0] = images[0].T
+        final_size = list(images[0][0].shape)
 
-        # now AFTER transposition etc., we get some (no need to get all)
-        # locations of foreground, that we will later use in the
-        # oversampling of foreground classes
-        foreground_locs = np.array(np.nonzero(images[-1])).T[::10]
-        numbered_ground_truth, ground_truth_numb_lesion = cc3d.connected_components(images[-1], connectivity=26, return_N=True)
-        if ground_truth_numb_lesion == 0:
-            object_sizes = 0
-        else:
-            object_sizes = [i * np.prod(target_spacing) for i in np.unique(numbered_ground_truth, return_counts=True)[-1][1:]]
-
-        final_size = list(images[0].shape)
+        # For classification there's no foreground classes
+        # And no connected components to analyze.
+        foreground_locs = []
+        numbered_ground_truth = ground_truth_numb_lesion = object_sizes = 0
 
         # save relevant values
         image_props["original_spacing"] = original_spacing
@@ -294,13 +147,7 @@ class YuccaPreprocessor(object):
         save_pickle(image_props, picklepath)
 
     def _resample_and_normalize_case(
-        self,
-        images: list,
-        seg: np.ndarray = None,
-        norm_op=None,
-        transpose=None,
-        original_spacing=None,
-        target_spacing=None,
+        self, images: list, seg: np.ndarray = None, norm_op=None, transpose=None, original_spacing=None, target_spacing=None
     ):
         # Normalize and Transpose images to target view.
         # Transpose segmentations to target view.
@@ -325,6 +172,7 @@ class YuccaPreprocessor(object):
         print(f"Normalized with: {norm_op[0]} \n" f"Transposed with: {transpose}")
 
         shape_t = images[0].shape
+        print(transpose, original_spacing)
         original_spacing_t = original_spacing[transpose]
         target_spacing_t = target_spacing[transpose]
 
@@ -347,7 +195,7 @@ class YuccaPreprocessor(object):
 
         return images
 
-    def preprocess_case_for_inference(self, images: list | tuple, patch_size: tuple):
+    def preprocess_case_for_inference(self, images: list, patch_size: tuple):
         """
         Will reorient ONLY if we have valid qform or sform codes.
         with coded=True the methods will return {affine or None} and {0 or 1}.
@@ -360,20 +208,17 @@ class YuccaPreprocessor(object):
         Finally images are resampled to the required spacing/size and returned
         as torch tensors of the required shape (b, c, x, y, (z))
         """
-        assert isinstance(images, (list, tuple)), "image(s) should be a list or tuple, even if only one " "image is passed"
+        assert isinstance(images, list), "image(s) should be a list, even if only one " "image is passed"
         self.initialize_properties()
         image_properties = {}
-        images = [nib.load(image[0]) if isinstance(image, tuple) else nib.load(image) for image in images]
+        images = [nib.load(image) for image in images]
 
         image_properties["original_spacing"] = get_nib_spacing(images[0])
         image_properties["original_shape"] = np.array(images[0].shape)
         image_properties["qform"] = images[0].get_qform()
         image_properties["sform"] = images[0].get_sform()
 
-        assert len(image_properties["original_shape"]) in [
-            2,
-            3,
-        ], "images must be either 2D or 3D for preprocessing"
+        assert len(image_properties["original_shape"]) in [2, 3], "images must be either 2D or 3D for preprocessing"
 
         # Check if header is valid and then attempt to orient to target orientation.
         if (
@@ -428,16 +273,16 @@ class YuccaPreprocessor(object):
 
     def reverse_preprocessing(self, images: np.ndarray, image_properties: dict):
         """
+        At this point images are potentially: cropped, transposed, resized and padded
+        (in this order).
+
+        First we undo the padding
+        Then we reverse resizing to ensure correct spacing
+        Then we transpose back to the original view
+        Finally we re-seat the cropped out part (if cropping is enabled)
+
         Expected shape of images are:
         (b, c, x, y(, z))
-
-        (1) Initialization: Extract relevant properties from the image_properties dictionary.
-        (2) Padding Reversion: Reverse the padding applied during preprocessing.
-        (3) Resampling and Transposition Reversion: Resize the images to revert the resampling operation.
-        Transpose the images back to the original orientation.
-        (4) Cropping Reversion (Optional): If cropping to the nonzero bounding box was applied, revert the cropping operation.
-        (5) Return: Return the reverted images as a NumPy array.
-        The original orientation of the image will be re-applied when saving the prediction
         """
 
         nclasses = len(self.plans["dataset_properties"]["classes"])
@@ -458,11 +303,7 @@ class YuccaPreprocessor(object):
                 )
                 shape = image.shape
                 if len(pad) > 5:
-                    image = image[
-                        pad[0] : shape[0] - pad[1],
-                        pad[2] : shape[1] - pad[3],
-                        pad[4] : shape[2] - pad[5],
-                    ]
+                    image = image[pad[0] : shape[0] - pad[1], pad[2] : shape[1] - pad[3], pad[4] : shape[2] - pad[5]]
                 elif len(pad) < 5:
                     image = image[pad[0] : shape[0] - pad[1], pad[2] : shape[1] - pad[3]]
 
@@ -482,11 +323,7 @@ class YuccaPreprocessor(object):
                 if self.plans["crop_to_nonzero"]:
                     bbox = image_properties["nonzero_box"]
                     if len(bbox) > 5:
-                        slices = (
-                            slice(bbox[0], bbox[1]),
-                            slice(bbox[2], bbox[3]),
-                            slice(bbox[4], bbox[5]),
-                        )
+                        slices = (slice(bbox[0], bbox[1]), slice(bbox[2], bbox[3]), slice(bbox[4], bbox[5]))
                     elif len(bbox) < 5:
                         slices = (slice(bbox[0], bbox[1]), slice(bbox[2], bbox[3]))
                     canvas[b, c][slices] = image

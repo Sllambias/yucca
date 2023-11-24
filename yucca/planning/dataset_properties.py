@@ -1,9 +1,10 @@
 from batchgenerators.utilities.file_and_folder_operations import subfiles, join, load_json, save_pickle
 from yuccalib.utils.nib_utils import get_nib_spacing
-from yuccalib.utils.type_conversions import nib_to_np
+from yuccalib.utils.type_conversions import nib_to_np, read_any_file
 import nibabel as nib
 import numpy as np
 import sys
+import os
 
 
 def create_properties_pkl(data_dir, save_dir, suffix=".nii.gz"):
@@ -15,6 +16,8 @@ def create_properties_pkl(data_dir, save_dir, suffix=".nii.gz"):
     properties = {}
 
     dataset_json = load_json(join(data_dir, "dataset.json"))
+    im_ext = dataset_json.get("image_extension") or "nii.gz"
+    properties["image_extension"] = im_ext
     properties["classes"] = list(dataset_json["labels"].keys())
     properties["tasks"] = {task: [] for task in dataset_json["tasks"]}
     if len(dataset_json["tasks"]) > 0:
@@ -36,12 +39,12 @@ def create_properties_pkl(data_dir, save_dir, suffix=".nii.gz"):
         intensity_results.append({})
         intensities_for_modality = []
 
-        subjects = subfiles(join(data_dir, "imagesTr"), suffix=f"_{mod_id:03}" + suffix)
+        subjects = subfiles(join(data_dir, "imagesTr"), suffix=f"_{mod_id:03}.{im_ext}")
         if len(dataset_json["tasks"]) > 0:
             for task in dataset_json["tasks"]:
-                for subject in subfiles(join(data_dir, "imagesTr", task), suffix=f"_{mod_id:03}" + suffix, join=False):
-                    if subject.endswith("_000.nii.gz"):
-                        properties["tasks"][task].append(subject[: -len("_000.nii.gz")])
+                for subject in subfiles(join(data_dir, "imagesTr", task), suffix=f"_{mod_id:03}.{im_ext}", join=False):
+                    if subject.endswith(f"_{mod_id:03}.{im_ext}"):
+                        properties["tasks"][task].append(subject[: -len(f"_{mod_id:03}.{im_ext}")])
                     subjects.append(join(data_dir, "imagesTr", task, subject))
 
         assert subjects, (
@@ -59,9 +62,12 @@ def create_properties_pkl(data_dir, save_dir, suffix=".nii.gz"):
                 completed += 20
                 print(f"Property file creation progress: {completed}%")
                 sys.stdout.flush()
-            image = nib.load(subject)
+            image = read_any_file(subject)
             sizes.append(image.shape)
-            spacings.append(get_nib_spacing(image).tolist())
+            if isinstance(image, nib.Nifti1Image):
+                spacings.append(get_nib_spacing(image).tolist())
+            else:
+                spacings.append([1.0, 1.0, 1.0])
             image = nib_to_np(image)
             mask = image >= background_pixel_value
             # In order to not run into memory issues we only take every 10th value
