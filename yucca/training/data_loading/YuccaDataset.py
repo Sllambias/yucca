@@ -1,4 +1,3 @@
-# %%
 import numpy as np
 import torch
 import os
@@ -110,11 +109,11 @@ class YuccaTestDataset(torch.utils.data.Dataset):
 
 if __name__ == "__main__":
     import torch
-    from yucca.paths import yucca_preprocessed
+    from yucca.paths import yucca_preprocessed_data
     from batchgenerators.utilities.file_and_folder_operations import join
     from yucca.training.data_loading.samplers import InfiniteRandomSampler
 
-    files = subfiles(join(yucca_preprocessed, "Task001_OASIS/YuccaPlanner"), suffix="npy")
+    files = subfiles(join(yucca_preprocessed_data, "Task001_OASIS/YuccaPlanner"), suffix="npy")
     ds = YuccaTrainDataset(files, patch_size=(12, 12, 12))
     sampler = InfiniteRandomSampler(ds)
     dl = torch.utils.data.DataLoader(ds, num_workers=2, batch_size=2, sampler=sampler)

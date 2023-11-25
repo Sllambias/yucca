@@ -3,11 +3,13 @@
 To setup environment variables add the following `.env` file to the root Yucca folder:
 
 ```
-YUCCA_RAW_DATA=/path/to/yucca_data/raw_data
-YUCCA_PREPROCESSED="/path/to/yucca_data/preprocessed"
-YUCCA_MODELS="/path/to/yucca_data/models"
-YUCCA_RESULTS="/path/to/yucca_data/results"
+YUCCA_SOURCE=<path-to-non-converted-datasets>
+YUCCA_RAW_DATA=<path-to-yucca-data-diretory>/raw_data
+YUCCA_PREPROCESSED_DATA=<path-to-yucca-data-diretory>/preprocessed_data
+YUCCA_MODELS=<path-to-yucca-data-diretory>/models
+YUCCA_RESULTS=<path-to-yucca-data-diretory>/results
 ```
+As an example `<path-to-yucca-data-diretory>` could be substituted by `/data/yucca`.
 
 What's the purpose of this?
 

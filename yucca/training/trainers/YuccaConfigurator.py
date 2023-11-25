@@ -1,4 +1,3 @@
-# %%
 import torch
 import numpy as np
 from time import localtime, strftime
@@ -17,7 +16,7 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.profilers import SimpleProfiler
 from pytorch_lightning.loggers import WandbLogger, CSVLogger
 from sklearn.model_selection import KFold
-from yucca.paths import yucca_models, yucca_preprocessed
+from yucca.paths import yucca_models, yucca_preprocessed_data
 from yuccalib.network_architectures.utils.model_memory_estimation import (
     find_optimal_tensor_dims,
 )
@@ -204,7 +203,7 @@ class YuccaConfigurator:
         self.callbacks = [best_ckpt, interval_ckpt, latest_ckpt, pred_writer]
 
     def setup_paths(self):
-        self.train_data_dir = join(yucca_preprocessed, self.task, self.planner)
+        self.train_data_dir = join(yucca_preprocessed_data, self.task, self.planner)
         self.outpath = join(
             yucca_models,
             self.task,
@@ -213,7 +212,7 @@ class YuccaConfigurator:
             f"fold_{self.folds}",
         )
         maybe_mkdir_p(self.outpath)
-        self.plans_path = join(yucca_preprocessed, self.task, self.planner, self.planner + "_plans.json")
+        self.plans_path = join(yucca_preprocessed_data, self.task, self.planner, self.planner + "_plans.json")
 
     def setup_data_params(self):
         # (1) check if previous versions exist
@@ -250,11 +249,11 @@ class YuccaConfigurator:
 
     def load_splits(self):
         # Load splits file or create it if not found (see: "split_data").
-        splits_file = join(yucca_preprocessed, self.task, "splits.pkl")
+        splits_file = join(yucca_preprocessed_data, self.task, "splits.pkl")
         if not isfile(splits_file):
             self.split_data(splits_file)
 
-        splits_file = load_pickle(join(yucca_preprocessed, self.task, "splits.pkl"))
+        splits_file = load_pickle(join(yucca_preprocessed_data, self.task, "splits.pkl"))
         self._train_split = splits_file[int(self.folds)]["train"]
         self._val_split = splits_file[int(self.folds)]["val"]
 
@@ -284,7 +283,6 @@ class YuccaConfigurator:
         save_pickle(splits, splits_file)
 
 
-# %%
 if __name__ == "__main__":
     from pytorch_lightning.loggers import WandbLogger, CSVLogger
 
@@ -292,4 +290,3 @@ if __name__ == "__main__":
         task="Task001_OASIS", model_name="TinyUNet", model_dimensions="2D", manager_name="YuccaLightningManager"
     )
     # x.val_split
-# %%

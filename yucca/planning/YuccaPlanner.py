@@ -1,6 +1,6 @@
 import yucca
 import numpy as np
-from yucca.paths import yucca_preprocessed, yucca_raw_data
+from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from yucca.planning.dataset_properties import create_properties_pkl
 from yuccalib.utils.files_and_folders import recursive_find_python_class
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, isfile, load_pickle, save_json, subfiles
@@ -181,7 +181,7 @@ class YuccaPlanner(object):
     def set_paths(self):
         # Setting up paths
         self.in_dir = join(yucca_raw_data, self.task)
-        self.target_dir = join(yucca_preprocessed, self.task)
+        self.target_dir = join(yucca_preprocessed_data, self.task)
         self.plans_folder = join(self.target_dir, self.name)
         self.plans_path = join(self.plans_folder, self.name + "_plans.json")
         maybe_mkdir_p(join(self.target_dir, self.name))

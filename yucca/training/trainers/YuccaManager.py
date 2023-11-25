@@ -10,7 +10,7 @@ from batchgenerators.utilities.file_and_folder_operations import (
     subfiles,
     save_pickle,
 )
-from yucca.paths import yucca_preprocessed
+from yucca.paths import yucca_preprocessed_data
 from yucca.training.trainers.base_manager import base_manager
 from yuccalib.evaluation.confusion_matrix import (
     torch_confusion_matrix_from_logits,
@@ -147,7 +147,7 @@ class YuccaManager(base_manager):
             # Then we load the plans and set modalities and classes etc.
             self.load_plans_from_path(
                 join(
-                    yucca_preprocessed,
+                    yucca_preprocessed_data,
                     self.task,
                     self.plan_id,
                     self.plan_id + "_plans.json",

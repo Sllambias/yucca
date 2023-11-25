@@ -1,4 +1,3 @@
-# %%
 import lightning as L
 import torch
 from typing import Literal
@@ -195,5 +194,3 @@ if __name__ == "__main__":
     #    input_folder="/home/zcr545/YuccaData/yucca_raw_data/Task001_OASIS/imagesTs",
     #    output_folder="/home/zcr545/YuccaData/yucca_predictions",
     # )
-
-# %%
