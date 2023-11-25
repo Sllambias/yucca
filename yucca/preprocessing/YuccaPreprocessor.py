@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import torch.nn.functional as F
 import nibabel as nib
 import os
 import cc3d
@@ -441,52 +442,50 @@ class YuccaPreprocessor(object):
 
         nclasses = len(self.plans["dataset_properties"]["classes"])
         original_shape = image_properties["original_shape"]
-        canvas = np.zeros((1, nclasses, *image_properties["uncropped_shape"]))
+        canvas = torch.zeros((1, nclasses, *image_properties["uncropped_shape"]))
         shape_after_crop = image_properties["cropped_shape"]
         shape_after_crop_transposed = shape_after_crop[self.transpose_forward]
         pad = image_properties["padding"]
 
-        for b in range(images.shape[0]):
-            for c in range(images.shape[1]):
-                image = images[b, c]
+        assert np.all(images.shape[2:] == image_properties["padded_shape"]), (
+            f"Reversing padding: "
+            f"image should be of shape: {image_properties['padded_shape']}"
+            f"but is: {images.shape[2:]}"
+        )
+        shape = images.shape[2:]
+        if len(pad) > 5:
+            images = images[
+                :,
+                :,
+                pad[0] : shape[0] - pad[1],
+                pad[2] : shape[1] - pad[3],
+                pad[4] : shape[2] - pad[5],
+            ]
+        elif len(pad) < 5:
+            images = images[:, :, pad[0] : shape[0] - pad[1], pad[2] : shape[1] - pad[3]]
 
-                assert np.all(image.shape == image_properties["padded_shape"]), (
-                    f"Reversing padding: "
-                    f"image should be of shape: {image_properties['padded_shape']}"
-                    f"but is: {image.shape}"
+        assert np.all(images[2:].shape == image_properties["resampled_transposed_shape"]), (
+            f"Reversing resampling and tranposition: "
+            f"image should be of shape: {image_properties['resampled_transposed_shape']}"
+            f"but is: {images[2:].shape}"
+        )
+        images = F.interpolate(images, output_shape=shape_after_crop_transposed, mode="trilinear").permute(
+            [0, 1] + [i + 2 for i in self.transpose_backward]
+        )
+
+        assert np.all(images.shape == image_properties["cropped_shape"]), (
+            f"Reversing cropping: " f"image should be of shape: {image_properties['cropped_shape']}" f"but is: {images.shape}"
+        )
+
+        if self.plans["crop_to_nonzero"]:
+            bbox = image_properties["nonzero_box"]
+            if len(bbox) > 5:
+                slices = (
+                    slice(bbox[0], bbox[1]),
+                    slice(bbox[2], bbox[3]),
+                    slice(bbox[4], bbox[5]),
                 )
-                shape = image.shape
-                if len(pad) > 5:
-                    image = image[
-                        pad[0] : shape[0] - pad[1],
-                        pad[2] : shape[1] - pad[3],
-                        pad[4] : shape[2] - pad[5],
-                    ]
-                elif len(pad) < 5:
-                    image = image[pad[0] : shape[0] - pad[1], pad[2] : shape[1] - pad[3]]
-
-                assert np.all(image.shape == image_properties["resampled_transposed_shape"]), (
-                    f"Reversing resampling and tranposition: "
-                    f"image should be of shape: {image_properties['resampled_transposed_shape']}"
-                    f"but is: {image.shape}"
-                )
-                image = resize(image, output_shape=shape_after_crop_transposed, order=3).transpose(self.transpose_backward)
-
-                assert np.all(image.shape == image_properties["cropped_shape"]), (
-                    f"Reversing cropping: "
-                    f"image should be of shape: {image_properties['cropped_shape']}"
-                    f"but is: {image.shape}"
-                )
-
-                if self.plans["crop_to_nonzero"]:
-                    bbox = image_properties["nonzero_box"]
-                    if len(bbox) > 5:
-                        slices = (
-                            slice(bbox[0], bbox[1]),
-                            slice(bbox[2], bbox[3]),
-                            slice(bbox[4], bbox[5]),
-                        )
-                    elif len(bbox) < 5:
-                        slices = (slice(bbox[0], bbox[1]), slice(bbox[2], bbox[3]))
-                    canvas[b, c][slices] = image
+            elif len(bbox) < 5:
+                slices = (slice(bbox[0], bbox[1]), slice(bbox[2], bbox[3]))
+            canvas[:, :][slices] = images
         return canvas
