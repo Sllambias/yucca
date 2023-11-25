@@ -6,9 +6,8 @@ from yucca.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data
 
 
-def convert(path: str, subdir: str = 'MyDataset'):
-    
-    """ INPUT DATA - Define input path and suffixes """
+def convert(path: str, subdir: str = "MyDataset"):
+    """INPUT DATA - Define input path and suffixes"""
     path = join(path, subdir)
     file_suffix = ".nii"
 

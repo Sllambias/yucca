@@ -7,7 +7,6 @@ from yucca.paths import yucca_raw_data
 
 
 def convert(path: str, subdir: str = "decathlon/Task02_Heart"):
-    
     # INPUT DATA
     # Define input path and extension
     path = join(path, subdir)
@@ -38,7 +37,6 @@ def convert(path: str, subdir: str = "decathlon/Task02_Heart"):
     images_dir_tr = images_dir_ts = images_dir
     labels_dir_tr = labels_dir_ts = labels_dir
 
-
     # Populate Target Directory
     # This is also the place to apply any re-orientation, resampling and/or label correction.
 
@@ -48,7 +46,7 @@ def convert(path: str, subdir: str = "decathlon/Task02_Heart"):
         sTr = sTr[: -len(file_extension)]
 
         # Orient to RAS and register image-label, using the image as reference.
-        #image = nibpro.resample_from_to(image, label, order=3)
+        # image = nibpro.resample_from_to(image, label, order=3)
 
         nib.save(image, filename=f"{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz")
         nib.save(label, filename=f"{target_labelsTr}/{task_prefix}_{sTr}.nii.gz")
@@ -59,7 +57,7 @@ def convert(path: str, subdir: str = "decathlon/Task02_Heart"):
         sTs = sTs[: -len(file_extension)]
 
         # Orient to RAS and register image-label, using the image as reference.
-        #image = nibpro.resample_from_to(image, label, order=3)
+        # image = nibpro.resample_from_to(image, label, order=3)
 
         nib.save(image, filename=f"{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz")
         nib.save(label, filename=f"{target_labelsTs}/{task_prefix}_{sTs}.nii.gz")

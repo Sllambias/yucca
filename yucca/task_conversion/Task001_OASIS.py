@@ -38,7 +38,6 @@ from tqdm import tqdm
 
 
 def convert(path: str, subdir: str = "OASIS"):
-    
     # INPUT DATA
     path = join(path, subdir)
     file_suffix = ".nii"
