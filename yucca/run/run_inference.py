@@ -54,7 +54,7 @@ def main():
     parser.add_argument(
         "-chk",
         help="Checkpoint to use for inference. Defaults to model_best.",
-        default="model_best",
+        default="best",
     )
     parser.add_argument(
         "-v",
@@ -141,7 +141,7 @@ def main():
 
     for planner in plans:
         path_to_versions = join(
-            yucca_models, source_task, model + "__" + dimensions, manager_name + "__" + planner, f"folds_{folds}"
+            yucca_models, source_task, model + "__" + dimensions, manager_name + "__" + planner, f"fold_{folds}"
         )
         if version is None:
             versions = [int(i.split("_")[-1]) for i in subdirs(path_to_versions, join=False)]
@@ -151,7 +151,7 @@ def main():
             source_task,
             model + "__" + dimensions,
             manager_name + "__" + planner,
-            f"folds_{folds}",
+            f"fold_{folds}",
             f"version_{version}",
             "checkpoints",
             checkpoint + ".ckpt",
@@ -171,7 +171,7 @@ def main():
         assert manager, f"searching for {manager_name} " f"but found: {manager}"
         assert issubclass(manager, (YuccaManager, YuccaLightningManager)), "Trainer is not a subclass of YuccaTrainer."
 
-        print(f"{'Using manager: ':25} {manager}")
+        print(f"{'Using manager: ':25} {manager_name}")
         manager = manager(
             model_name=model, model_dimensions=dimensions, task=source_task, folds=folds, planner=planner, ckpt_path=modelfile
         )
@@ -202,7 +202,7 @@ def main():
             inpath,
             outpath,
             save_softmax=save_softmax,
-            overwrite=overwrite,
+            # overwrite=overwrite, # Commented out until overwrite arg is added in manager.
         )
 
         folders_with_softmax.append(outpath)
