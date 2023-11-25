@@ -1,4 +1,3 @@
-# %%
 from torchvision import transforms
 from yuccalib.image_processing.matrix_ops import get_max_rotated_size
 from yuccalib.image_processing.transforms.formatting import (
@@ -196,8 +195,5 @@ class YuccaAugmentationComposer:
         return val_transforms
 
 
-# %%
 if __name__ == "__main__":
     x = YuccaAugmentationComposer()
-
-# %%

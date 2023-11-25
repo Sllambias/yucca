@@ -1,4 +1,3 @@
-# %%
 import torch
 import numpy as np
 from time import localtime, strftime
@@ -273,7 +272,6 @@ class YuccaConfigurator:
         save_pickle(splits, splits_file)
 
 
-# %%
 if __name__ == "__main__":
     from pytorch_lightning.loggers import WandbLogger, CSVLogger
 
@@ -281,4 +279,3 @@ if __name__ == "__main__":
         task="Task001_OASIS", model_name="TinyUNet", model_dimensions="2D", manager_name="YuccaLightningManager"
     )
     # x.val_split
-# %%
