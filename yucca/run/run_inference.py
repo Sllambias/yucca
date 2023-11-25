@@ -68,7 +68,14 @@ def main():
         action="store_true",
     )
     parser.add_argument(
-        "--do_tta",
+        "--profile",
+        help="Used to enable inference profiling",
+        default=False,
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "--disable_tta",
         help="Used to enable test-time augmentations (mirroring)",
         default=False,
         action="store_true",
@@ -121,9 +128,11 @@ def main():
     dimensions = args.d
     folds = args.f
     planner = args.pl
+    profile = args.profile
     checkpoint = args.chk
     version = args.v
     ensemble = args.ensemble
+    disable_tta = args.disable_tta
     not_strict = args.not_strict
     save_softmax = args.save_softmax
     overwrite = args.overwrite
@@ -173,7 +182,13 @@ def main():
 
         print(f"{'Using manager: ':25} {manager_name}")
         manager = manager(
-            model_name=model, model_dimensions=dimensions, task=source_task, folds=folds, planner=planner, ckpt_path=modelfile
+            model_name=model,
+            model_dimensions=dimensions,
+            task=source_task,
+            folds=folds,
+            planner=planner,
+            ckpt_path=modelfile,
+            profile=profile,
         )
 
         # Setting up input paths and output paths
@@ -186,8 +201,8 @@ def main():
             source_task,
             model + "__" + dimensions,
             manager_name + "__" + planner,
-            folds,
-            version,
+            f"fold_{folds}",
+            f"version_{version}",
             checkpoint,
         )
 
@@ -200,6 +215,7 @@ def main():
 
         manager.predict_folder(
             inpath,
+            disable_tta,
             outpath,
             save_softmax=save_softmax,
             # overwrite=overwrite, # Commented out until overwrite arg is added in manager.

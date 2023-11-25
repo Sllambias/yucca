@@ -13,6 +13,7 @@ from yuccalib.utils.files_and_folders import recursive_find_python_class
 from yuccalib.loss_and_optim.loss_functions.CE import CE
 from yuccalib.loss_and_optim.loss_functions.nnUNet_losses import DiceCE
 from yuccalib.utils.kwargs import filter_kwargs
+from time import time
 
 
 class YuccaLightningModule(L.LightningModule):
@@ -123,10 +124,15 @@ class YuccaLightningModule(L.LightningModule):
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         case, case_id = batch
 
+        print(self.test_time_augmentation)
+        t0 = time()
+
         (
             case_preprocessed,
             case_properties,
         ) = self.preprocessor.preprocess_case_for_inference(case, self.patch_size)
+
+        t1 = time()
 
         logits = (
             self.model.predict(
@@ -140,7 +146,16 @@ class YuccaLightningModule(L.LightningModule):
             .cpu()
             .numpy()
         )
+
+        t2 = time()
+
         logits = self.preprocessor.reverse_preprocessing(logits, case_properties)
+
+        t3 = time()
+
+        print("pp: ", t1 - t0)
+        print("pred: ", t2 - t1)
+        print("re: ", t3 - t2)
         return {"logits": logits, "properties": case_properties, "case_id": case_id[0]}
 
     def configure_optimizers(self):
