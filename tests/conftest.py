@@ -9,3 +9,4 @@ def set_env():
     os.environ["YUCCA_RAW_DATA"] = str(Path(__file__).parent.absolute() / "data")
     os.environ["YUCCA_MODELS"] = str(Path(__file__).parent.absolute() / "data")
     os.environ["YUCCA_RESULTS"] = str(Path(__file__).parent.absolute() / "data")
+    os.environ["YUCCA_SOURCE"] = str(Path(__file__).parent.absolute() / "data")
