@@ -20,6 +20,7 @@ from yuccalib.evaluation.metrics import (
 from yuccalib.evaluation.obj_metrics import get_obj_stats_for_label
 from yucca.paths import yucca_raw_data
 from weave.monitoring import StreamTable
+from tqdm import tqdm
 
 
 class YuccaEvaluator(object):
@@ -123,7 +124,7 @@ class YuccaEvaluator(object):
         for label in self.labels:
             meandict[label] = {k: [] for k in list(self.metrics.keys()) + self.obj_metrics}
 
-        for case in self.pred_subjects:
+        for case in tqdm(self.pred_subjects, desc="Evaluation"):
             casedict = {}
             predpath = join(self.folder_with_predictions, case)
             gtpath = join(self.folder_with_ground_truth, case)
