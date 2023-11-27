@@ -124,7 +124,7 @@ class YuccaEvaluator(object):
         for label in self.labels:
             meandict[label] = {k: [] for k in list(self.metrics.keys()) + self.obj_metrics}
 
-        for case in tqdm(self.pred_subjects, desc="Evaluation"):
+        for case in tqdm(self.pred_subjects, desc="Evaluating"):
             casedict = {}
             predpath = join(self.folder_with_predictions, case)
             gtpath = join(self.folder_with_ground_truth, case)
