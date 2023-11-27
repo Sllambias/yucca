@@ -11,7 +11,7 @@ from yuccalib.utils.nib_utils import (
     reorient_nib_image,
 )
 from yuccalib.utils.type_conversions import nib_to_np
-from yucca.paths import yucca_preprocessed, yucca_raw_data
+from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from yucca.preprocessing.normalization import normalizer
 from multiprocessing import Pool
 from skimage.transform import resize
@@ -69,7 +69,7 @@ class YuccaPreprocessor(object):
         self.target_spacing = []
 
     def initialize_paths(self):
-        self.target_dir = join(yucca_preprocessed, self.task, self.plans["plans_name"])
+        self.target_dir = join(yucca_preprocessed_data, self.task, self.plans["plans_name"])
         self.input_dir = join(yucca_raw_data, self.task)
         self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
 

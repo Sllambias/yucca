@@ -1,5 +1,4 @@
 __author__ = "Ezequiel de la Rosa"
-# %%
 import numpy as np
 import warnings
 import cc3d

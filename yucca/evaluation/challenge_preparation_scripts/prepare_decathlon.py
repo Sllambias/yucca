@@ -1,4 +1,3 @@
-# %%
 from batchgenerators.utilities.file_and_folder_operations import subfiles, join, maybe_mkdir_p
 import shutil
 
@@ -81,6 +80,3 @@ for i in range(10):
         maybe_mkdir_p(join(savepath, expected[i]))
 
         shutil.copy(join(folders[i], seg_path), f"{savepath}/{expected[i]}/{new_filename}")
-
-
-# %%
