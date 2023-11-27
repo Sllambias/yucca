@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import nibabel as nib
 import os
 import cc3d
+from yuccalib.utils.files_and_folders import load_yaml
 from yuccalib.image_processing.objects.BoundingBox import get_bbox_for_foreground
 from yuccalib.image_processing.cropping_and_padding import crop_to_box, pad_to_size
 from yuccalib.utils.nib_utils import (
@@ -11,7 +12,7 @@ from yuccalib.utils.nib_utils import (
     get_nib_orientation,
     reorient_nib_image,
 )
-from yuccalib.utils.type_conversions import nib_to_np
+from yuccalib.utils.type_conversions import nib_to_np, read_any_file
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from yucca.preprocessing.normalization import normalizer
 from multiprocessing import Pool
@@ -60,7 +61,7 @@ class YuccaPreprocessor(object):
         self.name = str(self.__class__.__name__)
         self.task = task
         self.plans_path = plans_path
-        self.plans = load_json(plans_path)
+        self.plans = self.load_plans(plans_path)
         self.threads = threads
         self.disable_unittests = disable_unittests
 
@@ -81,12 +82,23 @@ class YuccaPreprocessor(object):
         """
         self.dataset_properties = self.plans["dataset_properties"]
         self.intensities = self.dataset_properties["intensities"]
-        self.image_extension = self.dataset_properties["image_extension"]
+        self.image_extension = self.dataset_properties.get("image_extension") or "nii.gz"
 
         # op values
-        self.transpose_forward = np.array(self.plans["transpose_forward"])
-        self.transpose_backward = np.array(self.plans["transpose_backward"])
-        self.target_spacing = np.array(self.plans["target_spacing"])
+        self.transpose_forward = np.array(self.plans["transpose_forward"], dtype=int)
+        self.transpose_backward = np.array(self.plans["transpose_backward"], dtype=int)
+        self.target_spacing = np.array(self.plans["target_spacing"], dtype=float)
+
+    @staticmethod
+    def load_plans(plans_path):
+        if os.path.splitext(plans_path)[-1] == ".json":
+            return load_json(plans_path)
+        if os.path.splitext(plans_path)[-1] == ".yaml":
+            return load_yaml(plans_path)["configurator"]["_plans"]
+        else:
+            print(
+                f"Plan format not recognized. Got {plans_path} with ext {os.path.splitext(plans_path)[-1]} and expected either a '.json' or '.yaml' file"
+            )
 
     def run(self):
         self.initialize_properties()

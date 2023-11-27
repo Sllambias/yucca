@@ -24,7 +24,6 @@ def main():
     parser.add_argument("-d", "--subdir", help="Directory of data inside source data")
 
     args = parser.parse_args()
-
     task_converter = importlib.import_module(f"yucca.task_conversion.{args.task}")
 
     if args.subdir is None:

@@ -44,6 +44,9 @@ def convert(path: str, subdir: str = "FETAL_PLANES_DB"):
 
     # collect labels
     data_df = pd.read_csv(join(path, "FETAL_PLANES_DB_data.csv"), delimiter=";")
+
+    # Since there's trailing whitespaces in the columns of the dataset we strip names.
+    data_df = data_df.rename(columns=lambda x: x.strip())
     labels = list(data_df["Plane"].unique())
 
     # Populate Target Directory

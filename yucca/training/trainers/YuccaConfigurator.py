@@ -69,6 +69,7 @@ class YuccaConfigurator:
     def __init__(
         self,
         task: str,
+        ckpt_path: str = None,
         continue_from_most_recent: bool = True,
         disable_logging: bool = False,
         folds: str = "0",
@@ -82,6 +83,7 @@ class YuccaConfigurator:
         save_softmax: bool = False,
         tiny_patch: bool = False,
     ):
+        self.ckpt_path = ckpt_path
         self.continue_from_most_recent = continue_from_most_recent
         self.folds = folds
         self.disable_logging = disable_logging
@@ -113,13 +115,27 @@ class YuccaConfigurator:
     @property
     def plans(self):
         if self._plans is None:
-            self._plans = load_json(self.plans_path)
+            if self.ckpt_path is not None:
+                print("loading plans from specified ckpt")
+                self._plans = torch.load(self.ckpt_path, map_location="cpu")["hyper_parameters"]["configurator"]._plans
+            elif (
+                self.version is not None
+                and self.continue_from_most_recent
+                and isfile(join(self.outpath, "checkpoints", "last.ckpt"))
+            ):
+                print("loading plans from last ckpt")
+                self._plans = torch.load(join(self.outpath, "checkpoints", "last.ckpt"), map_location="cpu")[
+                    "hyper_parameters"
+                ]["configurator"]._plans
+            else:
+                print("loading plans.json and constructing parameters")
+                self._plans = load_json(self.plans_path)
         return self._plans
 
     @property
     def profiler(self):
         if self.profile and self._profiler is None:
-            self._profiler = SimpleProfiler(dirpath=join(self.outpath, f"version_{self.version}"), filename="simple_profile")
+            self._profiler = SimpleProfiler(dirpath=self.outpath, filename="simple_profile")
         return self._profiler
 
     @property
@@ -143,12 +159,12 @@ class YuccaConfigurator:
             return self._version
 
         # If the dir doesn't exist we return version 0
-        if not isdir(self.outpath):
+        if not isdir(self.save_dir):
             self._version = 0
             return self._version
 
         # The dir exists. Check if any previous version exists in dir.
-        previous_versions = subdirs(self.outpath, join=False)
+        previous_versions = subdirs(self.save_dir, join=False)
 
         # If no previous version exists we return version 0
         if not previous_versions:
@@ -174,7 +190,7 @@ class YuccaConfigurator:
         self.loggers.append(
             YuccaLogger(
                 disable_logging=self.disable_logging,
-                save_dir=self.outpath,
+                save_dir=self.save_dir,
                 name=None,
                 version=self.version,
                 steps_per_epoch=250,
@@ -184,8 +200,8 @@ class YuccaConfigurator:
             self.loggers.append(
                 WandbLogger(
                     name=f"version_{self.version}",
-                    save_dir=join(self.outpath, f"version_{self.version}"),
-                    version=self.version,
+                    save_dir=self.outpath,
+                    version=str(self.version),
                     project="Yucca",
                     group=self.task,
                     log_model="all",
@@ -193,7 +209,9 @@ class YuccaConfigurator:
             )
 
     def setup_callbacks(self):
-        best_ckpt = ModelCheckpoint(monitor="val_loss", mode="min", save_top_k=1, filename="best", enable_version_counter=True)
+        best_ckpt = ModelCheckpoint(
+            monitor="val_loss", mode="min", save_top_k=1, filename="best", enable_version_counter=False
+        )
         interval_ckpt = ModelCheckpoint(every_n_epochs=250, filename="{epoch}", enable_version_counter=False)
         latest_ckpt = ModelCheckpoint(
             every_n_epochs=15,
@@ -208,13 +226,14 @@ class YuccaConfigurator:
 
     def setup_paths(self):
         self.train_data_dir = join(yucca_preprocessed_data, self.task, self.planner)
-        self.outpath = join(
+        self.save_dir = join(
             yucca_models,
             self.task,
             self.model_name + "__" + self.model_dimensions,
             self.manager_name + "__" + self.planner,
             f"fold_{self.folds}",
         )
+        self.outpath = join(self.save_dir, f"version_{self.version}")
         maybe_mkdir_p(self.outpath)
         self.plans_path = join(yucca_preprocessed_data, self.task, self.planner, self.planner + "_plans.json")
 
@@ -222,21 +241,16 @@ class YuccaConfigurator:
         # (1) check if previous versions exist
         # (2) check if we want to continue from this
         # (3) check if hparams were created for the previous version
-        if (
-            self.version is not None
-            and self.continue_from_most_recent
-            and isfile(join(self.outpath, f"version_{self.version}", "hparams.yaml"))
-        ):
-            print("Found hparams.yaml, loading parameters")
-            hparams = load_yaml(join(self.outpath, f"version_{self.version}", "hparams.yaml"))
-            self.num_classes = int(hparams["configurator"]["num_classes"])
-            self.num_modalities = int(hparams["configurator"]["num_modalities"])
-            self.batch_size = int(hparams["configurator"]["batch_size"])
-            self.patch_size = [int(p) for p in hparams["configurator"]["patch_size"]]
+
+        self.num_classes = self.plans.get("num_classes") or len(self.plans["dataset_properties"]["classes"])
+        self.num_modalities = self.plans.get("num_modalities") or len(self.plans["dataset_properties"]["modalities"])
+        self.image_extension = (
+            self.plans.get("image_extension") or self.plans["dataset_properties"].get("image_extension") or "nii.gz"
+        )
+        if self.plans.get("batch_size") and self.plans.get("patch_size"):
+            self.batch_size = self.plans.get("batch_size")
+            self.patch_size = self.plans.get("patch_size")
         else:
-            print("Constructing new parameters")
-            self.num_classes = len(self.plans["dataset_properties"]["classes"])
-            self.num_modalities = len(self.plans["dataset_properties"]["modalities"])
             if self.tiny_patch or not torch.cuda.is_available():
                 self.batch_size = 2
                 self.patch_size = (32, 32) if self.model_dimensions == "2D" else (32, 32, 32)

@@ -21,12 +21,11 @@ def normalizer(array, scheme, intensities):
         return array
 
     if scheme == "minmax":
-        print("not yet implemented returns un-normalized arrays")
-        return array
+        raise NotImplementedError("Min Max normalization is not implemented yet. Use standardize, clip or no_norm.")
 
     if scheme == "standardize":
         assert intensities is not None, "ERROR: dataset wide stats are required for standardize"
-        return (array - intensities["mean"]) / intensities["std"]
+        return (array - float(intensities["mean"])) / float(intensities["std"])
 
     if scheme == "clip":
         lower_bound, upper_bound = np.percentile(array, (0.01, 99.99))

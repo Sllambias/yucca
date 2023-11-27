@@ -91,16 +91,6 @@ class YuccaLightningManager:
         save_softmax: bool = False,
         segmentation_output_dir: str = "./",
     ):
-        if stage == "fit":
-            # do something training related
-            # the stage param will disappear if nothing is found to be relevant here
-            pass
-        if stage == "test":
-            raise NotImplementedError
-        if stage == "predict":
-            # do something inference related
-            pass
-
         # Here we configure the outpath we will use to store model files and metadata
         # along with the path to plans file which will also be loaded.
         configurator = YuccaConfigurator(
@@ -127,6 +117,7 @@ class YuccaLightningManager:
         self.model_module = YuccaLightningModule(
             configurator=configurator,
             loss_fn=self.loss,
+            stage=stage,
             step_logging=self.step_logging,
             test_time_augmentation=not disable_tta if disable_tta is True else bool(augmenter.mirror_p_per_sample),
         )
@@ -142,7 +133,7 @@ class YuccaLightningManager:
 
         self.trainer = L.Trainer(
             callbacks=configurator.callbacks,
-            default_root_dir=configurator.outpath,
+            default_root_dir=configurator.save_dir,
             limit_train_batches=self.train_batches_per_step,
             limit_val_batches=self.val_batches_per_step,
             logger=configurator.loggers,

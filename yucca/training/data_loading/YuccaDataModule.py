@@ -60,6 +60,7 @@ class YuccaDataModule(pl.LightningDataModule):
         self.patch_size = self.cfg.patch_size
         self.train_data_dir = self.cfg.train_data_dir
         self.train_split = self.cfg.train_split
+        self.image_extension = self.cfg.image_extension
         self.val_split = self.cfg.val_split
         self.pre_aug_patch_size = pre_aug_patch_size
 
@@ -88,14 +89,12 @@ class YuccaDataModule(pl.LightningDataModule):
         if stage == "fit":
             self.train_dataset = YuccaTrainDataset(
                 self.train_samples,
-                keep_in_ram=True,
                 composed_transforms=self.composed_train_transforms,
                 patch_size=self.pre_aug_patch_size if self.pre_aug_patch_size is not None else self.patch_size,
             )
 
             self.val_dataset = YuccaTrainDataset(
                 self.val_samples,
-                keep_in_ram=True,
                 composed_transforms=self.composed_val_transforms,
                 patch_size=self.patch_size,
             )
@@ -104,7 +103,7 @@ class YuccaDataModule(pl.LightningDataModule):
             assert self.pred_data_dir is not None, "set a pred_data_dir for inference to work"
             # This dataset contains ONLY the images (and not the labels)
             # It will return a tuple of (case, case_id)
-            self.pred_dataset = YuccaTestDataset(self.pred_data_dir, patch_size=self.patch_size)
+            self.pred_dataset = YuccaTestDataset(self.pred_data_dir, patch_size=self.patch_size, suffix=self.image_extension)
 
     def train_dataloader(self):
         print(f"Starting training with data from: {self.train_data_dir}")
