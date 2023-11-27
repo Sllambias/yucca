@@ -441,7 +441,6 @@ class YuccaPreprocessor(object):
         """
 
         nclasses = len(self.plans["dataset_properties"]["classes"])
-        original_shape = image_properties["original_shape"]
         canvas = torch.zeros((1, nclasses, *image_properties["uncropped_shape"]), dtype=images.dtype)
         shape_after_crop = image_properties["cropped_shape"]
         shape_after_crop_transposed = shape_after_crop[self.transpose_forward]
@@ -452,50 +451,48 @@ class YuccaPreprocessor(object):
             f"image should be of shape: {image_properties['padded_shape']}"
             f"but is: {images.shape[2:]}"
         )
-        print(torch.unique(torch.argmax(images, 1)))
         shape = images.shape[2:]
         if len(pad) > 5:
             images = images[
+                :,
+                :,
                 pad[0] : shape[0] - pad[1],
                 pad[2] : shape[1] - pad[3],
                 pad[4] : shape[2] - pad[5],
             ]
         elif len(pad) < 5:
-            images = images[pad[0] : shape[0] - pad[1], pad[2] : shape[1] - pad[3]]
+            images = images[:, :, pad[0] : shape[0] - pad[1], pad[2] : shape[1] - pad[3]]
 
-        assert np.all(shape == image_properties["resampled_transposed_shape"]), (
+        assert np.all(images.shape[2:] == image_properties["resampled_transposed_shape"]), (
             f"Reversing resampling and tranposition: "
             f"image should be of shape: {image_properties['resampled_transposed_shape']}"
-            f"but is: {shape}"
+            f"but is: {images.shape[2:]}"
         )
         # Here we Interpolate the array to the original size. The shape starts as [H, W (,D)]. For Torch functionality it is changed to [B, C, H, W (,D)].
         # Afterwards it's squeezed back into [H, W (,D)] and transposed to the original direction.
-        images = torch.squeeze(F.interpolate(images, size=shape_after_crop_transposed.tolist(), mode="trilinear")).permute(
-            self.transpose_backward
+        images = F.interpolate(images, size=shape_after_crop_transposed.tolist(), mode="trilinear").permute(
+            [0, 1] + [i + 2 for i in self.transpose_backward]
         )
 
-        assert np.all(shape == image_properties["cropped_shape"]), (
-            f"Reversing cropping: " f"image should be of shape: {image_properties['cropped_shape']}" f"but is: {shape}"
+        assert np.all(images.shape[2:] == image_properties["cropped_shape"]), (
+            f"Reversing cropping: "
+            f"image should be of shape: {image_properties['cropped_shape']}"
+            f"but is: {images.shape[2:]}"
         )
 
         if self.plans["crop_to_nonzero"]:
             bbox = image_properties["nonzero_box"]
+            slices = [
+                slice(None),
+                slice(None),
+                slice(bbox[0], bbox[1]),
+                slice(bbox[2], bbox[3]),
+            ]
             if len(bbox) > 5:
-                slices = (
-                    slice(None),
-                    slice(c, c + 1),
-                    slice(bbox[0], bbox[1]),
-                    slice(bbox[2], bbox[3]),
+                slices.append(
                     slice(bbox[4], bbox[5]),
                 )
-            elif len(bbox) < 5:
-                slices = (slice(None), slice(c, c + 1), slice(bbox[0], bbox[1]), slice(bbox[2], bbox[3]))
             canvas[slices] = images
         else:
             canvas = images
-
-        am = np.argmax(canvas.numpy(), 1)
-        print(am.shape)
-        print(np.unique(am))
-        print(np.unique(am[0]))
         return canvas.numpy()
