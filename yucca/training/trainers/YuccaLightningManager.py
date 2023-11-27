@@ -124,7 +124,7 @@ class YuccaLightningManager:
         self.model_module = YuccaLightningModule(
             configurator=configurator,
             step_logging=self.step_logging,
-            test_time_augmentation=not disable_tta if disable_tta else bool(augmenter.mirror_p_per_sample),
+            test_time_augmentation=not disable_tta if disable_tta is True else bool(augmenter.mirror_p_per_sample),
         )
 
         self.data_module = YuccaDataModule(
