@@ -15,3 +15,6 @@ def maybe_get_task_from_task_id(task_id: str | int):
     for task in tasks:
         if task_id.lower() in task.lower():
             return task
+
+    # If we can't find anything we just return the original, on the offchance that the task does not exist in Raw Data while existing in e.g. Preprocessed
+    return task_id

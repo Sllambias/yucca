@@ -109,7 +109,7 @@ class YuccaAugmentationComposer:
 
     def overwrite_params(self, parameter_dict):
         for key, value in parameter_dict.items():
-            self.key = value
+            setattr(self, key, value)
 
     def compose_train_transforms(self):
         tr_transforms = transforms.Compose(

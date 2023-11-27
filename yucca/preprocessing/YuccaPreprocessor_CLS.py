@@ -6,7 +6,7 @@ import torch
 import nibabel as nib
 import os
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
-from yucca.paths import yucca_preprocessed, yucca_raw_data
+from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from yucca.preprocessing.normalization import normalizer
 from yuccalib.utils.nib_utils import get_nib_spacing, get_nib_orientation, reorient_nib_image
 from yuccalib.utils.type_conversions import nib_to_np, read_any_file

@@ -147,6 +147,11 @@ class YuccaLightningModule(L.LightningModule):
         # Initialize and configure the loss(es) here.
         # loss_kwargs holds args for any scheduler class,
         # but using filtering we only pass arguments relevant to the selected class.
+        self.loss_fn = recursive_find_python_class(
+            folder=[join(yuccalib.__path__[0], "loss_and_optim")],
+            class_name=self.loss_fn,
+            current_module="yuccalib.loss_and_optim",
+        )
         loss_kwargs = {
             # DCE
             "soft_dice_kwargs": {"apply_softmax": True},

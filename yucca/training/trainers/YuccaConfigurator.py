@@ -1,4 +1,5 @@
 import torch
+import yucca
 import numpy as np
 from time import localtime, strftime
 from batchgenerators.utilities.file_and_folder_operations import (
@@ -16,11 +17,13 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.profilers import SimpleProfiler
 from pytorch_lightning.loggers import WandbLogger, CSVLogger
 from sklearn.model_selection import KFold
+
+from yucca.preprocessing.YuccaPreprocessor_CLS import YuccaPreprocessor_CLS
 from yucca.paths import yucca_models, yucca_preprocessed_data
 from yuccalib.network_architectures.utils.model_memory_estimation import (
     find_optimal_tensor_dims,
 )
-from yuccalib.utils.files_and_folders import WriteSegFromLogits, load_yaml
+from yuccalib.utils.files_and_folders import WriteSegFromLogits, load_yaml, recursive_find_python_class
 from yuccalib.evaluation.loggers import YuccaLogger
 from typing import Union
 
@@ -103,6 +106,7 @@ class YuccaConfigurator:
         # Now run the setup
         self.setup_paths()
         self.setup_data_params()
+        self.setup_aug_params()
         self.setup_callbacks()
         self.setup_loggers()
 
@@ -246,6 +250,19 @@ class YuccaConfigurator:
                     max_memory_usage_in_gb=self.max_vram,
                 )
         print(f"Using batch size: {self.batch_size} and patch size: {self.patch_size}")
+
+    def setup_aug_params(self):
+        preprocessor_class = recursive_find_python_class(
+            folder=[join(yucca.__path__[0], "preprocessing")],
+            class_name=self.plans["preprocessor"],
+            current_module="yucca.preprocessing",
+        )
+        assert (
+            preprocessor_class
+        ), f"{self.plans['preprocessor']} was found in plans, but no class with the corresponding name was found"
+        self.augmentation_parameter_dict = {}
+        if issubclass(preprocessor_class, YuccaPreprocessor_CLS):
+            self.augmentation_parameter_dict["skip_seg"] = True
 
     def load_splits(self):
         # Load splits file or create it if not found (see: "split_data").

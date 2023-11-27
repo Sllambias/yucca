@@ -44,6 +44,7 @@ class YuccaLightningManager:
         deep_supervision: bool = False,
         disable_logging: bool = False,
         folds: str = "0",
+        loss: str = "DiceCE",
         max_epochs: int = 1000,
         model_dimensions: str = "3D",
         model_name: str = "TinyUNet",
@@ -60,6 +61,7 @@ class YuccaLightningManager:
         self.deep_supervision = deep_supervision
         self.disable_logging = disable_logging
         self.folds = folds
+        self.loss = loss
         self.max_epochs = max_epochs
         self.model_dimensions = model_dimensions
         self.model_name = model_name
@@ -118,10 +120,12 @@ class YuccaLightningManager:
         augmenter = YuccaAugmentationComposer(
             patch_size=configurator.patch_size,
             is_2D=True if self.model_dimensions == "2D" else False,
+            parameter_dict=configurator.augmentation_parameter_dict,
         )
 
         self.model_module = YuccaLightningModule(
             configurator=configurator,
+            loss_fn=self.loss,
             step_logging=self.step_logging,
             test_time_augmentation=bool(augmenter.mirror_p_per_sample),
         )
