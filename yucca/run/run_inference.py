@@ -54,7 +54,7 @@ def main():
     parser.add_argument(
         "-chk",
         help="Checkpoint to use for inference. Defaults to model_best.",
-        default="model_best",
+        default="best",
     )
     parser.add_argument(
         "-v",
@@ -68,7 +68,14 @@ def main():
         action="store_true",
     )
     parser.add_argument(
-        "--do_tta",
+        "--profile",
+        help="Used to enable inference profiling",
+        default=False,
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "--disable_tta",
         help="Used to enable test-time augmentations (mirroring)",
         default=False,
         action="store_true",
@@ -121,9 +128,11 @@ def main():
     dimensions = args.d
     folds = args.f
     planner = args.pl
+    profile = args.profile
     checkpoint = args.chk
     version = args.v
     ensemble = args.ensemble
+    disable_tta = args.disable_tta
     not_strict = args.not_strict
     save_softmax = args.save_softmax
     overwrite = args.overwrite
@@ -141,7 +150,7 @@ def main():
 
     for planner in plans:
         path_to_versions = join(
-            yucca_models, source_task, model + "__" + dimensions, manager_name + "__" + planner, f"folds_{folds}"
+            yucca_models, source_task, model + "__" + dimensions, manager_name + "__" + planner, f"fold_{folds}"
         )
         if version is None:
             versions = [int(i.split("_")[-1]) for i in subdirs(path_to_versions, join=False)]
@@ -151,7 +160,7 @@ def main():
             source_task,
             model + "__" + dimensions,
             manager_name + "__" + planner,
-            f"folds_{folds}",
+            f"fold_{folds}",
             f"version_{version}",
             "checkpoints",
             checkpoint + ".ckpt",
@@ -171,9 +180,15 @@ def main():
         assert manager, f"searching for {manager_name} " f"but found: {manager}"
         assert issubclass(manager, (YuccaManager, YuccaLightningManager)), "Trainer is not a subclass of YuccaTrainer."
 
-        print(f"{'Using manager: ':25} {manager}")
+        print(f"{'Using manager: ':25} {manager_name}")
         manager = manager(
-            model_name=model, model_dimensions=dimensions, task=source_task, folds=folds, planner=planner, ckpt_path=modelfile
+            model_name=model,
+            model_dimensions=dimensions,
+            task=source_task,
+            folds=folds,
+            planner=planner,
+            ckpt_path=modelfile,
+            profile=profile,
         )
 
         # Setting up input paths and output paths
@@ -186,8 +201,8 @@ def main():
             source_task,
             model + "__" + dimensions,
             manager_name + "__" + planner,
-            folds,
-            version,
+            f"fold_{folds}",
+            f"version_{version}",
             checkpoint,
         )
 
@@ -200,9 +215,10 @@ def main():
 
         manager.predict_folder(
             inpath,
+            disable_tta,
             outpath,
             save_softmax=save_softmax,
-            # overwrite=overwrite,
+            # overwrite=overwrite, # Commented out until overwrite arg is added in manager.
         )
 
         folders_with_softmax.append(outpath)

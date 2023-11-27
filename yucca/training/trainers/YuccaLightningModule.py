@@ -13,6 +13,7 @@ from yuccalib.utils.files_and_folders import recursive_find_python_class
 from yuccalib.loss_and_optim.loss_functions.CE import CE
 from yuccalib.loss_and_optim.loss_functions.nnUNet_losses import DiceCE
 from yuccalib.utils.kwargs import filter_kwargs
+from time import time
 
 
 class YuccaLightningModule(L.LightningModule):
@@ -128,18 +129,14 @@ class YuccaLightningModule(L.LightningModule):
             case_properties,
         ) = self.preprocessor.preprocess_case_for_inference(case, self.patch_size)
 
-        logits = (
-            self.model.predict(
-                mode=self.model_dimensions,
-                data=case_preprocessed,
-                patch_size=self.patch_size,
-                overlap=self.sliding_window_overlap,
-                mirror=self.test_time_augmentation,
-            )
-            .detach()
-            .cpu()
-            .numpy()
+        logits = self.model.predict(
+            mode=self.model_dimensions,
+            data=case_preprocessed,
+            patch_size=self.patch_size,
+            overlap=self.sliding_window_overlap,
+            mirror=self.test_time_augmentation,
         )
+
         logits = self.preprocessor.reverse_preprocessing(logits, case_properties)
         return {"logits": logits, "properties": case_properties, "case_id": case_id[0]}
 
