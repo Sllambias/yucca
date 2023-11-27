@@ -202,7 +202,7 @@ def main():
             inpath,
             outpath,
             save_softmax=save_softmax,
-            overwrite=overwrite,
+            # overwrite=overwrite,
         )
 
         folders_with_softmax.append(outpath)
