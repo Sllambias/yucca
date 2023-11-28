@@ -23,7 +23,7 @@ class YuccaLightningModule(L.LightningModule):
 
     def __init__(
         self,
-        configurator=YuccaConfigurator,
+        config: dict,
         learning_rate: float = 1e-3,
         loss_fn: str = "DiceCE",
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler = torch.optim.lr_scheduler.CosineAnnealingLR,
@@ -36,14 +36,14 @@ class YuccaLightningModule(L.LightningModule):
     ):
         super().__init__()
         # Extract parameters from the configurator
-        self.num_classes = configurator.num_classes
-        self.num_modalities = configurator.num_modalities
-        self.outpath = configurator.outpath
-        self.plans = configurator.plans
-        self.plans_path = configurator.plans_path
-        self.model_name = configurator.model_name
-        self.model_dimensions = configurator.model_dimensions
-        self.patch_size = configurator.patch_size
+        self.num_classes = config["num_classes"]
+        self.num_modalities = config["num_modalities"]
+        self.outpath = config["outpath"]
+        self.plans = config["plans"]
+        self.plans_path = config["plans_path"]
+        self.model_name = config["model_name"]
+        self.model_dimensions = config["model_dimensions"]
+        self.patch_size = config["patch_size"]
 
         # Loss, optimizer and scheduler parameters
         self.lr = learning_rate
@@ -144,7 +144,7 @@ class YuccaLightningModule(L.LightningModule):
             mirror=self.test_time_augmentation,
         )
 
-        logits = self.preprocessor.reverse_preprocessing(logits, case_properties)
+        logits, case_properties = self.preprocessor.reverse_preprocessing(logits, case_properties)
         return {"logits": logits, "properties": case_properties, "case_id": case_id[0]}
 
     def configure_optimizers(self):
@@ -200,14 +200,10 @@ class YuccaLightningModule(L.LightningModule):
 
 if __name__ == "__main__":
     from yucca.training.trainers.YuccaLightningManager import YuccaLightningManager
+    from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 
     path = None
-    Manager = YuccaLightningManager(
-        task="Task001_OASIS",
-        limit_train_batches=250,
-        limit_val_batches=50,
-        max_epochs=5,
-        ckpt_path=path,
-    )
-    # Manager.initialize()
-    # Manager.run_training()
+    cfg = YuccaConfigurator(task="Task001_OASIS", folds=2)
+    model = YuccaLightningModule(cfg)
+
+    Manager.run_training()
