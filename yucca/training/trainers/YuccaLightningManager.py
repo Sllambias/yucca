@@ -84,6 +84,7 @@ class YuccaLightningManager:
     def initialize(
         self,
         stage: Literal["fit", "test", "predict"],
+        disable_tta: bool = False,
         pred_data_dir: str = None,
         save_softmax: bool = False,
         segmentation_output_dir: str = "./",
@@ -123,7 +124,7 @@ class YuccaLightningManager:
         self.model_module = YuccaLightningModule(
             configurator=configurator,
             step_logging=self.step_logging,
-            test_time_augmentation=bool(augmenter.mirror_p_per_sample),
+            test_time_augmentation=not disable_tta if disable_tta is True else bool(augmenter.mirror_p_per_sample),
         )
 
         self.data_module = YuccaDataModule(
@@ -159,20 +160,23 @@ class YuccaLightningManager:
     def predict_folder(
         self,
         input_folder,
+        disable_tta: bool = False,
         output_folder: str = yucca_results,
         save_softmax=False,
     ):
         self.initialize(
             stage="predict",
+            disable_tta=disable_tta,
             pred_data_dir=input_folder,
             segmentation_output_dir=output_folder,
             save_softmax=save_softmax,
         )
-        self.trainer.predict(
-            model=self.model_module,
-            dataloaders=self.data_module,
-            ckpt_path=self.ckpt_path,
-        )
+        with torch.inference_mode():
+            self.trainer.predict(
+                model=self.model_module,
+                dataloaders=self.data_module,
+                ckpt_path=self.ckpt_path,
+            )
 
 
 if __name__ == "__main__":
