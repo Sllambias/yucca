@@ -106,7 +106,7 @@ class YuccaLightningModule(L.LightningModule):
         wandb.finish()
 
     def training_step(self, batch, batch_idx):
-        inputs, target = batch["image"], batch["seg"]
+        inputs, target = batch["image"], batch["label"]
         output = self(inputs)
         loss = self.loss_fn(output, target)
         metrics = self.train_metrics(output, target)
@@ -114,7 +114,7 @@ class YuccaLightningModule(L.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        inputs, target = batch["image"], batch["seg"]
+        inputs, target = batch["image"], batch["label"]
         output = self(inputs)
         loss = self.loss_fn(output, target)
         metrics = self.val_metrics(output, target)
