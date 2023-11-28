@@ -39,22 +39,22 @@ class YuccaPreprocessor_CLS(YuccaPreprocessor):
         # First find relevant images by their paths and save them in the image property pickle
         # Then load them as images
         # The '_' in the end is to avoid treating Case_4_000 AND Case_42_000 as different versions
-        # of the seg named Case_4 as both would start with "Case_4", however only the correct one is
+        # of the label named Case_4 as both would start with "Case_4", however only the correct one is
         # followed by an underscore
         imagepaths = [impath for impath in self.imagepaths if os.path.split(impath)[-1].startswith(subject_id + "_")]
 
         image_props["image files"] = imagepaths
         images = [read_any_file(image) for image in imagepaths]
 
-        # Do the same with segmentation
-        seg = [
-            segpath
-            for segpath in subfiles(join(self.input_dir, "labelsTr"))
-            if os.path.split(segpath)[-1].startswith(subject_id + ".")
+        # Do the same with label
+        label = [
+            labelpath
+            for labelpath in subfiles(join(self.input_dir, "labelsTr"))
+            if os.path.split(labelpath)[-1].startswith(subject_id + ".")
         ]
-        assert len(seg) < 2, f"unexpected number of segmentations found. Expected 1 or 0 and found {len(seg)}"
-        image_props["segmentation file"] = seg[0]
-        seg = read_any_file(seg[0], dtype=np.uint8)
+        assert len(label) < 2, f"unexpected number of labels found. Expected 1 or 0 and found {len(label)}"
+        image_props["label file"] = label[0]
+        label = read_any_file(label[0], dtype=np.uint8)
 
         if not self.disable_unittests:
             assert len(images) > 0, f"found no images for {subject_id + '_'}, " f"attempted imagepaths: {imagepaths}"
@@ -84,14 +84,14 @@ class YuccaPreprocessor_CLS(YuccaPreprocessor):
             original_orientation = get_nib_orientation(images[0])
             final_direction = self.plans["target_coordinate_system"]
             images = [nib_to_np(reorient_nib_image(image, original_orientation, final_direction)) for image in images]
-            if isinstance(seg, nib.Nifti1Image):
-                seg = nib_to_np(reorient_nib_image(seg, original_orientation, final_direction))
+            if isinstance(label, nib.Nifti1Image):
+                label = nib_to_np(reorient_nib_image(label, original_orientation, final_direction))
         else:
             original_spacing = np.array([1.0] * len(original_size))
             original_orientation = "INVALID"
             final_direction = "INVALID"
             images = [nib_to_np(image) for image in images]
-            seg = nib_to_np(seg)
+            label = nib_to_np(label)
 
         if self.target_spacing.size:
             target_spacing = self.target_spacing
@@ -111,7 +111,7 @@ class YuccaPreprocessor_CLS(YuccaPreprocessor):
             images, None, self.plans["normalization_scheme"], self.transpose_forward, original_spacing, target_spacing
         )
 
-        images = np.array((np.array(images).T, seg), dtype="object")
+        images = np.array((np.array(images).T, label), dtype="object")
         images[0] = images[0].T
         final_size = list(images[0][0].shape)
 

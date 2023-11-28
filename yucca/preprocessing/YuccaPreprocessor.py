@@ -148,10 +148,10 @@ class YuccaPreprocessor(object):
 
         (6) Foreground Locations:
         Extract some locations of the foreground, which will be used in oversampling of foreground classes.
-        Determine the number and sizes of connected components in the ground truth segmentation (can be used in analysis).
+        Determine the number and sizes of connected components in the ground truth label (can be used in analysis).
 
         (7) Save Preprocessed Data:
-        Stack the preprocessed images and segmentation.
+        Stack the preprocessed images and label.
         Save the preprocessed data as a NumPy array in a .npy file.
         Save relevant metadata as a .pkl file.
 
@@ -171,16 +171,16 @@ class YuccaPreprocessor(object):
         # First find relevant images by their paths and save them in the image property pickle
         # Then load them as images
         # The '_' in the end is to avoid treating Case_4_000 AND Case_42_000 as different versions
-        # of the seg named Case_4 as both would start with "Case_4", however only the correct one is
+        # of the label named Case_4 as both would start with "Case_4", however only the correct one is
         # followed by an underscore
         imagepaths = [impath for impath in self.imagepaths if os.path.split(impath)[-1].startswith(subject_id + "_")]
         image_props["image files"] = imagepaths
         images = [nib.load(image) for image in imagepaths]
 
-        # Do the same with segmentation
-        seg = join(self.input_dir, "labelsTr", subject_id + ".nii.gz")
-        image_props["segmentation file"] = seg
-        seg = nib.load(seg)
+        # Do the same with label
+        label = join(self.input_dir, "labelsTr", subject_id + ".nii.gz")
+        image_props["label file"] = label
+        label = nib.load(label)
 
         if not self.disable_unittests:
             assert len(images) > 0, f"found no images for {subject_id + '_'}, " f"attempted imagepaths: {imagepaths}"
@@ -190,18 +190,18 @@ class YuccaPreprocessor(object):
             ), f"image should be shape (x, y(, z)) but is {images[0].shape}"
 
             # make sure images and labels are correctly registered
-            assert images[0].shape == seg.shape, (
-                f"Sizes do not match for {subject_id}" f"Image is: {images[0].shape} while the seg is {seg.shape}"
+            assert images[0].shape == label.shape, (
+                f"Sizes do not match for {subject_id}" f"Image is: {images[0].shape} while the label is {label.shape}"
             )
 
-            assert np.allclose(get_nib_spacing(images[0]), get_nib_spacing(seg)), (
+            assert np.allclose(get_nib_spacing(images[0]), get_nib_spacing(label)), (
                 f"Spacings do not match for {subject_id}"
-                f"Image is: {get_nib_spacing(images[0])} while the seg is {get_nib_spacing(seg)}"
+                f"Image is: {get_nib_spacing(images[0])} while the label is {get_nib_spacing(label)}"
             )
 
-            assert get_nib_orientation(images[0]) == get_nib_orientation(seg), (
+            assert get_nib_orientation(images[0]) == get_nib_orientation(label), (
                 f"Directions do not match for {subject_id}"
-                f"Image is: {get_nib_orientation(images[0])} while the seg is {get_nib_orientation(seg)}"
+                f"Image is: {get_nib_orientation(images[0])} while the label is {get_nib_orientation(label)}"
             )
 
             # Make sure all modalities are correctly registered
@@ -236,16 +236,16 @@ class YuccaPreprocessor(object):
             original_orientation = get_nib_orientation(images[0])
             final_direction = self.plans["target_coordinate_system"]
             images = [nib_to_np(reorient_nib_image(image, original_orientation, final_direction)) for image in images]
-            seg = nib_to_np(reorient_nib_image(seg, original_orientation, final_direction))
+            label = nib_to_np(reorient_nib_image(label, original_orientation, final_direction))
         else:
             original_orientation = "INVALID"
             final_direction = "INVALID"
             images = [nib_to_np(image) for image in images]
-            seg = nib_to_np(seg)
+            label = nib_to_np(label)
 
         # Check if the ground truth only contains expected values
         expected_labels = np.array(self.plans["dataset_properties"]["classes"], dtype=np.float32)
-        actual_labels = np.unique(seg).astype(np.float32)
+        actual_labels = np.unique(label).astype(np.float32)
         assert np.all(np.isin(actual_labels, expected_labels)), (
             f"Unexpected labels found for {subject_id} \n" f"expected: {expected_labels} \n" f"found: {actual_labels}"
         )
@@ -256,13 +256,13 @@ class YuccaPreprocessor(object):
             image_props["crop_to_nonzero"] = nonzero_box
             for i in range(len(images)):
                 images[i] = crop_to_box(images[i], nonzero_box)
-            seg = crop_to_box(seg, nonzero_box)
+            label = crop_to_box(label, nonzero_box)
         else:
             image_props["crop_to_nonzero"] = self.plans["crop_to_nonzero"]
 
-        images, seg = self._resample_and_normalize_case(
+        images, label = self._resample_and_normalize_case(
             images,
-            seg,
+            label,
             self.plans["normalization_scheme"],
             self.transpose_forward,
             original_spacing,
@@ -270,7 +270,7 @@ class YuccaPreprocessor(object):
         )
 
         # Stack and fix dimensions
-        images = np.vstack((np.array(images), np.array(seg)[np.newaxis]))
+        images = np.vstack((np.array(images), np.array(label)[np.newaxis]))
 
         # now AFTER transposition etc., we get some (no need to get all)
         # locations of foreground, that we will later use in the
@@ -310,14 +310,14 @@ class YuccaPreprocessor(object):
     def _resample_and_normalize_case(
         self,
         images: list,
-        seg: np.ndarray = None,
+        label: np.ndarray = None,
         norm_op=None,
         transpose=None,
         original_spacing=None,
         target_spacing=None,
     ):
         # Normalize and Transpose images to target view.
-        # Transpose segmentations to target view.
+        # Transpose labels to target view.
         assert len(images) == len(norm_op) == len(self.intensities), (
             "number of images, "
             "normalization  operations and intensities does not match. \n"
@@ -351,13 +351,13 @@ class YuccaPreprocessor(object):
                 images[i] = resize(images[i], output_shape=target_shape, order=3)
             except OverflowError:
                 print("Unexpected values in either shape or image for resize")
-        if seg is not None:
-            seg = seg.transpose(transpose)
+        if label is not None:
+            label = label.transpose(transpose)
             try:
-                seg = resize(seg, output_shape=target_shape, order=0, anti_aliasing=False)
+                label = resize(label, output_shape=target_shape, order=0, anti_aliasing=False)
             except OverflowError:
-                print("Unexpected values in either shape or seg for resize")
-            return images, seg
+                print("Unexpected values in either shape or label for resize")
+            return images, label
 
         return images
 

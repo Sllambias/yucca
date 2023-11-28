@@ -18,17 +18,17 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         preprocessed_data_dir: list,
         patch_size: list | tuple,
         keep_in_ram: Union[bool, None] = None,
-        seg_dtype: type = int,
+        label_dtype: type = int,
         composed_transforms=None,
     ):
         self.all_cases = preprocessed_data_dir
         self.composed_transforms = composed_transforms
         self.patch_size = patch_size
-        self.seg_dtype = seg_dtype
+        self.label_dtype = label_dtype
 
         self.already_loaded_cases = {}
         self.croppad = CropPad(patch_size=self.patch_size, p_oversample_foreground=0.33)
-        self.to_torch = NumpyToTorch(seg_dtype=self.seg_dtype)
+        self.to_torch = NumpyToTorch(label_dtype=self.label_dtype)
 
         self._keep_in_ram = keep_in_ram
 
@@ -87,9 +87,9 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         case = self.all_cases[idx]
         data = self.load_and_maybe_keep_volume(case)
         if data.dtype == "O":
-            data_dict = {"image": data[:-1][0], "seg": data[-1:][0]}
+            data_dict = {"image": data[:-1][0], "label": data[-1:][0]}
         else:
-            data_dict = {"image": data[:-1], "seg": data[-1:]}
+            data_dict = {"image": data[:-1], "label": data[-1:]}
         return self._transform(data_dict, case)
 
     def _transform(self, data_dict, case):
