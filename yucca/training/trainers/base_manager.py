@@ -723,7 +723,7 @@ class base_manager(object):
         logits = self.preprocessor.reverse_preprocessing(logits, image_properties)
 
         print(f"{'Saving as: ':25} {outpath}")
-        save_segmentation_from_logits(
+        save_prediction_from_logits(
             logits,
             outpath=outpath,
             properties=image_properties,

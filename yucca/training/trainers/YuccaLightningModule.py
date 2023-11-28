@@ -205,5 +205,3 @@ if __name__ == "__main__":
     path = None
     cfg = YuccaConfigurator(task="Task001_OASIS", folds=2)
     model = YuccaLightningModule(cfg)
-
-    Manager.run_training()
