@@ -55,6 +55,7 @@ def main():
         "-chk",
         help="Checkpoint to use for inference. Defaults to model_best.",
         default="best",
+        default="best",
     )
     parser.add_argument(
         "-v",
@@ -68,6 +69,14 @@ def main():
         action="store_true",
     )
     parser.add_argument(
+        "--profile",
+        help="Used to enable inference profiling",
+        default=False,
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "--disable_tta",
         "--profile",
         help="Used to enable inference profiling",
         default=False,
@@ -129,9 +138,11 @@ def main():
     folds = args.f
     planner = args.pl
     profile = args.profile
+    profile = args.profile
     checkpoint = args.chk
     version = args.v
     ensemble = args.ensemble
+    disable_tta = args.disable_tta
     disable_tta = args.disable_tta
     not_strict = args.not_strict
     save_softmax = args.save_softmax
@@ -151,6 +162,7 @@ def main():
     for planner in plans:
         path_to_versions = join(
             yucca_models, source_task, model + "__" + dimensions, manager_name + "__" + planner, f"fold_{folds}"
+            yucca_models, source_task, model + "__" + dimensions, manager_name + "__" + planner, f"fold_{folds}"
         )
         if version is None:
             versions = [int(i.split("_")[-1]) for i in subdirs(path_to_versions, join=False)]
@@ -160,6 +172,7 @@ def main():
             source_task,
             model + "__" + dimensions,
             manager_name + "__" + planner,
+            f"fold_{folds}",
             f"fold_{folds}",
             f"version_{version}",
             "checkpoints",
@@ -180,6 +193,7 @@ def main():
         assert manager, f"searching for {manager_name} " f"but found: {manager}"
         assert issubclass(manager, (YuccaManager, YuccaLightningManager)), "Trainer is not a subclass of YuccaTrainer."
 
+        print(f"{'Using manager: ':25} {manager_name}")
         print(f"{'Using manager: ':25} {manager_name}")
         manager = manager(
             disable_logging=False,
@@ -204,6 +218,8 @@ def main():
             manager_name + "__" + planner,
             f"fold_{folds}",
             f"version_{version}",
+            f"fold_{folds}",
+            f"version_{version}",
             checkpoint,
         )
 
@@ -217,8 +233,10 @@ def main():
         manager.predict_folder(
             inpath,
             disable_tta,
+            disable_tta,
             outpath,
             save_softmax=save_softmax,
+            # overwrite=overwrite, # Commented out until overwrite arg is added in manager.
             # overwrite=overwrite, # Commented out until overwrite arg is added in manager.
         )
 

@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
+import torch.nn.functional as F
 import nibabel as nib
 import os
 import cc3d
@@ -446,6 +447,7 @@ class YuccaPreprocessor(object):
         return torch.tensor(images, dtype=torch.float32), image_properties
 
     def reverse_preprocessing(self, images: torch.Tensor, image_properties: dict):
+    def reverse_preprocessing(self, images: torch.Tensor, image_properties: dict):
         """
         Expected shape of images are:
         (b, c, x, y(, z))
@@ -460,6 +462,7 @@ class YuccaPreprocessor(object):
         """
         image_properties["save_format"] = image_properties.get("image_extension")
         nclasses = len(self.plans["dataset_properties"]["classes"])
+        canvas = torch.zeros((1, nclasses, *image_properties["uncropped_shape"]), dtype=images.dtype)
         canvas = torch.zeros((1, nclasses, *image_properties["uncropped_shape"]), dtype=images.dtype)
         shape_after_crop = image_properties["cropped_shape"]
         shape_after_crop_transposed = shape_after_crop[self.transpose_forward]
@@ -498,7 +501,39 @@ class YuccaPreprocessor(object):
             f"image should be of shape: {image_properties['cropped_shape']}"
             f"but is: {images.shape[2:]}"
         )
+        assert np.all(images.shape[2:] == image_properties["resampled_transposed_shape"]), (
+            f"Reversing resampling and tranposition: "
+            f"image should be of shape: {image_properties['resampled_transposed_shape']}"
+            f"but is: {images.shape[2:]}"
+        )
+        # Here we Interpolate the array to the original size. The shape starts as [H, W (,D)]. For Torch functionality it is changed to [B, C, H, W (,D)].
+        # Afterwards it's squeezed back into [H, W (,D)] and transposed to the original direction.
+        images = F.interpolate(images, size=shape_after_crop_transposed.tolist(), mode="trilinear").permute(
+            [0, 1] + [i + 2 for i in self.transpose_backward]
+        )
 
+        assert np.all(images.shape[2:] == image_properties["cropped_shape"]), (
+            f"Reversing cropping: "
+            f"image should be of shape: {image_properties['cropped_shape']}"
+            f"but is: {images.shape[2:]}"
+        )
+
+        if self.plans["crop_to_nonzero"]:
+            bbox = image_properties["nonzero_box"]
+            slices = [
+                slice(None),
+                slice(None),
+                slice(bbox[0], bbox[1]),
+                slice(bbox[2], bbox[3]),
+            ]
+            if len(bbox) > 5:
+                slices.append(
+                    slice(bbox[4], bbox[5]),
+                )
+            canvas[slices] = images
+        else:
+            canvas = images
+        return canvas.numpy()
         if self.plans["crop_to_nonzero"]:
             bbox = image_properties["nonzero_box"]
             slices = [
