@@ -452,7 +452,7 @@ class YuccaPreprocessor(object):
             f"but is: {images.shape[2:]}"
         )
         shape = images.shape[2:]
-        if len(pad) > 5:
+        if len(pad) == 6:
             images = images[
                 :,
                 :,
@@ -460,7 +460,7 @@ class YuccaPreprocessor(object):
                 pad[2] : shape[1] - pad[3],
                 pad[4] : shape[2] - pad[5],
             ]
-        elif len(pad) < 5:
+        elif len(pad) == 4:
             images = images[:, :, pad[0] : shape[0] - pad[1], pad[2] : shape[1] - pad[3]]
 
         assert np.all(images.shape[2:] == image_properties["resampled_transposed_shape"]), (
