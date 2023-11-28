@@ -94,7 +94,7 @@ class YuccaPreprocessor(object):
         if os.path.splitext(plans_path)[-1] == ".json":
             return load_json(plans_path)
         if os.path.splitext(plans_path)[-1] == ".yaml":
-            return load_yaml(plans_path)["configurator"]["_plans"]
+            return load_yaml(plans_path)["config"]["plans"]
         else:
             print(
                 f"Plan format not recognized. Got {plans_path} with ext {os.path.splitext(plans_path)[-1]} and expected either a '.json' or '.yaml' file"
@@ -376,36 +376,42 @@ class YuccaPreprocessor(object):
         assert isinstance(images, (list, tuple)), "image(s) should be a list or tuple, even if only one " "image is passed"
         self.initialize_properties()
         image_properties = {}
-        images = [nib.load(image[0]) if isinstance(image, tuple) else nib.load(image) for image in images]
+        ext = images[0][0].split(os.extsep, 1)[1] if isinstance(images[0], tuple) else images[0].split(os.extsep, 1)[1]
+        images = [read_any_file(image[0]) if isinstance(image, tuple) else read_any_file(image) for image in images]
 
-        image_properties["original_spacing"] = get_nib_spacing(images[0])
+        image_properties["image_extension"] = ext
         image_properties["original_shape"] = np.array(images[0].shape)
-        image_properties["qform"] = images[0].get_qform()
-        image_properties["sform"] = images[0].get_sform()
 
         assert len(image_properties["original_shape"]) in [
             2,
             3,
         ], "images must be either 2D or 3D for preprocessing"
 
-        # Check if header is valid and then attempt to orient to target orientation.
-        if (
-            images[0].get_qform(coded=True)[1]
-            or images[0].get_sform(coded=True)[1]
-            and self.plans.get("target_coordinate_system")
-        ):
-            image_properties["reoriented"] = True
-            original_orientation = get_nib_orientation(images[0])
-            image_properties["original_orientation"] = original_orientation
-            images = [
-                reorient_nib_image(image, original_orientation, self.plans["target_coordinate_system"]) for image in images
-            ]
-            image_properties["new_orientation"] = get_nib_orientation(images[0])
-        else:
-            print("Insufficient header information. Reorientation will not be attempted.")
-            image_properties["reoriented"] = False
+        image_properties["original_spacing"] = np.array([1.0] * len(image_properties["original_shape"]))
+        image_properties["qform"] = None
+        image_properties["sform"] = None
+        image_properties["reoriented"] = False
+        image_properties["affine"] = None
 
-        image_properties["affine"] = images[0].affine
+        if isinstance(images[0], nib.Nifti1Image):
+            image_properties["original_spacing"] = get_nib_spacing(images[0])
+            image_properties["qform"] = images[0].get_qform()
+            image_properties["sform"] = images[0].get_sform()
+            # Check if header is valid and then attempt to orient to target orientation.
+            if (
+                images[0].get_qform(coded=True)[1]
+                or images[0].get_sform(coded=True)[1]
+                and self.plans.get("target_coordinate_system")
+            ):
+                image_properties["reoriented"] = True
+                original_orientation = get_nib_orientation(images[0])
+                image_properties["original_orientation"] = original_orientation
+                images = [
+                    reorient_nib_image(image, original_orientation, self.plans["target_coordinate_system"]) for image in images
+                ]
+                image_properties["new_orientation"] = get_nib_orientation(images[0])
+            image_properties["affine"] = images[0].affine
+
         images = [nib_to_np(image) for image in images]
 
         image_properties["uncropped_shape"] = np.array(images[0].shape)
@@ -452,7 +458,7 @@ class YuccaPreprocessor(object):
         (5) Return: Return the reverted images as a NumPy array.
         The original orientation of the image will be re-applied when saving the prediction
         """
-
+        image_properties["save_format"] = image_properties.get("image_extension")
         nclasses = len(self.plans["dataset_properties"]["classes"])
         canvas = torch.zeros((1, nclasses, *image_properties["uncropped_shape"]), dtype=images.dtype)
         shape_after_crop = image_properties["cropped_shape"]
