@@ -47,9 +47,9 @@ class YuccaAugmentationComposer:
         self.patch_size = patch_size
 
         # label/segmentation transforms
-        self.skip_seg = False
-        self.seg_dtype = int
-        self.copy_image_to_seg = False
+        self.skip_label = False
+        self.label_dtype = int
+        self.copy_image_to_label = False
 
         self.additive_noise_p_per_sample = 0.2
         self.additive_noise_mean = (0.0, 0.0)
@@ -129,7 +129,7 @@ class YuccaAugmentationComposer:
                     z_rot_in_degrees=self.rotation_z,
                     p_scale_per_sample=self.scale_p_per_sample,
                     scale_factor=self.scale_factor,
-                    skip_seg=self.skip_seg,
+                    skip_label=self.skip_label,
                 ),
                 AdditiveNoise(
                     p_per_sample=self.additive_noise_p_per_sample,
@@ -173,7 +173,7 @@ class YuccaAugmentationComposer:
                     p_per_sample=self.mirror_p_per_sample,
                     axes=self.mirror_axes,
                     p_mirror_per_axis=self.mirror_p_per_axis,
-                    skip_seg=self.skip_seg,
+                    skip_label=self.skip_label,
                 ),
                 # DownsampleSegForDS() if self.deep_supervision else None,
                 # CopyImageToSeg() if self.CopyImageToSeg else None,
