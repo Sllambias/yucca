@@ -23,7 +23,7 @@ from yucca.paths import yucca_models, yucca_preprocessed_data
 from yuccalib.network_architectures.utils.model_memory_estimation import (
     find_optimal_tensor_dims,
 )
-from yuccalib.utils.files_and_folders import WriteSegFromLogits, load_yaml, recursive_find_python_class
+from yuccalib.utils.files_and_folders import WritePredictionFromLogits, load_yaml, recursive_find_python_class
 from yuccalib.evaluation.loggers import YuccaLogger
 from typing import Union
 
@@ -111,24 +111,26 @@ class YuccaConfigurator:
         self.setup_aug_params()
         self.setup_callbacks()
         self.setup_loggers()
+        self.populate_lm_hparams()
 
     @property
     def plans(self):
         if self._plans is None:
             if self.ckpt_path is not None:
-                print("loading plans from specified ckpt")
-                self._plans = torch.load(self.ckpt_path, map_location="cpu")["hyper_parameters"]["configurator"]._plans
+                print("Trying to find plans in specified ckpt")
+                self._plans = torch.load(self.ckpt_path, map_location="cpu")["hyper_parameters"].get("config['plans']")
             elif (
                 self.version is not None
                 and self.continue_from_most_recent
                 and isfile(join(self.outpath, "checkpoints", "last.ckpt"))
             ):
-                print("loading plans from last ckpt")
+                print("Trying to find plans in last ckpt")
                 self._plans = torch.load(join(self.outpath, "checkpoints", "last.ckpt"), map_location="cpu")[
                     "hyper_parameters"
-                ]["configurator"]._plans
-            else:
-                print("loading plans.json and constructing parameters")
+                ].get("config['plans']")
+            # If plans is still none the ckpt files were either empty/invalid or didn't exist and we create a new.
+            if self._plans is None:
+                print("Exhausted other options: loading plans.json and constructing parameters")
                 self._plans = load_json(self.plans_path)
         return self._plans
 
@@ -219,7 +221,7 @@ class YuccaConfigurator:
             filename="last",
             enable_version_counter=False,
         )
-        pred_writer = WriteSegFromLogits(
+        pred_writer = WritePredictionFromLogits(
             output_dir=self.segmentation_output_dir, save_softmax=self.save_softmax, write_interval="batch"
         )
         self.callbacks = [best_ckpt, interval_ckpt, latest_ckpt, pred_writer]
@@ -312,6 +314,38 @@ class YuccaConfigurator:
             splits.append({"train": list(files[train]), "val": list(files[val])})
 
         save_pickle(splits, splits_file)
+
+    def populate_lm_hparams(self):
+        # Here we control which variables go into the hparam dict that we pass to the LightningModule
+        # This way we can make sure it won't be given args that could potentially break it (such as classes that might be changed)
+        # or flood it with useless information.
+        self.lm_hparams = {
+            "aug_params": self.augmentation_parameter_dict,
+            "batch_size": self.batch_size,
+            "ckpt_path": self.ckpt_path,
+            "continue_from_most_recent": self.continue_from_most_recent,
+            "disable_logging": self.disable_logging,
+            "folds": self.folds,
+            "image_extension": self.image_extension,
+            "manager_name": self.manager_name,
+            "max_vram": self.max_vram,
+            "model_dimensions": self.model_dimensions,
+            "model_name": self.model_name,
+            "num_classes": self.num_classes,
+            "num_modalities": self.num_modalities,
+            "outpath": self.outpath,
+            "patch_size": self.patch_size,
+            "planner": self.planner,
+            "plans_path": self.plans_path,
+            "plans": self.plans,
+            "profile": self.profile,
+            "save_dir": self.save_dir,
+            "save_softmax": self.save_softmax,
+            "segmentation_output_dir": self.segmentation_output_dir,
+            "task": self.task,
+            "tiny_patch": self.tiny_patch,
+            "train_data_dir": self.train_data_dir,
+        }
 
 
 if __name__ == "__main__":

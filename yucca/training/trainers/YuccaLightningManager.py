@@ -115,7 +115,7 @@ class YuccaLightningManager:
         )
 
         self.model_module = YuccaLightningModule(
-            configurator=configurator,
+            config=configurator.lm_hparams,
             loss_fn=self.loss,
             stage=stage,
             step_logging=self.step_logging,
