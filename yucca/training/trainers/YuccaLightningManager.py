@@ -89,7 +89,7 @@ class YuccaLightningManager:
         disable_tta: bool = False,
         pred_data_dir: str = None,
         save_softmax: bool = False,
-        segmentation_output_dir: str = "./",
+        prediction_output_dir: str = "./",
     ):
         # Here we configure the outpath we will use to store model files and metadata
         # along with the path to plans file which will also be loaded.
@@ -102,7 +102,7 @@ class YuccaLightningManager:
             model_name=self.model_name,
             planner=self.planner,
             profile=self.profile,
-            segmentation_output_dir=segmentation_output_dir,
+            prediction_output_dir=prediction_output_dir,
             save_softmax=save_softmax,
             tiny_patch=True if self.model_name == "TinyUNet" else False,
             task=self.task,
@@ -163,7 +163,7 @@ class YuccaLightningManager:
             stage="predict",
             disable_tta=disable_tta,
             pred_data_dir=input_folder,
-            segmentation_output_dir=output_folder,
+            prediction_output_dir=output_folder,
             save_softmax=save_softmax,
         )
         with torch.inference_mode():

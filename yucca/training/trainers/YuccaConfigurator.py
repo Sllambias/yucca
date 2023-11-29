@@ -56,7 +56,7 @@ class YuccaConfigurator:
 
     planner (str, optional): Name of the planner associated with the dataset. Default is "YuccaPlanner".
 
-    segmentation_output_dir (str, optional): Output directory for segmentation results. Default is "./".
+    prediction_output_dir (str, optional): Output directory for label results. Default is "./".
         - Only used during inference.
 
     save_softmax (bool, optional): Whether to save softmax predictions during inference. Default is False.
@@ -79,7 +79,7 @@ class YuccaConfigurator:
         model_name: str = "UNet",
         planner: str = "YuccaPlanner",
         profile: bool = False,
-        segmentation_output_dir: str = "./",
+        prediction_output_dir: str = "./",
         save_softmax: bool = False,
         tiny_patch: bool = False,
     ):
@@ -92,7 +92,7 @@ class YuccaConfigurator:
         self.model_name = model_name
         self.manager_name = manager_name
         self.save_softmax = save_softmax
-        self.segmentation_output_dir = segmentation_output_dir
+        self.prediction_output_dir = prediction_output_dir
         self.planner = planner
         self.profile = profile
         self.task = task
@@ -222,7 +222,7 @@ class YuccaConfigurator:
             enable_version_counter=False,
         )
         pred_writer = WritePredictionFromLogits(
-            output_dir=self.segmentation_output_dir, save_softmax=self.save_softmax, write_interval="batch"
+            output_dir=self.prediction_output_dir, save_softmax=self.save_softmax, write_interval="batch"
         )
         self.callbacks = [best_ckpt, interval_ckpt, latest_ckpt, pred_writer]
 
@@ -278,7 +278,7 @@ class YuccaConfigurator:
         ), f"{self.plans['preprocessor']} was found in plans, but no class with the corresponding name was found"
         self.augmentation_parameter_dict = {}
         if issubclass(preprocessor_class, YuccaPreprocessor_CLS):
-            self.augmentation_parameter_dict["skip_seg"] = True
+            self.augmentation_parameter_dict["skip_label"] = True
 
     def load_splits(self):
         # Load splits file or create it if not found (see: "split_data").
@@ -341,7 +341,7 @@ class YuccaConfigurator:
             "profile": self.profile,
             "save_dir": self.save_dir,
             "save_softmax": self.save_softmax,
-            "segmentation_output_dir": self.segmentation_output_dir,
+            "prediction_output_dir": self.prediction_output_dir,
             "task": self.task,
             "tiny_patch": self.tiny_patch,
             "train_data_dir": self.train_data_dir,

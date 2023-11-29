@@ -55,7 +55,6 @@ def main():
         "-chk",
         help="Checkpoint to use for inference. Defaults to model_best.",
         default="best",
-        default="best",
     )
     parser.add_argument(
         "-v",
@@ -70,6 +69,11 @@ def main():
     )
     parser.add_argument(
         "--disable_tta",
+        help="Used to disable test-time augmentations (mirroring)",
+        default=False,
+        action="store_true",
+    )
+    parser.add_argument(
         "--profile",
         help="Used to enable inference profiling",
         default=False,
