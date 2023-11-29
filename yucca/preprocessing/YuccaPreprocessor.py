@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-import torch.nn.functional as F
 import nibabel as nib
 import os
 import cc3d
