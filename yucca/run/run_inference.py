@@ -219,7 +219,6 @@ def main():
             outpath,
             save_softmax=save_softmax,
             # overwrite=overwrite, # Commented out until overwrite arg is added in manager.
-            # overwrite=overwrite, # Commented out until overwrite arg is added in manager.
         )
 
         folders_with_softmax.append(outpath)
