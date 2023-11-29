@@ -460,7 +460,7 @@ class YuccaPreprocessor(object):
         The original orientation of the image will be re-applied when saving the prediction
         """
         image_properties["save_format"] = image_properties.get("image_extension")
-        nclasses = len(self.plans["dataset_properties"]["classes"])
+        nclasses = max(1, len(self.plans["dataset_properties"]["classes"]))
         canvas = torch.zeros((1, nclasses, *image_properties["uncropped_shape"]), dtype=images.dtype)
         shape_after_crop = image_properties["cropped_shape"]
         shape_after_crop_transposed = shape_after_crop[self.transpose_forward]
@@ -531,4 +531,4 @@ class YuccaPreprocessor(object):
             canvas[slices] = images
         else:
             canvas = images
-        return canvas.numpy()
+        return canvas.numpy(), image_properties
