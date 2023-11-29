@@ -18,11 +18,20 @@ def combine_imagesTr_from_tasks(tasks: Union[list, tuple], target_dir):
 
 
 def get_identifiers_from_splitted_files(folder: str, tasks: list):
+    suffix = ".nii.gz"
+    suffix_length = len(suffix) + 4  # length of _00X.nii.gz which is the ending of all nifti files
+
     if len(tasks) > 0:
-        uniques = np.unique([i[:-11] for task in tasks for i in subfiles(join(folder, task), suffix=".nii.gz", join=False)])
+        file_names = [
+            file[:-suffix_length] for task in tasks for file in subfiles(join(folder, task), suffix=suffix, join=False)
+        ]
     else:
-        uniques = np.unique([i[:-11] for i in subfiles(folder, suffix=".nii.gz", join=False)])
-    return uniques
+        file_names = [file[:-suffix_length] for file in subfiles(folder, suffix=suffix, join=False)]
+
+    assert len(file_names) > 1
+
+    np.unique([i[:-11] for i in subfiles(folder, suffix=".nii.gz", join=False)])
+    return np.unique(file_names)
 
 
 def generate_dataset_json(
@@ -56,6 +65,7 @@ def generate_dataset_json(
     :param dataset_release:
     :return:
     """
+
     train_identifiers = get_identifiers_from_splitted_files(imagesTr_dir, tasks)
 
     if imagesTs_dir is not None:
@@ -71,15 +81,13 @@ def generate_dataset_json(
     json_dict["licence"] = license
     json_dict["release"] = dataset_release
     json_dict["modality"] = {str(i): modalities[i] for i in range(len(modalities))}
-    json_dict["labels"] = {str(i): labels[i] for i in labels.keys()}
+    json_dict["labels"] = {str(i): labels[i] for i in labels.keys()} if labels is not None else None
     json_dict["label_hierarchy"] = label_hierarchy
     json_dict["tasks"] = tasks
     json_dict["numTraining"] = len(train_identifiers)
     json_dict["numTest"] = len(test_identifiers)
-    json_dict["training"] = [
-        {"image": "./imagesTr/%s.nii.gz" % i, "label": "./labelsTr/%s.nii.gz" % i} for i in train_identifiers
-    ]
-    json_dict["test"] = ["./imagesTs/%s.nii.gz" % i for i in test_identifiers]
+    json_dict["training"] = [{"image": name, "label": name if labels is not None else None} for name in train_identifiers]
+    json_dict["test"] = test_identifiers
 
     if not output_file.endswith("dataset.json"):
         print(
