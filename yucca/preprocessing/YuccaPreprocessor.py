@@ -75,6 +75,7 @@ class YuccaPreprocessor(object):
         self.target_dir = join(yucca_preprocessed_data, self.task, self.plans["plans_name"])
         self.input_dir = join(yucca_raw_data, self.task)
         self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
+        self.subject_ids = subfiles(join(self.input_dir, "labelsTr"), join=False)
 
     def initialize_properties(self):
         """
@@ -105,7 +106,6 @@ class YuccaPreprocessor(object):
         self.initialize_properties()
         self.initialize_paths()
         maybe_mkdir_p(self.target_dir)
-        subject_ids = subfiles(join(self.input_dir, "labelsTr"), join=False)
 
         print(
             f"{'Preprocessing Task:':25.25} {self.task} \n"
@@ -116,7 +116,7 @@ class YuccaPreprocessor(object):
             f"{'Transpose Backward:':25.25} {self.transpose_backward} \n"
         )
         p = Pool(self.threads)
-        p.map(self._preprocess_train_subject, subject_ids)
+        p.map(self._preprocess_train_subject, self.subject_ids)
         p.close()
         p.join()
 

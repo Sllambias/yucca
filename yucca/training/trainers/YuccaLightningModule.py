@@ -5,7 +5,8 @@ import wandb
 import yucca
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
-from torchmetrics.classification import Dice
+from torchmetrics.classification import Dice, Precision
+from torchmetrics.regression import MeanAbsoluteError
 from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 from yuccalib.utils.files_and_folders import recursive_find_python_class
 from yuccalib.utils.kwargs import filter_kwargs
@@ -44,6 +45,7 @@ class YuccaLightningModule(L.LightningModule):
         self.model_name = config["model_name"]
         self.model_dimensions = config["model_dimensions"]
         self.patch_size = config["patch_size"]
+        self.task_type = config["task_type"]
 
         # Loss, optimizer and scheduler parameters
         self.lr = learning_rate
@@ -56,8 +58,16 @@ class YuccaLightningModule(L.LightningModule):
 
         # Evaluation and logging
         self.step_logging = step_logging
-        self.train_metrics = MetricCollection({"train_dice": Dice(num_classes=self.num_classes, ignore_index=0)})
-        self.val_metrics = MetricCollection({"val_dice": Dice(num_classes=self.num_classes, ignore_index=0)})
+        if self.task_type in ["classification", "segmentation"]:
+            self.train_metrics = MetricCollection(
+                {"train_dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
+            )
+            self.val_metrics = MetricCollection(
+                {"val_dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
+            )
+        if self.task_type == "unsupervised":
+            self.train_metrics = MetricCollection({"train_MAE": MeanAbsoluteError()})
+            self.val_metrics = MetricCollection({"train_MAE": MeanAbsoluteError()})
 
         # Inference
         self.sliding_window_overlap = sliding_window_overlap

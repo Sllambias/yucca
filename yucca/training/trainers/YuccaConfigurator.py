@@ -17,8 +17,8 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.profilers import SimpleProfiler
 from pytorch_lightning.loggers import WandbLogger, CSVLogger
 from sklearn.model_selection import KFold
-
 from yucca.preprocessing.YuccaPreprocessor_CLS import YuccaPreprocessor_CLS
+from yucca.preprocessing.YuccaPreprocessor_NoLabel import YuccaPreprocessor_NoLabel
 from yucca.paths import yucca_models, yucca_preprocessed_data
 from yuccalib.network_architectures.utils.model_memory_estimation import (
     find_optimal_tensor_dims,
@@ -244,8 +244,8 @@ class YuccaConfigurator:
         # (2) check if we want to continue from this
         # (3) check if hparams were created for the previous version
 
-        self.num_classes = self.plans.get("num_classes") or len(self.plans["dataset_properties"]["classes"])
-        self.num_modalities = self.plans.get("num_modalities") or len(self.plans["dataset_properties"]["modalities"])
+        self.num_classes = max(1, self.plans.get("num_classes") or len(self.plans["dataset_properties"]["classes"]))
+        self.num_modalities = max(1, self.plans.get("num_modalities") or len(self.plans["dataset_properties"]["modalities"]))
         self.image_extension = (
             self.plans.get("image_extension") or self.plans["dataset_properties"].get("image_extension") or "nii.gz"
         )
@@ -279,6 +279,15 @@ class YuccaConfigurator:
         self.augmentation_parameter_dict = {}
         if issubclass(preprocessor_class, YuccaPreprocessor_CLS):
             self.augmentation_parameter_dict["skip_label"] = True
+            self.task_type = "classification"
+        elif issubclass(preprocessor_class, YuccaPreprocessor_NoLabel):
+            self.augmentation_parameter_dict["skip_label"] = True
+            self.augmentation_parameter_dict["copy_image_to_label"] = True
+            # This should be uncommented when masking is properly implemented
+            # self.augmentation_parameter_dict["mask_image_for_reconstruction"] = True
+            self.task_type = "unsupervised"
+        else:
+            self.task_type = "segmentation"
 
     def load_splits(self):
         # Load splits file or create it if not found (see: "split_data").
@@ -339,6 +348,7 @@ class YuccaConfigurator:
             "plans_path": self.plans_path,
             "plans": self.plans,
             "profile": self.profile,
+            "task_type": self.task_type,
             "save_dir": self.save_dir,
             "save_softmax": self.save_softmax,
             "prediction_output_dir": self.prediction_output_dir,

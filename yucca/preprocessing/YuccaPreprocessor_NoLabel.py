@@ -2,6 +2,7 @@
 Takes raw data conforming with Yucca standards and preprocesses according to the generic scheme
 """
 import numpy as np
+import re
 import torch
 import nibabel as nib
 import os
@@ -26,6 +27,13 @@ from batchgenerators.utilities.file_and_folder_operations import (
 
 
 class YuccaPreprocessor_NoLabel(YuccaPreprocessor):
+    def initialize_paths(self):
+        super().initialize_paths()
+        # Have to overwrite how we get the subject_ids as there's no labelsTr to get them from.
+        # Therefore we use the imagesTr folder and remove the modality suffix.
+        self.subject_ids = subfiles(join(self.input_dir, "imagesTr"), join=False)
+        self.subject_ids = [re.sub(r"_\d+\.", ".", subject) for subject in self.subject_ids]
+
     def _preprocess_train_subject(self, subject_id):
         image_props = {}
         subject_id = subject_id.split(os.extsep, 1)[0]
@@ -45,16 +53,6 @@ class YuccaPreprocessor_NoLabel(YuccaPreprocessor):
 
         image_props["image files"] = imagepaths
         images = [read_any_file(image) for image in imagepaths]
-
-        # Do the same with label
-        label = [
-            labelpath
-            for labelpath in subfiles(join(self.input_dir, "labelsTr"))
-            if os.path.split(labelpath)[-1].startswith(subject_id + ".")
-        ]
-        assert len(label) < 2, f"unexpected number of labels found. Expected 1 or 0 and found {len(label)}"
-        image_props["label file"] = label[0]
-        label = read_any_file(label[0], dtype=np.uint8)
 
         if not self.disable_unittests:
             assert len(images) > 0, f"found no images for {subject_id + '_'}, " f"attempted imagepaths: {imagepaths}"
@@ -84,14 +82,11 @@ class YuccaPreprocessor_NoLabel(YuccaPreprocessor):
             original_orientation = get_nib_orientation(images[0])
             final_direction = self.plans["target_coordinate_system"]
             images = [nib_to_np(reorient_nib_image(image, original_orientation, final_direction)) for image in images]
-            if isinstance(label, nib.Nifti1Image):
-                label = nib_to_np(reorient_nib_image(label, original_orientation, final_direction))
         else:
             original_spacing = np.array([1.0] * len(original_size))
             original_orientation = "INVALID"
             final_direction = "INVALID"
             images = [nib_to_np(image) for image in images]
-            label = nib_to_np(label)
 
         if self.target_spacing.size:
             target_spacing = self.target_spacing
@@ -111,11 +106,10 @@ class YuccaPreprocessor_NoLabel(YuccaPreprocessor):
             images, None, self.plans["normalization_scheme"], self.transpose_forward, original_spacing, target_spacing
         )
 
-        images = np.array((np.array(images).T, label), dtype="object")
-        images[0] = images[0].T
-        final_size = list(images[0][0].shape)
+        images = np.array(images)
+        final_size = list(images[0].shape)
 
-        # For classification there's no foreground classes
+        # For no label there's no foreground classes
         # And no connected components to analyze.
         foreground_locs = []
         numbered_ground_truth = ground_truth_numb_lesion = object_sizes = 0
@@ -142,11 +136,3 @@ class YuccaPreprocessor_NoLabel(YuccaPreprocessor):
 
         # save metadata as .pkl
         save_pickle(image_props, picklepath)
-
-    def reverse_preprocessing(self, images: torch.Tensor, image_properties: dict):
-        """
-        Expected shape of images are:
-        (b, c, x)
-        """
-        image_properties["save_format"] = "txt"
-        return images.cpu().numpy(), image_properties

@@ -57,16 +57,17 @@ class YuccaDataModule(pl.LightningDataModule):
 
         # Now extract parameters from the cfg
         self.batch_size = self.cfg.batch_size
+        self.image_extension = self.cfg.image_extension
         self.patch_size = self.cfg.patch_size
+        self.task_type = self.cfg.task_type
         self.train_data_dir = self.cfg.train_data_dir
         self.train_split = self.cfg.train_split
-        self.image_extension = self.cfg.image_extension
         self.val_split = self.cfg.val_split
-        self.pre_aug_patch_size = pre_aug_patch_size
 
         # Set by initialize()
         self.composed_train_transforms = composed_train_transforms
         self.composed_val_transforms = composed_val_transforms
+        self.pre_aug_patch_size = pre_aug_patch_size
 
         # Set in the predict loop
         self.pred_data_dir = pred_data_dir
@@ -91,12 +92,14 @@ class YuccaDataModule(pl.LightningDataModule):
                 self.train_samples,
                 composed_transforms=self.composed_train_transforms,
                 patch_size=self.pre_aug_patch_size if self.pre_aug_patch_size is not None else self.patch_size,
+                task_type=self.task_type,
             )
 
             self.val_dataset = YuccaTrainDataset(
                 self.val_samples,
                 composed_transforms=self.composed_val_transforms,
                 patch_size=self.patch_size,
+                task_type=self.task_type,
             )
 
         if stage == "predict":
