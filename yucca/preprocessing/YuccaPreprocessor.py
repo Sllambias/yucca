@@ -58,13 +58,13 @@ class YuccaPreprocessor(object):
     which is used later to oversample foreground.
     """
 
-    def __init__(self, plans_path, task=None, threads=12, disable_unittests=False):
+    def __init__(self, plans_path, task=None, threads=12, disable_sanity_checks=False):
         self.name = str(self.__class__.__name__)
         self.task = task
         self.plans_path = plans_path
         self.plans = self.load_plans(plans_path)
         self.threads = threads
-        self.disable_unittests = disable_unittests
+        self.disable_sanity_checks = disable_sanity_checks
 
         # lists for information we would like to attain
         self.transpose_forward = []
@@ -183,7 +183,7 @@ class YuccaPreprocessor(object):
         image_props["label file"] = label
         label = nib.load(label)
 
-        if not self.disable_unittests:
+        if not self.disable_sanity_checks:
             assert len(images) > 0, f"found no images for {subject_id + '_'}, " f"attempted imagepaths: {imagepaths}"
 
             assert (

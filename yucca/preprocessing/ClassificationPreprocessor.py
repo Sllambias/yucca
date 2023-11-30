@@ -56,7 +56,7 @@ class ClassificationPreprocessor(YuccaPreprocessor):
         image_props["label file"] = label[0]
         label = read_file_to_nifti_or_np(label[0], dtype=np.uint8)
 
-        if not self.disable_unittests:
+        if not self.disable_sanity_checks:
             assert len(images) > 0, f"found no images for {subject_id + '_'}, " f"attempted imagepaths: {imagepaths}"
             assert (
                 len(images[0].shape) == self.plans["dataset_properties"]["data_dimensions"]

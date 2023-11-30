@@ -54,7 +54,7 @@ class UnsupervisedPreprocessor(YuccaPreprocessor):
         image_props["image files"] = imagepaths
         images = [read_file_to_nifti_or_np(image) for image in imagepaths]
 
-        if not self.disable_unittests:
+        if not self.disable_sanity_checks:
             assert len(images) > 0, f"found no images for {subject_id + '_'}, " f"attempted imagepaths: {imagepaths}"
             assert (
                 len(images[0].shape) == self.plans["dataset_properties"]["data_dimensions"]
