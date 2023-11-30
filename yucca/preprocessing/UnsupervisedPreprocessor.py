@@ -26,7 +26,7 @@ from batchgenerators.utilities.file_and_folder_operations import (
 )
 
 
-class YuccaPreprocessor_NoLabel(YuccaPreprocessor):
+class UnsupervisedPreprocessor(YuccaPreprocessor):
     def initialize_paths(self):
         super().initialize_paths()
         # Have to overwrite how we get the subject_ids as there's no labelsTr to get them from.
