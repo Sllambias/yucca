@@ -34,7 +34,7 @@ def should_use(vol: nib.Nifti1Image):
 
 def dirs_in_dir(dir: str):
     p = Path(dir)
-    return [f.name.lower() for f in p.iterdir() if f.is_dir() and f.name[0] not in [".", "_"]]
+    return [f.name for f in p.iterdir() if f.is_dir() and f.name[0] not in [".", "_"]]
 
 
 def convert(path: str, subdir: str = "OASIS3"):
