@@ -31,7 +31,7 @@ def main():
         default=False,
         action="store_true",
     )
-    parser.add_argument("--disable_unit_tests", help="Enable or disable unittesting", default=False)
+    parser.add_argument("--disable_sanity_checks", help="Enable or disable sanity checks", default=False)
 
     # parser.add_argument("--threads", help="Number of threads/processes. \n"
     #                    "Don't touch this unless you know what you're doing.", default=2)
@@ -42,7 +42,7 @@ def main():
     planner_name = args.pl
     preprocessor_name = args.pr
     view = args.v
-    disable_testing = args.disable_unit_tests
+    disable_sanity_checks = args.disable_sanity_checks
     ensemble = args.ensemble
     # threads = args.threads
 
@@ -50,7 +50,7 @@ def main():
         planner = recursive_find_python_class(
             folder=[join(yucca.__path__[0], "planning")], class_name=planner_name, current_module="yucca.planning"
         )
-        planner = planner(task, preprocessor_name, 2, disable_testing, view=view)
+        planner = planner(task, preprocessor_name, 2, disable_sanity_checks, view=view)
         planner.plan()
         planner.preprocess()
     if ensemble:
@@ -59,7 +59,7 @@ def main():
             planner = recursive_find_python_class(
                 folder=[join(yucca.__path__[0], "planning")], class_name=planner_name, current_module="yucca.planning"
             )
-            planner = planner(task, preprocessor_name, 2, disable_testing, view=view)
+            planner = planner(task, preprocessor_name, 2, disable_sanity_checks, view=view)
             planner.plan()
             planner.preprocess()
 

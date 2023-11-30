@@ -5,7 +5,8 @@ import wandb
 import yucca
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
-from torchmetrics.classification import Dice
+from torchmetrics.classification import Dice, Precision
+from torchmetrics.regression import MeanAbsoluteError
 from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 from yuccalib.utils.files_and_folders import recursive_find_python_class
 from yuccalib.utils.kwargs import filter_kwargs
@@ -44,21 +45,34 @@ class YuccaLightningModule(L.LightningModule):
         self.model_name = config["model_name"]
         self.model_dimensions = config["model_dimensions"]
         self.patch_size = config["patch_size"]
+        self.task_type = config["task_type"]
 
         # Loss, optimizer and scheduler parameters
         self.lr = learning_rate
         self.loss_fn = loss_fn
-        if self.loss_fn is None:
-            self.loss_fn = "DiceCE"
+
         self.momentum = momentum
         self.optim = optimizer
         self.lr_scheduler = lr_scheduler
 
         # Evaluation and logging
         self.step_logging = step_logging
-        self.train_metrics = MetricCollection({"train_dice": Dice(num_classes=self.num_classes, ignore_index=0)})
-        self.val_metrics = MetricCollection({"val_dice": Dice(num_classes=self.num_classes, ignore_index=0)})
+        if self.task_type in ["classification", "segmentation"]:
+            self.train_metrics = MetricCollection(
+                {"train_dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
+            )
+            self.val_metrics = MetricCollection(
+                {"val_dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
+            )
+            _default_loss = "DiceCE"
 
+        if self.task_type == "unsupervised":
+            self.train_metrics = MetricCollection({"train_MAE": MeanAbsoluteError()})
+            self.val_metrics = MetricCollection({"train_MAE": MeanAbsoluteError()})
+            _default_loss = "MSE"
+
+        if self.loss_fn is None:
+            self.loss_fn = _default_loss
         # Inference
         self.sliding_window_overlap = sliding_window_overlap
         self.test_time_augmentation = test_time_augmentation

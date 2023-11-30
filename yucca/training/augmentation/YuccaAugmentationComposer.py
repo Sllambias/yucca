@@ -176,8 +176,8 @@ class YuccaAugmentationComposer:
                     skip_label=self.skip_label,
                 ),
                 # DownsampleSegForDS() if self.deep_supervision else None,
-                # CopyImageToSeg() if self.CopyImageToSeg else None,
-                # Masking() if self.MaskImageForReconstruction else None,
+                CopyImageToSeg(copy=self.copy_image_to_label),
+                Masking(mask=self.mask_image_for_reconstruction),
                 RemoveBatchDimension(),
             ]
         )
@@ -186,10 +186,10 @@ class YuccaAugmentationComposer:
     def compose_val_transforms(self):
         val_transforms = transforms.Compose(
             [
-                # AddBatchDimension(),
-                # CopyImageToSeg() if self.CopyImageToSeg else None,
-                # Masking() if self.MaskImageForReconstruction else None,
-                # RemoveBatchDimension(),
+                AddBatchDimension(),
+                CopyImageToSeg(copy=self.copy_image_to_label),
+                Masking(mask=self.mask_image_for_reconstruction),
+                RemoveBatchDimension(),
             ]
         )
         return val_transforms

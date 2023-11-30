@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
+import torch.nn.functional as F
 import nibabel as nib
 import os
 import cc3d
@@ -57,13 +58,13 @@ class YuccaPreprocessor(object):
     which is used later to oversample foreground.
     """
 
-    def __init__(self, plans_path, task=None, threads=12, disable_unittests=False):
+    def __init__(self, plans_path, task=None, threads=12, disable_sanity_checks=False):
         self.name = str(self.__class__.__name__)
         self.task = task
         self.plans_path = plans_path
         self.plans = self.load_plans(plans_path)
         self.threads = threads
-        self.disable_unittests = disable_unittests
+        self.disable_sanity_checks = disable_sanity_checks
 
         # lists for information we would like to attain
         self.transpose_forward = []
@@ -74,6 +75,8 @@ class YuccaPreprocessor(object):
         self.target_dir = join(yucca_preprocessed_data, self.task, self.plans["plans_name"])
         self.input_dir = join(yucca_raw_data, self.task)
         self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
+        self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
+        self.subject_ids = subfiles(join(self.input_dir, "labelsTr"), join=False)
 
     def initialize_properties(self):
         """
@@ -104,7 +107,6 @@ class YuccaPreprocessor(object):
         self.initialize_properties()
         self.initialize_paths()
         maybe_mkdir_p(self.target_dir)
-        subject_ids = subfiles(join(self.input_dir, "labelsTr"), join=False)
 
         print(
             f"{'Preprocessing Task:':25.25} {self.task} \n"
@@ -115,7 +117,7 @@ class YuccaPreprocessor(object):
             f"{'Transpose Backward:':25.25} {self.transpose_backward} \n"
         )
         p = Pool(self.threads)
-        p.map(self._preprocess_train_subject, subject_ids)
+        p.map(self._preprocess_train_subject, self.subject_ids)
         p.close()
         p.join()
 
@@ -181,7 +183,7 @@ class YuccaPreprocessor(object):
         image_props["label file"] = label
         label = nib.load(label)
 
-        if not self.disable_unittests:
+        if not self.disable_sanity_checks:
             assert len(images) > 0, f"found no images for {subject_id + '_'}, " f"attempted imagepaths: {imagepaths}"
 
             assert (
@@ -417,6 +419,32 @@ class YuccaPreprocessor(object):
             image_properties["affine"] = images[0].affine
 
         images = [nifti_or_np_to_np(image) for image in images]
+        image_properties["original_spacing"] = np.array([1.0] * len(image_properties["original_shape"]))
+        image_properties["qform"] = None
+        image_properties["sform"] = None
+        image_properties["reoriented"] = False
+        image_properties["affine"] = None
+
+        if isinstance(images[0], nib.Nifti1Image):
+            image_properties["original_spacing"] = get_nib_spacing(images[0])
+            image_properties["qform"] = images[0].get_qform()
+            image_properties["sform"] = images[0].get_sform()
+            # Check if header is valid and then attempt to orient to target orientation.
+            if (
+                images[0].get_qform(coded=True)[1]
+                or images[0].get_sform(coded=True)[1]
+                and self.plans.get("target_coordinate_system")
+            ):
+                image_properties["reoriented"] = True
+                original_orientation = get_nib_orientation(images[0])
+                image_properties["original_orientation"] = original_orientation
+                images = [
+                    reorient_nib_image(image, original_orientation, self.plans["target_coordinate_system"]) for image in images
+                ]
+                image_properties["new_orientation"] = get_nib_orientation(images[0])
+            image_properties["affine"] = images[0].affine
+
+        images = [nifti_or_np_to_np(image) for image in images]
 
         image_properties["uncropped_shape"] = np.array(images[0].shape)
 
@@ -463,7 +491,7 @@ class YuccaPreprocessor(object):
         The original orientation of the image will be re-applied when saving the prediction
         """
         image_properties["save_format"] = image_properties.get("image_extension")
-        nclasses = len(self.plans["dataset_properties"]["classes"])
+        nclasses = max(1, len(self.plans["dataset_properties"]["classes"]))
         canvas = torch.zeros((1, nclasses, *image_properties["uncropped_shape"]), dtype=images.dtype)
         shape_after_crop = image_properties["cropped_shape"]
         shape_after_crop_transposed = shape_after_crop[self.transpose_forward]
@@ -518,6 +546,22 @@ class YuccaPreprocessor(object):
             f"image should be of shape: {image_properties['cropped_shape']}"
             f"but is: {images.shape[2:]}"
         )
+        assert np.all(images.shape[2:] == image_properties["resampled_transposed_shape"]), (
+            f"Reversing resampling and tranposition: "
+            f"image should be of shape: {image_properties['resampled_transposed_shape']}"
+            f"but is: {images.shape[2:]}"
+        )
+        # Here we Interpolate the array to the original size. The shape starts as [H, W (,D)]. For Torch functionality it is changed to [B, C, H, W (,D)].
+        # Afterwards it's squeezed back into [H, W (,D)] and transposed to the original direction.
+        images = F.interpolate(images, size=shape_after_crop_transposed.tolist(), mode="trilinear").permute(
+            [0, 1] + [i + 2 for i in self.transpose_backward]
+        )
+
+        assert np.all(images.shape[2:] == image_properties["cropped_shape"]), (
+            f"Reversing cropping: "
+            f"image should be of shape: {image_properties['cropped_shape']}"
+            f"but is: {images.shape[2:]}"
+        )
 
         if self.plans["crop_to_nonzero"]:
             bbox = image_properties["nonzero_box"]
@@ -534,4 +578,4 @@ class YuccaPreprocessor(object):
             canvas[slices] = images
         else:
             canvas = images
-        return canvas.numpy()
+        return canvas.numpy(), image_properties

@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import os
-from typing import Union
+from typing import Union, Literal, Optional
 from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle
 from torchvision import transforms
 from yuccalib.image_processing.transforms.cropping_and_padding import CropPad
@@ -18,13 +18,19 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         preprocessed_data_dir: list,
         patch_size: list | tuple,
         keep_in_ram: Union[bool, None] = None,
-        label_dtype: type = int,
+        label_dtype: Optional[Union[int, float]] = None,
         composed_transforms=None,
+        task_type: Literal["classification", "segmentation", "unsupervised"] = "segmentation",
     ):
         self.all_cases = preprocessed_data_dir
         self.composed_transforms = composed_transforms
         self.patch_size = patch_size
-        self.label_dtype = label_dtype
+        self.task_type = task_type
+        if label_dtype is None:
+            if self.task_type in ["segmentation", "classification"]:
+                self.label_dtype = torch.int32
+            if self.task_type == "unsupervised":
+                self.label_dtype = torch.float32
 
         self.already_loaded_cases = {}
         self.croppad = CropPad(patch_size=self.patch_size, p_oversample_foreground=0.33)
@@ -87,10 +93,14 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         case = self.all_cases[idx]
         data = self.load_and_maybe_keep_volume(case)
-        if data.dtype == "O":
+        if self.task_type == "classification":
             data_dict = {"image": data[:-1][0], "label": data[-1:][0]}
-        else:
+        elif self.task_type == "segmentation":
             data_dict = {"image": data[:-1], "label": data[-1:]}
+        elif self.task_type == "unsupervised":
+            data_dict = {"image": data, "label": None}
+        else:
+            print(f"Task Type not recognized. Found {self.task_type}")
         return self._transform(data_dict, case)
 
     def _transform(self, data_dict, case):
