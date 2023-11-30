@@ -107,7 +107,6 @@ class YuccaPreprocessor(object):
         self.initialize_properties()
         self.initialize_paths()
         maybe_mkdir_p(self.target_dir)
-        subject_ids = subfiles(join(self.input_dir, "labelsTr"), suffix=".nii.gz", join=False)
 
         print(
             f"{'Preprocessing Task:':25.25} {self.task} \n"
