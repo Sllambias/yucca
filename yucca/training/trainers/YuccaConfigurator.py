@@ -17,7 +17,7 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.profilers import SimpleProfiler
 from pytorch_lightning.loggers import WandbLogger, CSVLogger
 from sklearn.model_selection import KFold
-from yucca.preprocessing.YuccaPreprocessor_NoLabel import YuccaPreprocessor_NoLabel
+from yucca.preprocessing.UnsupervisedPreprocessor import UnsupervisedPreprocessor
 from yucca.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
 from yucca.paths import yucca_models, yucca_preprocessed_data
 from yuccalib.network_architectures.utils.model_memory_estimation import (
@@ -280,7 +280,7 @@ class YuccaConfigurator:
         if issubclass(preprocessor_class, ClassificationPreprocessor):
             self.augmentation_parameter_dict["skip_label"] = True
             self.task_type = "classification"
-        elif issubclass(preprocessor_class, YuccaPreprocessor_NoLabel):
+        elif issubclass(preprocessor_class, UnsupervisedPreprocessor):
             self.augmentation_parameter_dict["skip_label"] = True
             self.augmentation_parameter_dict["copy_image_to_label"] = True
             # This should be uncommented when masking is properly implemented
