@@ -17,9 +17,6 @@ from batchgenerators.utilities.file_and_folder_operations import (
     isdir,
     subdirs,
 )
-from warnings import filterwarnings
-
-filterwarnings("ignore")
 
 
 def main():
@@ -46,9 +43,9 @@ def main():
     parser.add_argument("-m", help="Model Architecture. Defaults to UNet.", default="UNet")
     parser.add_argument("-d", help="2D or 3D model. Defaults to 3D.", default="3D")
     parser.add_argument(
-        "-tr",
-        help="Full name of Trainer Class. \n" "e.g. 'YuccaTrainer_DCE' or 'YuccaTrainer'. Defaults to YuccaTrainer.",
-        default="YuccaTrainer",
+        "-man",
+        help="Manager Class to be used. " "Defaults to the basic YuccaLightningManager",
+        default="YuccaLightningManager",
     )
     parser.add_argument("-pl", help="Planner. Defaults to YuccaPlanner", default="YuccaPlanner")
     parser.add_argument(
@@ -122,7 +119,7 @@ def main():
 
     source_task = maybe_get_task_from_task_id(args.s)
     target_task = maybe_get_task_from_task_id(args.t)
-    manager_name = args.tr
+    manager_name = args.man
     model = args.m
     dimensions = args.d
     folds = args.f
