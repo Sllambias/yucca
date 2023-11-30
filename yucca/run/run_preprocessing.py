@@ -16,7 +16,7 @@ def main():
     parser.add_argument(
         "-pr",
         help="Preprocessor Class to employ. "
-        "Defaults to the YuccaPreprocessor, but can be YuccaPreprocessor_CLS for classification tasks",
+        "Defaults to the YuccaPreprocessor, but can be ClassificationPreprocessor for classification tasks",
         default="YuccaPreprocessor",
     )
     parser.add_argument(
