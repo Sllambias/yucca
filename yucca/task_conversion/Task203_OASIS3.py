@@ -59,6 +59,9 @@ def convert(path: str, subdir: str = "OASIS3"):
 
     ext = ".nii.gz"
 
+    skipped_volumes = []
+    skipped_modalities = []
+
     for subject in tqdm(dirs_in_dir(subjects_dir), desc="Subjects"):
         if "mr" not in subject.lower():
             continue  # skip this subject
@@ -67,6 +70,7 @@ def convert(path: str, subdir: str = "OASIS3"):
         for modality in dirs_in_dir(subject_dir):
             modality_dir = join(subject_dir, modality)
             if should_skip(modality):
+                skipped_modalities.append(skipped_modalities)
                 continue  # skip this modality
             for file in subfiles(modality_dir, join=False, suffix=ext):
                 image_path = join(modality_dir, file)
@@ -79,7 +83,11 @@ def convert(path: str, subdir: str = "OASIS3"):
                         with gzip.open(output_path, mode="wb", compresslevel=1) as f_out:
                             shutil.copyfileobj(f_in, f_out)
                 else:
-                    print("Volume not large enough", image_path)
+                    skipped_volumes.append(image_path)
+
+    print(f"Skipped {len(skipped_volumes)} and {len(skipped_modalities)}")
+    print("Skipped workers", skipped_volumes)
+    print("Skipped modalities", skipped_modalities)
 
     generate_dataset_json(
         join(target_base, "dataset.json"),
