@@ -10,7 +10,7 @@ from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from yucca.preprocessing.normalization import normalizer
 from yuccalib.utils.nib_utils import get_nib_spacing, get_nib_orientation, reorient_nib_image
-from yuccalib.utils.type_conversions import nib_to_np, read_any_file
+from yuccalib.utils.type_conversions import nifti_or_np_to_np, read_file_to_nifti_or_np
 from yuccalib.image_processing.objects.BoundingBox import get_bbox_for_foreground
 from yuccalib.image_processing.cropping_and_padding import crop_to_box, pad_to_size
 from multiprocessing import Pool
@@ -52,7 +52,7 @@ class YuccaPreprocessor_NoLabel(YuccaPreprocessor):
         imagepaths = [impath for impath in self.imagepaths if os.path.split(impath)[-1].startswith(subject_id + "_")]
 
         image_props["image files"] = imagepaths
-        images = [read_any_file(image) for image in imagepaths]
+        images = [read_file_to_nifti_or_np(image) for image in imagepaths]
 
         if not self.disable_unittests:
             assert len(images) > 0, f"found no images for {subject_id + '_'}, " f"attempted imagepaths: {imagepaths}"
@@ -81,12 +81,12 @@ class YuccaPreprocessor_NoLabel(YuccaPreprocessor):
             original_spacing = get_nib_spacing(images[0])
             original_orientation = get_nib_orientation(images[0])
             final_direction = self.plans["target_coordinate_system"]
-            images = [nib_to_np(reorient_nib_image(image, original_orientation, final_direction)) for image in images]
+            images = [nifti_or_np_to_np(reorient_nib_image(image, original_orientation, final_direction)) for image in images]
         else:
             original_spacing = np.array([1.0] * len(original_size))
             original_orientation = "INVALID"
             final_direction = "INVALID"
-            images = [nib_to_np(image) for image in images]
+            images = [nifti_or_np_to_np(image) for image in images]
 
         if self.target_spacing.size:
             target_spacing = self.target_spacing
