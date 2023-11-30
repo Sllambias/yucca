@@ -17,8 +17,6 @@ def create_properties_pkl(data_dir, save_dir, suffix=".nii.gz"):
     dataset_json = load_json(join(data_dir, "dataset.json"))
     im_ext = dataset_json.get("image_extension") or "nii.gz"
     properties["image_extension"] = im_ext
-    im_ext = dataset_json.get("image_extension") or "nii.gz"
-    properties["image_extension"] = im_ext
     properties["classes"] = list(dataset_json["labels"].keys())
     properties["tasks"] = {task: [] for task in dataset_json["tasks"]}
     if len(dataset_json["tasks"]) > 0:
