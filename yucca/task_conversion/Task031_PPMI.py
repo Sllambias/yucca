@@ -88,7 +88,7 @@ def convert(path: str, subdir: str = "PPMI"):
                             output_name = f"{task_prefix}_{subject}_{modality}_{date_simple}_{image}_000.nii.gz"
                             output_path = join(target_imagesTr, output_name)
                             with open(image_path, "rb") as f_in:
-                                with gzip.open(output_path, mode="wb", compresslevel=2) as f_out:
+                                with gzip.open(output_path, mode="wb", compresslevel=1) as f_out:
                                     shutil.copyfileobj(f_in, f_out)
 
     generate_dataset_json(
