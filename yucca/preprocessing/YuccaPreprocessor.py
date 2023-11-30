@@ -573,7 +573,6 @@ class YuccaPreprocessor(object):
                 slice(bbox[2], bbox[3]),
             ]
             if len(bbox) == 6:
-            if len(bbox) == 6:
                 slices.append(
                     slice(bbox[4], bbox[5]),
                 )
