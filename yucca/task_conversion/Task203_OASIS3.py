@@ -60,7 +60,7 @@ def convert(path: str, subdir: str = "OASIS3"):
     ext = ".nii.gz"
 
     for subject in tqdm(dirs_in_dir(subjects_dir), desc="Subjects"):
-        if "mr" not in subject:
+        if "mr" not in subject.lower():
             continue  # skip this subject
 
         subject_dir = join(subjects_dir, subject)
