@@ -78,8 +78,8 @@ def generate_dataset_json(
     json_dict["tasks"] = tasks
     json_dict["numTraining"] = len(train_identifiers)
     json_dict["numTest"] = len(test_identifiers)
-    json_dict["training"] = [{"image": f"./imagesTr/{i}.{im_ext}", "label": f"./labelsTr/{i}"} for i in train_identifiers]
-    json_dict["test"] = [f"./imagesTs/{i}.{im_ext}" for i in test_identifiers]
+    json_dict["training"] = [{"image": name, "label": name if labels is not None else None} for name in train_identifiers]
+    json_dict["test"] = test_identifiers
 
     if not output_file.endswith("dataset.json"):
         print(
