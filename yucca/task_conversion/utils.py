@@ -74,13 +74,13 @@ def generate_dataset_json(
     json_dict["release"] = dataset_release
     json_dict["image_extension"] = im_ext
     json_dict["modality"] = {str(i): modalities[i] for i in range(len(modalities))}
-    json_dict["labels"] = {str(i): labels[i] for i in labels.keys()}
+    json_dict["labels"] = {str(i): labels[i] for i in labels.keys()} if labels is not None else None
     json_dict["label_hierarchy"] = label_hierarchy
     json_dict["tasks"] = tasks
     json_dict["numTraining"] = len(train_identifiers)
     json_dict["numTest"] = len(test_identifiers)
-    json_dict["training"] = [{"image": f"./imagesTr/{i}.{im_ext}", "label": f"./labelsTr/{i}"} for i in train_identifiers]
-    json_dict["test"] = [f"./imagesTs/{i}.{im_ext}" for i in test_identifiers]
+    json_dict["training"] = [{"image": name, "label": name if labels is not None else None} for name in train_identifiers]
+    json_dict["test"] = test_identifiers
 
     if not output_file.endswith("dataset.json"):
         print(

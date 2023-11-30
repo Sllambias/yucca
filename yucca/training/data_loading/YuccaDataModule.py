@@ -62,6 +62,7 @@ class YuccaDataModule(pl.LightningDataModule):
         self.task_type = self.cfg.task_type
         self.train_data_dir = self.cfg.train_data_dir
         self.train_split = self.cfg.train_split
+        self.image_extension = self.cfg.image_extension
         self.val_split = self.cfg.val_split
 
         # Set by initialize()

@@ -13,7 +13,7 @@ from yuccalib.utils.nib_utils import (
     get_nib_orientation,
     reorient_nib_image,
 )
-from yuccalib.utils.type_conversions import nib_to_np, read_any_file
+from yuccalib.utils.type_conversions import nifti_or_np_to_np, read_file_to_nifti_or_np
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from yucca.preprocessing.normalization import normalizer
 from multiprocessing import Pool
@@ -75,6 +75,7 @@ class YuccaPreprocessor(object):
         self.target_dir = join(yucca_preprocessed_data, self.task, self.plans["plans_name"])
         self.input_dir = join(yucca_raw_data, self.task)
         self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
+        self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
         self.subject_ids = subfiles(join(self.input_dir, "labelsTr"), join=False)
 
     def initialize_properties(self):
@@ -98,14 +99,15 @@ class YuccaPreprocessor(object):
         if os.path.splitext(plans_path)[-1] == ".yaml":
             return load_yaml(plans_path)["config"]["plans"]
         else:
-            print(
-                f"Plan format not recognized. Got {plans_path} with ext {os.path.splitext(plans_path)[-1]} and expected either a '.json' or '.yaml' file"
+            raise FileNotFoundError(
+                f"Plan file not found. Got {plans_path} with ext {os.path.splitext(plans_path)[-1]}. Expects either a '.json' or '.yaml' file."
             )
 
     def run(self):
         self.initialize_properties()
         self.initialize_paths()
         maybe_mkdir_p(self.target_dir)
+        subject_ids = subfiles(join(self.input_dir, "labelsTr"), suffix=".nii.gz", join=False)
 
         print(
             f"{'Preprocessing Task:':25.25} {self.task} \n"
@@ -235,13 +237,14 @@ class YuccaPreprocessor(object):
         if images[0].get_qform(coded=True)[1] or images[0].get_sform(coded=True)[1]:
             original_orientation = get_nib_orientation(images[0])
             final_direction = self.plans["target_coordinate_system"]
-            images = [nib_to_np(reorient_nib_image(image, original_orientation, final_direction)) for image in images]
-            label = nib_to_np(reorient_nib_image(label, original_orientation, final_direction))
+            images = [reorient_nib_image(image, original_orientation, final_direction) for image in images]
+            label = reorient_nib_image(label, original_orientation, final_direction)
         else:
             original_orientation = "INVALID"
             final_direction = "INVALID"
-            images = [nib_to_np(image) for image in images]
-            label = nib_to_np(label)
+
+        images = [nifti_or_np_to_np(image) for image in images]
+        label = nifti_or_np_to_np(label)
 
         # Check if the ground truth only contains expected values
         expected_labels = np.array(self.plans["dataset_properties"]["classes"], dtype=np.float32)
@@ -378,7 +381,10 @@ class YuccaPreprocessor(object):
         self.initialize_properties()
         image_properties = {}
         ext = images[0][0].split(os.extsep, 1)[1] if isinstance(images[0], tuple) else images[0].split(os.extsep, 1)[1]
-        images = [read_any_file(image[0]) if isinstance(image, tuple) else read_any_file(image) for image in images]
+        images = [
+            read_file_to_nifti_or_np(image[0]) if isinstance(image, tuple) else read_file_to_nifti_or_np(image)
+            for image in images
+        ]
 
         image_properties["image_extension"] = ext
         image_properties["original_shape"] = np.array(images[0].shape)
@@ -388,6 +394,32 @@ class YuccaPreprocessor(object):
             3,
         ], "images must be either 2D or 3D for preprocessing"
 
+        image_properties["original_spacing"] = np.array([1.0] * len(image_properties["original_shape"]))
+        image_properties["qform"] = None
+        image_properties["sform"] = None
+        image_properties["reoriented"] = False
+        image_properties["affine"] = None
+
+        if isinstance(images[0], nib.Nifti1Image):
+            image_properties["original_spacing"] = get_nib_spacing(images[0])
+            image_properties["qform"] = images[0].get_qform()
+            image_properties["sform"] = images[0].get_sform()
+            # Check if header is valid and then attempt to orient to target orientation.
+            if (
+                images[0].get_qform(coded=True)[1]
+                or images[0].get_sform(coded=True)[1]
+                and self.plans.get("target_coordinate_system")
+            ):
+                image_properties["reoriented"] = True
+                original_orientation = get_nib_orientation(images[0])
+                image_properties["original_orientation"] = original_orientation
+                images = [
+                    reorient_nib_image(image, original_orientation, self.plans["target_coordinate_system"]) for image in images
+                ]
+                image_properties["new_orientation"] = get_nib_orientation(images[0])
+            image_properties["affine"] = images[0].affine
+
+        images = [nifti_or_np_to_np(image) for image in images]
         image_properties["original_spacing"] = np.array([1.0] * len(image_properties["original_shape"]))
         image_properties["qform"] = None
         image_properties["sform"] = None
@@ -515,6 +547,22 @@ class YuccaPreprocessor(object):
             f"image should be of shape: {image_properties['cropped_shape']}"
             f"but is: {images.shape[2:]}"
         )
+        assert np.all(images.shape[2:] == image_properties["resampled_transposed_shape"]), (
+            f"Reversing resampling and tranposition: "
+            f"image should be of shape: {image_properties['resampled_transposed_shape']}"
+            f"but is: {images.shape[2:]}"
+        )
+        # Here we Interpolate the array to the original size. The shape starts as [H, W (,D)]. For Torch functionality it is changed to [B, C, H, W (,D)].
+        # Afterwards it's squeezed back into [H, W (,D)] and transposed to the original direction.
+        images = F.interpolate(images, size=shape_after_crop_transposed.tolist(), mode="trilinear").permute(
+            [0, 1] + [i + 2 for i in self.transpose_backward]
+        )
+
+        assert np.all(images.shape[2:] == image_properties["cropped_shape"]), (
+            f"Reversing cropping: "
+            f"image should be of shape: {image_properties['cropped_shape']}"
+            f"but is: {images.shape[2:]}"
+        )
 
         if self.plans["crop_to_nonzero"]:
             bbox = image_properties["nonzero_box"]
@@ -524,6 +572,7 @@ class YuccaPreprocessor(object):
                 slice(bbox[0], bbox[1]),
                 slice(bbox[2], bbox[3]),
             ]
+            if len(bbox) == 6:
             if len(bbox) == 6:
                 slices.append(
                     slice(bbox[4], bbox[5]),

@@ -1,6 +1,6 @@
 from batchgenerators.utilities.file_and_folder_operations import subfiles, join, load_json, save_pickle
 from yuccalib.utils.nib_utils import get_nib_spacing
-from yuccalib.utils.type_conversions import nib_to_np, read_any_file
+from yuccalib.utils.type_conversions import nifti_or_np_to_np, read_file_to_nifti_or_np
 import nibabel as nib
 import numpy as np
 import sys
@@ -15,6 +15,8 @@ def create_properties_pkl(data_dir, save_dir, suffix=".nii.gz"):
     properties = {}
 
     dataset_json = load_json(join(data_dir, "dataset.json"))
+    im_ext = dataset_json.get("image_extension") or "nii.gz"
+    properties["image_extension"] = im_ext
     im_ext = dataset_json.get("image_extension") or "nii.gz"
     properties["image_extension"] = im_ext
     properties["classes"] = list(dataset_json["labels"].keys())
@@ -65,13 +67,13 @@ def create_properties_pkl(data_dir, save_dir, suffix=".nii.gz"):
                 completed += 20
                 print(f"Property file creation progress: {completed}%")
                 sys.stdout.flush()
-            image = read_any_file(subject)
+            image = read_file_to_nifti_or_np(subject)
             sizes.append(image.shape)
             if isinstance(image, nib.Nifti1Image):
                 spacings.append(get_nib_spacing(image).tolist())
             else:
                 spacings.append([1.0, 1.0, 1.0])
-            image = nib_to_np(image)
+            image = nifti_or_np_to_np(image)
             mask = image >= background_pixel_value
 
             means.append(np.mean(image[mask]))
