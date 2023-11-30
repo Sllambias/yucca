@@ -1,6 +1,6 @@
 import shutil
 import gzip
-import os
+from pathlib import Path
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data
@@ -41,6 +41,11 @@ def should_use(vol: nib.Nifti1Image):
     return True
 
 
+def dirs_in_dir(dir: str):
+    p = Path(dir)
+    return [f.name for f in p.iterdir() if f.is_dir() and f.name[0] not in [".", "_"]]
+
+
 def convert(path: str, subdir: str = "PPMI"):
     """INPUT DATA - Define input path and suffixes"""
     path = join(path, subdir)
@@ -62,31 +67,29 @@ def convert(path: str, subdir: str = "PPMI"):
     """Populate Target Directory
     This is also the place to apply any re-orientation, resampling and/or label correction."""
 
-    for subject in tqdm(os.listdir(subjects_dir), desc="Subject"):
+    for subject in tqdm(dirs_in_dir(subjects_dir), desc="Subject"):
         subject_dir = join(subjects_dir, subject)
-        for modality in os.listdir(subject_dir):
+        for modality in dirs_in_dir(subject_dir):
             modality_dir = join(subject_dir, modality)
             if should_skip(modality):
                 continue  # skip this modality
-            for date in os.listdir(modality_dir):
+            for date in dirs_in_dir(modality_dir):
                 date_dir = join(modality_dir, date)
-                parsed_date = datetime.strptime("2015-10-21_08_30_26.0", "%Y-%m-%d_%H_%M_%S.%f")
+                parsed_date = datetime.strptime(date, "%Y-%m-%d_%H_%M_%S.%f")
                 date_simple = parsed_date.strftime("%Y%m%d")
-                for image in os.listdir(date_dir):
+                for image in dirs_in_dir(date_dir):
                     image_dir = join(date_dir, image)
-                    if "nifti" and "dicom" in os.listdir(image_dir):
+                    if "nifti" and "dicom" in dirs_in_dir(image_dir):
                         image_dir = join(image_dir, "nifti")
-
                     for file in subfiles(image_dir, join=False, suffix=".nii"):
                         image_path = join(image_dir, file)
                         vol = nib.load(image_path)
                         if should_use(vol):
                             output_name = f"{task_prefix}_{subject}_{modality}_{date_simple}_{image}_000.nii.gz"
+                            output_path = join(target_imagesTr, output_name)
                             with open(image_path, "rb") as f_in:
-                                with gzip.open(output_name, "wb") as f_out:
+                                with gzip.open(output_path, mode="wb", compresslevel=2) as f_out:
                                     shutil.copyfileobj(f_in, f_out)
-
-                            # nib.save(vol, output_name)
 
     generate_dataset_json(
         join(target_base, "dataset.json"),
