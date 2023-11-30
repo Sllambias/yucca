@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 def combine_imagesTr_from_tasks(tasks: Union[list, tuple], target_dir):
     assert len(tasks) > 0, "list of tasks empty"
-    for task in tasks:
+    for task in tqdm(tasks):
         source_dir = os.path.join(yucca_raw_data, task, "imagesTr")
         assert os.path.isdir(source_dir)
         for sTr in tqdm(os.listdir(source_dir), task):
