@@ -96,7 +96,9 @@ class YuccaPreprocessor(object):
         if os.path.splitext(plans_path)[-1] == ".yaml":
             return load_yaml(plans_path)["config"]["plans"]
         else:
-            raise FileNotFoundError f"Plan file not found. Got {plans_path} with ext {os.path.splitext(plans_path)[-1]}. Expects either a '.json' or '.yaml' file."
+            raise FileNotFoundError(
+                f"Plan file not found. Got {plans_path} with ext {os.path.splitext(plans_path)[-1]}. Expects either a '.json' or '.yaml' file."
+            )
 
     def run(self):
         self.initialize_properties()
@@ -376,7 +378,10 @@ class YuccaPreprocessor(object):
         self.initialize_properties()
         image_properties = {}
         ext = images[0][0].split(os.extsep, 1)[1] if isinstance(images[0], tuple) else images[0].split(os.extsep, 1)[1]
-        images = [read_file_to_nifti_or_np(image[0]) if isinstance(image, tuple) else read_file_to_nifti_or_np(image) for image in images]
+        images = [
+            read_file_to_nifti_or_np(image[0]) if isinstance(image, tuple) else read_file_to_nifti_or_np(image)
+            for image in images
+        ]
 
         image_properties["image_extension"] = ext
         image_properties["original_shape"] = np.array(images[0].shape)
