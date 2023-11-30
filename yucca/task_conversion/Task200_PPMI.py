@@ -52,7 +52,7 @@ def convert(path: str, subdir: str = "PPMI"):
     file_suffix = ".nii"
 
     """ OUTPUT DATA - Define the task name and prefix """
-    task_name = "Task031_PPMI"
+    task_name = "Task200_PPMI"
     task_prefix = "PPMI"
 
     """ Access the input data. If images are not split into train/test, and you wish to randomly
