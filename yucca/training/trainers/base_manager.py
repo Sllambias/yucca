@@ -32,7 +32,7 @@ from yuccalib.network_architectures.utils.model_memory_estimation import (
 )
 from yuccalib.utils.files_and_folders import (
     recursive_find_python_class,
-    save_segmentation_from_logits,
+    save_prediction_from_logits,
 )
 from yuccalib.utils.torch_utils import maybe_to_cuda
 from yuccalib.image_processing.transforms.BiasField import BiasField
@@ -723,7 +723,7 @@ class base_manager(object):
         logits = self.preprocessor.reverse_preprocessing(logits, image_properties)
 
         print(f"{'Saving as: ':25} {outpath}")
-        save_segmentation_from_logits(
+        save_prediction_from_logits(
             logits,
             outpath=outpath,
             properties=image_properties,

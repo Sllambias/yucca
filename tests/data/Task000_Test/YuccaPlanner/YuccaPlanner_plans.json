@@ -1,4 +1,6 @@
-{"dataset_properties":{
+{
+    "preprocessor": "YuccaPreprocessor",
+    "dataset_properties":{
     "classes": [
         "0",
         "1",

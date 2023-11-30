@@ -1,6 +1,6 @@
 from batchgenerators.utilities.file_and_folder_operations import subfiles, join, load_json, save_pickle
 from yuccalib.utils.nib_utils import get_nib_spacing
-from yuccalib.utils.type_conversions import nib_to_np
+from yuccalib.utils.type_conversions import nifti_or_np_to_np, read_file_to_nifti_or_np
 import nibabel as nib
 import numpy as np
 import sys
@@ -15,6 +15,8 @@ def create_properties_pkl(data_dir, save_dir, suffix=".nii.gz"):
     properties = {}
 
     dataset_json = load_json(join(data_dir, "dataset.json"))
+    im_ext = dataset_json.get("image_extension") or "nii.gz"
+    properties["image_extension"] = im_ext
     properties["classes"] = list(dataset_json["labels"].keys())
     properties["tasks"] = {task: [] for task in dataset_json["tasks"]}
     if len(dataset_json["tasks"]) > 0:
@@ -31,17 +33,21 @@ def create_properties_pkl(data_dir, save_dir, suffix=".nii.gz"):
     spacings = []
     intensity_results = []
 
+    means = []
+    min = np.inf
+    max = -np.inf
+    stds = []
+
     for mod_id, mod_name in properties["modalities"].items():
         mod_id = int(mod_id)
         intensity_results.append({})
-        intensities_for_modality = []
 
-        subjects = subfiles(join(data_dir, "imagesTr"), suffix=f"_{mod_id:03}" + suffix)
+        subjects = subfiles(join(data_dir, "imagesTr"), suffix=f"_{mod_id:03}.{im_ext}")
         if len(dataset_json["tasks"]) > 0:
             for task in dataset_json["tasks"]:
-                for subject in subfiles(join(data_dir, "imagesTr", task), suffix=f"_{mod_id:03}" + suffix, join=False):
-                    if subject.endswith("_000.nii.gz"):
-                        properties["tasks"][task].append(subject[: -len("_000.nii.gz")])
+                for subject in subfiles(join(data_dir, "imagesTr", task), suffix=f"_{mod_id:03}.{im_ext}", join=False):
+                    if subject.endswith(f"_{mod_id:03}.{im_ext}"):
+                        properties["tasks"][task].append(subject[: -len(f"_{mod_id:03}.{im_ext}")])
                     subjects.append(join(data_dir, "imagesTr", task, subject))
 
         assert subjects, (
@@ -59,21 +65,24 @@ def create_properties_pkl(data_dir, save_dir, suffix=".nii.gz"):
                 completed += 20
                 print(f"Property file creation progress: {completed}%")
                 sys.stdout.flush()
-            image = nib.load(subject)
+            image = read_file_to_nifti_or_np(subject)
             sizes.append(image.shape)
-            spacings.append(get_nib_spacing(image).tolist())
-            image = nib_to_np(image)
+            if isinstance(image, nib.Nifti1Image):
+                spacings.append(get_nib_spacing(image).tolist())
+            else:
+                spacings.append([1.0, 1.0, 1.0])
+            image = nifti_or_np_to_np(image)
             mask = image >= background_pixel_value
-            # In order to not run into memory issues we only take every 10th value
-            # And no more than 25.000 values per scan.
-            intensities_for_modality.append(list(np.random.choice(image[mask][::10], size=25000).astype(float)))
 
-        intensities_for_modality = sum(intensities_for_modality, [])
-        intensity_results[mod_id]["mean"] = np.mean(intensities_for_modality)
-        intensity_results[mod_id]["median"] = np.median(intensities_for_modality)
-        intensity_results[mod_id]["min"] = np.min(intensities_for_modality)
-        intensity_results[mod_id]["max"] = np.max(intensities_for_modality)
-        intensity_results[mod_id]["std"] = np.std(intensities_for_modality)
+            means.append(np.mean(image[mask]))
+            stds.append(np.std(image[mask]))
+            min = np.min([min, np.min(image[mask])])
+            max = np.max([max, np.max(image[mask])])
+
+        intensity_results[mod_id]["mean"] = float(np.mean(means))
+        intensity_results[mod_id]["min"] = float(min)
+        intensity_results[mod_id]["max"] = float(max)
+        intensity_results[mod_id]["std"] = float(np.mean(stds))
 
     assert all([len(size) == len(sizes[0]) for size in sizes]), "not all volumes have the same" " number of dimensions"
 

@@ -44,6 +44,7 @@ class YuccaLightningManager:
         deep_supervision: bool = False,
         disable_logging: bool = False,
         folds: str = "0",
+        loss: str = "DiceCE",
         max_epochs: int = 1000,
         model_dimensions: str = "3D",
         model_name: str = "TinyUNet",
@@ -60,6 +61,7 @@ class YuccaLightningManager:
         self.deep_supervision = deep_supervision
         self.disable_logging = disable_logging
         self.folds = folds
+        self.loss = loss
         self.max_epochs = max_epochs
         self.model_dimensions = model_dimensions
         self.model_name = model_name
@@ -87,18 +89,8 @@ class YuccaLightningManager:
         disable_tta: bool = False,
         pred_data_dir: str = None,
         save_softmax: bool = False,
-        segmentation_output_dir: str = "./",
+        prediction_output_dir: str = "./",
     ):
-        if stage == "fit":
-            # do something training related
-            # the stage param will disappear if nothing is found to be relevant here
-            pass
-        if stage == "test":
-            raise NotImplementedError
-        if stage == "predict":
-            # do something inference related
-            pass
-
         # Here we configure the outpath we will use to store model files and metadata
         # along with the path to plans file which will also be loaded.
         configurator = YuccaConfigurator(
@@ -110,7 +102,7 @@ class YuccaLightningManager:
             model_name=self.model_name,
             planner=self.planner,
             profile=self.profile,
-            segmentation_output_dir=segmentation_output_dir,
+            prediction_output_dir=prediction_output_dir,
             save_softmax=save_softmax,
             tiny_patch=True if self.model_name == "TinyUNet" else False,
             task=self.task,
@@ -119,10 +111,13 @@ class YuccaLightningManager:
         augmenter = YuccaAugmentationComposer(
             patch_size=configurator.patch_size,
             is_2D=True if self.model_dimensions == "2D" else False,
+            parameter_dict=configurator.augmentation_parameter_dict,
         )
 
         self.model_module = YuccaLightningModule(
-            configurator=configurator,
+            config=configurator.lm_hparams,
+            loss_fn=self.loss,
+            stage=stage,
             step_logging=self.step_logging,
             test_time_augmentation=not disable_tta if disable_tta is True else bool(augmenter.mirror_p_per_sample),
         )
@@ -138,7 +133,7 @@ class YuccaLightningManager:
 
         self.trainer = L.Trainer(
             callbacks=configurator.callbacks,
-            default_root_dir=configurator.outpath,
+            default_root_dir=configurator.save_dir,
             limit_train_batches=self.train_batches_per_step,
             limit_val_batches=self.val_batches_per_step,
             logger=configurator.loggers,
@@ -168,7 +163,7 @@ class YuccaLightningManager:
             stage="predict",
             disable_tta=disable_tta,
             pred_data_dir=input_folder,
-            segmentation_output_dir=output_folder,
+            prediction_output_dir=output_folder,
             save_softmax=save_softmax,
         )
         with torch.inference_mode():

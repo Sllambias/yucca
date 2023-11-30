@@ -115,6 +115,7 @@ def main():
         deep_supervision=False,
         disable_logging=True,
         folds=folds,
+        loss=loss,
         model_dimensions=dimensions,
         model_name=model_name,
         num_workers=8,

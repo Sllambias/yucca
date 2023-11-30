@@ -1,4 +1,5 @@
 import torch
+import yucca
 import numpy as np
 from time import localtime, strftime
 from batchgenerators.utilities.file_and_folder_operations import (
@@ -16,11 +17,12 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.profilers import SimpleProfiler
 from pytorch_lightning.loggers import WandbLogger, CSVLogger
 from sklearn.model_selection import KFold
+from yucca.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
 from yucca.paths import yucca_models, yucca_preprocessed_data
 from yuccalib.network_architectures.utils.model_memory_estimation import (
     find_optimal_tensor_dims,
 )
-from yuccalib.utils.files_and_folders import WriteSegFromLogits, load_yaml
+from yuccalib.utils.files_and_folders import WritePredictionFromLogits, load_yaml, recursive_find_python_class
 from yuccalib.evaluation.loggers import YuccaLogger
 from typing import Union
 
@@ -53,7 +55,7 @@ class YuccaConfigurator:
 
     planner (str, optional): Name of the planner associated with the dataset. Default is "YuccaPlanner".
 
-    segmentation_output_dir (str, optional): Output directory for segmentation results. Default is "./".
+    prediction_output_dir (str, optional): Output directory for prediction results. Default is "./".
         - Only used during inference.
 
     save_softmax (bool, optional): Whether to save softmax predictions during inference. Default is False.
@@ -66,6 +68,7 @@ class YuccaConfigurator:
     def __init__(
         self,
         task: str,
+        ckpt_path: str = None,
         continue_from_most_recent: bool = True,
         disable_logging: bool = False,
         folds: str = "0",
@@ -75,10 +78,11 @@ class YuccaConfigurator:
         model_name: str = "UNet",
         planner: str = "YuccaPlanner",
         profile: bool = False,
-        segmentation_output_dir: str = "./",
+        prediction_output_dir: str = "./",
         save_softmax: bool = False,
         tiny_patch: bool = False,
     ):
+        self.ckpt_path = ckpt_path
         self.continue_from_most_recent = continue_from_most_recent
         self.folds = folds
         self.disable_logging = disable_logging
@@ -87,7 +91,7 @@ class YuccaConfigurator:
         self.model_name = model_name
         self.manager_name = manager_name
         self.save_softmax = save_softmax
-        self.segmentation_output_dir = segmentation_output_dir
+        self.prediction_output_dir = prediction_output_dir
         self.planner = planner
         self.profile = profile
         self.task = task
@@ -103,19 +107,36 @@ class YuccaConfigurator:
         # Now run the setup
         self.setup_paths()
         self.setup_data_params()
+        self.setup_aug_params()
         self.setup_callbacks()
         self.setup_loggers()
+        self.populate_lm_hparams()
 
     @property
     def plans(self):
         if self._plans is None:
-            self._plans = load_json(self.plans_path)
+            if self.ckpt_path is not None:
+                print("Trying to find plans in specified ckpt")
+                self._plans = torch.load(self.ckpt_path, map_location="cpu")["hyper_parameters"].get("config['plans']")
+            elif (
+                self.version is not None
+                and self.continue_from_most_recent
+                and isfile(join(self.outpath, "checkpoints", "last.ckpt"))
+            ):
+                print("Trying to find plans in last ckpt")
+                self._plans = torch.load(join(self.outpath, "checkpoints", "last.ckpt"), map_location="cpu")[
+                    "hyper_parameters"
+                ].get("config['plans']")
+            # If plans is still none the ckpt files were either empty/invalid or didn't exist and we create a new.
+            if self._plans is None:
+                print("Exhausted other options: loading plans.json and constructing parameters")
+                self._plans = load_json(self.plans_path)
         return self._plans
 
     @property
     def profiler(self):
         if self.profile and self._profiler is None:
-            self._profiler = SimpleProfiler(dirpath=join(self.outpath, f"version_{self.version}"), filename="simple_profile")
+            self._profiler = SimpleProfiler(dirpath=self.outpath, filename="simple_profile")
         return self._profiler
 
     @property
@@ -139,12 +160,12 @@ class YuccaConfigurator:
             return self._version
 
         # If the dir doesn't exist we return version 0
-        if not isdir(self.outpath):
+        if not isdir(self.save_dir):
             self._version = 0
             return self._version
 
         # The dir exists. Check if any previous version exists in dir.
-        previous_versions = subdirs(self.outpath, join=False)
+        previous_versions = subdirs(self.save_dir, join=False)
 
         # If no previous version exists we return version 0
         if not previous_versions:
@@ -170,7 +191,7 @@ class YuccaConfigurator:
         self.loggers.append(
             YuccaLogger(
                 disable_logging=self.disable_logging,
-                save_dir=self.outpath,
+                save_dir=self.save_dir,
                 name=None,
                 version=self.version,
                 steps_per_epoch=250,
@@ -180,8 +201,8 @@ class YuccaConfigurator:
             self.loggers.append(
                 WandbLogger(
                     name=f"version_{self.version}",
-                    save_dir=join(self.outpath, f"version_{self.version}"),
-                    version=self.version,
+                    save_dir=self.outpath,
+                    version=str(self.version),
                     project="Yucca",
                     group=self.task,
                     log_model="all",
@@ -189,7 +210,9 @@ class YuccaConfigurator:
             )
 
     def setup_callbacks(self):
-        best_ckpt = ModelCheckpoint(monitor="val_loss", mode="min", save_top_k=1, filename="best", enable_version_counter=True)
+        best_ckpt = ModelCheckpoint(
+            monitor="val_loss", mode="min", save_top_k=1, filename="best", enable_version_counter=False
+        )
         interval_ckpt = ModelCheckpoint(every_n_epochs=250, filename="{epoch}", enable_version_counter=False)
         latest_ckpt = ModelCheckpoint(
             every_n_epochs=15,
@@ -197,20 +220,21 @@ class YuccaConfigurator:
             filename="last",
             enable_version_counter=False,
         )
-        pred_writer = WriteSegFromLogits(
-            output_dir=self.segmentation_output_dir, save_softmax=self.save_softmax, write_interval="batch"
+        pred_writer = WritePredictionFromLogits(
+            output_dir=self.prediction_output_dir, save_softmax=self.save_softmax, write_interval="batch"
         )
         self.callbacks = [best_ckpt, interval_ckpt, latest_ckpt, pred_writer]
 
     def setup_paths(self):
         self.train_data_dir = join(yucca_preprocessed_data, self.task, self.planner)
-        self.outpath = join(
+        self.save_dir = join(
             yucca_models,
             self.task,
             self.model_name + "__" + self.model_dimensions,
             self.manager_name + "__" + self.planner,
             f"fold_{self.folds}",
         )
+        self.outpath = join(self.save_dir, f"version_{self.version}")
         maybe_mkdir_p(self.outpath)
         self.plans_path = join(yucca_preprocessed_data, self.task, self.planner, self.planner + "_plans.json")
 
@@ -218,21 +242,16 @@ class YuccaConfigurator:
         # (1) check if previous versions exist
         # (2) check if we want to continue from this
         # (3) check if hparams were created for the previous version
-        if (
-            self.version is not None
-            and self.continue_from_most_recent
-            and isfile(join(self.outpath, f"version_{self.version}", "hparams.yaml"))
-        ):
-            print("Found hparams.yaml, loading parameters")
-            hparams = load_yaml(join(self.outpath, f"version_{self.version}", "hparams.yaml"))
-            self.num_classes = int(hparams["configurator"]["num_classes"])
-            self.num_modalities = int(hparams["configurator"]["num_modalities"])
-            self.batch_size = int(hparams["configurator"]["batch_size"])
-            self.patch_size = [int(p) for p in hparams["configurator"]["patch_size"]]
+
+        self.num_classes = self.plans.get("num_classes") or len(self.plans["dataset_properties"]["classes"])
+        self.num_modalities = self.plans.get("num_modalities") or len(self.plans["dataset_properties"]["modalities"])
+        self.image_extension = (
+            self.plans.get("image_extension") or self.plans["dataset_properties"].get("image_extension") or "nii.gz"
+        )
+        if self.plans.get("batch_size") and self.plans.get("patch_size"):
+            self.batch_size = self.plans.get("batch_size")
+            self.patch_size = self.plans.get("patch_size")
         else:
-            print("Constructing new parameters")
-            self.num_classes = len(self.plans["dataset_properties"]["classes"])
-            self.num_modalities = len(self.plans["dataset_properties"]["modalities"])
             if self.tiny_patch or not torch.cuda.is_available():
                 self.batch_size = 2
                 self.patch_size = (32, 32) if self.model_dimensions == "2D" else (32, 32, 32)
@@ -246,6 +265,19 @@ class YuccaConfigurator:
                     max_memory_usage_in_gb=self.max_vram,
                 )
         print(f"Using batch size: {self.batch_size} and patch size: {self.patch_size}")
+
+    def setup_aug_params(self):
+        preprocessor_class = recursive_find_python_class(
+            folder=[join(yucca.__path__[0], "preprocessing")],
+            class_name=self.plans["preprocessor"],
+            current_module="yucca.preprocessing",
+        )
+        assert (
+            preprocessor_class
+        ), f"{self.plans['preprocessor']} was found in plans, but no class with the corresponding name was found"
+        self.augmentation_parameter_dict = {}
+        if issubclass(preprocessor_class, ClassificationPreprocessor):
+            self.augmentation_parameter_dict["skip_label"] = True
 
     def load_splits(self):
         # Load splits file or create it if not found (see: "split_data").
@@ -281,6 +313,38 @@ class YuccaConfigurator:
             splits.append({"train": list(files[train]), "val": list(files[val])})
 
         save_pickle(splits, splits_file)
+
+    def populate_lm_hparams(self):
+        # Here we control which variables go into the hparam dict that we pass to the LightningModule
+        # This way we can make sure it won't be given args that could potentially break it (such as classes that might be changed)
+        # or flood it with useless information.
+        self.lm_hparams = {
+            "aug_params": self.augmentation_parameter_dict,
+            "batch_size": self.batch_size,
+            "ckpt_path": self.ckpt_path,
+            "continue_from_most_recent": self.continue_from_most_recent,
+            "disable_logging": self.disable_logging,
+            "folds": self.folds,
+            "image_extension": self.image_extension,
+            "manager_name": self.manager_name,
+            "max_vram": self.max_vram,
+            "model_dimensions": self.model_dimensions,
+            "model_name": self.model_name,
+            "num_classes": self.num_classes,
+            "num_modalities": self.num_modalities,
+            "outpath": self.outpath,
+            "patch_size": self.patch_size,
+            "planner": self.planner,
+            "plans_path": self.plans_path,
+            "plans": self.plans,
+            "profile": self.profile,
+            "save_dir": self.save_dir,
+            "save_softmax": self.save_softmax,
+            "prediction_output_dir": self.prediction_output_dir,
+            "task": self.task,
+            "tiny_patch": self.tiny_patch,
+            "train_data_dir": self.train_data_dir,
+        }
 
 
 if __name__ == "__main__":

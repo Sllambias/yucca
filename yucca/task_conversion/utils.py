@@ -17,21 +17,12 @@ def combine_imagesTr_from_tasks(tasks: Union[list, tuple], target_dir):
             shutil.copy2(os.path.join(source_dir, sTr), f"{target_dir}/{sTr}")
 
 
-def get_identifiers_from_splitted_files(folder: str, tasks: list):
-    suffix = ".nii.gz"
-    suffix_length = len(suffix) + 4  # length of _00X.nii.gz which is the ending of all nifti files
-
+def get_identifiers_from_splitted_files(folder: str, ext, tasks: list):
     if len(tasks) > 0:
-        file_names = [
-            file[:-suffix_length] for task in tasks for file in subfiles(join(folder, task), suffix=suffix, join=False)
-        ]
+        uniques = np.unique([i[: -len("_000." + ext)] for task in tasks for i in subfiles(join(folder, task), join=False)])
     else:
-        file_names = [file[:-suffix_length] for file in subfiles(folder, suffix=suffix, join=False)]
-
-    assert len(file_names) > 1
-
-    np.unique([i[:-11] for i in subfiles(folder, suffix=".nii.gz", join=False)])
-    return np.unique(file_names)
+        uniques = np.unique([i[: -len("_000." + ext)] for i in subfiles(folder, join=False)])
+    return uniques
 
 
 def generate_dataset_json(
@@ -65,11 +56,11 @@ def generate_dataset_json(
     :param dataset_release:
     :return:
     """
-
-    train_identifiers = get_identifiers_from_splitted_files(imagesTr_dir, tasks)
+    im_ext = os.path.split(subfiles(imagesTr_dir)[0])[-1].split(os.extsep, 1)[-1]
+    train_identifiers = get_identifiers_from_splitted_files(imagesTr_dir, im_ext, tasks)
 
     if imagesTs_dir is not None:
-        test_identifiers = get_identifiers_from_splitted_files(imagesTs_dir, tasks)
+        test_identifiers = get_identifiers_from_splitted_files(imagesTs_dir, im_ext, tasks)
     else:
         test_identifiers = []
 
@@ -80,6 +71,7 @@ def generate_dataset_json(
     json_dict["reference"] = dataset_reference
     json_dict["licence"] = license
     json_dict["release"] = dataset_release
+    json_dict["image_extension"] = im_ext
     json_dict["modality"] = {str(i): modalities[i] for i in range(len(modalities))}
     json_dict["labels"] = {str(i): labels[i] for i in labels.keys()} if labels is not None else None
     json_dict["label_hierarchy"] = label_hierarchy

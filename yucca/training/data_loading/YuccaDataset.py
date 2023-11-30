@@ -1,9 +1,10 @@
 import numpy as np
 import torch
 import os
+from typing import Union
 from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle
-from yuccalib.image_processing.transforms.cropping_and_padding import CropPad
 from torchvision import transforms
+from yuccalib.image_processing.transforms.cropping_and_padding import CropPad
 from yuccalib.image_processing.transforms.formatting import (
     AddBatchDimension,
     RemoveBatchDimension,
@@ -16,19 +17,31 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         self,
         preprocessed_data_dir: list,
         patch_size: list | tuple,
-        keep_in_ram=False,
-        seg_dtype: type = int,
+        keep_in_ram: Union[bool, None] = None,
+        label_dtype: type = int,
         composed_transforms=None,
     ):
         self.all_cases = preprocessed_data_dir
         self.composed_transforms = composed_transforms
-        self.keep_in_ram = keep_in_ram
         self.patch_size = patch_size
-        self.seg_dtype = seg_dtype
+        self.label_dtype = label_dtype
 
         self.already_loaded_cases = {}
         self.croppad = CropPad(patch_size=self.patch_size, p_oversample_foreground=0.33)
-        self.to_torch = NumpyToTorch(seg_dtype=self.seg_dtype)
+        self.to_torch = NumpyToTorch(label_dtype=self.label_dtype)
+
+        self._keep_in_ram = keep_in_ram
+
+    @property
+    def keep_in_ram(self):
+        if self._keep_in_ram is not None:
+            return self._keep_in_ram
+        if len(self.all_cases) < 1000:
+            self._keep_in_ram = True
+        else:
+            print("Large dataset detected. Will not keep cases in RAM during training.")
+            self._keep_in_ram = False
+        return self._keep_in_ram
 
     def load_and_maybe_keep_pickle(self, picklepath):
         if not self.keep_in_ram:
@@ -41,7 +54,10 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
     def load_and_maybe_keep_volume(self, path):
         if not self.keep_in_ram:
             if path[-3:] == "npy":
-                return np.load(path, "r")
+                try:
+                    return np.load(path, "r")
+                except ValueError:
+                    return np.load(path, allow_pickle=True)
             image = np.load(path)
             assert len(image.files) == 1, (
                 "More than one entry in data array. " f"Should only be ['data'] but is {[key for key in image.files]}"
@@ -71,7 +87,10 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         case = self.all_cases[idx]
         data = self.load_and_maybe_keep_volume(case)
-        data_dict = {"image": data[:-1], "seg": data[-1:]}
+        if data.dtype == "O":
+            data_dict = {"image": data[:-1][0], "label": data[-1:][0]}
+        else:
+            data_dict = {"image": data[:-1], "label": data[-1:]}
         return self._transform(data_dict, case)
 
     def _transform(self, data_dict, case):
@@ -83,11 +102,13 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
 
 
 class YuccaTestDataset(torch.utils.data.Dataset):
-    def __init__(self, raw_data_dir, patch_size):
+    def __init__(self, raw_data_dir, patch_size, suffix="nii.gz"):
         self.data_path = raw_data_dir
+        self.suffix = suffix
         self.unique_cases = np.unique(
-            [i[: -len("_000.nii.gz")] for i in subfiles(self.data_path, suffix=".nii.gz", join=False)]
+            [i[: -len("_000." + suffix)] for i in subfiles(self.data_path, suffix=self.suffix, join=False)]
         )
+        assert len(self.unique_cases) > 0, f"No cases found in {self.data_path}. Looking for files with suffix: {self.suffix}"
         self.patch_size = patch_size
 
     def __len__(self):
@@ -101,8 +122,8 @@ class YuccaTestDataset(torch.utils.data.Dataset):
         case_id = self.unique_cases[idx]
         case = [
             impath
-            for impath in subfiles(self.data_path, suffix=".nii.gz")
-            if os.path.split(impath)[-1][: -len("_000.nii.gz")] == case_id
+            for impath in subfiles(self.data_path, suffix=self.suffix)
+            if os.path.split(impath)[-1][: -len("_000." + self.suffix)] == case_id
         ]
         return case, case_id
 

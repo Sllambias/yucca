@@ -68,15 +68,14 @@ def main():
         action="store_true",
     )
     parser.add_argument(
-        "--profile",
-        help="Used to enable inference profiling",
+        "--disable_tta",
+        help="Used to disable test-time augmentations (mirroring)",
         default=False,
         action="store_true",
     )
-
     parser.add_argument(
-        "--disable_tta",
-        help="Used to enable test-time augmentations (mirroring)",
+        "--profile",
+        help="Used to enable inference profiling",
         default=False,
         action="store_true",
     )
@@ -182,6 +181,7 @@ def main():
 
         print(f"{'Using manager: ':25} {manager_name}")
         manager = manager(
+            disable_logging=False,
             model_name=model,
             model_dimensions=dimensions,
             task=source_task,

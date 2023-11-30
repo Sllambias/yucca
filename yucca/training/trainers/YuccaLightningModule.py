@@ -1,19 +1,15 @@
 import lightning as L
 import torch
 import yuccalib
-import torch.nn as nn
-import logging
 import wandb
+import yucca
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Dice
-from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 from yuccalib.utils.files_and_folders import recursive_find_python_class
-from yuccalib.loss_and_optim.loss_functions.CE import CE
-from yuccalib.loss_and_optim.loss_functions.nnUNet_losses import DiceCE
 from yuccalib.utils.kwargs import filter_kwargs
-from time import time
+from typing import Literal
 
 
 class YuccaLightningModule(L.LightningModule):
@@ -27,28 +23,33 @@ class YuccaLightningModule(L.LightningModule):
 
     def __init__(
         self,
-        configurator=YuccaConfigurator,
+        config: dict,
         learning_rate: float = 1e-3,
-        loss_fn: nn.Module = DiceCE,
+        loss_fn: str = "DiceCE",
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler = torch.optim.lr_scheduler.CosineAnnealingLR,
         momentum: float = 0.9,
         optimizer: torch.optim.Optimizer = torch.optim.SGD,
         sliding_window_overlap: float = 0.5,
+        stage: Literal["fit", "test", "predict"] = "fit",
         step_logging: bool = False,
         test_time_augmentation: bool = False,
     ):
         super().__init__()
         # Extract parameters from the configurator
-        self.num_classes = configurator.num_classes
-        self.num_modalities = configurator.num_modalities
-        self.plans_path = configurator.plans_path
-        self.model_name = configurator.model_name
-        self.model_dimensions = configurator.model_dimensions
-        self.patch_size = configurator.patch_size
+        self.num_classes = config["num_classes"]
+        self.num_modalities = config["num_modalities"]
+        self.outpath = config["outpath"]
+        self.plans = config["plans"]
+        self.plans_path = config["plans_path"]
+        self.model_name = config["model_name"]
+        self.model_dimensions = config["model_dimensions"]
+        self.patch_size = config["patch_size"]
 
         # Loss, optimizer and scheduler parameters
         self.lr = learning_rate
         self.loss_fn = loss_fn
+        if self.loss_fn is None:
+            self.loss_fn = "DiceCE"
         self.momentum = momentum
         self.optim = optimizer
         self.lr_scheduler = lr_scheduler
@@ -62,7 +63,8 @@ class YuccaLightningModule(L.LightningModule):
         self.sliding_window_overlap = sliding_window_overlap
         self.test_time_augmentation = test_time_augmentation
 
-        # Save params and start training
+        # If we are training we save params and then start training
+        # Do not overwrite parameters during inference.
         self.save_hyperparameters()
         self.load_model()
 
@@ -104,7 +106,7 @@ class YuccaLightningModule(L.LightningModule):
         wandb.finish()
 
     def training_step(self, batch, batch_idx):
-        inputs, target = batch["image"], batch["seg"]
+        inputs, target = batch["image"], batch["label"]
         output = self(inputs)
         loss = self.loss_fn(output, target)
         metrics = self.train_metrics(output, target)
@@ -112,14 +114,19 @@ class YuccaLightningModule(L.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        inputs, target = batch["image"], batch["seg"]
+        inputs, target = batch["image"], batch["label"]
         output = self(inputs)
         loss = self.loss_fn(output, target)
         metrics = self.val_metrics(output, target)
         self.log_dict({"val_loss": loss} | metrics, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
 
     def on_predict_start(self):
-        self.preprocessor = YuccaPreprocessor(self.plans_path)
+        preprocessor_class = recursive_find_python_class(
+            folder=[join(yucca.__path__[0], "preprocessing")],
+            class_name=self.plans["preprocessor"],
+            current_module="yucca.preprocessing",
+        )
+        self.preprocessor = preprocessor_class(join(self.outpath, "hparams.yaml"))
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         case, case_id = batch
@@ -137,13 +144,18 @@ class YuccaLightningModule(L.LightningModule):
             mirror=self.test_time_augmentation,
         )
 
-        logits = self.preprocessor.reverse_preprocessing(logits, case_properties)
+        logits, case_properties = self.preprocessor.reverse_preprocessing(logits, case_properties)
         return {"logits": logits, "properties": case_properties, "case_id": case_id[0]}
 
     def configure_optimizers(self):
         # Initialize and configure the loss(es) here.
         # loss_kwargs holds args for any scheduler class,
         # but using filtering we only pass arguments relevant to the selected class.
+        self.loss_fn = recursive_find_python_class(
+            folder=[join(yuccalib.__path__[0], "loss_and_optim")],
+            class_name=self.loss_fn,
+            current_module="yuccalib.loss_and_optim",
+        )
         loss_kwargs = {
             # DCE
             "soft_dice_kwargs": {"apply_softmax": True},
@@ -188,14 +200,8 @@ class YuccaLightningModule(L.LightningModule):
 
 if __name__ == "__main__":
     from yucca.training.trainers.YuccaLightningManager import YuccaLightningManager
+    from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 
     path = None
-    Manager = YuccaLightningManager(
-        task="Task001_OASIS",
-        limit_train_batches=250,
-        limit_val_batches=50,
-        max_epochs=5,
-        ckpt_path=path,
-    )
-    # Manager.initialize()
-    # Manager.run_training()
+    cfg = YuccaConfigurator(task="Task001_OASIS", folds=2)
+    model = YuccaLightningModule(cfg)
