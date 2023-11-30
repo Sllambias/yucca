@@ -12,7 +12,7 @@ from yuccalib.utils.nib_utils import (
     get_nib_orientation,
     reorient_nib_image,
 )
-from yuccalib.utils.type_conversions import nib_to_np, read_any_file
+from yuccalib.utils.type_conversions import nifti_or_np_to_np, read_file_to_nifti_or_np
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from yucca.preprocessing.normalization import normalizer
 from multiprocessing import Pool
@@ -96,9 +96,7 @@ class YuccaPreprocessor(object):
         if os.path.splitext(plans_path)[-1] == ".yaml":
             return load_yaml(plans_path)["config"]["plans"]
         else:
-            print(
-                f"Plan format not recognized. Got {plans_path} with ext {os.path.splitext(plans_path)[-1]} and expected either a '.json' or '.yaml' file"
-            )
+            raise FileNotFoundError f"Plan file not found. Got {plans_path} with ext {os.path.splitext(plans_path)[-1]}. Expects either a '.json' or '.yaml' file."
 
     def run(self):
         self.initialize_properties()
@@ -234,13 +232,14 @@ class YuccaPreprocessor(object):
         if images[0].get_qform(coded=True)[1] or images[0].get_sform(coded=True)[1]:
             original_orientation = get_nib_orientation(images[0])
             final_direction = self.plans["target_coordinate_system"]
-            images = [nib_to_np(reorient_nib_image(image, original_orientation, final_direction)) for image in images]
-            label = nib_to_np(reorient_nib_image(label, original_orientation, final_direction))
+            images = [reorient_nib_image(image, original_orientation, final_direction) for image in images]
+            label = reorient_nib_image(label, original_orientation, final_direction)
         else:
             original_orientation = "INVALID"
             final_direction = "INVALID"
-            images = [nib_to_np(image) for image in images]
-            label = nib_to_np(label)
+
+        images = [nifti_or_np_to_np(image) for image in images]
+        label = nifti_or_np_to_np(label)
 
         # Check if the ground truth only contains expected values
         expected_labels = np.array(self.plans["dataset_properties"]["classes"], dtype=np.float32)
@@ -377,7 +376,7 @@ class YuccaPreprocessor(object):
         self.initialize_properties()
         image_properties = {}
         ext = images[0][0].split(os.extsep, 1)[1] if isinstance(images[0], tuple) else images[0].split(os.extsep, 1)[1]
-        images = [read_any_file(image[0]) if isinstance(image, tuple) else read_any_file(image) for image in images]
+        images = [read_file_to_nifti_or_np(image[0]) if isinstance(image, tuple) else read_file_to_nifti_or_np(image) for image in images]
 
         image_properties["image_extension"] = ext
         image_properties["original_shape"] = np.array(images[0].shape)
@@ -412,7 +411,7 @@ class YuccaPreprocessor(object):
                 image_properties["new_orientation"] = get_nib_orientation(images[0])
             image_properties["affine"] = images[0].affine
 
-        images = [nib_to_np(image) for image in images]
+        images = [nifti_or_np_to_np(image) for image in images]
 
         image_properties["uncropped_shape"] = np.array(images[0].shape)
 

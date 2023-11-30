@@ -9,7 +9,7 @@ from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from yucca.preprocessing.normalization import normalizer
 from yuccalib.utils.nib_utils import get_nib_spacing, get_nib_orientation, reorient_nib_image
-from yuccalib.utils.type_conversions import nib_to_np, read_any_file
+from yuccalib.utils.type_conversions import nifti_or_np_to_np, read_file_to_nifti_or_np
 from yuccalib.image_processing.objects.BoundingBox import get_bbox_for_foreground
 from yuccalib.image_processing.cropping_and_padding import crop_to_box, pad_to_size
 from multiprocessing import Pool
@@ -25,7 +25,7 @@ from batchgenerators.utilities.file_and_folder_operations import (
 )
 
 
-class YuccaPreprocessor_CLS(YuccaPreprocessor):
+class ClassificationPreprocessor(YuccaPreprocessor):
     def _preprocess_train_subject(self, subject_id):
         image_props = {}
         subject_id = subject_id.split(os.extsep, 1)[0]
@@ -44,7 +44,7 @@ class YuccaPreprocessor_CLS(YuccaPreprocessor):
         imagepaths = [impath for impath in self.imagepaths if os.path.split(impath)[-1].startswith(subject_id + "_")]
 
         image_props["image files"] = imagepaths
-        images = [read_any_file(image) for image in imagepaths]
+        images = [read_file_to_nifti_or_np(image) for image in imagepaths]
 
         # Do the same with label
         label = [
@@ -54,7 +54,7 @@ class YuccaPreprocessor_CLS(YuccaPreprocessor):
         ]
         assert len(label) < 2, f"unexpected number of labels found. Expected 1 or 0 and found {len(label)}"
         image_props["label file"] = label[0]
-        label = read_any_file(label[0], dtype=np.uint8)
+        label = read_file_to_nifti_or_np(label[0], dtype=np.uint8)
 
         if not self.disable_unittests:
             assert len(images) > 0, f"found no images for {subject_id + '_'}, " f"attempted imagepaths: {imagepaths}"
@@ -83,15 +83,17 @@ class YuccaPreprocessor_CLS(YuccaPreprocessor):
             original_spacing = get_nib_spacing(images[0])
             original_orientation = get_nib_orientation(images[0])
             final_direction = self.plans["target_coordinate_system"]
-            images = [nib_to_np(reorient_nib_image(image, original_orientation, final_direction)) for image in images]
+            images = [reorient_nib_image(image, original_orientation, final_direction) for image in images]
             if isinstance(label, nib.Nifti1Image):
-                label = nib_to_np(reorient_nib_image(label, original_orientation, final_direction))
+                label = reorient_nib_image(label, original_orientation, final_direction)
         else:
             original_spacing = np.array([1.0] * len(original_size))
             original_orientation = "INVALID"
             final_direction = "INVALID"
-            images = [nib_to_np(image) for image in images]
-            label = nib_to_np(label)
+
+        # And now we ensure images are numpy - if we're not working with niftis they will already be at this point
+        images = [nifti_or_np_to_np(image) for image in images]
+        label = nifti_or_np_to_np(label)
 
         if self.target_spacing.size:
             target_spacing = self.target_spacing

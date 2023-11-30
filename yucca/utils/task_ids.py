@@ -17,4 +17,7 @@ def maybe_get_task_from_task_id(task_id: str | int):
             return task
 
     # If we can't find anything we just return the original, on the offchance that the task does not exist in Raw Data while existing in e.g. Preprocessed
+    print(
+        f"Couldn't find a task called: {task_id} in the raw data folder: {yucca_raw_data}. If your task only exists in e.g. the Preprocessed folder things might still work."
+    )
     return task_id

@@ -17,8 +17,7 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.profilers import SimpleProfiler
 from pytorch_lightning.loggers import WandbLogger, CSVLogger
 from sklearn.model_selection import KFold
-
-from yucca.preprocessing.YuccaPreprocessor_CLS import YuccaPreprocessor_CLS
+from yucca.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
 from yucca.paths import yucca_models, yucca_preprocessed_data
 from yuccalib.network_architectures.utils.model_memory_estimation import (
     find_optimal_tensor_dims,
@@ -56,7 +55,7 @@ class YuccaConfigurator:
 
     planner (str, optional): Name of the planner associated with the dataset. Default is "YuccaPlanner".
 
-    prediction_output_dir (str, optional): Output directory for label results. Default is "./".
+    prediction_output_dir (str, optional): Output directory for prediction results. Default is "./".
         - Only used during inference.
 
     save_softmax (bool, optional): Whether to save softmax predictions during inference. Default is False.
@@ -277,7 +276,7 @@ class YuccaConfigurator:
             preprocessor_class
         ), f"{self.plans['preprocessor']} was found in plans, but no class with the corresponding name was found"
         self.augmentation_parameter_dict = {}
-        if issubclass(preprocessor_class, YuccaPreprocessor_CLS):
+        if issubclass(preprocessor_class, ClassificationPreprocessor):
             self.augmentation_parameter_dict["skip_label"] = True
 
     def load_splits(self):
