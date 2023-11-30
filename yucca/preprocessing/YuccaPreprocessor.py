@@ -445,7 +445,7 @@ class YuccaPreprocessor(object):
                 image_properties["new_orientation"] = get_nib_orientation(images[0])
             image_properties["affine"] = images[0].affine
 
-        images = [nib_to_np(image) for image in images]
+        images = [nifti_or_np_to_np(image) for image in images]
 
         image_properties["uncropped_shape"] = np.array(images[0].shape)
 
