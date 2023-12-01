@@ -30,7 +30,7 @@ class YuccaPlanner(object):
     this means 2D models will be trained on sagittal slices with this planner.
     """
 
-    def __init__(self, task, preprocessor="YuccaPreprocessor", threads=2, disable_unittests=False, view=None):
+    def __init__(self, task, preprocessor="YuccaPreprocessor", threads=2, disable_sanity_checks=False, view=None):
         # Required arguments
         self.task = task
 
@@ -44,7 +44,7 @@ class YuccaPlanner(object):
         # Threading speeds up the process. Unittests should by default be enabled.
         self.preprocessor = preprocessor
         self.threads = threads
-        self.disable_unittests = disable_unittests
+        self.disable_sanity_checks = disable_sanity_checks
 
         self.plans = {}
         self.suggested_dimensionality = "3D"
@@ -191,8 +191,8 @@ class YuccaPlannerX(YuccaPlanner):
     Used to train (mostly 2D) models on the Coronal view of 3D volumes.
     """
 
-    def __init__(self, task, threads=2, disable_unittests=False):
-        super().__init__(task, threads, disable_unittests)
+    def __init__(self, task, threads=2, disable_sanity_checks=False):
+        super().__init__(task, threads, disable_sanity_checks=disable_sanity_checks)
         self.name = self.name + "X"
         self.view = "X"
 
@@ -202,8 +202,8 @@ class YuccaPlannerY(YuccaPlanner):
     Used to train (mostly 2D) models on the Coronal view of 3D volumes.
     """
 
-    def __init__(self, task, threads=2, disable_unittests=False):
-        super().__init__(task, threads, disable_unittests)
+    def __init__(self, task, threads=2, disable_sanity_checks=False):
+        super().__init__(task, threads, disable_sanity_checks=disable_sanity_checks)
         self.name = self.name + "Y"
         self.view = "Y"
 
@@ -213,7 +213,7 @@ class YuccaPlannerZ(YuccaPlanner):
     Used to train (mostly 2D) models on the Axial view of 3D volumes.
     """
 
-    def __init__(self, task, threads=2, disable_unittests=False):
-        super().__init__(task, threads, disable_unittests)
+    def __init__(self, task, threads=2, disable_sanity_checks=False):
+        super().__init__(task, threads, disable_sanity_checks=disable_sanity_checks)
         self.name = self.name + "Z"
         self.view = "Z"
