@@ -8,6 +8,8 @@ from typing import Tuple, Union
 from batchgenerators.utilities.file_and_folder_operations import save_json, subfiles, join
 from tqdm import tqdm
 
+from pathlib import Path
+
 
 def combine_imagesTr_from_tasks(tasks: Union[list, tuple], target_dir):
     assert len(tasks) > 0, "list of tasks empty"
@@ -24,6 +26,16 @@ def get_identifiers_from_splitted_files(folder: str, ext, tasks: list):
     else:
         uniques = np.unique([i[: -len("_000." + ext)] for i in subfiles(folder, join=False)])
     return uniques
+
+
+def dirs_in_dir(dir: str):
+    p = Path(dir)
+    return [f.name for f in p.iterdir() if f.is_dir() and f.name[0] not in [".", "_"]]
+
+
+def files_in_dir(dir: str):
+    p = Path(dir)
+    return [f.name for f in p.iterdir() if f.is_file() and f.name[0] not in [".", "_"]]
 
 
 def generate_dataset_json(
@@ -57,9 +69,8 @@ def generate_dataset_json(
     :param dataset_release:
     :return:
     """
-    files = subfiles(imagesTr_dir)
-    image_file = files[0] if files[0][0] != "." else files[1]
-    im_ext = os.path.split(image_file)[-1].split(os.extsep, 1)[-1]
+    first_file = files_in_dir(imagesTr_dir)[0]
+    im_ext = os.path.split(first_file)[-1].split(os.extsep, 1)[-1]
     train_identifiers = get_identifiers_from_splitted_files(imagesTr_dir, im_ext, tasks)
 
     if imagesTs_dir is not None:
