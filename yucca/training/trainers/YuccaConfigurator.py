@@ -265,7 +265,8 @@ class YuccaConfigurator:
                     max_patch_size=self.plans["new_mean_size"],
                     max_memory_usage_in_gb=self.max_vram,
                 )
-        print(f"Using batch size: {self.batch_size} and patch size: {self.patch_size}")
+        print(f"{'Batch Size: ':25} {self.batch_size}")
+        print(f"{'Patch Size: ':25} {self.patch_size}")
 
     def setup_aug_params(self):
         preprocessor_class = recursive_find_python_class(
@@ -288,6 +289,8 @@ class YuccaConfigurator:
             self.task_type = "unsupervised"
         else:
             self.task_type = "segmentation"
+        print(f"{'Task Name: ':25} {self.task}")
+        print(f"{'Task Type: ':25} {self.task_type}")
 
     def load_splits(self):
         # Load splits file or create it if not found (see: "split_data").

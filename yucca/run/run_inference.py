@@ -85,6 +85,7 @@ def main():
         "with the appropriate suffixes (e.g. '_000.nii.gz'). "
         "Only touch if you know what you're doing.",
     )
+    parser.add_argument("--log", help="Used to enable logging. Defaults to False", default=False, action="store_true")
     parser.add_argument(
         "--save_softmax",
         default=False,
@@ -126,6 +127,7 @@ def main():
     planner = args.pl
     profile = args.profile
     checkpoint = args.chk
+    log = args.log
     version = args.v
     ensemble = args.ensemble
     disable_tta = args.disable_tta
@@ -178,7 +180,7 @@ def main():
 
         print(f"{'Using manager: ':25} {manager_name}")
         manager = manager(
-            disable_logging=False,
+            disable_logging=not log,
             model_name=model,
             model_dimensions=dimensions,
             task=source_task,

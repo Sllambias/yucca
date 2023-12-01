@@ -49,6 +49,7 @@ def main():
         "Defaults to training on fold 0",
         default=0,
     )
+
     parser.add_argument("--epochs", help="Used to specify the number of epochs for training. Default is 1000")
     # The following can be changed to run training with alternative LR, Loss and/or Momentum ###
     parser.add_argument(
@@ -58,7 +59,7 @@ def main():
     )
     parser.add_argument("--loss", help="Should only be used to employ alternative Loss Function", default=None)
     parser.add_argument("--mom", help="Should only be used to employ alternative Momentum.", default=None)
-
+    parser.add_argument("--log", help="Used to enable logging. Defaults to False", default=False, action="store_true")
     parser.add_argument(
         "--new_version",
         help="Start a new version, instead of continuing from the most recent. ",
@@ -81,6 +82,7 @@ def main():
     manager_name = args.man
     folds = args.f
     lr = args.lr
+    log = args.log
     loss = args.loss
     momentum = args.mom
     new_version = args.new_version
@@ -112,7 +114,7 @@ def main():
         ckpt_path=None,
         continue_from_most_recent=not new_version,
         deep_supervision=False,
-        disable_logging=True,
+        disable_logging=not log,
         folds=folds,
         loss=loss,
         model_dimensions=dimensions,

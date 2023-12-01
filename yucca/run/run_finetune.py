@@ -90,6 +90,7 @@ def main():
     ensemble = args.ensemble
     fast_training = args.fast
     lr = args.lr
+    log = args.log
     loss = args.loss
     momentum = args.mom
     threads = args.threads
