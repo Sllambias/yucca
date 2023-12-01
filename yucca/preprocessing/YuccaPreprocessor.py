@@ -76,7 +76,7 @@ class YuccaPreprocessor(object):
         self.input_dir = join(yucca_raw_data, self.task)
         self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
         self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
-        self.subject_ids = subfiles(join(self.input_dir, "labelsTr"), join=False)
+        self.subject_ids = subfiles(join(self.input_dir, "labelsTr"), suffix=self.image_extension, join=False)
 
     def initialize_properties(self):
         """
@@ -117,6 +117,8 @@ class YuccaPreprocessor(object):
             f"{'Transpose Backward:':25.25} {self.transpose_backward} \n"
         )
         p = Pool(self.threads)
+        assert self.threads == 1
+
         p.map(self._preprocess_train_subject, self.subject_ids)
         p.close()
         p.join()
@@ -329,7 +331,10 @@ class YuccaPreprocessor(object):
         )
 
         for i in range(len(images)):
-            images[i] = normalizer(images[i], scheme=norm_op[i], intensities=self.intensities[i])
+            image = images[i]
+            assert image is not None
+
+            images[i] = normalizer(image, scheme=norm_op[i], intensities=self.intensities[i])
             assert len(images[i].shape) == len(transpose), (
                 "image and transpose axes do not match. \n"
                 f"images[i].shape == {images[i].shape} \n"
