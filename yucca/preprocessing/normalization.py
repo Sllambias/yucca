@@ -1,8 +1,9 @@
+import warnings
 from skimage import exposure
 import numpy as np
 
 
-def normalizer(array, scheme, intensities):
+def normalizer(array: np.ndarray, scheme: str, intensities: {}):
     """
     Normalizing function for preprocessing and inference.
 
@@ -31,3 +32,36 @@ def normalizer(array, scheme, intensities):
         lower_bound, upper_bound = np.percentile(array, (0.01, 99.99))
         array = exposure.rescale_intensity(array, in_range=(lower_bound, upper_bound), out_range=(0, 1))
         return array
+
+    if scheme == "volume_wise_znorm":
+        empty_val = np.min(array)  # We assume the background is the minimum value
+
+        if empty_val != array.item(0):
+            warnings.warn(
+                "Tried to normalize an array where the top right value was not the same as the minimum value."
+                f"empty_val: {empty_val}, top right: {array.item(0)}"
+            )
+
+        array = clamp(array)
+        array = znormalize(array, array == empty_val)
+        array = rescale(array, range(-1, 1))
+        return array
+
+
+def clamp(x, q=0.99):
+    q_val = np.percentile(x, q)
+    return np.clip(x, a_min=None, a_max=q_val)
+
+
+def znormalize(x, mask):
+    values = x[mask]
+    mean, std = np.mean(values), np.std(values)
+    if std == 0:
+        return None
+    x -= mean
+    x /= std
+    return x
+
+
+def rescale(x, range=(0, 1)):
+    return exposure.rescale_intensity(x, out_range=range)
