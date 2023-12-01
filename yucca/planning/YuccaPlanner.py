@@ -217,3 +217,10 @@ class YuccaPlannerZ(YuccaPlanner):
         super().__init__(task, threads, disable_sanity_checks=disable_sanity_checks)
         self.name = self.name + "Z"
         self.view = "Z"
+
+
+class UnsupervisedPlanner(YuccaPlanner):
+    def __init__(self, task, threads=2, disable_sanity_checks=False):
+        super().__init__(task, threads, preprocessor="UnsupervisedPreprocsessor", disable_sanity_checks=disable_sanity_checks)
+        self.name = str(self.__class__.__name__)
+        self.norm_op = "volume_wise_znorm"

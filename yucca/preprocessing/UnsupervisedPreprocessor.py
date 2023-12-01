@@ -3,26 +3,17 @@ Takes raw data conforming with Yucca standards and preprocesses according to the
 """
 import numpy as np
 import re
-import torch
-import nibabel as nib
-import os
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
-from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from yucca.preprocessing.normalization import normalizer
 from yuccalib.utils.nib_utils import get_nib_spacing, get_nib_orientation, reorient_nib_image
 from yuccalib.utils.type_conversions import nifti_or_np_to_np, read_file_to_nifti_or_np
 from yuccalib.image_processing.objects.BoundingBox import get_bbox_for_foreground
-from yuccalib.image_processing.cropping_and_padding import crop_to_box, pad_to_size
-from multiprocessing import Pool
-from skimage.transform import resize
+from yuccalib.image_processing.cropping_and_padding import crop_to_box
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
-    load_json,
     subfiles,
     save_pickle,
-    maybe_mkdir_p,
     isfile,
-    subdirs,
 )
 
 
@@ -112,7 +103,7 @@ class UnsupervisedPreprocessor(YuccaPreprocessor):
         # For no label there's no foreground classes
         # And no connected components to analyze.
         foreground_locs = []
-        numbered_ground_truth = ground_truth_numb_lesion = object_sizes = 0
+        ground_truth_numb_lesion = object_sizes = 0
 
         # save relevant values
         image_props["original_spacing"] = original_spacing
