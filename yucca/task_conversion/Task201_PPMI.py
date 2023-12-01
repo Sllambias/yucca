@@ -2,7 +2,7 @@ import shutil
 import gzip
 from pathlib import Path
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
-from yucca.task_conversion.utils import generate_dataset_json, dirs_in_dir
+from yucca.task_conversion.utils import generate_dataset_json, dirs_in_dir, should_use
 from yucca.paths import yucca_raw_data
 from datetime import datetime
 from tqdm import tqdm
@@ -32,12 +32,6 @@ def should_skip(modality: str):
     for accept in accept_modalities:
         if accept in modality:
             return False
-    return True
-
-
-def should_use(vol: nib.Nifti1Image):
-    if np.any(np.array(vol.shape) < 15):
-        return False
     return True
 
 

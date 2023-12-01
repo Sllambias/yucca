@@ -27,7 +27,7 @@ def convert(path: str, subdir: str = None):
         os.path.join(target_base, "dataset.json"),
         target_imagesTr,
         imagesTs_dir=None,
-        modalities=["t1", "t2", "mprage", "flair", "gre", "dwi", "swi", "grappa"],
+        modalities=["MRI"],
         labels=expected_labels,
         dataset_name=task_name,
         license="CC-BY-SA 4.0",

@@ -1,15 +1,10 @@
 from pathlib import Path
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
-from yucca.task_conversion.utils import generate_dataset_json
+from yucca.task_conversion.utils import generate_dataset_json, dirs_in_dir
 from yucca.paths import yucca_raw_data
 from tqdm import tqdm
 
 import shutil
-
-
-def dirs_in_dir(dir: str):
-    p = Path(dir)
-    return [f.name for f in p.iterdir() if f.is_dir() and f.name[0] not in [".", "_"]]
 
 
 def convert(path: str, subdir: str = "ISLES-2022"):
