@@ -25,9 +25,16 @@ from tqdm import tqdm
 
 class YuccaEvaluator(object):
     def __init__(
-        self, labels: list | int, folder_with_predictions, folder_with_ground_truth, do_object_eval=False, as_binary=False
+        self,
+        labels: list | int,
+        folder_with_predictions,
+        folder_with_ground_truth,
+        log=False,
+        do_object_eval=False,
+        as_binary=False,
     ):
         self.name = "results"
+        self.log = log
         self.metrics = {
             "Dice": dice,
             "Sensitivity": sensitivity,
@@ -114,7 +121,8 @@ class YuccaEvaluator(object):
             self.sanity_checks()
             dict = self.evaluate_folder()
             self.save_as_json(dict)
-            self.update_streamtable(dict["mean"])
+            if self.log:
+                self.update_streamtable(dict["mean"])
 
     def evaluate_folder(self):
         sys.stdout.flush()
