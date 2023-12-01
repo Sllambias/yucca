@@ -3,8 +3,11 @@ Takes raw data conforming with Yucca standards and preprocesses according to the
 """
 import numpy as np
 import re
+import os
+import nibabel as nib
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yucca.preprocessing.normalization import normalizer
+from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from yuccalib.utils.nib_utils import get_nib_spacing, get_nib_orientation, reorient_nib_image
 from yuccalib.utils.type_conversions import nifti_or_np_to_np, read_file_to_nifti_or_np
 from yuccalib.image_processing.objects.BoundingBox import get_bbox_for_foreground
@@ -19,11 +22,14 @@ from batchgenerators.utilities.file_and_folder_operations import (
 
 class UnsupervisedPreprocessor(YuccaPreprocessor):
     def initialize_paths(self):
-        super().initialize_paths()
         # Have to overwrite how we get the subject_ids as there's no labelsTr to get them from.
         # Therefore we use the imagesTr folder and remove the modality suffix.
-        self.subject_ids = subfiles(join(self.input_dir, "imagesTr"), join=False)
-        self.subject_ids = [re.sub(r"_\d+\.", ".", subject) for subject in self.subject_ids]
+        self.target_dir = join(yucca_preprocessed_data, self.task, self.plans["plans_name"])
+        self.input_dir = join(yucca_raw_data, self.task)
+        self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
+
+        subject_ids = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension, join=False)
+        self.subject_ids = [re.sub(r"_\d+\.", ".", subject) for subject in subject_ids]
 
     def _preprocess_train_subject(self, subject_id):
         image_props = {}
