@@ -221,6 +221,6 @@ class YuccaPlannerZ(YuccaPlanner):
 
 class UnsupervisedPlanner(YuccaPlanner):
     def __init__(self, task, threads=2, disable_sanity_checks=False):
-        super().__init__(task, threads, preprocessor="UnsupervisedPreprocsessor", disable_sanity_checks=disable_sanity_checks)
+        super().__init__(task, threads, preprocessor="UnsupervisedPreprocessor", disable_sanity_checks=disable_sanity_checks)
         self.name = str(self.__class__.__name__)
         self.norm_op = "volume_wise_znorm"
