@@ -57,7 +57,9 @@ def generate_dataset_json(
     :param dataset_release:
     :return:
     """
-    im_ext = os.path.split(subfiles(imagesTr_dir)[0])[-1].split(os.extsep, 1)[-1]
+    files = subfiles(imagesTr_dir)
+    image_file = files[0] if files[0][0] != "." else files[1]
+    im_ext = os.path.split(image_file)[-1].split(os.extsep, 1)[-1]
     train_identifiers = get_identifiers_from_splitted_files(imagesTr_dir, im_ext, tasks)
 
     if imagesTs_dir is not None:
