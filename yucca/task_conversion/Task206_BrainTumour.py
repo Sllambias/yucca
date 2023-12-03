@@ -48,7 +48,7 @@ def convert(path: str, subdir: str = "decathlon/Task01_BrainTumour"):
         join(target_base, "dataset.json"),
         target_imagesTr,
         imagesTs_dir=None,
-        modalities=["flair", "t1w", "t1gd", "t2w"],
+        modalities=["MRI"],
         labels=None,
         dataset_name=task_name,
         license="CC-BY-SA 4.0",

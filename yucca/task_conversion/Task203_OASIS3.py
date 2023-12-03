@@ -76,7 +76,7 @@ def convert(path: str, subdir: str = "OASIS3"):
         join(target_base, "dataset.json"),
         target_imagesTr,
         imagesTs_dir=None,
-        modalities=accept_modalities,
+        modalities=["MRI"],
         labels=None,
         dataset_name=task_name,
         license="https://www.oasis-brains.org/#access",
