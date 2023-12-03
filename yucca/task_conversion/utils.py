@@ -43,7 +43,7 @@ def files_in_dir(dir: str):
 
 
 def should_use(vol: nib.Nifti1Image):
-    return not (np.any(np.array(vol.shape) < 15) or len(vol.shape) != 3)
+    return not (np.any(np.array(vol.shape) < 15) or len(vol.shape) != 3 or np.array(vol.dataobj).min() < 0)
 
 
 def generate_dataset_json(

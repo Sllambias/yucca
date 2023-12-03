@@ -12,7 +12,7 @@ import numpy as np
 
 
 accept_modalities = ["t1", "t2", "mprage", "flair", "gre", "dwi", "swi", "grappa", "anat"]
-rejec_modalities = ["fmri", "func"]
+rejec_modalities = ["fmri", "func"]  # TODO: Might need to skip GRE
 
 
 def should_skip(modality: str):
