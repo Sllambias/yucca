@@ -117,7 +117,6 @@ class YuccaPreprocessor(object):
             f"{'Transpose Backward:':25.25} {self.transpose_backward} \n"
         )
         p = Pool(self.threads)
-        assert self.threads == 1
 
         p.map(self._preprocess_train_subject, self.subject_ids)
         p.close()
