@@ -1,7 +1,6 @@
 import torch
 import yucca
 import numpy as np
-from time import localtime, strftime
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     maybe_mkdir_p,
@@ -23,7 +22,7 @@ from yucca.paths import yucca_models, yucca_preprocessed_data
 from yuccalib.network_architectures.utils.model_memory_estimation import (
     find_optimal_tensor_dims,
 )
-from yuccalib.utils.files_and_folders import WritePredictionFromLogits, load_yaml, recursive_find_python_class
+from yuccalib.utils.files_and_folders import WritePredictionFromLogits, recursive_find_python_class
 from yuccalib.evaluation.loggers import YuccaLogger
 from typing import Union
 
