@@ -69,13 +69,13 @@ def convert(path: str, subdir: str = "PPMI"):
                         if should_use(vol):
                             output_name = f"{task_prefix}_{subject}_{modality}_{date_simple}_{image}_000.nii.gz"
                             output_path = join(target_imagesTr, output_name)
-                            shutil.copy2(image_path, output_path)
+                            nib.save(vol, filename=output_path)
 
     generate_dataset_json(
         join(target_base, "dataset.json"),
         target_imagesTr,
         imagesTs_dir=None,
-        modalities=accept_modalities,
+        modalities=["MRI"],
         labels=None,
         dataset_name=task_name,
         license="https://www.ppmi-info.org/sites/default/files/docs/ppmi-data-use-agreement.pdf",
