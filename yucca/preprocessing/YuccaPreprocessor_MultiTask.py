@@ -10,7 +10,7 @@ from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from yucca.preprocessing.normalization import normalizer
 from yuccalib.utils.nib_utils import get_nib_spacing, get_nib_orientation, reorient_nib_image
-from yuccalib.utils.type_conversions import nib_to_np
+from yuccalib.utils.type_conversions import nifti_or_np_to_np
 from yuccalib.image_processing.objects.BoundingBox import get_bbox_for_foreground
 from yuccalib.image_processing.cropping_and_padding import crop_to_box, pad_to_size
 from multiprocessing import Pool
