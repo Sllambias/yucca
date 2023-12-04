@@ -32,11 +32,6 @@ def create_properties_pkl(data_dir, save_dir, suffix=".nii.gz"):
     spacings = []
     intensity_results = []
 
-    means_fg = []
-    min_fg = np.inf
-    max_fg = -np.inf
-    stds_fg = []
-
     means = []
     min = np.inf
     max = -np.inf
@@ -83,32 +78,18 @@ def create_properties_pkl(data_dir, save_dir, suffix=".nii.gz"):
                 spacings.append(get_nib_spacing(image).tolist())
             else:
                 spacings.append([1.0, 1.0, 1.0])
+
             image = nifti_or_np_to_np(image)
+            image_msk = image[image > background_pixel_value]
 
-            mask = image > background_pixel_value
+            means.append(np.mean(image_msk))
+            stds.append(np.std(image_msk))
 
-            means.append(np.mean(image))
-            means_fg.append(np.mean(image[mask]))
-            stds.append(np.std(image))
-            stds_fg.append(np.std(image[mask]))
+            maxmin = np.max([min, np.min(image_msk)])
+            min = np.min([min, np.min(image_msk)])
+            max = np.max([max, np.max(image_msk)])
 
-            maxmin = np.max([min, np.min(image)])
-            min = np.min([min, np.min(image)])
-            max = np.max([max, np.max(image)])
-
-            maxmin_fg = np.max([min_fg, np.min(image[mask])])
-            min_fg = np.min([min_fg, np.min(image[mask])])
-            max_fg = np.max([max_fg, np.max(image[mask])])
-
-        intensity_results[mod_id]["fg"] = {
-            "mean": float(np.mean(means_fg)),
-            "min": float(min_fg),
-            "max": float(max_fg),
-            "maxmin": float(maxmin_fg),
-            "std": float(np.mean(stds_fg)),
-        }
-
-        intensity_results[mod_id]["all"] = {
+        intensity_results[mod_id] = {
             "mean": float(np.mean(means)),
             "min": float(min),
             "max": float(max),
@@ -124,4 +105,3 @@ def create_properties_pkl(data_dir, save_dir, suffix=".nii.gz"):
     properties["original_spacings"] = spacings
     properties["intensities"] = intensity_results
     save_pickle(properties, join(save_dir, "dataset_properties.pkl"))
-    json.dump(intensity_results, open(join(save_dir, "intensity_results.json"), "w"))
