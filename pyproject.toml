@@ -1,6 +1,6 @@
 [project]
 name = "yucca"
-version = "0.0.10"
+version = "0.0.11"
 authors = [
   { name="Sebastian LLambias", email="llambias@live.dk" },
 ]
