@@ -3,6 +3,8 @@ name = "yucca"
 version = "0.1.0"
 authors = [
   { name="Sebastian LLambias", email="llambias@live.dk" },
+  { name="Asbjørn Munk", email="9844416+asbjrnmunk@users.noreply.github.com" },
+  { name="Jakob Ambsdorf", email="20045425+jakobamb@users.noreply.github.com" },
 ]
 description = "The modern framework for out-of-the box mahine Learning on medical data."
 readme = "README.md"
