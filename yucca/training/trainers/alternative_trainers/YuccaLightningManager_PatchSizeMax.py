@@ -5,6 +5,7 @@ class YuccaLightningManager_PatchSizeMax(YuccaLightningManager):
     """
     Instantiate a YuccaLightningManager object with the patch size set to the maximum patch size.
     """
+
     def __init__(
         self,
         ckpt_path: str = None,
