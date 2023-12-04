@@ -21,7 +21,7 @@ def convert(path: str, subdir: str = None):
 
     os.makedirs(target_imagesTr, exist_ok=True)
 
-    combine_imagesTr_from_tasks(tasks=tasks_to_combine, target_dir=target_imagesTr)
+    # combine_imagesTr_from_tasks(tasks=tasks_to_combine, target_dir=target_imagesTr)
 
     generate_dataset_json(
         os.path.join(target_base, "dataset.json"),
