@@ -42,7 +42,7 @@ def files_in_dir(dir: str):
     return [f.name for f in p.iterdir() if f.is_file() and f.name[0] not in [".", "_"]]
 
 
-def should_use(vol: nib.Nifti1Image):
+def should_use_volume(vol: nib.Nifti1Image):
     return not (np.any(np.array(vol.shape) < 15) or len(vol.shape) != 3 or np.array(vol.dataobj).min() < 0)
 
 

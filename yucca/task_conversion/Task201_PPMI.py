@@ -2,7 +2,7 @@ import shutil
 import gzip
 from pathlib import Path
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
-from yucca.task_conversion.utils import generate_dataset_json, dirs_in_dir, should_use
+from yucca.task_conversion.utils import generate_dataset_json, dirs_in_dir, should_use_volume
 from yucca.paths import yucca_raw_data
 from datetime import datetime
 from tqdm import tqdm
@@ -66,7 +66,7 @@ def convert(path: str, subdir: str = "PPMI"):
                     for file in subfiles(image_dir, join=False, suffix=".nii"):
                         image_path = join(image_dir, file)
                         vol = nib.load(image_path)
-                        if should_use(vol):
+                        if should_use_volume(vol):
                             output_name = f"{task_prefix}_{subject}_{modality}_{date_simple}_{image}_000.nii.gz"
                             output_path = join(target_imagesTr, output_name)
                             nib.save(vol, filename=output_path)
