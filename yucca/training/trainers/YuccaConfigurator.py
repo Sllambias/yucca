@@ -24,7 +24,7 @@ from yuccalib.network_architectures.utils.model_memory_estimation import (
 )
 from yuccalib.utils.files_and_folders import WritePredictionFromLogits, recursive_find_python_class
 from yuccalib.evaluation.loggers import YuccaLogger
-from typing import Union
+from typing import Union, Literal
 
 
 class YuccaConfigurator:
@@ -63,6 +63,13 @@ class YuccaConfigurator:
 
     tiny_patch (bool, optional): Whether to use a tiny patch size. Default is False.
         - Mainly useful for debugging and/or running on CPU.
+
+    patch_size (tuple, optional): Patch size. Can be a tuple (2D), tuple (3D), string, or None. Default is None.
+        - If a tuple is provided: the patch size will be set to that value.
+        - If a string is provided:  "max" will set the patch size to the maximum input of the dataset
+                                    "min" will set the patch size to the minimum input of the dataset
+                                    "mean" will set the patch size to the mean input of the dataset
+        - If None is provided: the patch size will be inferred.
     """
 
     def __init__(
@@ -80,7 +87,7 @@ class YuccaConfigurator:
         profile: bool = False,
         prediction_output_dir: str = "./",
         save_softmax: bool = False,
-        tiny_patch: bool = False,
+        patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
     ):
         self.ckpt_path = ckpt_path
         self.continue_from_most_recent = continue_from_most_recent
@@ -95,7 +102,7 @@ class YuccaConfigurator:
         self.planner = planner
         self.profile = profile
         self.task = task
-        self.tiny_patch = tiny_patch
+        self.patch_size = patch_size
 
         # Attributes set upon calling
         self._plans = None
@@ -252,10 +259,19 @@ class YuccaConfigurator:
             self.batch_size = self.plans.get("batch_size")
             self.patch_size = self.plans.get("patch_size")
         else:
-            if self.tiny_patch or not torch.cuda.is_available():
+            if not torch.cuda.is_available():
+                # tiny patch and batch size for CPU training
                 self.batch_size = 2
                 self.patch_size = (32, 32) if self.model_dimensions == "2D" else (32, 32, 32)
-            else:
+            elif isinstance(self.patch_size, str):
+                # If the patch size is a string we need to infer it from the dataset
+                if self.patch_size == "max":
+                    self.patch_size = self.plans["new_max_size"]
+                elif self.patch_size == "min":
+                    self.patch_size = self.plans["new_min_size"]
+                elif self.patch_size == "mean":
+                    self.patch_size = self.plans["new_mean_size"]
+            elif self.patch_size is None:
                 self.batch_size, self.patch_size = find_optimal_tensor_dims(
                     dimensionality=self.model_dimensions,
                     num_classes=self.num_classes,
@@ -264,6 +280,7 @@ class YuccaConfigurator:
                     max_patch_size=self.plans["new_mean_size"],
                     max_memory_usage_in_gb=self.max_vram,
                 )
+            # if the patch size is a tuple we use that
         print(f"Using batch size: {self.batch_size} and patch size: {self.patch_size}")
 
     def setup_aug_params(self):
