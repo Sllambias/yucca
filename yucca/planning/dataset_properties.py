@@ -1,10 +1,9 @@
-import warnings
+import logging
 from batchgenerators.utilities.file_and_folder_operations import subfiles, join, load_json, save_pickle
 from yuccalib.utils.nib_utils import get_nib_spacing
 from yuccalib.utils.type_conversions import nifti_or_np_to_np, read_file_to_nifti_or_np
 import nibabel as nib
 import numpy as np
-import json
 from tqdm import tqdm
 
 
@@ -66,28 +65,36 @@ def create_properties_pkl(data_dir, save_dir, suffix=".nii.gz"):
 
         # Loop through all images in task
         for subject in tqdm(subjects):
-            image = read_file_to_nifti_or_np(subject)
-            sizes.append(image.shape)
-            dim = len(image.shape)
-            if dim > 3:
-                warnings.warn(
-                    f"A volume has more than three dimensions. This is most often a mistake." f"Dims: {dim}, Vol: {subject}"
+            try:
+                image = read_file_to_nifti_or_np(subject)
+                sizes.append(image.shape)
+                dim = len(image.shape)
+
+                if dim > 3:
+                    logging.warn(
+                        f"A volume has more than three dimensions. This is most often a mistake."
+                        f"Dims: {dim}, Vol: {subject}"
+                    )
+
+                if isinstance(image, nib.Nifti1Image):
+                    spacings.append(get_nib_spacing(image).tolist())
+                else:
+                    spacings.append([1.0, 1.0, 1.0])
+
+                image = nifti_or_np_to_np(image)
+                image_msk = image[image > background_pixel_value]
+
+                means.append(np.mean(image_msk))
+                stds.append(np.std(image_msk))
+
+                maxmin = np.max([min, np.min(image_msk)])
+                min = np.min([min, np.min(image_msk)])
+                max = np.max([max, np.max(image_msk)])
+            except Exception as err:
+                logging.warn(
+                    f"Could not read `{subject}`, got error `{err}`."
+                    "Suppressing to finalize, but you might need to act accordingly."
                 )
-
-            if isinstance(image, nib.Nifti1Image):
-                spacings.append(get_nib_spacing(image).tolist())
-            else:
-                spacings.append([1.0, 1.0, 1.0])
-
-            image = nifti_or_np_to_np(image)
-            image_msk = image[image > background_pixel_value]
-
-            means.append(np.mean(image_msk))
-            stds.append(np.std(image_msk))
-
-            maxmin = np.max([min, np.min(image_msk)])
-            min = np.min([min, np.min(image_msk)])
-            max = np.max([max, np.max(image_msk)])
 
         intensity_results[mod_id] = {
             "mean": float(np.mean(means)),
