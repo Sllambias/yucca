@@ -26,6 +26,7 @@ from batchgenerators.utilities.file_and_folder_operations import (
     maybe_mkdir_p,
     isfile,
 )
+import logging
 
 
 class YuccaPreprocessor(object):
@@ -108,7 +109,7 @@ class YuccaPreprocessor(object):
         self.initialize_paths()
         maybe_mkdir_p(self.target_dir)
 
-        print(
+        logging.info(
             f"{'Preprocessing Task:':25.25} {self.task} \n"
             f"{'Using Planner:':25.25} {self.plans_path} \n"
             f"{'Crop to nonzero:':25.25} {self.plans['crop_to_nonzero']} \n"
@@ -163,12 +164,12 @@ class YuccaPreprocessor(object):
         """
         image_props = {}
         subject_id = subject_id.split(os.extsep, 1)[0]
-        print(f"Preprocessing: {subject_id}")
+        logging.info(f"Preprocessing: {subject_id}")
         arraypath = join(self.target_dir, subject_id + ".npy")
         picklepath = join(self.target_dir, subject_id + ".pkl")
 
         if isfile(arraypath) and isfile(picklepath):
-            print(f"Case: {subject_id} already exists. Skipping.")
+            logging.info(f"Case: {subject_id} already exists. Skipping.")
             return
         # First find relevant images by their paths and save them in the image property pickle
         # Then load them as images
@@ -298,7 +299,7 @@ class YuccaPreprocessor(object):
         image_props["n_cc"] = ground_truth_numb_lesion
         image_props["size_cc"] = object_sizes
 
-        print(
+        logging.info(
             f"size before: {original_size} size after: {image_props['new_size']} \n"
             f"spacing before: {original_spacing} spacing after: {image_props['new_spacing']} \n"
             f"Saving {subject_id} in {arraypath} \n"
@@ -342,7 +343,7 @@ class YuccaPreprocessor(object):
                 f"len(transpose) == {len(transpose)} \n"
             )
             images[i] = images[i].transpose(transpose)
-        print(f"Normalized with: {norm_op[0]} \n" f"Transposed with: {transpose}")
+        logging.info(f"Normalized with: {norm_op[0]} \n" f"Transposed with: {transpose}")
 
         shape_t = images[0].shape
         original_spacing_t = original_spacing[transpose]
@@ -356,13 +357,13 @@ class YuccaPreprocessor(object):
             try:
                 images[i] = resize(images[i], output_shape=target_shape, order=3)
             except OverflowError:
-                print("Unexpected values in either shape or image for resize")
+                logging.error("Unexpected values in either shape or image for resize")
         if label is not None:
             label = label.transpose(transpose)
             try:
                 label = resize(label, output_shape=target_shape, order=0, anti_aliasing=False)
             except OverflowError:
-                print("Unexpected values in either shape or label for resize")
+                logging.error("Unexpected values in either shape or label for resize")
             return images, label
 
         return images
