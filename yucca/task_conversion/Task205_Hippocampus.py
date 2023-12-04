@@ -2,24 +2,13 @@ import shutil
 import gzip
 from pathlib import Path
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
-from yucca.task_conversion.utils import generate_dataset_json
+from yucca.task_conversion.utils import generate_dataset_json, should_use_volume
 from yucca.paths import yucca_raw_data
 from datetime import datetime
 from tqdm import tqdm
 
 import nibabel as nib
 import numpy as np
-
-
-def should_use(vol: nib.Nifti1Image):
-    if np.any(np.array(vol.shape) < 15):
-        return False
-    return True
-
-
-def dirs_in_dir(dir: str):
-    p = Path(dir)
-    return [f.name for f in p.iterdir() if f.is_dir() and f.name[0] not in [".", "_"]]
 
 
 def convert(path: str, subdir: str = "decathlon/Task04_Hippocampus"):
@@ -49,12 +38,10 @@ def convert(path: str, subdir: str = "decathlon/Task04_Hippocampus"):
         image_path = join(subjects_dir, file)
         file_name = file[: -len(ext)]
         vol = nib.load(image_path)
-        if should_use(vol):
+        if should_use_volume(vol):
             output_name = f"{task_prefix}_{file_name}_000.nii.gz"
             output_path = join(target_imagesTr, output_name)
-            with open(image_path, "rb") as f_in:
-                with gzip.open(output_path, mode="wb", compresslevel=1) as f_out:
-                    shutil.copyfileobj(f_in, f_out)
+            shutil.copy2(image_path, output_path)
         else:
             skipped_volumes.append(image_path)
 
