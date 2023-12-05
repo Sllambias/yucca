@@ -257,6 +257,8 @@ class YuccaConfigurator:
             self.batch_size = self.plans.get("batch_size")
             self.patch_size = self.plans.get("patch_size")
         else:
+            # XXX: batch_size needs to be configured by find_optimal_tensor_dims down the line
+            self.batch_size = 64  # default batch size, overwritten by find_optimal_tensor_dims or set to 2 if CPU
             if isinstance(self.patch_size, str):
                 # If the patch size is a string we need to infer it from the dataset
                 if self.patch_size == "max":
@@ -265,8 +267,6 @@ class YuccaConfigurator:
                     self.patch_size = self.plans["new_min_size"]
                 elif self.patch_size == "mean":
                     self.patch_size = self.plans["new_mean_size"]
-                # XXX: batch_size needs to be configured by find_optimal_tensor_dims down the line
-                self.batch_size = 64
             elif self.patch_size is None:
                 if not torch.cuda.is_available():
                     # tiny patch and batch size for CPU training
