@@ -167,15 +167,15 @@ class YuccaMultiTaskPreprocessor(YuccaPreprocessor):
         if images[0].get_qform(coded=True)[1] or images[0].get_sform(coded=True)[1]:
             original_orientation = get_nib_orientation(images[0])
             final_direction = self.plans["target_coordinate_system"]
-            images = [nib_to_np(reorient_nib_image(image, original_orientation, final_direction)) for image in images]
+            images = [nifti_or_np_to_np(reorient_nib_image(image, original_orientation, final_direction)) for image in images]
             if isinstance(seg, nib.Nifti1Image):
-                seg = nib_to_np(reorient_nib_image(seg, original_orientation, final_direction))
+                seg = nifti_or_np_to_np(reorient_nib_image(seg, original_orientation, final_direction))
         else:
             original_orientation = "INVALID"
             final_direction = "INVALID"
-            images = [nib_to_np(image) for image in images]
+            images = [nifti_or_np_to_np(image) for image in images]
             if isinstance(seg, nib.Nifti1Image):
-                seg = nib_to_np(seg)
+                seg = nifti_or_np_to_np(seg)
 
         # Cropping is performed to save computational resources. We are only removing background.
         if self.plans["crop_to_nonzero"]:
@@ -341,7 +341,7 @@ class YuccaMultiTaskPreprocessor(YuccaPreprocessor):
             image_properties["reoriented"] = False
 
         image_properties["affine"] = images[0].affine
-        images = [nib_to_np(image) for image in images]
+        images = [nifti_or_np_to_np(image) for image in images]
 
         image_properties["uncropped_shape"] = np.array(images[0].shape)
 
