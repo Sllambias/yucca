@@ -1,3 +1,4 @@
+# %%
 import lightning as L
 import torch
 from typing import Literal
@@ -93,7 +94,8 @@ class YuccaLightningManager:
     ):
         # Here we configure the outpath we will use to store model files and metadata
         # along with the path to plans file which will also be loaded.
-        configurator = YuccaConfigurator(
+        self.configurator = YuccaConfigurator(
+            ckpt_path=self.ckpt_path,
             continue_from_most_recent=self.continue_from_most_recent,
             disable_logging=self.disable_logging,
             folds=self.folds,
@@ -109,13 +111,13 @@ class YuccaLightningManager:
         )
 
         augmenter = YuccaAugmentationComposer(
-            patch_size=configurator.patch_size,
+            patch_size=self.configurator.patch_size,
             is_2D=True if self.model_dimensions == "2D" else False,
-            parameter_dict=configurator.augmentation_parameter_dict,
+            parameter_dict=self.configurator.augmentation_parameter_dict,
         )
 
         self.model_module = YuccaLightningModule(
-            config=configurator.lm_hparams,
+            config=self.configurator.lm_hparams,
             loss_fn=self.loss,
             stage=stage,
             step_logging=self.step_logging,
@@ -125,20 +127,20 @@ class YuccaLightningManager:
         self.data_module = YuccaDataModule(
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
-            configurator=configurator,
+            configurator=self.configurator,
             num_workers=self.num_workers,
             pred_data_dir=pred_data_dir,
             pre_aug_patch_size=augmenter.pre_aug_patch_size,
         )
 
         self.trainer = L.Trainer(
-            callbacks=configurator.callbacks,
-            default_root_dir=configurator.save_dir,
+            callbacks=self.configurator.callbacks,
+            default_root_dir=self.configurator.save_dir,
             limit_train_batches=self.train_batches_per_step,
             limit_val_batches=self.val_batches_per_step,
-            logger=configurator.loggers,
+            logger=self.configurator.loggers,
             precision=self.precision,
-            profiler=configurator.profiler,
+            profiler=self.configurator.profiler,
             enable_progress_bar=not self.disable_logging,
             max_epochs=self.max_epochs,
             **self.kwargs,
@@ -150,6 +152,14 @@ class YuccaLightningManager:
             model=self.model_module,
             datamodule=self.data_module,
             ckpt_path="last",
+        )
+
+    def run_finetuning(self):
+        self.initialize(stage="fit")
+        self.model_module.load_state_dict(self.configurator.get_model_weights(), strict=False)
+        self.trainer.fit(
+            model=self.model_module,
+            datamodule=self.data_module,
         )
 
     def predict_folder(
@@ -187,9 +197,11 @@ if __name__ == "__main__":
         num_workers=0,
         task="Task001_OASIS",
     )
-
-    Manager.run_training()
+    Manager.initialize("fit")
+    # Manager.run_training()
     # Manager.predict_folder(
     #    input_folder="/home/zcr545/YuccaData/yucca_raw_data/Task001_OASIS/imagesTs",
     #    output_folder="/home/zcr545/YuccaData/yucca_predictions",
     # )
+
+# %%

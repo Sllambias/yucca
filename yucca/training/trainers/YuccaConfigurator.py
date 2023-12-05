@@ -183,6 +183,10 @@ class YuccaConfigurator:
                 self._version = newest_version + 1
             return self._version
 
+    def get_model_weights(self) -> {}:
+        print(f"loading weights from {self.ckpt_path}")
+        return torch.load(self.ckpt_path, map_location=torch.device("cpu"))["state_dict"]
+
     def setup_loggers(self):
         # The CSVLogger is the barebones logger needed to save hparams.yaml and set the proper
         # outpath that will be expected by the pipeline for continued training etc.
