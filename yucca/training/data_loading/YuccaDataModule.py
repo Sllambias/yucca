@@ -1,7 +1,7 @@
 import lightning as pl
 import torchvision
 from typing import Literal
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Sampler
 from batchgenerators.utilities.file_and_folder_operations import join
 from yucca.training.data_loading.YuccaDataset import YuccaTestDataset, YuccaTrainDataset
 from yucca.training.data_loading.samplers import InfiniteRandomSampler
@@ -50,6 +50,7 @@ class YuccaDataModule(pl.LightningDataModule):
         num_workers: int = 8,
         pred_data_dir: str = None,
         pre_aug_patch_size: list | tuple = None,
+        sampler: Sampler = InfiniteRandomSampler,
     ):
         super().__init__()
         # First set our configurator object
@@ -76,7 +77,7 @@ class YuccaDataModule(pl.LightningDataModule):
         # Set default values
         self.num_workers = num_workers
         self.val_num_workers = num_workers // 2 if num_workers > 0 else num_workers
-        self.sampler = InfiniteRandomSampler
+        self.sampler = sampler
 
     def prepare_data(self):
         self.train_samples = [join(self.train_data_dir, i) for i in self.train_split]
@@ -111,13 +112,14 @@ class YuccaDataModule(pl.LightningDataModule):
 
     def train_dataloader(self):
         print(f"Starting training with data from: {self.train_data_dir}")
-        train_sampler = self.sampler(self.train_dataset)
+        train_sampler = self.sampler(self.train_dataset) if self.sampler is not None else None
         return DataLoader(
             self.train_dataset,
             num_workers=self.num_workers,
             batch_size=self.batch_size,
             persistent_workers=bool(self.num_workers),
             sampler=train_sampler,
+            shuffle=self.sampler is None,
         )
 
     def val_dataloader(self):
