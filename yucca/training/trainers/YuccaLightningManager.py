@@ -76,7 +76,7 @@ class YuccaLightningManager:
         self.kwargs = kwargs
 
         if patch_size is None:
-            self.patch_size = (32, 32) if self.model_name == "TinyUNet" else None
+            self.patch_size = "tiny" if self.model_name == "TinyUNet" else None
         else:
             self.patch_size = patch_size
 

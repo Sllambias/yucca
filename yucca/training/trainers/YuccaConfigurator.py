@@ -84,7 +84,7 @@ class YuccaConfigurator:
         profile: bool = False,
         prediction_output_dir: str = "./",
         save_softmax: bool = False,
-        patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
+        patch_size: Union[tuple, Literal["max", "min", "mean", "tiny"]] = None,
     ):
         self.ckpt_path = ckpt_path
         self.continue_from_most_recent = continue_from_most_recent
@@ -267,6 +267,8 @@ class YuccaConfigurator:
                     self.patch_size = self.plans["new_min_size"]
                 elif self.patch_size == "mean":
                     self.patch_size = self.plans["new_mean_size"]
+                elif self.patch_size == "tiny":
+                    self.patch_size = (32, 32) if self.model_dimensions == "2D" else (32, 32, 32)
             elif self.patch_size is None:
                 if not torch.cuda.is_available():
                     # tiny patch and batch size for CPU training
