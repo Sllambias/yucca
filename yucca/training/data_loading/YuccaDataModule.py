@@ -119,7 +119,7 @@ class YuccaDataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             persistent_workers=bool(self.num_workers),
             sampler=train_sampler,
-            shuffle=self.sampler is None,
+            shuffle=train_sampler is None,
         )
 
     def val_dataloader(self):
