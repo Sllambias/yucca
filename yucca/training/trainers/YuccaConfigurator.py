@@ -257,9 +257,11 @@ class YuccaConfigurator:
             self.batch_size = self.plans.get("batch_size")
             self.patch_size = self.plans.get("patch_size")
         else:
-            # XXX: batch_size needs to be configured by find_optimal_tensor_dims down the line
-            self.batch_size = 64  # default batch size, overwritten by find_optimal_tensor_dims or set to 2 if CPU
-            if isinstance(self.patch_size, str):
+            if not torch.cuda.is_available():
+                # tiny patch and batch size for CPU training
+                self.batch_size = 2
+                self.patch_size = (32, 32) if self.model_dimensions == "2D" else (32, 32, 32)
+            elif isinstance(self.patch_size, str):
                 # If the patch size is a string we need to infer it from the dataset
                 if self.patch_size == "max":
                     self.patch_size = self.plans["new_max_size"]
@@ -268,23 +270,21 @@ class YuccaConfigurator:
                 elif self.patch_size == "mean":
                     self.patch_size = self.plans["new_mean_size"]
                 elif self.patch_size == "tiny":
-                    self.patch_size = (32, 32) if self.model_dimensions == "2D" else (32, 32, 32)
-            elif self.patch_size is None:
-                if not torch.cuda.is_available():
-                    # tiny patch and batch size for CPU training
-                    self.batch_size = 2
-                    self.patch_size = (32, 32) if self.model_dimensions == "2D" else (32, 32, 32)
-                else:
-                    # otherwise we use the largest possible patch size that still fits into the GPU
-                    self.batch_size, self.patch_size = find_optimal_tensor_dims(
-                        dimensionality=self.model_dimensions,
-                        num_classes=self.num_classes,
-                        modalities=self.num_modalities,
-                        model_name=self.model_name,
-                        max_patch_size=self.plans["new_mean_size"],
-                        max_memory_usage_in_gb=self.max_vram,
-                    )
-            # if the patch size is a tuple we use that
+                    self.patch_size = (32, 32, 32)
+                if self.model_dimensions == "2D" and len(self.patch_size) == 3:
+                    # If we have now selected a 3D patch for a 2D model we skip the first dim
+                    # as we will be extracting patches from that dimension.
+                    self.patch_size = self.patch_size[1:]
+                # otherwise we use the largest possible patch size that still fits into the GPU
+                self.batch_size, self.patch_size = find_optimal_tensor_dims(
+                    dimensionality=self.model_dimensions,
+                    num_classes=self.num_classes,
+                    modalities=self.num_modalities,
+                    model_name=self.model_name,
+                    max_patch_size=self.plans["new_mean_size"],
+                    fixed_patch_size=self.patch_size,
+                    max_memory_usage_in_gb=self.max_vram,
+                )
         print(f"Using batch size: {self.batch_size} and patch size: {self.patch_size}")
 
     def setup_aug_params(self):
