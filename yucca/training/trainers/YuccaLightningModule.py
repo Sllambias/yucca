@@ -3,6 +3,7 @@ import torch
 import yuccalib
 import wandb
 import yucca
+import copy
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Dice, Precision
@@ -210,6 +211,22 @@ class YuccaLightningModule(L.LightningModule):
 
         # Finally return the optimizer and scheduler - the loss is not returned.
         return {"optimizer": self.optim, "lr_scheduler": self.lr_scheduler}
+
+    def load_state_dict(self, *args, **kwargs):
+        # Here there's also potential to implement custom loading functions.
+        # E.g. to load 2D pretrained models into 3D by repeating or something like that.
+        successful = 0
+        unsuccessful = 0
+        old_params = copy.deepcopy(self.model.state_dict())
+        super().load_state_dict(*args, **kwargs)
+        new_params = self.model.state_dict()
+        for p1, p2 in zip(old_params.values(), new_params.values()):
+            # If more than one param in layer is NE (not equal) to the original weights we've successfully loaded new weights.
+            if p1.data.ne(p2.data).sum() > 0:
+                successful += 1
+            else:
+                unsuccessful += 1
+        print(f"Succesfully transferred weights for {successful}/{successful+unsuccessful} layers")
 
 
 if __name__ == "__main__":
