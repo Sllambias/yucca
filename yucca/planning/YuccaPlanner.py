@@ -154,6 +154,8 @@ class YuccaPlanner(object):
 
         mean_size = np.mean(new_sizes, 0, dtype=int).tolist()
         min_size = np.min(new_sizes, 0).tolist()
+        max_size = np.max(new_sizes, 0).tolist()
+
         if len(size_cc) > 0:
             mean_cc = np.mean(size_cc, dtype=int).tolist()
             min_cc = np.min(size_cc).tolist()
@@ -168,6 +170,7 @@ class YuccaPlanner(object):
         self.plans["new_spacings"] = new_spacings
         self.plans["new_mean_size"] = mean_size
         self.plans["new_min_size"] = min_size
+        self.plans["new_max_size"] = max_size
         self.plans["mean_cc_size"] = mean_cc
         self.plans["max_cc_size"] = max_cc
         self.plans["min_cc_size"] = min_cc

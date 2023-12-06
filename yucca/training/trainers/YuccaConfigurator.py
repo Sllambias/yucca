@@ -1,7 +1,6 @@
 import torch
 import yucca
 import numpy as np
-from time import localtime, strftime
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     maybe_mkdir_p,
@@ -23,9 +22,9 @@ from yucca.paths import yucca_models, yucca_preprocessed_data
 from yuccalib.network_architectures.utils.model_memory_estimation import (
     find_optimal_tensor_dims,
 )
-from yuccalib.utils.files_and_folders import WritePredictionFromLogits, load_yaml, recursive_find_python_class
+from yuccalib.utils.files_and_folders import WritePredictionFromLogits, recursive_find_python_class
 from yuccalib.evaluation.loggers import YuccaLogger
-from typing import Union
+from typing import Union, Literal
 
 
 class YuccaConfigurator:
@@ -62,8 +61,12 @@ class YuccaConfigurator:
     save_softmax (bool, optional): Whether to save softmax predictions during inference. Default is False.
         - Only used during inference. Used to save the softmax predictions combined by model ensembles.
 
-    tiny_patch (bool, optional): Whether to use a tiny patch size. Default is False.
-        - Mainly useful for debugging and/or running on CPU.
+    patch_size (tuple, optional): Patch size. Can be a tuple (2D), tuple (3D), string, or None. Default is None.
+        - If a tuple is provided: the patch size will be set to that value.
+        - If a string is provided:  "max" will set the patch size to the maximum input of the dataset
+                                    "min" will set the patch size to the minimum input of the dataset
+                                    "mean" will set the patch size to the mean input of the dataset
+        - If None is provided: the patch size will be inferred.
     """
 
     def __init__(
@@ -81,7 +84,7 @@ class YuccaConfigurator:
         profile: bool = False,
         prediction_output_dir: str = "./",
         save_softmax: bool = False,
-        tiny_patch: bool = False,
+        patch_size: Union[tuple, Literal["max", "min", "mean", "tiny"]] = None,
     ):
         self.ckpt_path = ckpt_path
         self.continue_from_most_recent = continue_from_most_recent
@@ -96,7 +99,7 @@ class YuccaConfigurator:
         self.planner = planner
         self.profile = profile
         self.task = task
-        self.tiny_patch = tiny_patch
+        self.patch_size = patch_size
 
         # Attributes set upon calling
         self._plans = None
@@ -250,19 +253,36 @@ class YuccaConfigurator:
             self.plans.get("image_extension") or self.plans["dataset_properties"].get("image_extension") or "nii.gz"
         )
         if self.plans.get("batch_size") and self.plans.get("patch_size"):
+            # load batch and patch size from plan if they exist
             self.batch_size = self.plans.get("batch_size")
             self.patch_size = self.plans.get("patch_size")
         else:
-            if self.tiny_patch or not torch.cuda.is_available():
+            if not torch.cuda.is_available():
+                # tiny patch and batch size for CPU training
                 self.batch_size = 2
                 self.patch_size = (32, 32) if self.model_dimensions == "2D" else (32, 32, 32)
-            else:
+            elif isinstance(self.patch_size, str):
+                # If the patch size is a string we need to infer it from the dataset
+                if self.patch_size == "max":
+                    self.patch_size = self.plans["new_max_size"]
+                elif self.patch_size == "min":
+                    self.patch_size = self.plans["new_min_size"]
+                elif self.patch_size == "mean":
+                    self.patch_size = self.plans["new_mean_size"]
+                elif self.patch_size == "tiny":
+                    self.patch_size = (32, 32, 32)
+                if self.model_dimensions == "2D" and len(self.patch_size) == 3:
+                    # If we have now selected a 3D patch for a 2D model we skip the first dim
+                    # as we will be extracting patches from that dimension.
+                    self.patch_size = self.patch_size[1:]
+                # otherwise we use the largest possible patch size that still fits into the GPU
                 self.batch_size, self.patch_size = find_optimal_tensor_dims(
                     dimensionality=self.model_dimensions,
                     num_classes=self.num_classes,
                     modalities=self.num_modalities,
                     model_name=self.model_name,
                     max_patch_size=self.plans["new_mean_size"],
+                    fixed_patch_size=self.patch_size,
                     max_memory_usage_in_gb=self.max_vram,
                 )
         print(f"Using batch size: {self.batch_size} and patch size: {self.patch_size}")
@@ -353,7 +373,6 @@ class YuccaConfigurator:
             "save_softmax": self.save_softmax,
             "prediction_output_dir": self.prediction_output_dir,
             "task": self.task,
-            "tiny_patch": self.tiny_patch,
             "train_data_dir": self.train_data_dir,
         }
 

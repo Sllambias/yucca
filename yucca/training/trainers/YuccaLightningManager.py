@@ -1,6 +1,6 @@
 import lightning as L
 import torch
-from typing import Literal
+from typing import Literal, Union
 from yucca.training.augmentation.YuccaAugmentationComposer import (
     YuccaAugmentationComposer,
 )
@@ -51,6 +51,7 @@ class YuccaLightningManager:
         num_workers: int = 8,
         planner: str = "YuccaPlanner",
         precision: str = "16-mixed",
+        patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
         profile: bool = False,
         step_logging: bool = False,
         task: str = None,
@@ -73,6 +74,11 @@ class YuccaLightningManager:
         self.step_logging = step_logging
         self.task = task
         self.kwargs = kwargs
+
+        if patch_size is None:
+            self.patch_size = "tiny" if self.model_name == "TinyUNet" else None
+        else:
+            self.patch_size = patch_size
 
         # default settings
         self.max_vram = 12
@@ -104,7 +110,7 @@ class YuccaLightningManager:
             profile=self.profile,
             prediction_output_dir=prediction_output_dir,
             save_softmax=save_softmax,
-            tiny_patch=True if self.model_name == "TinyUNet" else False,
+            patch_size=self.patch_size,
             task=self.task,
         )
 
