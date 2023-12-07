@@ -29,7 +29,7 @@ def get_identifiers_from_splitted_files(folder: str, ext, tasks: list):
         )
     else:
         uniques = np.unique([i[: -len("_000." + ext)] for i in subfiles(folder, suffix=ext, join=False)])
-    return uniques
+    return list(uniques)
 
 
 def dirs_in_dir(dir: str):
