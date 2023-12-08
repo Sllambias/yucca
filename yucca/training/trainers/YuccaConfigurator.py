@@ -315,12 +315,12 @@ class YuccaConfigurator:
 
                 # Case 4: fixed patch size, fixed batch size
                 elif self.patch_size is not None and self.batch_size is not None:
-                    print("Using patch and batch sizes provided by user.")
-                    # do nothing. Patch and batch szie already set!
+                    print("Using provided patch and batch sizes.")
+                    # do nothing. Patch and batch size already set!
 
         assert isinstance(self.patch_size, tuple), self.patch_size
-        assert isinstance(self.batch_size, int)
-        assert self.batch_size > 0
+        assert isinstance(self.batch_size, int), self.batch_size
+        assert self.batch_size > 0, self.batch_size
         assert (self.model_dimensions == "2D" and len(self.patch_size) == 2) or (
             self.model_dimensions == "3D" and len(self.patch_size) == 3
         ), (self.model_dimensions, len(self.patch_size))
