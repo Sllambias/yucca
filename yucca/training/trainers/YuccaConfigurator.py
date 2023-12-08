@@ -271,7 +271,7 @@ class YuccaConfigurator:
                 # tiny patch and batch size for CPU training
                 if self.batch_size is None:
                     self.batch_size = 2
-                if self.patch_size is None:
+                if self.patch_size is None or self.patch_size == "tiny":
                     self.patch_size = (32, 32) if self.model_dimensions == "2D" else (32, 32, 32)
             else:
                 # We either have to infer patch size, batch size, both, or none, thus we have to check four cases
@@ -315,13 +315,15 @@ class YuccaConfigurator:
 
                 # Case 4: fixed patch size, fixed batch size
                 elif self.patch_size is not None and self.batch_size is not None:
-                    # sanitize user input
-                    assert isinstance(self.patch_size, tuple)
-                    assert isinstance(self.patch_size, int)
-                    assert self.batch_size > 0
-                    assert (self.model_dimensions == "2D" and len(self.patch_size) == 2) or (
-                        self.model_dimensions == "3D" and len(self.patch_size) == 3
-                    ), (self.model_dimensions, len(self.patch_size))
+                    print("Using patch and batch sizes provided by user.")
+                    # do nothing. Patch and batch szie already set!
+
+        assert isinstance(self.patch_size, tuple), self.patch_size
+        assert isinstance(self.batch_size, int)
+        assert self.batch_size > 0
+        assert (self.model_dimensions == "2D" and len(self.patch_size) == 2) or (
+            self.model_dimensions == "3D" and len(self.patch_size) == 3
+        ), (self.model_dimensions, len(self.patch_size))
 
         print(f"Using batch size: {self.batch_size} and patch size: {self.patch_size}")
 
