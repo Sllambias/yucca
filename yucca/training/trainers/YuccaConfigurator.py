@@ -1,5 +1,7 @@
 import torch
 import yucca
+import math
+import logging
 import numpy as np
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
@@ -393,7 +395,12 @@ class YuccaConfigurator:
 
         elif self.split_method == "tiny_val":
             np.random.shuffle(files)  # inplace
-            num_val = int(len(files) * 0.01)
+            num_val = math.ceil(len(files) * 0.01)
+            if num_val < 10:
+                logging.warning(
+                    "The validation split is very small. Are you sure you want to use the tiny_val splitting method?"
+                )
+
             splits.append({"train": list(files[num_val:]), "val": list(files[:num_val])})
 
         assert len(splits) > 0
@@ -442,4 +449,4 @@ if __name__ == "__main__":
         manager_name="YuccaLightningManager",
         split_method="tiny_val",
     )
-    x.val_split
+    print(x.val_split)
