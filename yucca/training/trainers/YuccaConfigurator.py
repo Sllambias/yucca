@@ -84,7 +84,7 @@ class YuccaConfigurator:
         continue_from_most_recent: bool = True,
         disable_logging: bool = False,
         folds: str = "0",
-        split_method: Literal["5fold", "tiny_val"] = "kfold",
+        split_method: Literal["5fold", "tiny_val"] = "5fold",
         max_vram: int = 12,
         manager_name: str = "YuccaLightningManager",
         model_dimensions: str = "3D",
@@ -436,6 +436,10 @@ if __name__ == "__main__":
     from pytorch_lightning.loggers import WandbLogger, CSVLogger
 
     x = YuccaConfigurator(
-        task="Task001_OASIS", model_name="TinyUNet", model_dimensions="2D", manager_name="YuccaLightningManager"
+        task="Task001_OASIS",
+        model_name="TinyUNet",
+        model_dimensions="2D",
+        manager_name="YuccaLightningManager",
+        split_method="tiny_val",
     )
-    # x.val_split
+    x.val_split
