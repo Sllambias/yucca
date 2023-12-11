@@ -396,6 +396,7 @@ class YuccaConfigurator:
             num_val = int(len(files) * 0.01)
             splits.append({"train": list(files[num_val:]), "val": list(files[:num_val])})
 
+        assert len(splits) > 0
         save_pickle(splits, splits_file)
 
     def populate_lm_hparams(self):
