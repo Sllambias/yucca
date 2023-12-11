@@ -123,7 +123,7 @@ class YuccaDataModule(pl.LightningDataModule):
         )
 
     def val_dataloader(self):
-        val_sampler = self.sampler(self.val_dataset)
+        val_sampler = self.sampler(self.val_dataset) if self.sampler is not None else None
         return DataLoader(
             self.val_dataset,
             num_workers=self.val_num_workers,
