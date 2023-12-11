@@ -45,6 +45,10 @@ class YuccaConfigurator:
 
     folds (str, optional): Fold identifier for cross-validation. Default is "0".
 
+    split_method (str): either tiny_val or 5fold.
+        - If tiny_val, the split is 1% val and 99% train, chosen randomly.
+        - If 5fold, the fold is a simple 5-fold with an 80/20 split.
+
     max_vram (int, optional): Maximum VRAM (Video RAM) usage in gigabytes. Default is 12.
 
     manager_name (str, optional): Name of the manager associated with the pipeline. Default is "YuccaLightningManager".
@@ -80,6 +84,7 @@ class YuccaConfigurator:
         continue_from_most_recent: bool = True,
         disable_logging: bool = False,
         folds: str = "0",
+        split_method: Literal["5fold", "tiny_val"] = "kfold",
         max_vram: int = 12,
         manager_name: str = "YuccaLightningManager",
         model_dimensions: str = "3D",
@@ -94,6 +99,8 @@ class YuccaConfigurator:
         self.ckpt_path = ckpt_path
         self.continue_from_most_recent = continue_from_most_recent
         self.folds = folds
+        self.split_method = split_method
+        assert split_method in ["5fold", "tiny_val"]
         self.disable_logging = disable_logging
         self.max_vram = max_vram
         self.model_dimensions = model_dimensions
@@ -374,13 +381,20 @@ class YuccaConfigurator:
         assert files, f"Couldn't find any .npy or .npz files in {self.train_data_dir}"
 
         files = np.array(files)
-        # We set this seed manually as multiple trainers might use this split,
-        # And we may not know which individual seed dictated the data splits
-        # Therefore for reproducibility this is fixed.
 
-        kf = KFold(n_splits=5, shuffle=True, random_state=52189)
-        for train, val in kf.split(files):
-            splits.append({"train": list(files[train]), "val": list(files[val])})
+        if self.split_method == "5fold":
+            # We set this seed manually as multiple trainers might use this split,
+            # And we may not know which individual seed dictated the data splits
+            # Therefore for reproducibility this is fixed.
+
+            kf = KFold(n_splits=5, shuffle=True, random_state=52189)
+            for train, val in kf.split(files):
+                splits.append({"train": list(files[train]), "val": list(files[val])})
+
+        elif self.split_method == "tiny_val":
+            np.random.shuffle(files)  # inplace
+            num_val = int(len(files) * 0.01)
+            splits.append({"train": list(files[num_val:]), "val": list(files[:num_val])})
 
         save_pickle(splits, splits_file)
 
