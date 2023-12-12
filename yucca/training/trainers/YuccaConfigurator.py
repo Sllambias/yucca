@@ -297,7 +297,6 @@ class YuccaConfigurator:
 
             # Case 3: fixed patch size, infer batch size
             elif self.patch_size is not None and self.batch_size is None:
-
                 self.batch_size, self.patch_size = find_optimal_tensor_dims(
                     fixed_patch_size=self.patch_size,
                     dimensionality=self.model_dimensions,
