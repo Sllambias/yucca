@@ -45,7 +45,7 @@ def normalizer(array: np.ndarray, scheme: str, intensities: {}):
         mask = array != empty_val
         array = clamp(array, mask=mask)
         array = znormalize(array, mask=mask)
-        array = rescale(array, range=(-1, 1))
+        array = rescale(array, range=(0, 1))
         return array
 
 

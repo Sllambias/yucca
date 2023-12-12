@@ -67,6 +67,10 @@ class YuccaConfigurator:
                                     "min" will set the patch size to the minimum input of the dataset
                                     "mean" will set the patch size to the mean input of the dataset
         - If None is provided: the patch size will be inferred.
+
+    batch_size: Batch size. Can be either an integer or None. Default is None.
+        - If an interger is provided: the batch size will be set to that value.
+        - If None is provided: the batch size will be inferred.
     """
 
     def __init__(
@@ -85,6 +89,7 @@ class YuccaConfigurator:
         prediction_output_dir: str = "./",
         save_softmax: bool = False,
         patch_size: Union[tuple, Literal["max", "min", "mean", "tiny"]] = None,
+        batch_size: int = None,
     ):
         self.ckpt_path = ckpt_path
         self.continue_from_most_recent = continue_from_most_recent
@@ -100,6 +105,7 @@ class YuccaConfigurator:
         self.profile = profile
         self.task = task
         self.patch_size = patch_size
+        self.batch_size = batch_size
 
         # Attributes set upon calling
         self._plans = None
@@ -263,32 +269,62 @@ class YuccaConfigurator:
         else:
             if not torch.cuda.is_available():
                 # tiny patch and batch size for CPU training
-                self.batch_size = 2
-                self.patch_size = (32, 32) if self.model_dimensions == "2D" else (32, 32, 32)
-            elif isinstance(self.patch_size, str):
-                # If the patch size is a string we need to infer it from the dataset
-                if self.patch_size == "max":
-                    self.patch_size = self.plans["new_max_size"]
-                elif self.patch_size == "min":
-                    self.patch_size = self.plans["new_min_size"]
-                elif self.patch_size == "mean":
-                    self.patch_size = self.plans["new_mean_size"]
-                elif self.patch_size == "tiny":
-                    self.patch_size = (32, 32, 32)
-                if self.model_dimensions == "2D" and len(self.patch_size) == 3:
-                    # If we have now selected a 3D patch for a 2D model we skip the first dim
-                    # as we will be extracting patches from that dimension.
-                    self.patch_size = self.patch_size[1:]
-                # otherwise we use the largest possible patch size that still fits into the GPU
-                self.batch_size, self.patch_size = find_optimal_tensor_dims(
-                    dimensionality=self.model_dimensions,
-                    num_classes=self.num_classes,
-                    modalities=self.num_modalities,
-                    model_name=self.model_name,
-                    max_patch_size=self.plans["new_mean_size"],
-                    fixed_patch_size=self.patch_size,
-                    max_memory_usage_in_gb=self.max_vram,
-                )
+                if self.batch_size is None:
+                    self.batch_size = 2
+                if self.patch_size is None or self.patch_size == "tiny":
+                    self.patch_size = (32, 32) if self.model_dimensions == "2D" else (32, 32, 32)
+            else:
+                # We either have to infer patch size, batch size, both, or none, thus we have to check four cases
+                # Case 1: infer patch size, infer batch size
+                if self.patch_size is None and self.batch_size is None:
+                    self.batch_size, self.patch_size = find_optimal_tensor_dims(
+                        dimensionality=self.model_dimensions,
+                        num_classes=self.num_classes,
+                        modalities=self.num_modalities,
+                        model_name=self.model_name,
+                        max_patch_size=self.plans["new_mean_size"],
+                        max_memory_usage_in_gb=self.max_vram,
+                    )
+                # Case 2: infer patch size, fixed batch size
+                elif self.patch_size is None and self.batch_size is not None:
+                    raise NotImplementedError  # Not yet supported in Yuccalib
+
+                # Case 3: fixed patch size, infer batch size
+                elif self.patch_size is not None and self.batch_size is None:
+                    # Get patch size from dataset
+                    if isinstance(self.patch_size, str):
+                        if self.patch_size in ["max", "min", "mean"]:
+                            self.patch_size = self.plans[f"new_{self.patch_size}_size"]
+                        elif self.patch_size == "tiny":
+                            self.patch_size = (32, 32, 32)
+
+                        if self.model_dimensions == "2D" and len(self.patch_size) == 3:
+                            # If we have now selected a 3D patch for a 2D model we skip the first dim
+                            # as we will be extracting patches from that dimension.
+                            self.patch_size = self.patch_size[1:]
+
+                    self.batch_size, self.patch_size = find_optimal_tensor_dims(
+                        fixed_patch_size=self.patch_size,
+                        dimensionality=self.model_dimensions,
+                        num_classes=self.num_classes,
+                        modalities=self.num_modalities,
+                        model_name=self.model_name,
+                        max_patch_size=self.plans["new_mean_size"],
+                        max_memory_usage_in_gb=self.max_vram,
+                    )
+
+                # Case 4: fixed patch size, fixed batch size
+                elif self.patch_size is not None and self.batch_size is not None:
+                    print("Using provided patch and batch sizes.")
+                    # do nothing. Patch and batch size already set!
+
+        assert isinstance(self.patch_size, tuple), self.patch_size
+        assert isinstance(self.batch_size, int), self.batch_size
+        assert self.batch_size > 0, self.batch_size
+        assert (self.model_dimensions == "2D" and len(self.patch_size) == 2) or (
+            self.model_dimensions == "3D" and len(self.patch_size) == 3
+        ), (self.model_dimensions, len(self.patch_size))
+
         print(f"Using batch size: {self.batch_size} and patch size: {self.patch_size}")
 
     def setup_aug_params(self):
