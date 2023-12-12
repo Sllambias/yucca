@@ -77,7 +77,7 @@ class YuccaPreprocessor(object):
         self.input_dir = join(yucca_raw_data, self.task)
         self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
         self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
-        self.subject_ids = subfiles(join(self.input_dir, "labelsTr"), suffix=self.image_extension, join=False)
+        self.subject_ids = subfiles(join(self.input_dir, "labelsTr"), join=False)
 
     def initialize_properties(self):
         """
