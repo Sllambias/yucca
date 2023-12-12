@@ -21,13 +21,12 @@ def convert(path: str, txt_file_prefix: str = "data"):
     We are abusing the subdir argument to specify a file with the label paths.
 
     Usage:
-        python run_task_conversion.py -t Task901_SONAI_NoLabel -p /path/to/SONAI -d data.txt
+        python run_task_conversion.py -t Task901_SONAI_NoLabel -p /path/to/SONAI -d data
 
-        there need to be data_train.txt and data_test.txt files in the SONAI directory. (data is the default prefix)
+        there need to be data_train.txt and data_test.txt files in the specified directory. (data is the default prefix)
     """
 
     # INPUT DATA
-    path = f"{path}"
     images_tr_txt = join(path, f"{txt_file_prefix}_train.txt")
     images_ts_txt = join(path, f"{txt_file_prefix}_test.txt")
 
