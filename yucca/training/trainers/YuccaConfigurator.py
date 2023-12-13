@@ -116,7 +116,7 @@ class YuccaConfigurator:
 
         # Now run the setup
         self.setup_paths()
-        self.setup_data_params()
+        self.setup_plan_properties()
         self.setup_aug_params()
         self.setup_callbacks()
         self.setup_loggers()
@@ -252,77 +252,12 @@ class YuccaConfigurator:
         maybe_mkdir_p(self.outpath)
         self.plans_path = join(yucca_preprocessed_data, self.task, self.planner, self.planner + "_plans.json")
 
-    def setup_data_params(self):
-        # (1) check if previous versions exist
-        # (2) check if we want to continue from this
-        # (3) check if hparams were created for the previous version
-
+    def setup_plan_properties(self):
         self.num_classes = max(1, self.plans.get("num_classes") or len(self.plans["dataset_properties"]["classes"]))
         self.num_modalities = max(1, self.plans.get("num_modalities") or len(self.plans["dataset_properties"]["modalities"]))
         self.image_extension = (
             self.plans.get("image_extension") or self.plans["dataset_properties"].get("image_extension") or "nii.gz"
         )
-        if self.plans.get("batch_size") and self.plans.get("patch_size"):
-            # load batch and patch size from plan if they exist
-            self.batch_size = self.plans.get("batch_size")
-            self.patch_size = self.plans.get("patch_size")
-        else:
-            # convert patch_size provided as string to tuple
-            if isinstance(self.patch_size, str):
-                if self.patch_size in ["max", "min", "mean"]:
-                    # Get patch size from dataset
-                    self.patch_size = self.plans[f"new_{self.patch_size}_size"]
-                elif self.patch_size == "tiny":
-                    self.patch_size = (32, 32, 32)
-
-                if self.model_dimensions == "2D" and len(self.patch_size) == 3:
-                    # If we have now selected a 3D patch for a 2D model we skip the first dim
-                    # as we will be extracting patches from that dimension.
-                    self.patch_size = self.patch_size[1:]
-
-            # We either have to infer patch size, batch size, both, or none, thus we have to check four cases
-            # Case 1: infer patch size, infer batch size
-            if self.patch_size is None and self.batch_size is None:
-                self.batch_size, self.patch_size = find_optimal_tensor_dims(
-                    dimensionality=self.model_dimensions,
-                    num_classes=self.num_classes,
-                    modalities=self.num_modalities,
-                    model_name=self.model_name,
-                    max_patch_size=self.plans["new_mean_size"],
-                    max_memory_usage_in_gb=self.max_vram,
-                )
-            # Case 2: infer patch size, fixed batch size
-            elif self.patch_size is None and self.batch_size is not None:
-                raise NotImplementedError  # Not yet supported in Yuccalib
-
-            # Case 3: fixed patch size, infer batch size
-            elif self.patch_size is not None and self.batch_size is None:
-                self.batch_size, self.patch_size = find_optimal_tensor_dims(
-                    fixed_patch_size=self.patch_size,
-                    dimensionality=self.model_dimensions,
-                    num_classes=self.num_classes,
-                    modalities=self.num_modalities,
-                    model_name=self.model_name,
-                    max_patch_size=self.plans["new_mean_size"],
-                    max_memory_usage_in_gb=self.max_vram,
-                )
-
-            # Case 4: fixed patch size, fixed batch size
-            elif self.patch_size is not None and self.batch_size is not None:
-                print("Using provided patch and batch sizes.")
-                # do nothing. Patch and batch size already set!
-            else:
-                # we should never get here
-                raise ValueError(f"Unhandled case: {self.patch_size}, {self.batch_size}")
-
-        assert isinstance(self.patch_size, tuple), self.patch_size
-        assert isinstance(self.batch_size, int), self.batch_size
-        assert self.batch_size > 0, self.batch_size
-        assert (self.model_dimensions == "2D" and len(self.patch_size) == 2) or (
-            self.model_dimensions == "3D" and len(self.patch_size) == 3
-        ), (self.model_dimensions, len(self.patch_size))
-
-        print(f"Using batch size: {self.batch_size} and patch size: {self.patch_size}")
 
     def setup_aug_params(self):
         preprocessor_class = recursive_find_python_class(
