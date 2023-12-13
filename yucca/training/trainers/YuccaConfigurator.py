@@ -79,7 +79,7 @@ class YuccaConfigurator:
         ckpt_path: str = None,
         continue_from_most_recent: bool = True,
         disable_logging: bool = False,
-        folds: str = "0",
+        fold: int = "0",
         max_vram: int = 12,
         manager_name: str = "YuccaLightningManager",
         model_dimensions: str = "3D",
@@ -93,7 +93,7 @@ class YuccaConfigurator:
     ):
         self.ckpt_path = ckpt_path
         self.continue_from_most_recent = continue_from_most_recent
-        self.folds = folds
+        self.fold = fold
         self.disable_logging = disable_logging
         self.max_vram = max_vram
         self.model_dimensions = model_dimensions
@@ -109,8 +109,6 @@ class YuccaConfigurator:
 
         # Attributes set upon calling
         self._plans = None
-        self._train_split = None
-        self._val_split = None
         self._version = None
         self._profiler = None
 
@@ -148,21 +146,6 @@ class YuccaConfigurator:
         if self.profile and self._profiler is None:
             self._profiler = SimpleProfiler(dirpath=self.outpath, filename="simple_profile")
         return self._profiler
-
-    @property
-    def train_split(self):
-        # We do not want to make "self.load_splits" a part of the default pipeline, since many
-        # test sets will not have a training set and thus no splits. E.g. training on
-        # DatasetA with a training set and running inference on DatasetB with no training set.
-        if self._train_split is None:
-            self.load_splits()
-        return self._train_split
-
-    @property
-    def val_split(self):
-        if self._val_split is None:
-            self.load_splits()
-        return self._val_split
 
     @property
     def version(self) -> Union[None, int]:
@@ -246,7 +229,7 @@ class YuccaConfigurator:
             self.task,
             self.model_name + "__" + self.model_dimensions,
             self.manager_name + "__" + self.planner,
-            f"fold_{self.folds}",
+            f"fold_{self.fold}",
         )
         self.outpath = join(self.save_dir, f"version_{self.version}")
         maybe_mkdir_p(self.outpath)
@@ -349,41 +332,6 @@ class YuccaConfigurator:
         else:
             self.task_type = "segmentation"
 
-    def load_splits(self):
-        # Load splits file or create it if not found (see: "split_data").
-        splits_file = join(yucca_preprocessed_data, self.task, "splits.pkl")
-        if not isfile(splits_file):
-            self.split_data(splits_file)
-
-        splits_file = load_pickle(join(yucca_preprocessed_data, self.task, "splits.pkl"))
-        self._train_split = splits_file[int(self.folds)]["train"]
-        self._val_split = splits_file[int(self.folds)]["val"]
-
-    def split_data(self, splits_file):
-        splits = []
-
-        files = subfiles(self.train_data_dir, join=False, suffix=".npy")
-        if not files:
-            files = subfiles(self.train_data_dir, join=False, suffix=".npz")
-            if files:
-                self.log(
-                    "Only found compressed (.npz) files. This might increase runtime.",
-                    time=False,
-                )
-
-        assert files, f"Couldn't find any .npy or .npz files in {self.train_data_dir}"
-
-        files = np.array(files)
-        # We set this seed manually as multiple trainers might use this split,
-        # And we may not know which individual seed dictated the data splits
-        # Therefore for reproducibility this is fixed.
-
-        kf = KFold(n_splits=5, shuffle=True, random_state=52189)
-        for train, val in kf.split(files):
-            splits.append({"train": list(files[train]), "val": list(files[val])})
-
-        save_pickle(splits, splits_file)
-
     def populate_lm_hparams(self):
         # Here we control which variables go into the hparam dict that we pass to the LightningModule
         # This way we can make sure it won't be given args that could potentially break it (such as classes that might be changed)
@@ -394,7 +342,6 @@ class YuccaConfigurator:
             "ckpt_path": self.ckpt_path,
             "continue_from_most_recent": self.continue_from_most_recent,
             "disable_logging": self.disable_logging,
-            "folds": self.folds,
             "image_extension": self.image_extension,
             "manager_name": self.manager_name,
             "max_vram": self.max_vram,
