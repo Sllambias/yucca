@@ -93,6 +93,3 @@ def get_profiler(profile, outpath):
         return SimpleProfiler(dirpath=outpath, filename="simple_profile")
     else:
         return None
-
-
-callback_config = configure_callbacks(task="Task001", version_dir=".", save_dir=".", version=0, profile=False)
