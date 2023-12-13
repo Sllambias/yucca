@@ -10,6 +10,9 @@ class BatchPatchConfig:
     batch_size: int
     patch_size: Union[Tuple[int, int], Tuple[int, int, int]]
 
+    def lm_hparams(self):
+        return {"batch_size": self.batch_size, "patch_size": self.patch_size}
+
 
 def get_batch_patch_size_cfg(
     plan: dict,
