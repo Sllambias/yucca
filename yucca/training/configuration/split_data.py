@@ -52,6 +52,8 @@ def get_split_config(
     if isfile(splits_path):
         splits = load_pickle(splits_path)
         if isinstance(splits, SplitConfig):
+            splits.fold = fold
+            logging.warn(f"Reusing already computed split file which was split using the {method} method")
             return splits
 
     files = get_file_names(train_data_dir)
