@@ -10,13 +10,13 @@ from lightning.pytorch.profilers.profiler import Profiler
 
 
 @dataclass
-class CallbackConfigurator:
+class CallbackConfig:
     callbacks: list
     loggers: list
     profiler: Profiler
 
 
-def configure_callbacks(
+def get_callback_config(
     task: str,
     save_dir: str,
     version_dir: str,
@@ -32,7 +32,7 @@ def configure_callbacks(
     loggers = get_loggers(task, save_dir, version_dir, version, disable_logging, steps_per_epoch)
     profiler = get_profiler(profile, save_dir)
 
-    return CallbackConfigurator(callbacks=callbacks, loggers=loggers, profiler=profiler)
+    return CallbackConfig(callbacks=callbacks, loggers=loggers, profiler=profiler)
 
 
 def get_loggers(
