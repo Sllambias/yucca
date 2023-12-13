@@ -55,7 +55,7 @@ def get_split_config(
         if isinstance(splits, SplitConfig):
             return splits
 
-    files = load_files(train_data_dir)
+    files = get_file_names(train_data_dir)
     return perform_split(files, splits_path, fold, method, k, val_ratio, seed)
 
 
@@ -86,12 +86,12 @@ def perform_split(files: list[str], splits_path: str, fold: int, method: str, k:
     return splits
 
 
-def load_files(train_data_dir):
-    files = subfiles(train_data_dir, join=False, suffix=".npy")
-    if not files:
-        files = subfiles(train_data_dir, join=False, suffix=".npz")
-        if files:
+def get_file_names(train_data_dir):
+    file_names = subfiles(train_data_dir, join=False, suffix=".npy")
+    if not file_names:
+        file_names = subfiles(train_data_dir, join=False, suffix=".npz")
+        if file_names:
             logging.warn("Only found compressed (.npz) files. This might increase runtime.")
 
-    assert files, f"Couldn't find any .npy or .npz files in {train_data_dir}"
-    return np.array(files)
+    assert file_names, f"Couldn't find any .npy or .npz files in {train_data_dir}"
+    return np.array(file_names)
