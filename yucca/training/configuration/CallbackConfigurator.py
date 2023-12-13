@@ -35,11 +35,9 @@ class CallbackConfigurator:
         self.setup_profiler()
 
     def setup_loggers(self):
-        # The CSVLogger is the barebones logger needed to save hparams.yaml and set the proper
-        # outpath that will be expected by the pipeline for continued training etc.
+        # The YuccaLogger is the barebones logger needed to save hparams.yaml
         # It should generally never be disabled.
         self.loggers = []
-        # self.loggers.append(CSVLogger(save_dir=self.outpath, name=None, version=self.version))
         self.loggers.append(
             YuccaLogger(
                 disable_logging=self.disable_logging,
