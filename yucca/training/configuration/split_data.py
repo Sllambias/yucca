@@ -3,7 +3,6 @@ import logging
 import math
 import numpy as np
 from batchgenerators.utilities.file_and_folder_operations import join, subfiles, isfile, save_pickle, load_pickle
-from enum import StrEnum, auto
 
 from sklearn.model_selection import KFold
 from yucca.paths import yucca_preprocessed_data
