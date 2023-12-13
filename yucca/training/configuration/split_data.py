@@ -3,7 +3,7 @@ import logging
 import math
 import numpy as np
 from batchgenerators.utilities.file_and_folder_operations import join, subfiles, isfile, save_pickle, load_pickle
-from enum import StrEnum, auto, asdict
+from enum import StrEnum, auto
 
 from sklearn.model_selection import KFold
 from yucca.paths import yucca_preprocessed_data
@@ -66,7 +66,7 @@ def perform_split(files: list[str], splits_path: str, fold: int, method: str, k:
         folds = []
         for train, val in kf.split(files):
             folds.append({"train": list(files[train]), "val": list(files[val])})
-        splits = SplitConfig(folds, fold, method, seed=seed, k=k, seed=seed)
+        splits = SplitConfig(folds, fold, method, k=k, seed=seed)
 
     elif method == "simple":
         assert val_ratio is not None
@@ -78,6 +78,7 @@ def perform_split(files: list[str], splits_path: str, fold: int, method: str, k:
 
         folds = [{"train": list(files[train]), "val": list(files[val])}]
         splits = SplitConfig(folds, fold, method, val_ratio=val_ratio, seed=seed)
+
     else:
         raise ValueError("`method` is not a valid SplitMethod")
 

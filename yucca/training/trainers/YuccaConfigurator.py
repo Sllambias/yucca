@@ -79,7 +79,7 @@ class YuccaConfigurator:
         ckpt_path: str = None,
         continue_from_most_recent: bool = True,
         disable_logging: bool = False,
-        fold: int = "0",
+        fold: int = 0,
         max_vram: int = 12,
         manager_name: str = "YuccaLightningManager",
         model_dimensions: str = "3D",

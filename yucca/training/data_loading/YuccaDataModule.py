@@ -3,7 +3,7 @@ import torchvision
 from typing import Literal
 from torch.utils.data import DataLoader, Sampler
 from batchgenerators.utilities.file_and_folder_operations import join
-from yucca.training.configuration.split_data import Split
+from yucca.training.configuration.split_data import SplitConfig
 from yucca.training.data_loading.YuccaDataset import YuccaTestDataset, YuccaTrainDataset
 from yucca.training.data_loading.samplers import InfiniteRandomSampler
 from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
@@ -46,7 +46,7 @@ class YuccaDataModule(pl.LightningDataModule):
     def __init__(
         self,
         configurator: YuccaConfigurator,
-        split: Split,
+        split: SplitConfig,
         composed_train_transforms: torchvision.transforms.Compose = None,
         composed_val_transforms: torchvision.transforms.Compose = None,
         num_workers: int = 8,
@@ -64,8 +64,8 @@ class YuccaDataModule(pl.LightningDataModule):
         self.patch_size = self.cfg.patch_size
         self.task_type = self.cfg.task_type
         self.train_data_dir = self.cfg.train_data_dir
-        self.train_split = split.train
-        self.val_split = split.val
+        self.train_split = split.train()
+        self.val_split = split.val()
         self.image_extension = self.cfg.image_extension
 
         # Set by initialize()
