@@ -29,7 +29,9 @@ class UnsupervisedPreprocessor(YuccaPreprocessor):
         self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
 
         subject_ids = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension, join=False)
-        self.subject_ids = [re.sub(r"_\d+\.", ".", subject) for subject in subject_ids]
+        self.subject_ids = [
+            file for file in subfiles(join(self.input_dir, "labelsTr"), join=False) if not file.startswith(".")
+        ]
 
     def _preprocess_train_subject(self, subject_id):
         image_props = {}
