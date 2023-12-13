@@ -311,6 +311,9 @@ class YuccaConfigurator:
             elif self.patch_size is not None and self.batch_size is not None:
                 print("Using provided patch and batch sizes.")
                 # do nothing. Patch and batch size already set!
+            else:
+                # we should never get here
+                raise ValueError(f"Unhandled case: {self.patch_size}, {self.batch_size}")
 
         assert isinstance(self.patch_size, tuple), self.patch_size
         assert isinstance(self.batch_size, int), self.batch_size
