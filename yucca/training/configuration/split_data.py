@@ -2,8 +2,8 @@ from dataclasses import dataclass
 import logging
 import math
 import numpy as np
-from batchgenerators.utilities.file_and_folder_operations import join, subfiles, isfile, save_pickle, load_pickle, load_files
-from enum import StrEnum, auto
+from batchgenerators.utilities.file_and_folder_operations import join, subfiles, isfile, save_pickle, load_pickle
+from enum import StrEnum, auto, asdict
 
 from sklearn.model_selection import KFold
 from yucca.paths import yucca_preprocessed_data
@@ -12,58 +12,72 @@ from yucca.paths import yucca_preprocessed_data
 # And we may not know which individual seed dictated the data splits
 # Therefore for reproducibility this is fixed.
 DEFAULT_SEED = 52189
+allowed_split_methods = ["kfold", "simple"]
 
-class SplitMethod(StrEnum):
-    KFOLD = auto()
-    SIMPLE = auto()
 
 @dataclass
-class Splits:
+class SplitConfig:
     folds: list[dict]
-    method: SplitMethod
+    fold: int
+    method: str
     seed: int
     k: int = None
-    p: float = None
+    val_ratio: float = None
 
-    def train(self, fold):
-        return self.folds[fold]["train"]
+    def train(self):
+        return self.folds[self.fold]["train"]
 
-    def val(self, fold):
-        return self.folds[fold]["val"]
+    def val(self):
+        return self.folds[self.fold]["val"]
+
+    def lm_hparams(self):
+        return {"fold": self.fold, "method": self.method, "seed": self.seed, "k": self.k, "val_ratio": self.val_ratio}
 
 
-def split_data(train_data_dir: str, task: str, method: SplitMethod, k: int = 5, p: float = 0.01, seed: int = DEFAULT_SEED):
+def get_split_config(
+    train_data_dir: str,
+    task: str,
+    fold: int = 0,
+    method: str = "kfold",
+    k: int = 5,
+    val_ratio: float = 0.01,
+    seed: int = DEFAULT_SEED,
+):
     """
     If method is `SplitMethod.KFOLD` then a k argument must be provided
     If method is `SplitMethod.SIMPLE` a p argument must be provided
     """
+    assert method in allowed_split_methods, f"The method {method} is not an allowed splitting method"
+
     splits_path = join(yucca_preprocessed_data, task, "splits.pkl")
     if isfile(splits_path):
         splits = load_pickle(splits_path)
-        if isinstance(splits, Splits):
+        if isinstance(splits, SplitConfig):
             return splits
 
     files = load_files(train_data_dir)
-    return perform_split(files, splits_path, method, k, p, seed)
+    return perform_split(files, splits_path, fold, method, k, val_ratio, seed)
 
 
-def perform_split(files: list[str], splits_path: str, method: SplitMethod, k: int, p: float, seed: int):
-    if method == SplitMethod.KFOLD:
+def perform_split(files: list[str], splits_path: str, fold: int, method: str, k: int, val_ratio: float, seed: int):
+    if method == "kfold":
+        assert k is not None
         kf = KFold(n_splits=k, shuffle=True, random_state=seed)
         folds = []
         for train, val in kf.split(files):
-            folds.append({"train": list(files[train]), "val": list(files[val])}
-        splits = Splits(folds, method, seed=seed, k=k, seed=seed)
+            folds.append({"train": list(files[train]), "val": list(files[val])})
+        splits = SplitConfig(folds, fold, method, seed=seed, k=k, seed=seed)
 
-    elif method == SplitMethod.SIMPLE:
+    elif method == "simple":
+        assert val_ratio is not None
         np.random.seed(seed)
         np.random.shuffle(files)  # inplace
-        num_val = math.ceil(len(files) * p)
+        num_val = math.ceil(len(files) * val_ratio)
         if num_val < 10:
             logging.warning("The validation split is very small. Consider using a higher `p`.")
 
         folds = [{"train": list(files[train]), "val": list(files[val])}]
-        splits = Splits(folds, method, p=p, seed=seed)
+        splits = SplitConfig(folds, fold, method, val_ratio=val_ratio, seed=seed)
     else:
         raise ValueError("`method` is not a valid SplitMethod")
 
