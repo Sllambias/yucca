@@ -88,6 +88,7 @@ def find_optimal_tensor_dims(
     model_name,
     max_patch_size,
     fixed_patch_size: tuple | list = None,
+    fixed_batch_size: tuple | list = None,
     max_memory_usage_in_gb=None,
 ):
     if max_memory_usage_in_gb is None:
@@ -119,6 +120,10 @@ def find_optimal_tensor_dims(
         batch_size = 2
         max_batch_size = 2
         patch_size = [32, 32, 32] if not model_name == "UNetR" else [64, 64, 64]
+
+    if fixed_batch_size:
+        batch_size = fixed_batch_size
+        max_batch_size = fixed_batch_size
 
     absolute_max = 128**3
 
@@ -202,9 +207,10 @@ def find_optimal_tensor_dims(
 if __name__ == "__main__":
     batch_size, patch_size = find_optimal_tensor_dims(
         dimensionality="2D",
+        max_memory_usage_in_gb=6,
         num_classes=3,
         modalities=1,
         model_name="UNet",
         max_patch_size=[187, 151],
-        fixed_patch_size=[187, 151],
+        fixed_patch_size=[120, 130],
     )
