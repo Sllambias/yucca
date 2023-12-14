@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from yuccalib.network_architectures.utils.model_memory_estimation import (
-    find_optimal_tensor_dims,
-)
 from typing import Tuple, Union, Optional, Literal
+
+from yucca.network_architectures.utils.model_memory_estimation import find_optimal_tensor_dims
 
 
 @dataclass
