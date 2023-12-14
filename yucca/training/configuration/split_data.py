@@ -56,7 +56,9 @@ def get_split_config(
             logging.warn(f"Reusing already computed split file which was split using the {method} method")
             return split_cfg
         else:
-            logging.warn(f"Split_cfg was either the wrong type or was generated using a different `k` and `p`")
+            logging.warn(
+                "Generating new split_cfg since split_cfg was either the wrong type or was generated using a different `k` and `p`."
+            )
 
     file_names = get_file_names(train_data_dir)
 
@@ -85,7 +87,7 @@ def kfold_split(file_names: list[str], k: int):
 
 def simple_split(file_names: list[str], p: float):
     assert p is not None
-    assert 0 < p < 1 or p is None
+    assert 0 < p < 1
     np.random.shuffle(file_names)  # inplace
     num_val = math.ceil(len(file_names) * p)
     if num_val < 10:
