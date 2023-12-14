@@ -110,7 +110,6 @@ class YuccaLightningManager:
             model_dimensions=self.model_dimensions,
             model_name=self.model_name,
             planner=self.planner,
-            patch_size=self.patch_size,
             task=self.task,
         )
 
