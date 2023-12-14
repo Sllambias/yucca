@@ -51,7 +51,7 @@ def get_loggers(
     loggers = [
         YuccaLogger(
             disable_logging=disable_logging,
-            save_dir=version_dir,
+            save_dir=save_dir,
             name=None,
             version=version,
             steps_per_epoch=steps_per_epoch,
