@@ -30,6 +30,7 @@ dependencies = [
     "setuptools",
     "SimpleITK",
     "tqdm",
+    "timm>=0.9.8",
     "torchmetrics",
     "torchvision>=0.16.0",
     "wandb",
