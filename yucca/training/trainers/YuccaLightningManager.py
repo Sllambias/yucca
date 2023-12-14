@@ -129,7 +129,6 @@ class YuccaLightningManager:
             parameter_dict=self.configurator.augmentation_parameter_dict,
         )
 
-        splits = get_split_config(self.configurator.train_data_dir, self.configurator.task)
         callback_config = get_callback_config(
             task=self.task,
             save_dir=self.configurator.save_dir,
