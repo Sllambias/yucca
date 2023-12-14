@@ -40,7 +40,7 @@ class YuccaLightningModule(L.LightningModule):
         # Extract parameters from the configurator
         self.num_classes = config["num_classes"]
         self.num_modalities = config["num_modalities"]
-        self.outpath = config["outpath"]
+        self.version_dir = config["version_dir"]
         self.plans = config["plans"]
         self.plans_path = config["plans_path"]
         self.model_name = config["model_name"]
@@ -141,7 +141,7 @@ class YuccaLightningModule(L.LightningModule):
             class_name=self.plans["preprocessor"],
             current_module="yucca.preprocessing",
         )
-        self.preprocessor = preprocessor_class(join(self.outpath, "hparams.yaml"))
+        self.preprocessor = preprocessor_class(join(self.version_dir, "hparams.yaml"))
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         case, case_id = batch
