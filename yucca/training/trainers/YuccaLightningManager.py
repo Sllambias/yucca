@@ -45,7 +45,7 @@ class YuccaLightningManager:
         continue_from_most_recent: bool = True,
         deep_supervision: bool = False,
         disable_logging: bool = False,
-        fold: int = 0,
+        split_idx: int = 0,
         loss: str = "DiceCE",
         max_epochs: int = 1000,
         model_dimensions: str = "3D",
@@ -63,7 +63,7 @@ class YuccaLightningManager:
         self.continue_from_most_recent = continue_from_most_recent
         self.deep_supervision = deep_supervision
         self.disable_logging = disable_logging
-        self.fold = fold
+        self.split_idx = split_idx
         self.loss = loss
         self.max_epochs = max_epochs
         self.model_dimensions = model_dimensions
@@ -122,7 +122,7 @@ class YuccaLightningManager:
             parameter_dict=self.configurator.augmentation_parameter_dict,
         )
 
-        split = get_split_config(self.configurator.train_data_dir, self.configurator.task, fold=self.fold)
+        split = get_split_config(self.configurator.train_data_dir, self.configurator.task, split_idx=self.split_idx)
 
         self.model_module = YuccaLightningModule(
             config=self.configurator.lm_hparams | split.lm_hparams(),

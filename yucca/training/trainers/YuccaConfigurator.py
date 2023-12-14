@@ -79,7 +79,7 @@ class YuccaConfigurator:
         ckpt_path: str = None,
         continue_from_most_recent: bool = True,
         disable_logging: bool = False,
-        fold: int = 0,
+        split_idx: int = 0,
         max_vram: int = 12,
         manager_name: str = "YuccaLightningManager",
         model_dimensions: str = "3D",
@@ -93,7 +93,7 @@ class YuccaConfigurator:
     ):
         self.ckpt_path = ckpt_path
         self.continue_from_most_recent = continue_from_most_recent
-        self.fold = fold
+        self.split_idx = split_idx
         self.disable_logging = disable_logging
         self.max_vram = max_vram
         self.model_dimensions = model_dimensions
@@ -229,7 +229,7 @@ class YuccaConfigurator:
             self.task,
             self.model_name + "__" + self.model_dimensions,
             self.manager_name + "__" + self.planner,
-            f"fold_{self.fold}",
+            f"fold_{self.split_idx}",
         )
         self.outpath = join(self.save_dir, f"version_{self.version}")
         maybe_mkdir_p(self.outpath)
