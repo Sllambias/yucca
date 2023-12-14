@@ -19,11 +19,12 @@ from sklearn.model_selection import KFold
 from yucca.preprocessing.UnsupervisedPreprocessor import UnsupervisedPreprocessor
 from yucca.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
 from yucca.paths import yucca_models, yucca_preprocessed_data
-from yuccalib.network_architectures.utils.model_memory_estimation import (
+from yucca.network_architectures.utils.model_memory_estimation import (
     find_optimal_tensor_dims,
 )
-from yuccalib.utils.files_and_folders import WritePredictionFromLogits, recursive_find_python_class
-from yuccalib.evaluation.loggers import YuccaLogger
+from yucca.utils.files_and_folders import recursive_find_python_class
+from yucca.utils.saving import WritePredictionFromLogits
+from yucca.evaluation.loggers import YuccaLogger
 from typing import Union, Literal
 
 
@@ -40,9 +41,6 @@ class YuccaConfigurator:
         - When this is False the Configurator will look for previous trainings and start a new training with a
         version one higher than the latest
 
-    disable_logging (bool, optional): Whether to disable logging. Default is False.
-        - This disables both the training log file and WandB logging. hparams.yaml will still be saved.
-
     folds (str, optional): Fold identifier for cross-validation. Default is "0".
 
     max_vram (int, optional): Maximum VRAM (Video RAM) usage in gigabytes. Default is 12.
@@ -54,12 +52,6 @@ class YuccaConfigurator:
     model_name (str, optional): Model architecture name. Default is "UNet".
 
     planner (str, optional): Name of the planner associated with the dataset. Default is "YuccaPlanner".
-
-    prediction_output_dir (str, optional): Output directory for prediction results. Default is "./".
-        - Only used during inference.
-
-    save_softmax (bool, optional): Whether to save softmax predictions during inference. Default is False.
-        - Only used during inference. Used to save the softmax predictions combined by model ensembles.
 
     patch_size (tuple, optional): Patch size. Can be a tuple (2D), tuple (3D), string, or None. Default is None.
         - If a tuple is provided: the patch size will be set to that value.
@@ -78,42 +70,31 @@ class YuccaConfigurator:
         task: str,
         ckpt_path: str = None,
         continue_from_most_recent: bool = True,
-        disable_logging: bool = False,
         split_idx: int = 0,
         max_vram: int = 12,
         manager_name: str = "YuccaLightningManager",
         model_dimensions: str = "3D",
         model_name: str = "UNet",
         planner: str = "YuccaPlanner",
-        profile: bool = False,
-        prediction_output_dir: str = "./",
-        save_softmax: bool = False,
     ):
         self.ckpt_path = ckpt_path
         self.continue_from_most_recent = continue_from_most_recent
         self.split_idx = split_idx
-        self.disable_logging = disable_logging
         self.max_vram = max_vram
         self.model_dimensions = model_dimensions
         self.model_name = model_name
         self.manager_name = manager_name
-        self.save_softmax = save_softmax
-        self.prediction_output_dir = prediction_output_dir
         self.planner = planner
-        self.profile = profile
         self.task = task
 
         # Attributes set upon calling
         self._plans = None
         self._version = None
-        self._profiler = None
 
         # Now run the setup
         self.setup_paths()
         self.setup_plan_properties()
         self.setup_aug_params()
-        self.setup_callbacks()
-        self.setup_loggers()
         self.populate_lm_hparams()
 
     @property
@@ -125,10 +106,10 @@ class YuccaConfigurator:
             elif (
                 self.version is not None
                 and self.continue_from_most_recent
-                and isfile(join(self.outpath, "checkpoints", "last.ckpt"))
+                and isfile(join(self.version_dir, "checkpoints", "last.ckpt"))
             ):
                 print("Trying to find plans in last ckpt")
-                self._plans = torch.load(join(self.outpath, "checkpoints", "last.ckpt"), map_location="cpu")[
+                self._plans = torch.load(join(self.version_dir, "checkpoints", "last.ckpt"), map_location="cpu")[
                     "hyper_parameters"
                 ].get("config['plans']")
             # If plans is still none the ckpt files were either empty/invalid or didn't exist and we create a new.
@@ -136,12 +117,6 @@ class YuccaConfigurator:
                 print("Exhausted other options: loading plans.json and constructing parameters")
                 self._plans = load_json(self.plans_path)
         return self._plans
-
-    @property
-    def profiler(self):
-        if self.profile and self._profiler is None:
-            self._profiler = SimpleProfiler(dirpath=self.outpath, filename="simple_profile")
-        return self._profiler
 
     @property
     def version(self) -> Union[None, int]:
@@ -175,49 +150,6 @@ class YuccaConfigurator:
         print(f"loading weights from {self.ckpt_path}")
         return torch.load(self.ckpt_path, map_location=torch.device("cpu"))["state_dict"]
 
-    def setup_loggers(self):
-        # The CSVLogger is the barebones logger needed to save hparams.yaml and set the proper
-        # outpath that will be expected by the pipeline for continued training etc.
-        # It should generally never be disabled.
-        self.loggers = []
-        # self.loggers.append(CSVLogger(save_dir=self.outpath, name=None, version=self.version))
-        self.loggers.append(
-            YuccaLogger(
-                disable_logging=self.disable_logging,
-                save_dir=self.save_dir,
-                name=None,
-                version=self.version,
-                steps_per_epoch=250,
-            )
-        )
-        if not self.disable_logging:
-            self.loggers.append(
-                WandbLogger(
-                    name=f"version_{self.version}",
-                    save_dir=self.outpath,
-                    version=str(self.version),
-                    project="Yucca",
-                    group=self.task,
-                    log_model="all",
-                )
-            )
-
-    def setup_callbacks(self):
-        best_ckpt = ModelCheckpoint(
-            monitor="val_loss", mode="min", save_top_k=1, filename="best", enable_version_counter=False
-        )
-        interval_ckpt = ModelCheckpoint(every_n_epochs=250, filename="{epoch}", enable_version_counter=False)
-        latest_ckpt = ModelCheckpoint(
-            every_n_epochs=15,
-            save_top_k=1,
-            filename="last",
-            enable_version_counter=False,
-        )
-        pred_writer = WritePredictionFromLogits(
-            output_dir=self.prediction_output_dir, save_softmax=self.save_softmax, write_interval="batch"
-        )
-        self.callbacks = [best_ckpt, interval_ckpt, latest_ckpt, pred_writer]
-
     def setup_paths(self):
         self.train_data_dir = join(yucca_preprocessed_data, self.task, self.planner)
         self.save_dir = join(
@@ -227,8 +159,8 @@ class YuccaConfigurator:
             self.manager_name + "__" + self.planner,
             f"fold_{self.split_idx}",
         )
-        self.outpath = join(self.save_dir, f"version_{self.version}")
-        maybe_mkdir_p(self.outpath)
+        self.version_dir = join(self.save_dir, f"version_{self.version}")
+        maybe_mkdir_p(self.version_dir)
         self.plans_path = join(yucca_preprocessed_data, self.task, self.planner, self.planner + "_plans.json")
 
     def setup_plan_properties(self):
@@ -267,22 +199,18 @@ class YuccaConfigurator:
             "aug_params": self.augmentation_parameter_dict,
             "ckpt_path": self.ckpt_path,
             "continue_from_most_recent": self.continue_from_most_recent,
-            "disable_logging": self.disable_logging,
             "image_extension": self.image_extension,
             "manager_name": self.manager_name,
             "max_vram": self.max_vram,
             "model_dimensions": self.model_dimensions,
             "model_name": self.model_name,
             "num_classes": self.num_classes,
-            "outpath": self.outpath,
+            "version_dir": self.version_dir,
             "planner": self.planner,
             "plans_path": self.plans_path,
             "plans": self.plans,
-            "profile": self.profile,
             "task_type": self.task_type,
             "save_dir": self.save_dir,
-            "save_softmax": self.save_softmax,
-            "prediction_output_dir": self.prediction_output_dir,
             "task": self.task,
             "train_data_dir": self.train_data_dir,
         }

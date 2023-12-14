@@ -1,25 +1,25 @@
 from torchvision import transforms
-from yuccalib.image_processing.matrix_ops import get_max_rotated_size
-from yuccalib.image_processing.transforms.formatting import (
+from yucca.image_processing.matrix_ops import get_max_rotated_size
+from yucca.image_processing.transforms.formatting import (
     AddBatchDimension,
     RemoveBatchDimension,
 )
-from yuccalib.image_processing.transforms.BiasField import BiasField
-from yuccalib.image_processing.transforms.Blur import Blur
-from yuccalib.image_processing.transforms.CopyImageToSeg import CopyImageToSeg
-from yuccalib.image_processing.transforms.Gamma import Gamma
-from yuccalib.image_processing.transforms.Ghosting import MotionGhosting
-from yuccalib.image_processing.transforms.Masking import Masking
-from yuccalib.image_processing.transforms.Mirror import Mirror
-from yuccalib.image_processing.transforms.Noise import (
+from yucca.image_processing.transforms.BiasField import BiasField
+from yucca.image_processing.transforms.Blur import Blur
+from yucca.image_processing.transforms.CopyImageToSeg import CopyImageToSeg
+from yucca.image_processing.transforms.Gamma import Gamma
+from yucca.image_processing.transforms.Ghosting import MotionGhosting
+from yucca.image_processing.transforms.Masking import Masking
+from yucca.image_processing.transforms.Mirror import Mirror
+from yucca.image_processing.transforms.Noise import (
     AdditiveNoise,
     MultiplicativeNoise,
 )
-from yuccalib.image_processing.transforms.Ringing import GibbsRinging
-from yuccalib.image_processing.transforms.sampling import DownsampleSegForDS
-from yuccalib.image_processing.transforms.SimulateLowres import SimulateLowres
-from yuccalib.image_processing.transforms.Spatial import Spatial
-from yuccalib.network_architectures.utils.model_memory_estimation import (
+from yucca.image_processing.transforms.Ringing import GibbsRinging
+from yucca.image_processing.transforms.sampling import DownsampleSegForDS
+from yucca.image_processing.transforms.SimulateLowres import SimulateLowres
+from yucca.image_processing.transforms.Spatial import Spatial
+from yucca.network_architectures.utils.model_memory_estimation import (
     find_optimal_tensor_dims,
 )
 

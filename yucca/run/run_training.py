@@ -1,7 +1,7 @@
 import argparse
 import yucca
 from yucca.utils.task_ids import maybe_get_task_from_task_id
-from yuccalib.utils.files_and_folders import recursive_find_python_class
+from yucca.utils.files_and_folders import recursive_find_python_class
 from batchgenerators.utilities.file_and_folder_operations import join
 
 
@@ -29,6 +29,7 @@ def main():
         "-d",
         help="Dimensionality of the Model. Can be 3D or 2D. "
         "Defaults to 3D. Note that this will always be 2D if ensemble is enabled.",
+        default="3D",
     )
     parser.add_argument(
         "-man",

@@ -8,10 +8,11 @@ import nibabel as nib
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yucca.preprocessing.normalization import normalizer
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data
-from yuccalib.utils.nib_utils import get_nib_spacing, get_nib_orientation, reorient_nib_image
-from yuccalib.utils.type_conversions import nifti_or_np_to_np, read_file_to_nifti_or_np
-from yuccalib.image_processing.objects.BoundingBox import get_bbox_for_foreground
-from yuccalib.image_processing.cropping_and_padding import crop_to_box
+from yucca.utils.nib_utils import get_nib_spacing, get_nib_orientation, reorient_nib_image
+from yucca.utils.type_conversions import nifti_or_np_to_np
+from yucca.utils.loading import read_file_to_nifti_or_np
+from yucca.image_processing.objects.BoundingBox import get_bbox_for_foreground
+from yucca.image_processing.cropping_and_padding import crop_to_box
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     subfiles,

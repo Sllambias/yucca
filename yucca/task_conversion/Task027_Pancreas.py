@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data
-from yuccalib.utils.nib_utils import get_nib_direction, reorient_nib_image
+from yucca.utils.nib_utils import get_nib_direction, reorient_nib_image
 
 # INPUT DATA
 # Define input path and extension
