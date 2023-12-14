@@ -207,7 +207,7 @@ if __name__ == "__main__":
         disable_logging=False,
         step_logging=True,
         ckpt_path=path,
-        folds="0",
+        split_idx=0,
         model_name="TinyUNet",
         model_dimensions="2D",
         num_workers=0,

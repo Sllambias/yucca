@@ -114,7 +114,7 @@ def main():
         continue_from_most_recent=not new_version,
         deep_supervision=False,
         disable_logging=True,
-        fold=fold,
+        split_idx=fold,
         loss=loss,
         model_dimensions=dimensions,
         model_name=model_name,
