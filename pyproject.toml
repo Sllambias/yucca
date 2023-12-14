@@ -30,9 +30,10 @@ dependencies = [
     "setuptools",
     "SimpleITK",
     "tqdm",
+    "torchmetrics",
+    "torchvision>=0.16.0",
     "wandb",
     "weave",
-    "torchmetrics",
     "python-dotenv==1.0.0"
 ]
 
