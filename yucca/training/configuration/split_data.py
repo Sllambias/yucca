@@ -7,84 +7,80 @@ from batchgenerators.utilities.file_and_folder_operations import join, subfiles,
 from sklearn.model_selection import KFold
 from yucca.paths import yucca_preprocessed_data
 
-# We set this seed manually as multiple trainers might use this split,
-# And we may not know which individual seed dictated the data splits
-# Therefore for reproducibility this is fixed.
-DEFAULT_SEED = 52189
-allowed_split_methods = ["kfold", "simple"]
-
 
 @dataclass
 class SplitConfig:
-    folds: list[dict]
-    fold: int
-    method: str
-    seed: int
+    splits: list[dict]
+    split_idx: int
     k: int = None
-    val_ratio: float = None
+    p: float = None
 
     def train(self):
-        return self.folds[self.fold]["train"]
+        return self.splits[self.split_idx]["train"]
 
     def val(self):
-        return self.folds[self.fold]["val"]
+        return self.splits[self.split_idx]["val"]
 
     def lm_hparams(self):
-        return {"fold": self.fold, "method": self.method, "seed": self.seed, "k": self.k, "val_ratio": self.val_ratio}
+        return {"split_idx": self.split_idx, "k": self.k, "p": self.p}
 
 
 def get_split_config(
     train_data_dir: str,
     task: str,
-    fold: int = 0,
-    method: str = "kfold",
+    split_idx: int = 0,
     k: int = 5,
-    val_ratio: float = 0.01,
-    seed: int = DEFAULT_SEED,
+    p: float = None,
 ):
     """
-    If method is `SplitMethod.KFOLD` then a k argument must be provided
-    If method is `SplitMethod.SIMPLE` a p argument must be provided
+    If `k` is provided we will split with `k-fold`. If `p` is provided it determines the fraction of items used for the val split.
     """
-    assert method in allowed_split_methods, f"The method {method} is not an allowed splitting method"
+    assert (k is not None and p) or (k is None and p is not None), "You can only provide one of `k` or `p`."
+    if p is not None:
+        assert 0 < p < 1, "`p` must be a number between 0 and 1 and determines the fraction of items used for the val split"
+    if k is not None:
+        assert k > 0
+        assert isinstance(k, int), "`k`"
+
+    method = "kfold" if k is not None else "simple_train_val_split"
 
     splits_path = join(yucca_preprocessed_data, task, "splits.pkl")
     if isfile(splits_path):
         splits = load_pickle(splits_path)
         if isinstance(splits, SplitConfig):
-            splits.fold = fold
+            splits.split_idx = split_idx
             logging.warn(f"Reusing already computed split file which was split using the {method} method")
             return splits
 
-    files = get_file_names(train_data_dir)
-    return perform_split(files, splits_path, fold, method, k, val_ratio, seed)
+    file_names = get_file_names(train_data_dir)
 
-
-def perform_split(files: list[str], splits_path: str, fold: int, method: str, k: int, val_ratio: float, seed: int):
     if method == "kfold":
-        assert k is not None
-        kf = KFold(n_splits=k, shuffle=True, random_state=seed)
-        folds = []
-        for train, val in kf.split(files):
-            folds.append({"train": list(files[train]), "val": list(files[val])})
-        splits = SplitConfig(folds, fold, method, k=k, seed=seed)
-
-    elif method == "simple":
-        assert val_ratio is not None
-        np.random.seed(seed)
-        np.random.shuffle(files)  # inplace
-        num_val = math.ceil(len(files) * val_ratio)
-        if num_val < 10:
-            logging.warning("The validation split is very small. Consider using a higher `p`.")
-
-        folds = [{"train": list(files[train]), "val": list(files[val])}]
-        splits = SplitConfig(folds, fold, method, val_ratio=val_ratio, seed=seed)
-
+        splits = kfold_split(file_names, k)
     else:
-        raise ValueError("`method` is not a valid SplitMethod")
+        splits = simple_split(file_names, p)
 
+    split_cfg = SplitConfig(splits, split_idx, k, p)
     save_pickle(splits, splits_path)
+    return split_cfg
+
+
+def kfold_split(file_names: list[str], k: int):
+    assert k is not None
+    kf = KFold(n_splits=k, shuffle=True)
+    splits = []
+    for train, val in kf.split(file_names):
+        splits.append({"train": list(file_names[train]), "val": list(file_names[val])})
     return splits
+
+
+def simple_split(file_names: list[str], p: float):
+    assert p is not None
+    assert 0 < p < 1 or p is None
+    np.random.shuffle(file_names)  # inplace
+    num_val = math.ceil(len(file_names) * p)
+    if num_val < 10:
+        logging.warning("The validation split is very small. Consider using a higher `p`.")
+    return [{"train": list(file_names[num_val:]), "val": list(file_names[:num_val])}]
 
 
 def get_file_names(train_data_dir):
