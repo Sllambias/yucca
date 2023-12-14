@@ -80,7 +80,7 @@ def main():
     dimensions = args.d
     epochs = args.epochs
     manager_name = args.man
-    fold = args.f
+    split_idx = args.f
     lr = args.lr
     loss = args.loss
     momentum = args.mom
@@ -114,7 +114,7 @@ def main():
         continue_from_most_recent=not new_version,
         deep_supervision=False,
         disable_logging=True,
-        split_idx=fold,
+        split_idx=split_idx,
         loss=loss,
         model_dimensions=dimensions,
         model_name=model_name,
