@@ -32,16 +32,12 @@ class LossTree:
             if not isinstance(value, dict):
                 newnode.channel = value
             else:
-                self.recursive_expand(
-                    value, starting_node=newnode, starting_layer=starting_layer
-                )
+                self.recursive_expand(value, starting_node=newnode, starting_layer=starting_layer)
 
     def get_loss_layers(self):
         for layer in self.layers:
             layer_list = []
-            self.loss_layers.append(
-                self.recursive_loss_layers(layer, self.root, layer_list)
-            )
+            self.loss_layers.append(self.recursive_loss_layers(layer, self.root, layer_list))
 
     def get_subclasses(self, node, class_list):
         if len(node.children) == 0:

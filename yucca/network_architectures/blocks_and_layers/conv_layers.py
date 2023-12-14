@@ -70,11 +70,7 @@ class ConvDropoutNormNonlin(nn.Module):
 
         self.conv = self.conv_op(input_channels, output_channels, **self.conv_kwargs)
 
-        if (
-            self.dropout_op is not None
-            and self.dropout_op_kwargs["p"] is not None
-            and self.dropout_op_kwargs["p"] > 0
-        ):
+        if self.dropout_op is not None and self.dropout_op_kwargs["p"] is not None and self.dropout_op_kwargs["p"] > 0:
             self.dropout = self.dropout_op(**self.dropout_op_kwargs)
         else:
             self.dropout = None

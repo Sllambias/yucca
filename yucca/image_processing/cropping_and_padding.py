@@ -31,9 +31,7 @@ def pad_to_size(array, size):
         )
         return array_padded, pad_box
 
-    array_padded = np.pad(
-        array, ((pad_box[0], pad_box[1]), (pad_box[2], pad_box[3])), mode="edge"
-    )
+    array_padded = np.pad(array, ((pad_box[0], pad_box[1]), (pad_box[2], pad_box[3])), mode="edge")
     return array_padded, pad_box
 
 

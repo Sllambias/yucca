@@ -48,9 +48,7 @@ class Box(object):
     def set_coordinates(self):
         box = get_bbox_for_label(self.array, self.label, self.padding)
 
-        assert len(box) in [4, 6], (
-            "invalid box dimensions. Should be " f"4 (2D) or 6 (3D) but is {len(box)}"
-        )
+        assert len(box) in [4, 6], "invalid box dimensions. Should be " f"4 (2D) or 6 (3D) but is {len(box)}"
         if len(box) == 6:
             self.xmin, self.xmax, self.ymin, self.ymax, self.zmin, self.zmax = box
         if len(box) == 4:

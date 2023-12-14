@@ -65,11 +65,7 @@ class YuccaLogger(Logger):
         if self.name is not None:
             log_dir = join(log_dir, self.name)
         if self.version is not None:
-            version = (
-                self.version
-                if isinstance(self.version, str)
-                else f"version_{self.version}"
-            )
+            version = self.version if isinstance(self.version, str) else f"version_{self.version}"
             log_dir = join(log_dir, version)
         if not isdir(log_dir):
             maybe_mkdir_p(log_dir)
@@ -111,9 +107,7 @@ class YuccaLogger(Logger):
                 f.write("\n")
                 print("\n")
                 f.write(f"{t} {'Current Epoch:':20} {current_epoch} \n")
-                f.write(
-                    f"{t} {'Epoch Time:':20} {epoch_end_time-self.epoch_start_time} \n"
-                )
+                f.write(f"{t} {'Epoch Time:':20} {epoch_end_time-self.epoch_start_time} \n")
                 print(f"{t} {'Current Epoch:':20} {current_epoch}")
                 print(f"{t} {'Epoch Time:':20} {epoch_end_time-self.epoch_start_time}")
                 self.previous_epoch = current_epoch

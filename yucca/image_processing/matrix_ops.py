@@ -14,9 +14,7 @@ def create_zero_centered_coordinate_matrix(shape):
             )
         ).astype(float)
     if len(shape) == 2:
-        mesh = np.array(
-            np.meshgrid(np.arange(shape[0]), np.arange(shape[1]), indexing="ij")
-        ).astype(float)
+        mesh = np.array(np.meshgrid(np.arange(shape[0]), np.arange(shape[1]), indexing="ij")).astype(float)
 
     for d in range(len(shape)):
         mesh[d] -= (mesh.shape[d + 1] - 1) / 2
@@ -42,21 +40,15 @@ def deform_coordinate_matrix(coordinate_matrix, alpha, sigma):
 
 
 def Rx(theta):
-    return np.array(
-        [[1, 0, 0], [0, m.cos(theta), -m.sin(theta)], [0, m.sin(theta), m.cos(theta)]]
-    )
+    return np.array([[1, 0, 0], [0, m.cos(theta), -m.sin(theta)], [0, m.sin(theta), m.cos(theta)]])
 
 
 def Ry(theta):
-    return np.array(
-        [[m.cos(theta), 0, m.sin(theta)], [0, 1, 0], [-m.sin(theta), 0, m.cos(theta)]]
-    )
+    return np.array([[m.cos(theta), 0, m.sin(theta)], [0, 1, 0], [-m.sin(theta), 0, m.cos(theta)]])
 
 
 def Rz(theta):
-    return np.array(
-        [[m.cos(theta), -m.sin(theta), 0], [m.sin(theta), m.cos(theta), 0], [0, 0, 1]]
-    )
+    return np.array([[m.cos(theta), -m.sin(theta), 0], [m.sin(theta), m.cos(theta), 0], [0, 0, 1]])
 
 
 def Rz2D(theta):

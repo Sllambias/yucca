@@ -73,9 +73,7 @@ class ASPP(nn.Module):
 
 
 class DeepLabHeadV3Plus(nn.Module):
-    def __init__(
-        self, in_channels, low_level_channels, num_classes, aspp_dilate=[12, 24, 36]
-    ):
+    def __init__(self, in_channels, low_level_channels, num_classes, aspp_dilate=[12, 24, 36]):
         super(DeepLabHeadV3Plus, self).__init__()
         self.project = nn.Sequential(
             nn.Conv2d(low_level_channels, 48, 1, bias=False),
