@@ -1,9 +1,9 @@
 import torch
 import torch.nn.functional as F
 from torch import nn, Tensor
-from yucca.loss_and_optim.utils.LossTree import LossTree
-from yucca.loss_and_optim.loss_functions.nnUNet_losses import DiceCE
-from yucca.loss_and_optim.loss_functions.NLL import NLL
+from yucca.training.loss_and_optim.utils.LossTree import LossTree
+from yucca.training.loss_and_optim.loss_functions.nnUNet_losses import DiceCE
+from yucca.training.loss_and_optim.loss_functions.NLL import NLL
 
 
 class HierarchicalLoss(nn.Module):

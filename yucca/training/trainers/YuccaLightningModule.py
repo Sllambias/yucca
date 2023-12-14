@@ -166,9 +166,9 @@ class YuccaLightningModule(L.LightningModule):
         # loss_kwargs holds args for any scheduler class,
         # but using filtering we only pass arguments relevant to the selected class.
         self.loss_fn = recursive_find_python_class(
-            folder=[join(yucca.__path__[0], "loss_and_optim")],
+            folder=[join(yucca.__path__[0], "training/loss_and_optim")],
             class_name=self.loss_fn,
-            current_module="yucca.loss_and_optim",
+            current_module="yucca.training.loss_and_optim",
         )
         loss_kwargs = {
             # DCE

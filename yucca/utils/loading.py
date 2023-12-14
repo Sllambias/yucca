@@ -2,6 +2,7 @@ import yaml
 import os
 import nibabel as nib
 import numpy as np
+from PIL import Image
 
 
 def load_yaml(file: str):

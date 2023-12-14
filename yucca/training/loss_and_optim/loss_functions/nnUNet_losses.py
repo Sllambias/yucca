@@ -10,7 +10,7 @@ Implementation by:
 import torch
 import numpy as np
 from torch import nn
-from yucca.loss_and_optim.loss_functions.CE import CE
+from yucca.training.loss_and_optim.loss_functions.CE import CE
 import torch.nn.functional as F
 
 
