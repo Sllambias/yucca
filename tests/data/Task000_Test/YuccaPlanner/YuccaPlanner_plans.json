@@ -1,14 +1,18 @@
 {
     "preprocessor": "YuccaPreprocessor",
     "dataset_properties":{
-    "classes": [
-        "0",
-        "1",
-        "2"
-    ],
-    "tasks": {},
-    "label_hierarchy": {},
-    "modalities": {
-        "0": "T1"
-    }}
+        "classes": [
+            "0",
+            "1",
+            "2"
+        ],
+        "tasks": {},
+        "label_hierarchy": {},
+        "modalities": {
+            "0": "T1"
+        }
+    },
+    "new_min_size": [32,32,32],
+    "new_mean_size": [32,32,32],
+    "new_max_size": [32,32,32]
 }

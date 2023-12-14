@@ -3,6 +3,7 @@ import torchvision
 from typing import Literal
 from torch.utils.data import DataLoader, Sampler
 from batchgenerators.utilities.file_and_folder_operations import join
+from yucca.training.configuration.input_dimensions import InputDimensions
 from yucca.training.configuration.split_data import SplitConfig
 from yucca.training.data_loading.YuccaDataset import YuccaTestDataset, YuccaTrainDataset
 from yucca.training.data_loading.samplers import InfiniteRandomSampler
@@ -46,6 +47,7 @@ class YuccaDataModule(pl.LightningDataModule):
     def __init__(
         self,
         configurator: YuccaConfigurator,
+        input_dims: InputDimensions,
         splits: SplitConfig,
         split_idx: int,
         composed_train_transforms: torchvision.transforms.Compose = None,
@@ -58,16 +60,16 @@ class YuccaDataModule(pl.LightningDataModule):
         super().__init__()
         # First set our configurator object
         self.cfg = configurator
+        self.input_dims = input_dims
 
         # Now extract parameters from the cfg
-        self.batch_size = self.cfg.batch_size
+        self.batch_size = self.input_dims.batch_size
+        self.patch_size = self.input_dims.patch_size
         self.image_extension = self.cfg.image_extension
-        self.patch_size = self.cfg.patch_size
         self.task_type = self.cfg.task_type
         self.train_data_dir = self.cfg.train_data_dir
         self.train_split = splits.train(split_idx)
         self.val_split = splits.val(split_idx)
-        self.image_extension = self.cfg.image_extension
 
         # Set by initialize()
         self.composed_train_transforms = composed_train_transforms

@@ -111,7 +111,7 @@ def find_optimal_tensor_dims(
         dropout = nn.Dropout2d
         norm = nn.InstanceNorm2d
         batch_size = 16
-        max_batch_size = 128
+        max_batch_size = 512
         patch_size = [32, 32] if not model_name == "UNetR" else [64, 64]
     if dimensionality == "3D":
         conv = nn.Conv3d
