@@ -51,10 +51,12 @@ def get_split_config(
 
     splits_path = join(yucca_preprocessed_data, task, "splits.pkl")
     if isfile(splits_path):
-        splits = load_pickle(splits_path)
-        if isinstance(splits, SplitConfig):
+        split_cfg = load_pickle(splits_path)
+        if split_cfg_is_the_same(split_cfg, k, p):
             logging.warn(f"Reusing already computed split file which was split using the {method} method")
-            return splits
+            return split_cfg
+        else:
+            logging.warn(f"Split_cfg was either the wrong type or was generated using a different `k` and `p`")
 
     file_names = get_file_names(train_data_dir)
 
@@ -64,8 +66,12 @@ def get_split_config(
         splits = simple_split(file_names, p)
 
     split_cfg = SplitConfig(splits, k, p)
-    save_pickle(splits, splits_path)
+    save_pickle(split_cfg, splits_path)
     return split_cfg
+
+
+def split_cfg_is_the_same(split_cfg, k, p):
+    return isinstance(split_cfg, SplitConfig) and split_cfg.k == k and split_cfg.p == p
 
 
 def kfold_split(file_names: list[str], k: int):
