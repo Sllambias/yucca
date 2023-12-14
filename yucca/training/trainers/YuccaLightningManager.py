@@ -130,7 +130,7 @@ class YuccaLightningManager:
             save_softmax=save_softmax,
         )
         self.model_module = YuccaLightningModule(
-            config=self.configurator.lm_hparams | splits.lm_hparams() | {"split_idx": self.split_idx},
+            config=self.configurator.lm_hparams | splits.lm_hparams(),
             loss_fn=self.loss,
             stage=stage,
             step_logging=self.step_logging,

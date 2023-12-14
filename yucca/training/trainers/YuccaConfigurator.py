@@ -287,6 +287,7 @@ class YuccaConfigurator:
             "plans": self.plans,
             "task_type": self.task_type,
             "save_dir": self.save_dir,
+            "split_idx": self.split_idx,
             "task": self.task,
             "train_data_dir": self.train_data_dir,
         }
