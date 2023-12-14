@@ -233,5 +233,5 @@ if __name__ == "__main__":
     from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 
     path = None
-    cfg = YuccaConfigurator(task="Task001_OASIS", folds=2)
+    cfg = YuccaConfigurator(task="Task001_OASIS", split_idx=2)
     model = YuccaLightningModule(cfg)
