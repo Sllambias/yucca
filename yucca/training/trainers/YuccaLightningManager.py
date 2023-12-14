@@ -122,10 +122,10 @@ class YuccaLightningManager:
             parameter_dict=self.configurator.augmentation_parameter_dict,
         )
 
-        split = get_split_config(self.configurator.train_data_dir, self.configurator.task, split_idx=self.split_idx)
+        splits = get_split_config(self.configurator.train_data_dir, self.configurator.task)
 
         self.model_module = YuccaLightningModule(
-            config=self.configurator.lm_hparams | split.lm_hparams(),
+            config=self.configurator.lm_hparams | splits.lm_hparams() | {"split_idx": self.split_idx},
             loss_fn=self.loss,
             stage=stage,
             step_logging=self.step_logging,
@@ -133,7 +133,8 @@ class YuccaLightningManager:
         )
 
         self.data_module = YuccaDataModule(
-            split=split,
+            splits=splits,
+            split_idx=self.split_idx,
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
             configurator=self.configurator,

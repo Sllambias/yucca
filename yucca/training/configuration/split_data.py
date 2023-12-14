@@ -11,30 +11,27 @@ from yucca.paths import yucca_preprocessed_data
 @dataclass
 class SplitConfig:
     splits: list[dict]
-    split_idx: int
     k: int = None
     p: float = None
 
-    def train(self):
-        return self.splits[self.split_idx]["train"]
+    def train(self, idx):
+        return self.splits[idx]["train"]
 
-    def val(self):
-        return self.splits[self.split_idx]["val"]
+    def val(self, idx):
+        return self.splits[idx]["val"]
 
     def lm_hparams(self):
-        return {"split_idx": self.split_idx, "k": self.k, "p": self.p}
+        return {"k": self.k, "p": self.p}
 
 
 def get_split_config(
     train_data_dir: str,
     task: str,
-    split_idx: int = 0,
     k: int = 5,
     p: float = None,
 ):
     """
     Params:
-        split_idx: the index of the calculated splits to use. When the splits are pre_calculated we will update teh index.
         k: k for k-folds
         p: fraction of data to use for val split
 
@@ -56,7 +53,6 @@ def get_split_config(
     if isfile(splits_path):
         splits = load_pickle(splits_path)
         if isinstance(splits, SplitConfig):
-            splits.split_idx = split_idx
             logging.warn(f"Reusing already computed split file which was split using the {method} method")
             return splits
 
@@ -67,7 +63,7 @@ def get_split_config(
     else:
         splits = simple_split(file_names, p)
 
-    split_cfg = SplitConfig(splits, split_idx, k, p)
+    split_cfg = SplitConfig(splits, k, p)
     save_pickle(splits, splits_path)
     return split_cfg
 
