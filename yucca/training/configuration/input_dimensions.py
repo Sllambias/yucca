@@ -24,7 +24,7 @@ def get_input_dims(
     num_classes: int,
     model_name: str,
     max_vram: Optional[int] = None,
-    batch_size: Optional[int] = None,
+    batch_size: Union[int, Literal["tiny"]] = None,
     patch_size: Union[Literal["max", "min", "mean", "tiny"], Tuple[int, int], Tuple[int, int, int], None] = None,
 ):
     num_modalities = max(1, plan.get("num_modalities") or len(plan["dataset_properties"]["modalities"]))
@@ -35,6 +35,13 @@ def get_input_dims(
     if patch_size is None and plan.get("patch_size"):
         patch_size = plan.get("patch_size")
 
+    # onvert batch_size provided as string to int
+    if isinstance(batch_size, str):
+        if batch_size == "tiny":
+            batch_size = 2
+        else:
+            raise ValueError(f"Unknown batch size param: {batch_size}")
+
     # convert patch_size provided as string to tuple
     if isinstance(patch_size, str):
         if patch_size in ["max", "min", "mean"]:
@@ -42,6 +49,8 @@ def get_input_dims(
             patch_size = plan[f"new_{patch_size}_size"]
         elif patch_size == "tiny":
             patch_size = (32, 32, 32)
+        else:
+            raise ValueError(f"Unknown patch size param: {patch_size}")
 
         if model_dimensions == "2D" and len(patch_size) == 3:
             # If we have now selected a 3D patch for a 2D model we skip the first dim
