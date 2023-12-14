@@ -80,7 +80,7 @@ def main():
     dimensions = args.d
     trainer_name = args.tr
     plans = args.pl
-    folds = args.f
+    split_idx = args.f
     ensemble = args.ensemble
     fast_training = args.fast
     lr = args.lr
@@ -112,7 +112,7 @@ def main():
             model=model,
             model_dimensions=dimensions,
             task=task,
-            folds=folds,
+            split_idx=split_idx,
             plan_id=plans,
             starting_lr=lr,
             loss_fn=loss,
@@ -131,7 +131,7 @@ def main():
         views = ["X", "Y", "Z"]
         for view in views:
             trainer = recursive_find_python_class(
-                folder=[join(yucca.__path__[0], "training", "trainers")],
+                split_idx=[join(yucca.__path__[0], "training", "trainers")],
                 class_name=trainer_name,
                 current_module="yucca.training.trainers",
             )
@@ -140,7 +140,7 @@ def main():
                 model=model,
                 model_dimensions=dimensions,
                 task=task,
-                folds=folds,
+                split_idx=split_idx,
                 plan_id=plan_and_view,
                 starting_lr=lr,
                 loss_fn=loss,

@@ -4,6 +4,8 @@ from typing import Literal, Union
 from yucca.training.augmentation.YuccaAugmentationComposer import (
     YuccaAugmentationComposer,
 )
+from yucca.training.configuration.split_data import get_split_config
+from yucca.training.configuration.configure_callbacks import get_callback_config
 from yucca.training.data_loading.YuccaDataModule import YuccaDataModule
 from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 from yucca.training.trainers.YuccaLightningModule import YuccaLightningModule
@@ -43,7 +45,7 @@ class YuccaLightningManager:
         continue_from_most_recent: bool = True,
         deep_supervision: bool = False,
         disable_logging: bool = False,
-        folds: str = "0",
+        split_idx: int = 0,
         loss: str = "DiceCE",
         max_epochs: int = 1000,
         model_dimensions: str = "3D",
@@ -61,7 +63,7 @@ class YuccaLightningManager:
         self.continue_from_most_recent = continue_from_most_recent
         self.deep_supervision = deep_supervision
         self.disable_logging = disable_logging
-        self.folds = folds
+        self.split_idx = split_idx
         self.loss = loss
         self.max_epochs = max_epochs
         self.model_dimensions = model_dimensions
@@ -102,15 +104,10 @@ class YuccaLightningManager:
         self.configurator = YuccaConfigurator(
             ckpt_path=self.ckpt_path,
             continue_from_most_recent=self.continue_from_most_recent,
-            disable_logging=self.disable_logging,
-            folds=self.folds,
             manager_name=self.name,
             model_dimensions=self.model_dimensions,
             model_name=self.model_name,
             planner=self.planner,
-            profile=self.profile,
-            prediction_output_dir=prediction_output_dir,
-            save_softmax=save_softmax,
             patch_size=self.patch_size,
             task=self.task,
         )
@@ -121,8 +118,19 @@ class YuccaLightningManager:
             parameter_dict=self.configurator.augmentation_parameter_dict,
         )
 
+        splits = get_split_config(self.configurator.train_data_dir, self.configurator.task)
+        callback_config = get_callback_config(
+            task=self.task,
+            save_dir=self.configurator.save_dir,
+            version_dir=self.configurator.version_dir,
+            version=self.configurator.version,
+            disable_logging=self.disable_logging,
+            prediction_output_dir=prediction_output_dir,
+            profile=self.profile,
+            save_softmax=save_softmax,
+        )
         self.model_module = YuccaLightningModule(
-            config=self.configurator.lm_hparams,
+            config=self.configurator.lm_hparams | splits.lm_hparams() | {"split_idx": self.split_idx},
             loss_fn=self.loss,
             stage=stage,
             step_logging=self.step_logging,
@@ -130,6 +138,8 @@ class YuccaLightningManager:
         )
 
         self.data_module = YuccaDataModule(
+            splits=splits,
+            split_idx=self.split_idx,
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
             configurator=self.configurator,
@@ -139,13 +149,13 @@ class YuccaLightningManager:
         )
 
         self.trainer = L.Trainer(
-            callbacks=self.configurator.callbacks,
+            callbacks=callback_config.callbacks,
             default_root_dir=self.configurator.save_dir,
             limit_train_batches=self.train_batches_per_step,
             limit_val_batches=self.val_batches_per_step,
-            logger=self.configurator.loggers,
+            logger=callback_config.loggers,
             precision=self.precision,
-            profiler=self.configurator.profiler,
+            profiler=callback_config.profiler,
             enable_progress_bar=not self.disable_logging,
             max_epochs=self.max_epochs,
             **self.kwargs,
@@ -196,7 +206,7 @@ if __name__ == "__main__":
         disable_logging=False,
         step_logging=True,
         ckpt_path=path,
-        folds="0",
+        split_idx=0,
         model_name="TinyUNet",
         model_dimensions="2D",
         num_workers=0,

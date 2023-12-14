@@ -29,6 +29,7 @@ def main():
         "-d",
         help="Dimensionality of the Model. Can be 3D or 2D. "
         "Defaults to 3D. Note that this will always be 2D if ensemble is enabled.",
+        default="3D",
     )
     parser.add_argument(
         "-man",
@@ -79,7 +80,7 @@ def main():
     dimensions = args.d
     epochs = args.epochs
     manager_name = args.man
-    folds = args.f
+    split_idx = args.f
     lr = args.lr
     loss = args.loss
     momentum = args.mom
@@ -113,7 +114,7 @@ def main():
         continue_from_most_recent=not new_version,
         deep_supervision=False,
         disable_logging=True,
-        folds=folds,
+        split_idx=split_idx,
         loss=loss,
         model_dimensions=dimensions,
         model_name=model_name,
