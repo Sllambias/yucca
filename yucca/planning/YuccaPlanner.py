@@ -2,7 +2,7 @@ import yucca
 import numpy as np
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from yucca.planning.dataset_properties import create_properties_pkl
-from yuccalib.utils.files_and_folders import recursive_find_python_class
+from yucca.utils.files_and_folders import recursive_find_python_class
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, isfile, load_pickle, save_json, subfiles
 
 

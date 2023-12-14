@@ -1,4 +1,3 @@
-# %%
 import lightning as L
 import torch
 from typing import Literal, Union

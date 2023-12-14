@@ -1,5 +1,5 @@
 from yucca.training.trainers.YuccaManager import YuccaManager
-from yuccalib.loss_and_optim.loss_functions.deep_supervision import DeepSupervisionLoss
+from yucca.loss_and_optim.loss_functions.deep_supervision import DeepSupervisionLoss
 
 
 class YuccaManager_DS(YuccaManager):

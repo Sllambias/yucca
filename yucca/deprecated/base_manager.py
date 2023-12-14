@@ -5,7 +5,6 @@ import wandb
 import sys
 import random
 import yucca
-import yuccalib
 from time import localtime, strftime, time, mktime
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
@@ -26,32 +25,30 @@ from batchgenerators.transforms.abstract_transforms import Compose
 from yucca.paths import yucca_preprocessed_data, yucca_models
 from yucca.training.data_loading.YuccaLoader import YuccaLoader
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
-from yuccalib.image_processing.matrix_ops import get_max_rotated_size
-from yuccalib.network_architectures.utils.model_memory_estimation import (
+from yucca.image_processing.matrix_ops import get_max_rotated_size
+from yucca.network_architectures.utils.model_memory_estimation import (
     find_optimal_tensor_dims,
 )
-from yuccalib.utils.files_and_folders import (
-    recursive_find_python_class,
-    save_prediction_from_logits,
-)
-from yuccalib.utils.torch_utils import maybe_to_cuda
-from yuccalib.image_processing.transforms.BiasField import BiasField
-from yuccalib.image_processing.transforms.Blur import Blur
-from yuccalib.image_processing.transforms.CopyImageToSeg import CopyImageToSeg
-from yuccalib.image_processing.transforms.cropping_and_padding import CropPad
-from yuccalib.image_processing.transforms.formatting import NumpyToTorch
-from yuccalib.image_processing.transforms.Gamma import Gamma
-from yuccalib.image_processing.transforms.Ghosting import MotionGhosting
-from yuccalib.image_processing.transforms.Masking import Masking
-from yuccalib.image_processing.transforms.Mirror import Mirror
-from yuccalib.image_processing.transforms.Noise import (
+from yucca.utils.files_and_folders import recursive_find_python_class
+from yucca.utils.saving import save_prediction_from_logits
+from yucca.utils.torch_utils import maybe_to_cuda
+from yucca.image_processing.transforms.BiasField import BiasField
+from yucca.image_processing.transforms.Blur import Blur
+from yucca.image_processing.transforms.CopyImageToSeg import CopyImageToSeg
+from yucca.image_processing.transforms.cropping_and_padding import CropPad
+from yucca.image_processing.transforms.formatting import NumpyToTorch
+from yucca.image_processing.transforms.Gamma import Gamma
+from yucca.image_processing.transforms.Ghosting import MotionGhosting
+from yucca.image_processing.transforms.Masking import Masking
+from yucca.image_processing.transforms.Mirror import Mirror
+from yucca.image_processing.transforms.Noise import (
     AdditiveNoise,
     MultiplicativeNoise,
 )
-from yuccalib.image_processing.transforms.Ringing import GibbsRinging
-from yuccalib.image_processing.transforms.sampling import DownsampleSegForDS
-from yuccalib.image_processing.transforms.SimulateLowres import SimulateLowres
-from yuccalib.image_processing.transforms.Spatial import Spatial
+from yucca.image_processing.transforms.Ringing import GibbsRinging
+from yucca.image_processing.transforms.sampling import DownsampleSegForDS
+from yucca.image_processing.transforms.SimulateLowres import SimulateLowres
+from yucca.image_processing.transforms.Spatial import Spatial
 
 
 class base_manager(object):
@@ -289,9 +286,9 @@ class base_manager(object):
 
     def initialize_network(self):
         self.network = recursive_find_python_class(
-            folder=[join(yuccalib.__path__[0], "network_architectures")],
+            folder=[join(yucca.__path__[0], "network_architectures")],
             class_name=self.model_name,
-            current_module="yuccalib.network_architectures",
+            current_module="yucca.network_architectures",
         )
 
         if self.model_dimensions == "3D":

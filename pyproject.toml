@@ -17,7 +17,6 @@ classifiers = [
 keywords = ['deep learning', 'image segmentation', 'medical image analysis','medical image segmentation']
 
 dependencies = [
-    "yuccalib@git+https://github.com/Sllambias/yuccalib",
     "batchgenerators>=0.23",
     "connected_components_3d",
     "matplotlib",
@@ -31,9 +30,11 @@ dependencies = [
     "setuptools",
     "SimpleITK",
     "tqdm",
+    "timm>=0.9.8",
+    "torchmetrics",
+    "torchvision>=0.16.0",
     "wandb",
     "weave",
-    "torchmetrics",
     "python-dotenv==1.0.0"
 ]
 
@@ -54,8 +55,8 @@ yucca_finetune = 'yucca.run.run_finetune:main'
 yucca_convert_task = 'yucca.run.run_task_conversion:main'
 
 [project.urls]
-"Homepage" = "https://github.com/sllambias/yuccalib"
-"Bug Tracker" = "https://github.com/sllambias/yuccalib/issues"
+"Homepage" = "https://github.com/sllambias/yucca"
+"Bug Tracker" = "https://github.com/sllambias/yucca/issues"
 
 [build-system]
 requires = ["setuptools>=61.0"]

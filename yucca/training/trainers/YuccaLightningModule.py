@@ -1,16 +1,15 @@
 import lightning as L
 import torch
-import yuccalib
-import wandb
 import yucca
+import wandb
 import copy
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Dice, Precision
 from torchmetrics.regression import MeanAbsoluteError
 from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
-from yuccalib.utils.files_and_folders import recursive_find_python_class
-from yuccalib.utils.kwargs import filter_kwargs
+from yucca.utils.files_and_folders import recursive_find_python_class
+from yucca.utils.kwargs import filter_kwargs
 from typing import Literal
 
 
@@ -86,9 +85,9 @@ class YuccaLightningModule(L.LightningModule):
     def load_model(self):
         print(f"Loading Model: {self.model_dimensions} {self.model_name}")
         self.model = recursive_find_python_class(
-            folder=[join(yuccalib.__path__[0], "network_architectures")],
+            folder=[join(yucca.__path__[0], "network_architectures")],
             class_name=self.model_name,
-            current_module="yuccalib.network_architectures",
+            current_module="yucca.network_architectures",
         )
         if self.model_dimensions == "3D":
             conv_op = torch.nn.Conv3d
@@ -167,9 +166,9 @@ class YuccaLightningModule(L.LightningModule):
         # loss_kwargs holds args for any scheduler class,
         # but using filtering we only pass arguments relevant to the selected class.
         self.loss_fn = recursive_find_python_class(
-            folder=[join(yuccalib.__path__[0], "loss_and_optim")],
+            folder=[join(yucca.__path__[0], "training/loss_and_optim")],
             class_name=self.loss_fn,
-            current_module="yuccalib.loss_and_optim",
+            current_module="yucca.training.loss_and_optim",
         )
         loss_kwargs = {
             # DCE

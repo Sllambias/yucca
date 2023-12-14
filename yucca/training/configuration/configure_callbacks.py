@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.profilers import SimpleProfiler
 from pytorch_lightning.loggers import WandbLogger, CSVLogger
-from yuccalib.evaluation.loggers import YuccaLogger
-from yuccalib.utils.files_and_folders import WritePredictionFromLogits
+from yucca.evaluation.loggers import YuccaLogger
+from yucca.utils.saving import WritePredictionFromLogits
 from lightning.pytorch.profilers.profiler import Profiler
 
 

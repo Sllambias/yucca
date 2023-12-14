@@ -19,11 +19,12 @@ from sklearn.model_selection import KFold
 from yucca.preprocessing.UnsupervisedPreprocessor import UnsupervisedPreprocessor
 from yucca.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
 from yucca.paths import yucca_models, yucca_preprocessed_data
-from yuccalib.network_architectures.utils.model_memory_estimation import (
+from yucca.network_architectures.utils.model_memory_estimation import (
     find_optimal_tensor_dims,
 )
-from yuccalib.utils.files_and_folders import WritePredictionFromLogits, recursive_find_python_class
-from yuccalib.evaluation.loggers import YuccaLogger
+from yucca.utils.files_and_folders import recursive_find_python_class
+from yucca.utils.saving import WritePredictionFromLogits
+from yucca.evaluation.loggers import YuccaLogger
 from typing import Union, Literal
 
 
