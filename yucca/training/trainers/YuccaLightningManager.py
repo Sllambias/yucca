@@ -5,6 +5,7 @@ from typing import Literal, Union
 from yucca.training.augmentation.YuccaAugmentationComposer import (
     YuccaAugmentationComposer,
 )
+from yucca.training.configuration.split_data import get_split_config
 from yucca.training.data_loading.YuccaDataModule import YuccaDataModule
 from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 from yucca.training.trainers.YuccaLightningModule import YuccaLightningModule
@@ -44,7 +45,7 @@ class YuccaLightningManager:
         continue_from_most_recent: bool = True,
         deep_supervision: bool = False,
         disable_logging: bool = False,
-        folds: str = "0",
+        split_idx: int = 0,
         loss: str = "DiceCE",
         max_epochs: int = 1000,
         model_dimensions: str = "3D",
@@ -62,7 +63,7 @@ class YuccaLightningManager:
         self.continue_from_most_recent = continue_from_most_recent
         self.deep_supervision = deep_supervision
         self.disable_logging = disable_logging
-        self.folds = folds
+        self.split_idx = split_idx
         self.loss = loss
         self.max_epochs = max_epochs
         self.model_dimensions = model_dimensions
@@ -104,7 +105,6 @@ class YuccaLightningManager:
             ckpt_path=self.ckpt_path,
             continue_from_most_recent=self.continue_from_most_recent,
             disable_logging=self.disable_logging,
-            folds=self.folds,
             manager_name=self.name,
             model_dimensions=self.model_dimensions,
             model_name=self.model_name,
@@ -122,8 +122,10 @@ class YuccaLightningManager:
             parameter_dict=self.configurator.augmentation_parameter_dict,
         )
 
+        splits = get_split_config(self.configurator.train_data_dir, self.configurator.task)
+
         self.model_module = YuccaLightningModule(
-            config=self.configurator.lm_hparams,
+            config=self.configurator.lm_hparams | splits.lm_hparams() | {"split_idx": self.split_idx},
             loss_fn=self.loss,
             stage=stage,
             step_logging=self.step_logging,
@@ -131,6 +133,8 @@ class YuccaLightningManager:
         )
 
         self.data_module = YuccaDataModule(
+            splits=splits,
+            split_idx=self.split_idx,
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
             configurator=self.configurator,
