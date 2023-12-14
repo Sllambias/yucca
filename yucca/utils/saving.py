@@ -1,5 +1,6 @@
 import nibabel as nib
 import numpy as np
+from lightning.pytorch.callbacks import BasePredictionWriter
 from yucca.utils.softmax import softmax
 from yucca.utils.nib_utils import reorient_nib_image
 from PIL import Image

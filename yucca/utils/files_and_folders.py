@@ -8,7 +8,6 @@ import shutil
 import os
 import warnings
 from PIL import Image
-from lightning.pytorch.callbacks import BasePredictionWriter
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     subfiles,
