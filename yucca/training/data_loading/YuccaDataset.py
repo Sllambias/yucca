@@ -4,8 +4,8 @@ import os
 from typing import Union, Literal, Optional
 from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle
 from torchvision import transforms
-from yuccalib.image_processing.transforms.cropping_and_padding import CropPad
-from yuccalib.image_processing.transforms.formatting import (
+from yucca.image_processing.transforms.cropping_and_padding import CropPad
+from yucca.image_processing.transforms.formatting import (
     AddBatchDimension,
     RemoveBatchDimension,
     NumpyToTorch,

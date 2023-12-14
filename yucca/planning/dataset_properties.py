@@ -1,7 +1,8 @@
 import logging
 from batchgenerators.utilities.file_and_folder_operations import subfiles, join, load_json, save_pickle
-from yuccalib.utils.nib_utils import get_nib_spacing
-from yuccalib.utils.type_conversions import nifti_or_np_to_np, read_file_to_nifti_or_np
+from yucca.utils.nib_utils import get_nib_spacing
+from yucca.utils.type_conversions import nifti_or_np_to_np
+from yucca.utils.loading import read_file_to_nifti_or_np
 import nibabel as nib
 import numpy as np
 from tqdm import tqdm

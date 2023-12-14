@@ -5,7 +5,7 @@ from yucca.paths import yucca_raw_data, yucca_results, yucca_models
 from yucca.evaluation.YuccaEvaluator import YuccaEvaluator
 from yucca.training.trainers.YuccaManager import YuccaManager
 from yucca.training.trainers.YuccaLightningManager import YuccaLightningManager
-from yuccalib.utils.files_and_folders import (
+from yucca.utils.files_and_folders import (
     recursive_find_python_class,
     merge_softmax_from_folders,
 )

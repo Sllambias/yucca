@@ -12,14 +12,14 @@ from batchgenerators.utilities.file_and_folder_operations import (
 )
 from yucca.paths import yucca_preprocessed_data
 from yucca.training.trainers.base_manager import base_manager
-from yuccalib.evaluation.confusion_matrix import (
+from yucca.evaluation.confusion_matrix import (
     torch_confusion_matrix_from_logits,
     torch_get_tp_fp_tn_fn,
 )
-from yuccalib.evaluation.metrics import dice_per_label
-from yuccalib.loss_and_optim.loss_functions.nnUNet_losses import DiceCE
-from yuccalib.utils.files_and_folders import recursive_find_python_class
-from yuccalib.utils.kwargs import filter_kwargs
+from yucca.evaluation.metrics import dice_per_label
+from yucca.loss_and_optim.loss_functions.nnUNet_losses import DiceCE
+from yucca.utils.files_and_folders import recursive_find_python_class
+from yucca.utils.kwargs import filter_kwargs
 
 
 class YuccaManager(base_manager):

@@ -1,0 +1,130 @@
+import pkgutil
+import importlib
+import numpy as np
+import nibabel as nib
+import fileinput
+import re
+import shutil
+import os
+import warnings
+from PIL import Image
+from lightning.pytorch.callbacks import BasePredictionWriter
+from batchgenerators.utilities.file_and_folder_operations import (
+    join,
+    subfiles,
+    subdirs,
+    maybe_mkdir_p,
+)
+from yucca.utils.softmax import softmax
+from yucca.utils.nib_utils import reorient_nib_image
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+
+def replace_in_file(file_path, pattern_replacement):
+    with fileinput.input(file_path, inplace=True) as file:
+        for line in file:
+            for pattern, replacement in pattern_replacement.items():
+                line = line.replace(pattern, replacement)
+            print(line, end="")
+
+
+def rename_file_or_dir(file: str, patterns: dict):
+    # Patterns is a dict of key, value pairs where keys are the words to replace and values are
+    # what to substitute them by. E.g. if patterns = {"foo": "bar"}
+    # then the sentence "foo bar" --> "bar bar"
+    newfile = file
+    for k, v in patterns.items():
+        newfile = re.sub(k, v, newfile)
+    if os.path.isdir(file):
+        if newfile != file:
+            shutil.move(file, newfile)
+    elif os.path.isfile(file):
+        os.rename(file, newfile)
+
+
+def recursive_rename(folder, patterns_in_file, patterns_in_name):
+    """
+    Takes a top folder and recursively looks through all subfolders and files.
+    For all file contents it will replace patterns_in_file keys with the corresponding values.
+    For all file names it will replace the patterns_in_name keys with the corresponding values.
+
+    If patterns_in_file = {"llama": "alpaca", "coffee": "TEA"}
+    and patterns_in_name = {"foo": "bar", "Foo": "Bar"}
+    and we take the file:
+
+    MyPythonFooScript.py
+    ---- (with the following lines of code) ----
+    llama = 42
+    coffee = 123
+
+    something_else = llama + coffee
+    ----
+
+    then we will end up with
+
+    MyPythonBarScript.py
+    ----
+    alpaca = 42
+    TEA = 123
+
+    something_else = alpaca + TEA
+    """
+    dirs = subdirs(folder)
+    files = subfiles(folder)
+    for file in files:
+        replace_in_file(
+            file,
+            patterns_in_file,
+        )
+        rename_file_or_dir(file, patterns_in_name)
+    for direc in dirs:
+        rename_file_or_dir(direc, patterns_in_name)
+        recursive_rename(direc)
+
+
+def recursive_find_python_class(folder: list, class_name: str, current_module: str):
+    """
+    Stolen from nnUNet model_restore.py.
+    Folder = starting path, e.g. join(yucca.__path__[0], 'preprocessing')
+    Trainer_name = e.g. YuccaPreprocessor3D
+    Current_module = starting module e.g. 'yucca.preprocessing'
+    """
+    tr = None
+    for _, modname, ispkg in pkgutil.iter_modules(folder):
+        if not ispkg:
+            m = importlib.import_module(current_module + "." + modname)
+            if hasattr(m, class_name):
+                tr = getattr(m, class_name)
+                break
+
+    if tr is None:
+        for _, modname, ispkg in pkgutil.iter_modules(folder):
+            if ispkg:
+                next_current_module = current_module + "." + modname
+                tr = recursive_find_python_class(
+                    [join(folder[0], modname)],
+                    class_name,
+                    current_module=next_current_module,
+                )
+            if tr is not None:
+                break
+
+    return tr
+
+
+def recursive_find_realpath(path):
+    """
+    This might produce undesirable results if run on a slurm/batch management user, that does not
+    the same permissions as you.
+    """
+    non_linked_dirs = []
+    while path:
+        if os.path.islink(path):
+            path = os.path.realpath(path)
+        path, part = os.path.split(path)
+        non_linked_dirs.append(part)
+        if path == os.path.sep:
+            non_linked_dirs.append(path)
+            path = False
+    return os.path.join(*non_linked_dirs[::-1])
