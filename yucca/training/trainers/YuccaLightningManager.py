@@ -6,7 +6,7 @@ from yucca.training.augmentation.YuccaAugmentationComposer import (
     YuccaAugmentationComposer,
 )
 from yucca.training.configuration.split_data import get_split_config
-from yucca.yucca.training.configuration.configure_callbacks import get_callback_config
+from yucca.training.configuration.configure_callbacks import get_callback_config
 from yucca.training.data_loading.YuccaDataModule import YuccaDataModule
 from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 from yucca.training.trainers.YuccaLightningModule import YuccaLightningModule
