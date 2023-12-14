@@ -6,24 +6,30 @@ from typing import Tuple, Union, Optional, Literal
 
 
 @dataclass
-class BatchPatchConfig:
+class InputDimensions:
     batch_size: int
     patch_size: Union[Tuple[int, int], Tuple[int, int, int]]
+    num_modalities: int
 
     def lm_hparams(self):
-        return {"batch_size": self.batch_size, "patch_size": self.patch_size}
+        return {
+            "batch_size": self.batch_size,
+            "patch_size": self.patch_size,
+            "num_modalities": self.num_modalities,
+        }
 
 
-def get_batch_patch_size_cfg(
+def get_input_dims(
     plan: dict,
     model_dimensions: Literal["2D", "3D"],
     num_classes: int,
-    num_modalities: int,
     model_name: str,
     max_vram: Optional[int] = None,
     batch_size: Optional[int] = None,
     patch_size: Union[Literal["max", "min", "mean", "tiny"], Tuple[int, int], Tuple[int, int, int], None] = None,
 ):
+    num_modalities = max(1, plan.get("num_modalities") or len(plan["dataset_properties"]["modalities"]))
+
     # If batch_size or patch_size is not provided, try to infer it from the plan
     if batch_size is None and plan.get("batch_size"):
         batch_size = plan.get("batch_size")
@@ -70,4 +76,8 @@ def get_batch_patch_size_cfg(
 
     print(f"Using batch size: {batch_size} and patch size: {patch_size}")
 
-    return BatchPatchConfig(batch_size=batch_size, patch_size=patch_size)
+    return InputDimensions(
+        batch_size=batch_size,
+        patch_size=patch_size,
+        num_modalities=num_modalities,
+    )

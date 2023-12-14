@@ -1,7 +1,6 @@
-# %%
 import lightning as L
 import torch
-from typing import Literal, Union
+from typing import Literal, Union, Optional
 from yucca.training.augmentation.YuccaAugmentationComposer import (
     YuccaAugmentationComposer,
 )
@@ -10,6 +9,7 @@ from yucca.training.data_loading.YuccaDataModule import YuccaDataModule
 from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 from yucca.training.trainers.YuccaLightningModule import YuccaLightningModule
 from yucca.paths import yucca_results
+from yucca.training.configuration.input_dimensions import get_input_dims
 
 
 class YuccaLightningManager:
@@ -54,6 +54,7 @@ class YuccaLightningManager:
         planner: str = "YuccaPlanner",
         precision: str = "16-mixed",
         patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
+        batch_size: Optional[int] = None,
         profile: bool = False,
         step_logging: bool = False,
         task: str = None,
@@ -112,20 +113,30 @@ class YuccaLightningManager:
             profile=self.profile,
             prediction_output_dir=prediction_output_dir,
             save_softmax=save_softmax,
-            patch_size=self.patch_size,
             task=self.task,
         )
 
+        splits = get_split_config(self.configurator.train_data_dir, self.configurator.task)
+        input_dims = get_input_dims(
+            self.configurator.plans,
+            self.model_dimensions,
+            self.configurator.num_classes,
+            self.configurator.model_name,
+            self.configurator.max_vram,
+            self.patch_size,
+        )
+
         augmenter = YuccaAugmentationComposer(
-            patch_size=self.configurator.patch_size,
+            patch_size=input_dims.patch_size,
             is_2D=True if self.model_dimensions == "2D" else False,
             parameter_dict=self.configurator.augmentation_parameter_dict,
         )
 
-        splits = get_split_config(self.configurator.train_data_dir, self.configurator.task)
-
         self.model_module = YuccaLightningModule(
-            config=self.configurator.lm_hparams | splits.lm_hparams() | {"split_idx": self.split_idx},
+            config=self.configurator.lm_hparams
+            | splits.lm_hparams()
+            | {"split_idx": self.split_idx}
+            | input_dims.lm_hparams(),
             loss_fn=self.loss,
             stage=stage,
             step_logging=self.step_logging,
@@ -135,6 +146,7 @@ class YuccaLightningManager:
         self.data_module = YuccaDataModule(
             splits=splits,
             split_idx=self.split_idx,
+            input_dims=input_dims,
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
             configurator=self.configurator,
@@ -213,5 +225,3 @@ if __name__ == "__main__":
     #    input_folder="/home/zcr545/YuccaData/yucca_raw_data/Task001_OASIS/imagesTs",
     #    output_folder="/home/zcr545/YuccaData/yucca_predictions",
     # )
-
-# %%

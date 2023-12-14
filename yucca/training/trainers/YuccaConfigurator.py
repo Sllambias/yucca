@@ -88,8 +88,6 @@ class YuccaConfigurator:
         profile: bool = False,
         prediction_output_dir: str = "./",
         save_softmax: bool = False,
-        patch_size: Union[tuple, Literal["max", "min", "mean", "tiny"]] = None,
-        batch_size: int = None,
     ):
         self.ckpt_path = ckpt_path
         self.continue_from_most_recent = continue_from_most_recent
@@ -104,8 +102,6 @@ class YuccaConfigurator:
         self.planner = planner
         self.profile = profile
         self.task = task
-        self.patch_size = patch_size
-        self.batch_size = batch_size
 
         # Attributes set upon calling
         self._plans = None
@@ -237,7 +233,6 @@ class YuccaConfigurator:
 
     def setup_plan_properties(self):
         self.num_classes = max(1, self.plans.get("num_classes") or len(self.plans["dataset_properties"]["classes"]))
-        self.num_modalities = max(1, self.plans.get("num_modalities") or len(self.plans["dataset_properties"]["modalities"]))
         self.image_extension = (
             self.plans.get("image_extension") or self.plans["dataset_properties"].get("image_extension") or "nii.gz"
         )
@@ -270,7 +265,6 @@ class YuccaConfigurator:
         # or flood it with useless information.
         self.lm_hparams = {
             "aug_params": self.augmentation_parameter_dict,
-            "batch_size": self.batch_size,
             "ckpt_path": self.ckpt_path,
             "continue_from_most_recent": self.continue_from_most_recent,
             "disable_logging": self.disable_logging,
@@ -280,9 +274,7 @@ class YuccaConfigurator:
             "model_dimensions": self.model_dimensions,
             "model_name": self.model_name,
             "num_classes": self.num_classes,
-            "num_modalities": self.num_modalities,
             "outpath": self.outpath,
-            "patch_size": self.patch_size,
             "planner": self.planner,
             "plans_path": self.plans_path,
             "plans": self.plans,
