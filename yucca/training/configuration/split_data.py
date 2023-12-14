@@ -33,14 +33,22 @@ def get_split_config(
     p: float = None,
 ):
     """
-    If `k` is provided we will split with `k-fold`. If `p` is provided it determines the fraction of items used for the val split.
+    Params:
+        split_idx: the index of the calculated splits to use. When the splits are pre_calculated we will update teh index.
+        k: k for k-folds
+        p: fraction of data to use for val split
+
+    Note:
+        You can only provide one of `k` or `p`.
+        - If `k` is provided we will split with `k-fold`.
+        - If `p` is provided it determines the fraction of items used for the val split.
     """
     assert (k is not None and p is None) or (k is None and p is not None), "You can only provide one of `k` or `p`."
     if p is not None:
         assert 0 < p < 1, "`p` must be a number between 0 and 1 and determines the fraction of items used for the val split"
     if k is not None:
         assert k > 0
-        assert isinstance(k, int), "`k`"
+        assert isinstance(k, int), "`k` should be an integer"
 
     method = "kfold" if k is not None else "simple_train_val_split"
 
