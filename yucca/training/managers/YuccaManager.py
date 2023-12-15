@@ -142,7 +142,7 @@ class YuccaManager:
         augmenter = YuccaAugmentationComposer(
             patch_size=input_dims.patch_size,
             is_2D=True if self.model_dimensions == "2D" else False,
-            use_preset_for_task_type=plan_config.task_type,
+            task_type_preset=plan_config.task_type,
         )
 
         callback_config = get_callback_config(
