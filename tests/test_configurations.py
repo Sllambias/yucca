@@ -1,31 +1,53 @@
 def test_configurations():
     import os
     from yucca.training.configuration.configure_callbacks import get_callback_config
-    from yucca.training.configuration.configure_paths_and_plans import get_path_and_plan_config
+    from yucca.training.configuration.configure_paths_and_version import get_path_and_version_config
+    from yucca.training.configuration.configure_plans import get_plan_config
+    from yucca.training.configuration.configure_task import get_task_config
     from yucca.training.configuration.input_dimensions import get_input_dims
     from yucca.training.configuration.split_data import get_split_config
     from yucca.paths import yucca_preprocessed_data
 
-    path_and_plan_config = get_path_and_plan_config(task="Task000_Test", model_dimensions="2D", model_name="TinyUNet")
-    assert path_and_plan_config is not None
+    task_config = get_task_config(task="Task000_Test")
+    assert task_config is not None and isinstance(task_config.continue_from_most_recent, bool)
 
-    input_dims_config = get_input_dims(
-        plan=path_and_plan_config.plans,
-        model_dimensions=path_and_plan_config.model_dimensions,
-        num_classes=path_and_plan_config.num_classes,
-        model_name=path_and_plan_config.model_name,
+    path_config = get_path_and_version_config(
+        continue_from_most_recent=task_config.continue_from_most_recent,
+        manager_name=task_config.manager_name,
+        model_dimensions=task_config.model_dimensions,
+        model_name=task_config.model_name,
+        planner_name=task_config.planner_name,
+        split_idx=task_config.split_idx,
+        task=task_config.task,
+    )
+    assert path_config is not None and isinstance(path_config.version, int)
+
+    plan_config = get_plan_config(
+        ckpt_path=None,
+        continue_from_most_recent=True,
+        plans_path=path_config.plans_path,
+        version=path_config.version,
+        version_dir=path_config.version_dir,
+    )
+    assert plan_config is not None and plan_config.task_type in ["classification", "segmentation", "unsupervised"]
+
+    input_dims = get_input_dims(
+        plan=plan_config.plans,
+        model_dimensions=task_config.model_dimensions,
+        num_classes=plan_config.num_classes,
+        model_name=task_config.model_name,
         batch_size="tiny",
         patch_size="tiny",
     )
-    assert input_dims_config is not None
+    assert input_dims is not None and len(input_dims.patch_size) in [2, 3]
 
-    split_config = get_split_config(train_data_dir=path_and_plan_config.train_data_dir, task=path_and_plan_config.task)
-    assert split_config is not None
+    split_config = get_split_config(train_data_dir=path_config.train_data_dir, task=task_config.task)
+    assert split_config is not None and len(split_config.train(0)) > 0
 
     callback_config = get_callback_config(
-        task=path_and_plan_config.task,
-        save_dir=path_and_plan_config.save_dir,
-        version_dir=path_and_plan_config.version_dir,
-        version=path_and_plan_config.version,
+        task=task_config.task,
+        save_dir=path_config.save_dir,
+        version_dir=path_config.version_dir,
+        version=path_config.version,
     )
-    assert callback_config is not None
+    assert callback_config is not None and isinstance(callback_config.loggers, list)

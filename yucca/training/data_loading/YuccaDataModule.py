@@ -5,9 +5,9 @@ from torch.utils.data import DataLoader, Sampler
 from batchgenerators.utilities.file_and_folder_operations import join
 from yucca.training.configuration.input_dimensions import InputDimensions
 from yucca.training.configuration.split_data import SplitConfig
+from yucca.training.configuration.configure_plans import PlanConfig
 from yucca.training.data_loading.YuccaDataset import YuccaTestDataset, YuccaTrainDataset
 from yucca.training.data_loading.samplers import InfiniteRandomSampler
-from yucca.training.configuration.configure_paths_and_plans import PathAndPlanConfig
 
 
 class YuccaDataModule(pl.LightningDataModule):
@@ -46,8 +46,8 @@ class YuccaDataModule(pl.LightningDataModule):
 
     def __init__(
         self,
-        config: PathAndPlanConfig,
         input_dims: InputDimensions,
+        plan_config: PlanConfig,
         splits: SplitConfig,
         split_idx: int,
         composed_train_transforms: torchvision.transforms.Compose = None,
@@ -55,19 +55,15 @@ class YuccaDataModule(pl.LightningDataModule):
         num_workers: int = 8,
         pred_data_dir: str = None,
         pre_aug_patch_size: list | tuple = None,
+        train_data_dir: str = None,
         sampler: Sampler = InfiniteRandomSampler,
     ):
         super().__init__()
-        # First set our configurator object
-        self.cfg = config
-        self.input_dims = input_dims
-
-        # Now extract parameters from the cfg
-        self.batch_size = self.input_dims.batch_size
-        self.patch_size = self.input_dims.patch_size
-        self.image_extension = self.cfg.image_extension
-        self.task_type = self.cfg.task_type
-        self.train_data_dir = self.cfg.train_data_dir
+        # extract parameters
+        self.batch_size = input_dims.batch_size
+        self.patch_size = input_dims.patch_size
+        self.image_extension = plan_config.image_extension
+        self.task_type = plan_config.task_type
         self.train_split = splits.train(split_idx)
         self.val_split = splits.val(split_idx)
 
@@ -75,6 +71,9 @@ class YuccaDataModule(pl.LightningDataModule):
         self.composed_train_transforms = composed_train_transforms
         self.composed_val_transforms = composed_val_transforms
         self.pre_aug_patch_size = pre_aug_patch_size
+
+        # Set in the train loop
+        self.train_data_dir = train_data_dir
 
         # Set in the predict loop
         self.pred_data_dir = pred_data_dir
