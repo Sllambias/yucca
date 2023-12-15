@@ -7,7 +7,7 @@ from yucca.training.configuration.input_dimensions import InputDimensions
 from yucca.training.configuration.split_data import SplitConfig
 from yucca.training.data_loading.YuccaDataset import YuccaTestDataset, YuccaTrainDataset
 from yucca.training.data_loading.samplers import InfiniteRandomSampler
-from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
+from yucca.training.configuration.configure_paths_and_plans import PathAndPlanConfig
 
 
 class YuccaDataModule(pl.LightningDataModule):
@@ -46,7 +46,7 @@ class YuccaDataModule(pl.LightningDataModule):
 
     def __init__(
         self,
-        configurator: YuccaConfigurator,
+        config: PathAndPlanConfig,
         input_dims: InputDimensions,
         splits: SplitConfig,
         split_idx: int,
@@ -59,7 +59,7 @@ class YuccaDataModule(pl.LightningDataModule):
     ):
         super().__init__()
         # First set our configurator object
-        self.cfg = configurator
+        self.cfg = config
         self.input_dims = input_dims
 
         # Now extract parameters from the cfg

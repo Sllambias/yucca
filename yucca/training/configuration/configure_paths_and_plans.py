@@ -1,8 +1,9 @@
 # %%
 import yucca
 import torch
-from batchgenerators.utilities.file_and_folder_operations import join, isdir, subdirs, maybe_mkdir_p, isfile
+from batchgenerators.utilities.file_and_folder_operations import join, isdir, subdirs, maybe_mkdir_p, isfile, load_json
 from dataclasses import dataclass
+from typing import Union
 from yucca.paths import yucca_models, yucca_preprocessed_data
 from yucca.preprocessing.UnsupervisedPreprocessor import UnsupervisedPreprocessor
 from yucca.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
@@ -10,9 +11,10 @@ from yucca.utils.files_and_folders import recursive_find_python_class
 
 
 @dataclass
-class ExperimentConfig:
+class PathAndPlanConfig:
     continue_from_most_recent: bool
     ckpt_path: str
+    image_extension: str
     manager_name: str
     model_dimensions: str
     model_name: str
@@ -32,6 +34,7 @@ class ExperimentConfig:
         return {
             "continue_from_most_recent": self.continue_from_most_recent,
             "ckpt_path": self.ckpt_path,
+            "image_extension": self.image_extension,
             "manager_name": self.manager_name,
             "model_dimensions": self.model_dimensions,
             "model_name": self.model_name,
@@ -49,27 +52,26 @@ class ExperimentConfig:
         }
 
 
-def get_experiment_config(
+def get_path_and_plan_config(
     task: str,
     ckpt_path: str = None,
     continue_from_most_recent: bool = True,
-    split_idx: int = 0,
-    max_vram: int = 12,
     manager_name: str = "YuccaLightningManager",
     model_dimensions: str = "3D",
     model_name: str = "UNet",
     planner: str = "YuccaPlanner",
+    split_idx: int = 0,
 ):
     save_dir, train_data_dir, version_dir, plans_path, version = setup_paths_and_version(
         continue_from_most_recent, manager_name, model_dimensions, model_name, split_idx, task, planner
     )
     plans = setup_plans(ckpt_path, continue_from_most_recent, plans_path, version, version_dir)
-    print(plans)
     num_classes, task_type = setup_classes_and_task_type(plans)
-
-    cfg = ExperimentConfig(
+    image_extension = plans.get("image_extension") or plans["dataset_properties"].get("image_extension") or "nii.gz"
+    return PathAndPlanConfig(
         continue_from_most_recent=continue_from_most_recent,
         ckpt_path=ckpt_path,
+        image_extension=image_extension,
         manager_name=manager_name,
         model_dimensions=model_dimensions,
         model_name=model_name,
@@ -85,22 +87,17 @@ def get_experiment_config(
         version_dir=version_dir,
         version=version,
     )
-    return cfg
 
 
-x = get_experiment_config(task="Task001_OASIS")
-
-
-# %%
 def setup_plans(ckpt_path, continue_from_most_recent, plans_path, version, version_dir):
     if ckpt_path is not None:
         print("Trying to find plans in specified ckpt")
-        return torch.load(ckpt_path, map_location="cpu")["hyper_parameters"].get("config['plans']")
+        return torch.load(ckpt_path, map_location="cpu")["hyper_parameters"]["config"]["plans"]
     elif version is not None and continue_from_most_recent and isfile(join(version_dir, "checkpoints", "last.ckpt")):
         print("Trying to find plans in last ckpt")
-        return load_yaml(join(version_dir, "checkpoints", "last.ckpt"), map_location="cpu")["hyper_parameters"].get(
-            "config['plans']"
-        )
+        return torch.load(join(version_dir, "checkpoints", "last.ckpt"), map_location="cpu")["hyper_parameters"]["config"][
+            "plans"
+        ]
     # If plans is still none the ckpt files were either empty/invalid or didn't exist and we create a new.
     print("Exhausted other options: loading plans.json and constructing parameters")
     return load_json(plans_path)
@@ -126,12 +123,6 @@ def detect_version(save_dir, continue_from_most_recent) -> Union[None, int]:
             return newest_version
         else:
             return newest_version + 1
-
-
-#
-# def get_model_weights( -> {}:
-#    print(f"loading weights from {ckpt_path}")
-#    return torch.load(ckpt_path, map_location=torch.device("cpu"))["state_dict"]
 
 
 def setup_paths_and_version(continue_from_most_recent, manager_name, model_dimensions, model_name, split_idx, task, planner):
@@ -170,41 +161,6 @@ def setup_classes_and_task_type(plans):
     return num_classes, task_type
 
 
-# if classification:
-#    augmentation_parameter_dict["skip_label"] = True
-#
-# if unsupervised:
-#    augmentation_parameter_dict["skip_label"] = True
-#    augmentation_parameter_dict["copy_image_to_label"] = True
-#    # This should be uncommented when masking is properly implemented
-#    # augmentation_parameter_dict["mask_image_for_reconstruction"] = True
-
-# def populate_lm_hparams(:
-#    # Here we control which variables go into the hparam dict that we pass to the LightningModule
-#    # This way we can make sure it won't be given args that could potentially break it (such as classes that might be changed)
-#    # or flood it with useless information.
-#    lm_hparams = {
-#        "aug_params": augmentation_parameter_dict,
-#        "ckpt_path": ckpt_path,
-#        "continue_from_most_recent": continue_from_most_recent,
-#        "image_extension": image_extension,
-#        "manager_name": manager_name,
-#        "max_vram": max_vram,
-#        "model_dimensions": model_dimensions,
-#        "model_name": model_name,
-#        "num_classes": num_classes,
-#        "version_dir": version_dir,
-#        "planner": planner,
-#        "plans_path": plans_path,
-#        "plans": plans,
-#        "task_type": task_type,
-#        "save_dir": save_dir,
-#        "split_idx": split_idx,
-#        "task": task,
-#        "train_data_dir": train_data_dir,
-#    }
-#
-#
-
+x = get_path_and_plan_config(task="Task001_OASIS")
 
 # %%
