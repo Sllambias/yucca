@@ -1,4 +1,4 @@
-def test_configurator_works():
+def test_configurations():
     import os
     from yucca.training.configuration.configure_callbacks import get_callback_config
     from yucca.training.configuration.configure_paths_and_plans import get_path_and_plan_config
