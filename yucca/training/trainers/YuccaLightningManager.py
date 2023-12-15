@@ -217,12 +217,12 @@ if __name__ == "__main__":
     path = None
     Manager = YuccaLightningManager(
         disable_logging=False,
-        step_logging=True,
         ckpt_path=path,
-        split_idx=0,
         model_name="TinyUNet",
         model_dimensions="2D",
         num_workers=0,
+        split_idx=0,
+        step_logging=True,
         task="Task001_OASIS",
     )
     Manager.initialize("fit")
