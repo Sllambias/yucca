@@ -65,8 +65,10 @@ def get_path_and_plan_config(
         continue_from_most_recent, manager_name, model_dimensions, model_name, split_idx, task, planner
     )
     plans = setup_plans(ckpt_path, continue_from_most_recent, plans_path, version, version_dir)
-    num_classes, task_type = setup_classes_and_task_type(plans)
+    task_type = setup_task_type(plans)
+    num_classes = max(1, plans.get("num_classes") or len(plans["dataset_properties"]["classes"]))
     image_extension = plans.get("image_extension") or plans["dataset_properties"].get("image_extension") or "nii.gz"
+
     return PathAndPlanConfig(
         continue_from_most_recent=continue_from_most_recent,
         ckpt_path=ckpt_path,
@@ -102,7 +104,6 @@ def setup_plans(ckpt_path, continue_from_most_recent, plans_path, version, versi
     return load_json(plans_path)
 
 
-#
 def detect_version(save_dir, continue_from_most_recent) -> Union[None, int]:
     # If the dir doesn't exist we return version 0
     if not isdir(save_dir):
@@ -140,9 +141,7 @@ def setup_paths_and_version(continue_from_most_recent, manager_name, model_dimen
     return save_dir, train_data_dir, version_dir, plans_path, version
 
 
-def setup_classes_and_task_type(plans):
-    num_classes = max(1, plans.get("num_classes") or len(plans["dataset_properties"]["classes"]))
-
+def setup_task_type(plans):
     preprocessor_class = recursive_find_python_class(
         folder=[join(yucca.__path__[0], "preprocessing")],
         class_name=plans["preprocessor"],
@@ -157,4 +156,4 @@ def setup_classes_and_task_type(plans):
         task_type = "unsupervised"
     else:
         task_type = "segmentation"
-    return num_classes, task_type
+    return task_type
