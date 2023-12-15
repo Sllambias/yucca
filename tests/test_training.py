@@ -1,7 +1,7 @@
 def test_2D_training():
-    from yucca.yucca.training.trainers.YuccaManager import YuccaLightningManager
+    from yucca.training.trainers.YuccaManager import YuccaManager
 
-    manager = YuccaLightningManager(
+    manager = YuccaManager(
         task="Task000_Test",
         fast_dev_run=True,
         disable_logging=True,
@@ -14,9 +14,9 @@ def test_2D_training():
 
 
 def test_3D_training():
-    from yucca.yucca.training.trainers.YuccaManager import YuccaLightningManager
+    from yucca.yucca.training.trainers.YuccaManager import YuccaManager
 
-    manager = YuccaLightningManager(
+    manager = YuccaManager(
         task="Task000_Test",
         fast_dev_run=True,
         disable_logging=True,

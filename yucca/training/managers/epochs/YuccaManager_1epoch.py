@@ -1,7 +1,7 @@
-from yucca.yucca.training.trainers.YuccaManager import YuccaLightningManager
+from yucca.training.managers.YuccaManager import YuccaManager
 
 
-class YuccaLightningManager_1epoch(YuccaLightningManager):
+class YuccaManager_1epoch(YuccaManager):
     def __init__(
         self,
         model,

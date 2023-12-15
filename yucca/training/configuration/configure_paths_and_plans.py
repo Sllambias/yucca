@@ -55,7 +55,7 @@ def get_path_and_plan_config(
     task: str,
     ckpt_path: str = None,
     continue_from_most_recent: bool = True,
-    manager_name: str = "YuccaLightningManager",
+    manager_name: str = "YuccaManager",
     model_dimensions: str = "3D",
     model_name: str = "UNet",
     planner: str = "YuccaPlanner",
