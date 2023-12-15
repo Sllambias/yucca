@@ -110,11 +110,11 @@ class YuccaAugmentationComposer:
 
     def apply_task_specific_preset(self, task_type):
         if task_type == "classification":
-            augmentation_parameter_dict["skip_label"] = True
+            self.skip_label = True
 
         if task_type == "unsupervised":
-            augmentation_parameter_dict["skip_label"] = True
-            augmentation_parameter_dict["copy_image_to_label"] = True
+            self.skip_label = True
+            self.copy_image_to_label = True
             # This should be uncommented when masking is properly implemented
             # augmentation_parameter_dict["mask_image_for_reconstruction"] = True
 
