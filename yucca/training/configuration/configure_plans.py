@@ -11,7 +11,7 @@ from yucca.utils.files_and_folders import recursive_find_python_class
 
 @dataclass
 class PlanConfig:
-    ckpt_path: str
+    ckpt_path: Union[str, None]
     image_extension: str
     num_classes: int
     plans: dict
