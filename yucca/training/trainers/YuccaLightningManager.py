@@ -46,17 +46,16 @@ class YuccaLightningManager:
         continue_from_most_recent: bool = True,
         deep_supervision: bool = False,
         disable_logging: bool = False,
-        split_idx: int = 0,
-        loss: str = "DiceCE",
+        loss: str = None,
         max_epochs: int = 1000,
         model_dimensions: str = "3D",
         model_name: str = "TinyUNet",
         num_workers: int = 8,
+        patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
         planner: str = "YuccaPlanner",
         precision: str = "16-mixed",
-        patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
-        batch_size: Optional[int] = None,
         profile: bool = False,
+        split_idx: int = 0,
         step_logging: bool = False,
         task: str = None,
         **kwargs,
@@ -65,7 +64,6 @@ class YuccaLightningManager:
         self.continue_from_most_recent = continue_from_most_recent
         self.deep_supervision = deep_supervision
         self.disable_logging = disable_logging
-        self.split_idx = split_idx
         self.loss = loss
         self.max_epochs = max_epochs
         self.model_dimensions = model_dimensions
@@ -75,6 +73,7 @@ class YuccaLightningManager:
         self.planner = planner
         self.precision = precision
         self.profile = profile
+        self.split_idx = split_idx
         self.step_logging = step_logging
         self.task = task
         self.kwargs = kwargs

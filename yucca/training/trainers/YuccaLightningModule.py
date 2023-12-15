@@ -26,7 +26,7 @@ class YuccaLightningModule(L.LightningModule):
         self,
         config: dict,
         learning_rate: float = 1e-3,
-        loss_fn: str = "DiceCE",
+        loss_fn: str = None,
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler = torch.optim.lr_scheduler.CosineAnnealingLR,
         momentum: float = 0.9,
         optimizer: torch.optim.Optimizer = torch.optim.SGD,
@@ -73,6 +73,7 @@ class YuccaLightningModule(L.LightningModule):
 
         if self.loss_fn is None:
             self.loss_fn = _default_loss
+
         # Inference
         self.sliding_window_overlap = sliding_window_overlap
         self.test_time_augmentation = test_time_augmentation

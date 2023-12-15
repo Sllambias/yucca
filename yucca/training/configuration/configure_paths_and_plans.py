@@ -1,4 +1,3 @@
-# %%
 import yucca
 import torch
 from batchgenerators.utilities.file_and_folder_operations import join, isdir, subdirs, maybe_mkdir_p, isfile, load_json
@@ -159,8 +158,3 @@ def setup_classes_and_task_type(plans):
     else:
         task_type = "segmentation"
     return num_classes, task_type
-
-
-x = get_path_and_plan_config(task="Task001_OASIS")
-
-# %%
