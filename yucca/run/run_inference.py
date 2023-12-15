@@ -3,12 +3,9 @@ import yucca
 from yucca.utils.task_ids import maybe_get_task_from_task_id
 from yucca.paths import yucca_raw_data, yucca_results, yucca_models
 from yucca.evaluation.YuccaEvaluator import YuccaEvaluator
-from yucca.training.trainers.YuccaManager import YuccaManager
-from yucca.training.trainers.YuccaLightningManager import YuccaLightningManager
-from yucca.utils.files_and_folders import (
-    recursive_find_python_class,
-    merge_softmax_from_folders,
-)
+from yucca.training.managers.YuccaManager import YuccaManager
+from yucca.utils.files_and_folders import recursive_find_python_class
+from yucca.utils.saving import merge_softmax_from_folders
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     load_json,
@@ -46,9 +43,9 @@ def main():
     parser.add_argument("-m", help="Model Architecture. Defaults to UNet.", default="UNet")
     parser.add_argument("-d", help="2D or 3D model. Defaults to 3D.", default="3D")
     parser.add_argument(
-        "-tr",
+        "-man",
         help="Full name of Trainer Class. \n" "e.g. 'YuccaTrainer_DCE' or 'YuccaTrainer'. Defaults to YuccaTrainer.",
-        default="YuccaTrainer",
+        default="YuccaManager",
     )
     parser.add_argument("-pl", help="Planner. Defaults to YuccaPlanner", default="YuccaPlanner")
     parser.add_argument(
@@ -122,10 +119,10 @@ def main():
 
     source_task = maybe_get_task_from_task_id(args.s)
     target_task = maybe_get_task_from_task_id(args.t)
-    manager_name = args.tr
+    manager_name = args.man
     model = args.m
     dimensions = args.d
-    folds = args.f
+    split_idx = int(args.f)
     planner = args.pl
     profile = args.profile
     checkpoint = args.chk
@@ -149,17 +146,18 @@ def main():
 
     for planner in plans:
         path_to_versions = join(
-            yucca_models, source_task, model + "__" + dimensions, manager_name + "__" + planner, f"fold_{folds}"
+            yucca_models, source_task, model + "__" + dimensions, manager_name + "__" + planner, f"fold_{split_idx}"
         )
         if version is None:
             versions = [int(i.split("_")[-1]) for i in subdirs(path_to_versions, join=False)]
             version = str(max(versions))
+
         modelfile = join(
             yucca_models,
             source_task,
             model + "__" + dimensions,
             manager_name + "__" + planner,
-            f"fold_{folds}",
+            f"fold_{split_idx}",
             f"version_{version}",
             "checkpoints",
             checkpoint + ".ckpt",
@@ -171,13 +169,13 @@ def main():
         )
 
         manager = recursive_find_python_class(
-            folder=[join(yucca.__path__[0], "training")],
+            folder=[join(yucca.__path__[0], "training", "managers")],
             class_name=manager_name,
-            current_module="yucca.training",
+            current_module="yucca.training.managers",
         )
 
         assert manager, f"searching for {manager_name} " f"but found: {manager}"
-        assert issubclass(manager, (YuccaManager, YuccaLightningManager)), "Trainer is not a subclass of YuccaTrainer."
+        assert issubclass(manager, (YuccaManager, YuccaManager)), "Trainer is not a subclass of YuccaTrainer."
 
         print(f"{'Using manager: ':25} {manager_name}")
         manager = manager(
@@ -185,7 +183,7 @@ def main():
             model_name=model,
             model_dimensions=dimensions,
             task=source_task,
-            folds=folds,
+            split_idx=split_idx,
             planner=planner,
             ckpt_path=modelfile,
             profile=profile,
@@ -201,7 +199,7 @@ def main():
             source_task,
             model + "__" + dimensions,
             manager_name + "__" + planner,
-            f"fold_{folds}",
+            f"fold_{split_idx}",
             f"version_{version}",
             checkpoint,
         )
@@ -238,7 +236,7 @@ def main():
             source_task,
             model + dimensions,
             manager_name + "__" + planner + "_Ensemble",
-            "fold_" + folds + "_" + checkpoint,
+            "fold_" + str(split_idx) + "_" + checkpoint,
         )
         merge_softmax_from_folders(folders_with_softmax, ensemble_outpath)
 

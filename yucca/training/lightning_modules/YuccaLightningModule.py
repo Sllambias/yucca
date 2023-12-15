@@ -7,7 +7,6 @@ from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Dice, Precision
 from torchmetrics.regression import MeanAbsoluteError
-from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.utils.kwargs import filter_kwargs
 from typing import Literal
@@ -227,12 +226,3 @@ class YuccaLightningModule(L.LightningModule):
             else:
                 unsuccessful += 1
         print(f"Succesfully transferred weights for {successful}/{successful+unsuccessful} layers")
-
-
-if __name__ == "__main__":
-    from yucca.training.trainers.YuccaLightningManager import YuccaLightningManager
-    from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
-
-    path = None
-    cfg = YuccaConfigurator(task="Task001_OASIS", split_idx=2)
-    model = YuccaLightningModule(cfg)

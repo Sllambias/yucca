@@ -1,5 +1,5 @@
 def test_2D_training():
-    from yucca.training.trainers.YuccaLightningManager import YuccaLightningManager
+    from yucca.yucca.training.trainers.YuccaManager import YuccaLightningManager
 
     manager = YuccaLightningManager(
         task="Task000_Test",
@@ -14,7 +14,7 @@ def test_2D_training():
 
 
 def test_3D_training():
-    from yucca.training.trainers.YuccaLightningManager import YuccaLightningManager
+    from yucca.yucca.training.trainers.YuccaManager import YuccaLightningManager
 
     manager = YuccaLightningManager(
         task="Task000_Test",

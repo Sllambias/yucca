@@ -1,8 +1,7 @@
-from yucca.training.trainers.YuccaManager import YuccaManager
-from yucca.loss_and_optim.loss_functions.CE import CE
+from yucca.training.managers.YuccaManager import YuccaManager
 
 
-class YuccaManager_CE(YuccaManager):
+class YuccaManager_1e2(YuccaManager):
     def __init__(
         self,
         model,
@@ -16,4 +15,4 @@ class YuccaManager_CE(YuccaManager):
         continue_training: bool = False,
     ):
         super().__init__(model, model_dimensions, task, folds, plan_id, starting_lr, loss_fn, momentum, continue_training)
-        self._DEFAULT_LOSS = CE
+        self._DEFAULT_STARTING_LR = 1e-2

@@ -61,7 +61,7 @@ def get_loggers(
         loggers.append(
             WandbLogger(
                 name=f"version_{version}",
-                save_dir=save_dir,
+                save_dir=version_dir,
                 version=str(version),
                 project="Yucca",
                 group=task,

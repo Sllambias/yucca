@@ -1,19 +1,17 @@
 import lightning as L
 import torch
 from typing import Literal, Union, Optional
-from yucca.training.augmentation.YuccaAugmentationComposer import (
-    YuccaAugmentationComposer,
-)
+from yucca.training.augmentation.YuccaAugmentationComposer import YuccaAugmentationComposer
 from yucca.training.configuration.split_data import get_split_config
 from yucca.training.configuration.configure_callbacks import get_callback_config
 from yucca.training.configuration.configure_paths_and_plans import get_path_and_plan_config
 from yucca.training.data_loading.YuccaDataModule import YuccaDataModule
-from yucca.training.trainers.YuccaLightningModule import YuccaLightningModule
+from yucca.training.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from yucca.training.configuration.input_dimensions import get_input_dims
 from yucca.paths import yucca_results
 
 
-class YuccaLightningManager:
+class YuccaManager:
     """
     The YuccaLightningManager class provides a convenient way to manage the training and inference processes in the Yucca project.
     It encapsulates the configuration, setup, and execution steps, making it easier to conduct experiments and predictions with consistent settings.

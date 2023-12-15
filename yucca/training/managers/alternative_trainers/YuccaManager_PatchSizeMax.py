@@ -1,7 +1,7 @@
-from yucca.training.trainers.YuccaLightningManager import YuccaLightningManager
+from yucca.training.managers.YuccaManager import YuccaManager
 
 
-class YuccaLightningManager_PatchSizeMax(YuccaLightningManager):
+class YuccaManager_PatchSizeMax(YuccaManager):
     """
     Instantiate a YuccaLightningManager object with the patch size set to the maximum patch size.
     """

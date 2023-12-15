@@ -33,8 +33,8 @@ def main():
     )
     parser.add_argument(
         "-man",
-        help="Manager Class to be used. " "Defaults to the basic YuccaLightningManager",
-        default="YuccaLightningManager",
+        help="Manager Class to be used. " "Defaults to the basic YuccaManager",
+        default="YuccaManager",
     )
     parser.add_argument(
         "-pl",
@@ -61,8 +61,8 @@ def main():
     parser.add_argument("--mom", help="Should only be used to employ alternative Momentum.", default=None)
 
     parser.add_argument(
-        "--log",
-        help="Enable logging. ",
+        "--disable_logging",
+        help="disable logging. ",
         action="store_true",
         default=False,
     )
@@ -86,9 +86,9 @@ def main():
     dimensions = args.d
     epochs = args.epochs
     manager_name = args.man
-    split_idx = args.f
+    split_idx = int(args.f)
     lr = args.lr
-    log = args.log
+    log = not args.disable_logging
     loss = args.loss
     momentum = args.mom
     new_version = args.new_version
@@ -111,11 +111,13 @@ def main():
         "TinyUNet",
     ], f"{model_name} is an invalid model name. This is case sensitive."
 
+    print(f"{'Using manager: ':25} {manager_name}")
     manager = recursive_find_python_class(
-        folder=[join(yucca.__path__[0], "training", "trainers")],
+        folder=[join(yucca.__path__[0], "training", "managers")],
         class_name=manager_name,
-        current_module="yucca.training.trainers",
+        current_module="yucca.training.managers",
     )
+
     manager = manager(
         ckpt_path=None,
         continue_from_most_recent=not new_version,
