@@ -1,5 +1,5 @@
 def test_2D_training():
-    from yucca.training.trainers.YuccaManager import YuccaManager
+    from yucca.training.managers.YuccaManager import YuccaManager
 
     manager = YuccaManager(
         task="Task000_Test",
@@ -14,7 +14,7 @@ def test_2D_training():
 
 
 def test_3D_training():
-    from yucca.yucca.training.trainers.YuccaManager import YuccaManager
+    from yucca.training.managers.YuccaManager import YuccaManager
 
     manager = YuccaManager(
         task="Task000_Test",
