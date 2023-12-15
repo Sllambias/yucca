@@ -213,7 +213,7 @@ class YuccaManager:
 if __name__ == "__main__":
     # path = "/home/zcr545/YuccaData/yucca_models/Task001_OASIS/UNet__3D/YuccaPlanner/YuccaLightningManager/0/2023_11_08_15_19_14/checkpoints/test_ckpt.ckpt"
     path = None
-    Manager = YuccaLightningManager(
+    Manager = YuccaManager(
         disable_logging=False,
         ckpt_path=path,
         model_name="TinyUNet",
