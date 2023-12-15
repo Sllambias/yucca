@@ -2,7 +2,7 @@
 name = "yucca"
 version = "0.2.0"
 authors = [
-  { name="Sebastian LLambias", email="llambias@live.dk" },
+  { name="Sebastian Llambias", email="llambias@live.dk" },
   { name="Asbjørn Munk", email="9844416+asbjrnmunk@users.noreply.github.com" },
   { name="Jakob Ambsdorf", email="20045425+jakobamb@users.noreply.github.com" },
 ]
