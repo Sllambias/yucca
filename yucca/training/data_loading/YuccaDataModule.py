@@ -46,6 +46,7 @@ class YuccaDataModule(pl.LightningDataModule):
 
     def __init__(
         self,
+        train_data_dir: str,
         input_dims_config: InputDimensionsConfig,
         plan_config: PlanConfig,
         splits_config: SplitConfig,
@@ -55,7 +56,6 @@ class YuccaDataModule(pl.LightningDataModule):
         num_workers: int = 8,
         pred_data_dir: str = None,
         pre_aug_patch_size: list | tuple = None,
-        train_data_dir: str = None,
         sampler: Sampler = InfiniteRandomSampler,
     ):
         super().__init__()
