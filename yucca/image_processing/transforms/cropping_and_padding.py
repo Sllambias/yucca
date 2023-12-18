@@ -51,6 +51,7 @@ class CropPad(YuccaTransform):
         image: np.ndarray,
         label: np.ndarray,
         image_properties: dict,
+        input_shape: np.ndarray,
         target_image_shape: list | tuple,
         target_label_shape: list | tuple,
         **pad_kwargs,
@@ -59,11 +60,11 @@ class CropPad(YuccaTransform):
             return self.generate_3D_case_from_3D(
                 image, image_properties, label, target_image_shape, target_label_shape, **pad_kwargs
             )
-        elif len(self.patch_size) == 2 and len(self.input_shape) == 4:
+        elif len(self.patch_size) == 2 and len(input_shape) == 4:
             return self.generate_2D_case_from_3D(
                 image, image_properties, label, target_image_shape, target_label_shape, **pad_kwargs
             )
-        elif len(self.patch_size) == 2 and len(self.input_shape) == 3:
+        elif len(self.patch_size) == 2 and len(input_shape) == 3:
             return self.generate_2D_case_from_2D(
                 image, image_properties, label, target_image_shape, target_label_shape, **pad_kwargs
             )
@@ -303,6 +304,7 @@ class CropPad(YuccaTransform):
         data_dict[self.data_key], data_dict[self.label_key] = self.__croppad__(
             image=data_dict[self.data_key],
             image_properties=image_properties,
+            input_shape=input_shape,
             label=data_dict[self.label_key],
             target_image_shape=target_image_shape,
             target_label_shape=target_label_shape,
