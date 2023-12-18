@@ -1,7 +1,7 @@
-from yucca.training.trainers.YuccaTrainer import YuccaTrainer
+from yucca.training.managers.YuccaManager import YuccaManager
 
 
-class YuccaTrainer_1e4(YuccaTrainer):
+class YuccaManager_1e2(YuccaManager):
     def __init__(
         self,
         model,
@@ -15,4 +15,4 @@ class YuccaTrainer_1e4(YuccaTrainer):
         continue_training: bool = False,
     ):
         super().__init__(model, model_dimensions, task, folds, plan_id, starting_lr, loss_fn, momentum, continue_training)
-        self._DEFAULT_STARTING_LR = 1e-4
+        self._DEFAULT_STARTING_LR = 1e-2

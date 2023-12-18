@@ -30,10 +30,11 @@ class YuccaAugmentationComposer:
         patch_size: list | tuple,
         is_2D: bool = False,
         parameter_dict: dict = {},
+        task_type_preset: str = None,
     ):
         self._pre_aug_patch_size = None
-
         self.setup_default_params(is_2D, patch_size)
+        self.apply_task_type_specific_preset(task_type_preset)
         self.overwrite_params(parameter_dict)
         self.train_transforms = self.compose_train_transforms()
         self.val_transforms = self.compose_val_transforms()
@@ -106,6 +107,16 @@ class YuccaAugmentationComposer:
         if self.elastic_deform_p_per_sample > 0 or self.rotation_p_per_sample > 0 or self.scale_p_per_sample > 0:
             self._pre_aug_patch_size = get_max_rotated_size(self.patch_size)
         return self._pre_aug_patch_size
+
+    def apply_task_type_specific_preset(self, task_type_preset):
+        if task_type_preset == "classification":
+            self.skip_label = True
+
+        if task_type_preset == "unsupervised":
+            self.skip_label = True
+            self.copy_image_to_label = True
+            # This should be uncommented when masking is properly implemented
+            # augmentation_parameter_dict["mask_image_for_reconstruction"] = True
 
     def overwrite_params(self, parameter_dict):
         for key, value in parameter_dict.items():

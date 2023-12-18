@@ -7,7 +7,6 @@ from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Dice, Precision
 from torchmetrics.regression import MeanAbsoluteError
-from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
 from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.utils.kwargs import filter_kwargs
 from typing import Literal
@@ -26,7 +25,7 @@ class YuccaLightningModule(L.LightningModule):
         self,
         config: dict,
         learning_rate: float = 1e-3,
-        loss_fn: str = "DiceCE",
+        loss_fn: str = None,
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler = torch.optim.lr_scheduler.CosineAnnealingLR,
         momentum: float = 0.9,
         optimizer: torch.optim.Optimizer = torch.optim.SGD,
@@ -73,6 +72,7 @@ class YuccaLightningModule(L.LightningModule):
 
         if self.loss_fn is None:
             self.loss_fn = _default_loss
+
         # Inference
         self.sliding_window_overlap = sliding_window_overlap
         self.test_time_augmentation = test_time_augmentation
@@ -226,12 +226,3 @@ class YuccaLightningModule(L.LightningModule):
             else:
                 unsuccessful += 1
         print(f"Succesfully transferred weights for {successful}/{successful+unsuccessful} layers")
-
-
-if __name__ == "__main__":
-    from yucca.training.trainers.YuccaLightningManager import YuccaLightningManager
-    from yucca.training.trainers.YuccaConfigurator import YuccaConfigurator
-
-    path = None
-    cfg = YuccaConfigurator(task="Task001_OASIS", split_idx=2)
-    model = YuccaLightningModule(cfg)

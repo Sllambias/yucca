@@ -1,7 +1,7 @@
-from yucca.training.trainers.YuccaTrainer import YuccaTrainer
+from yucca.training.managers.YuccaManager import YuccaManager
 
 
-class YuccaTrainer_24GB(YuccaTrainer):
+class YuccaManager_1epoch(YuccaManager):
     def __init__(
         self,
         model,
@@ -31,4 +31,4 @@ class YuccaTrainer_24GB(YuccaTrainer):
             finetune,
             fast_training,
         )
-        self.max_vram = 24
+        self.final_epoch = 1

@@ -1,5 +1,5 @@
 def test_manager_works():
-    from yucca.training.trainers.YuccaLightningManager import YuccaLightningManager
+    from yucca.training.managers.YuccaManager import YuccaManager
 
-    manager = YuccaLightningManager()
+    manager = YuccaManager()
     assert manager is not None

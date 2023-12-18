@@ -34,8 +34,8 @@ def main():
     )
     parser.add_argument(
         "-man",
-        help="Manager Class to be used. " "Defaults to the basic YuccaLightningManager",
-        default="YuccaLightningManager",
+        help="Manager Class to be used. " "Defaults to the basic YuccaManager",
+        default="YuccaManager",
     )
     parser.add_argument(
         "-pl",
@@ -82,7 +82,7 @@ def main():
     dimensions = args.d
     epochs = args.epochs
     manager_name = args.man
-    folds = args.f
+    split_idx = int(args.f)
     lr = args.lr
     loss = args.loss
     momentum = args.mom
@@ -96,9 +96,9 @@ def main():
         assert "e" in lr, f"Learning Rate should be in scientific notation e.g. 1e-4, but is {lr}"
 
     manager = recursive_find_python_class(
-        folder=[join(yucca.__path__[0], "training", "trainers")],
+        folder=[join(yucca.__path__[0], "training", "managers")],
         class_name=manager_name,
-        current_module="yucca.training.trainers",
+        current_module="yucca.training.managers",
     )
     # checkpoint = join(
     #    yucca_models,
@@ -116,7 +116,7 @@ def main():
         continue_from_most_recent=False,
         deep_supervision=False,
         disable_logging=True,
-        folds=folds,
+        split_idx=split_idx,
         loss=loss,
         model_dimensions=dimensions,
         model_name=model_name,

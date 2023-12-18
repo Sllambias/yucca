@@ -53,10 +53,10 @@ def get_split_config(
     if isfile(splits_path):
         split_cfg = load_pickle(splits_path)
         if split_cfg_is_the_same(split_cfg, k, p):
-            logging.warn(f"Reusing already computed split file which was split using the {method} method")
+            logging.warning(f"Reusing already computed split file which was split using the {method} method")
             return split_cfg
         else:
-            logging.warn(
+            logging.warning(
                 "Generating new split_cfg since split_cfg was either the wrong type or was generated using a different `k` and `p`."
             )
 
@@ -100,7 +100,7 @@ def get_file_names(train_data_dir):
     if not file_names:
         file_names = subfiles(train_data_dir, join=False, suffix=".npz")
         if file_names:
-            logging.warn("Only found compressed (.npz) files. This might increase runtime.")
+            logging.warning("Only found compressed (.npz) files. This might increase runtime.")
 
     assert file_names, f"Couldn't find any .npy or .npz files in {train_data_dir}"
     return np.array(file_names)
