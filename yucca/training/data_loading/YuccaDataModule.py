@@ -3,7 +3,7 @@ import torchvision
 from typing import Literal
 from torch.utils.data import DataLoader, Sampler
 from batchgenerators.utilities.file_and_folder_operations import join
-from yucca.training.configuration.input_dimensions import InputDimensions
+from yucca.training.configuration.input_dimensions import InputDimensionsConfig
 from yucca.training.configuration.split_data import SplitConfig
 from yucca.training.configuration.configure_plans import PlanConfig
 from yucca.training.data_loading.YuccaDataset import YuccaTestDataset, YuccaTrainDataset
@@ -46,9 +46,9 @@ class YuccaDataModule(pl.LightningDataModule):
 
     def __init__(
         self,
-        input_dims: InputDimensions,
+        input_dims_config: InputDimensionsConfig,
         plan_config: PlanConfig,
-        splits: SplitConfig,
+        splits_config: SplitConfig,
         split_idx: int,
         composed_train_transforms: torchvision.transforms.Compose = None,
         composed_val_transforms: torchvision.transforms.Compose = None,
@@ -60,12 +60,12 @@ class YuccaDataModule(pl.LightningDataModule):
     ):
         super().__init__()
         # extract parameters
-        self.batch_size = input_dims.batch_size
-        self.patch_size = input_dims.patch_size
+        self.batch_size = input_dims_config.batch_size
+        self.patch_size = input_dims_config.patch_size
         self.image_extension = plan_config.image_extension
         self.task_type = plan_config.task_type
-        self.train_split = splits.train(split_idx)
-        self.val_split = splits.val(split_idx)
+        self.train_split = splits_config.train(split_idx)
+        self.val_split = splits_config.val(split_idx)
 
         # Set by initialize()
         self.composed_train_transforms = composed_train_transforms

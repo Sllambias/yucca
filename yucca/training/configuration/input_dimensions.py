@@ -5,7 +5,7 @@ from yucca.network_architectures.utils.model_memory_estimation import find_optim
 
 
 @dataclass
-class InputDimensions:
+class InputDimensionsConfig:
     batch_size: int
     patch_size: Union[Tuple[int, int], Tuple[int, int, int]]
     num_modalities: int
@@ -18,7 +18,7 @@ class InputDimensions:
         }
 
 
-def get_input_dims(
+def get_input_dims_config(
     plan: dict,
     model_dimensions: Literal["2D", "3D"],
     num_classes: int,
@@ -84,7 +84,7 @@ def get_input_dims(
 
     print(f"Using batch size: {batch_size} and patch size: {patch_size}")
 
-    return InputDimensions(
+    return InputDimensionsConfig(
         batch_size=batch_size,
         patch_size=patch_size,
         num_modalities=num_modalities,

@@ -4,7 +4,7 @@ def test_configurations():
     from yucca.training.configuration.configure_paths_and_version import get_path_config
     from yucca.training.configuration.configure_plans import get_plan_config
     from yucca.training.configuration.configure_task import get_task_config
-    from yucca.training.configuration.input_dimensions import get_input_dims
+    from yucca.training.configuration.input_dimensions import get_input_dims_config
     from yucca.training.configuration.split_data import get_split_config
     from yucca.paths import yucca_preprocessed_data
 
@@ -17,7 +17,7 @@ def test_configurations():
     plan_config = get_plan_config(path_config=path_config, continue_from_most_recent=True)
     assert plan_config is not None and plan_config.task_type in ["classification", "segmentation", "unsupervised"]
 
-    input_dims = get_input_dims(
+    input_dims = get_input_dims_config(
         plan=plan_config.plans,
         model_dimensions=task_config.model_dimensions,
         num_classes=plan_config.num_classes,
