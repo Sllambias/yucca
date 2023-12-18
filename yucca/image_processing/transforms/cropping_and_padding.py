@@ -19,23 +19,32 @@ class CropPad(YuccaTransform):
         self,
         data_key="image",
         label_key="label",
-        pad_value: Literal["min", "zero", "edge"],
+        pad_value: Union[Literal["min", "zero", "edge"], int, float] = "min",
         patch_size: tuple | list = None,
         p_oversample_foreground=0.0,
     ):
         self.data_key = data_key
         self.label_key = label_key
-        self.mode = mode
+        self.pad_value = pad_value
         self.patch_size = patch_size
         self.p_oversample_foreground = p_oversample_foreground
 
-
-
     @staticmethod
-    def get_params(input_shape, target_shape):
+    def get_params(data, pad_value, target_shape):
+        if pad_value == "min":
+            pad_kwargs = {"constant_values": data.min(), "mode": "constant"}
+        elif pad_value == "zero":
+            pad_kwargs = {"constant_values": np.zeros(1, dtype=data.dtype), "mode": "constant"}
+        elif isinstance(pad_value, int) or isinstance(pad_value, float):
+            pad_kwargs = {"constant_values": pad_value, "mode": "constant"}
+        elif pad_value == "edge":
+            pad_kwargs = {"mode": "edge"}
+        else:
+            print("Unrecognized pad value detected.")
+        input_shape = data.shape
         target_image_shape = (input_shape[0], *target_shape)
         target_label_shape = (1, *target_shape)
-        return target_image_shape, target_label_shape, input_shape
+        return input_shape, target_image_shape, target_label_shape, pad_kwargs
 
     def __croppad__(
         self,
@@ -44,15 +53,22 @@ class CropPad(YuccaTransform):
         image_properties: dict,
         target_image_shape: list | tuple,
         target_label_shape: list | tuple,
+        **pad_kwargs,
     ):
         if len(self.patch_size) == 3:
-            return self.generate_3D_case_from_3D(image, label, image_properties, target_image_shape, target_label_shape)
+            return self.generate_3D_case_from_3D(
+                image, image_properties, label, target_image_shape, target_label_shape, **pad_kwargs
+            )
         elif len(self.patch_size) == 2 and len(self.input_shape) == 4:
-            return self.generate_2D_case_from_3D(image, label, image_properties, target_image_shape, target_label_shape)
+            return self.generate_2D_case_from_3D(
+                image, image_properties, label, target_image_shape, target_label_shape, **pad_kwargs
+            )
         elif len(self.patch_size) == 2 and len(self.input_shape) == 3:
-            return self.generate_2D_case_from_2D(image, label, image_properties, target_image_shape, target_label_shape)
+            return self.generate_2D_case_from_2D(
+                image, image_properties, label, target_image_shape, target_label_shape, **pad_kwargs
+            )
 
-    def generate_3D_case_from_3D(self, image, label, image_properties, target_image_shape, target_label_shape):
+    def generate_3D_case_from_3D(self, image, image_properties, label, target_image_shape, target_label_shape, **pad_kwargs):
         image_out = np.zeros(target_image_shape)
         label_out = np.zeros(target_label_shape)
 
@@ -108,7 +124,7 @@ class CropPad(YuccaTransform):
                 crop_start_idx[2] : crop_start_idx[2] + self.patch_size[2],
             ],
             ((0, 0), (pad_lb_x, pad_ub_x), (pad_lb_y, pad_ub_y), (pad_lb_z, pad_ub_z)),
-            mode=self.mode,
+            **pad_kwargs,
         )
         if label is None:
             return image_out, None
@@ -128,7 +144,7 @@ class CropPad(YuccaTransform):
         )
         return image_out, label_out
 
-    def generate_2D_case_from_3D(self, image, label, image_properties, target_image_shape, target_label_shape):
+    def generate_2D_case_from_3D(self, image, image_properties, label, target_image_shape, target_label_shape, **pad_kwargs):
         """
         The possible input for this can be 2D or 3D data.
         For 2D we want to pad or crop as necessary.
@@ -185,7 +201,7 @@ class CropPad(YuccaTransform):
                 crop_start_idx[1] : crop_start_idx[1] + self.patch_size[1],
             ],
             ((0, 0), (pad_lb_y, pad_ub_y), (pad_lb_z, pad_ub_z)),
-            mode="edge",
+            **pad_kwargs,
         )
 
         if label is None:
@@ -203,7 +219,7 @@ class CropPad(YuccaTransform):
 
         return image_out, label_out
 
-    def generate_2D_case_from_2D(self, image, label, image_properties, target_image_shape, target_label_shape):
+    def generate_2D_case_from_2D(self, image, image_properties, label, target_image_shape, target_label_shape, **pad_kwargs):
         """
         The possible input for this can be 2D or 3D data.
         For 2D we want to pad or crop as necessary.
@@ -257,7 +273,7 @@ class CropPad(YuccaTransform):
                 crop_start_idx[1] : crop_start_idx[1] + self.patch_size[1],
             ],
             ((0, 0), (pad_lb_x, pad_ub_x), (pad_lb_y, pad_ub_y)),
-            mode="edge",
+            **pad_kwargs,
         )
 
         if label is None:  # Reconstruction/inpainting
@@ -280,15 +296,16 @@ class CropPad(YuccaTransform):
     def __call__(self, packed_data_dict=None, image_properties=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
 
-        target_image_shape, target_label_shape, self.input_shape = self.get_params(
-            data_dict[self.data_key].shape, self.patch_size
+        input_shape, target_image_shape, target_label_shape, pad_kwargs = self.get_params(
+            data=data_dict[self.data_key], pad_value=self.pad_value, target_shape=self.patch_size
         )
 
         data_dict[self.data_key], data_dict[self.label_key] = self.__croppad__(
-            data_dict[self.data_key],
-            data_dict[self.label_key],
-            image_properties,
-            target_image_shape,
-            target_label_shape,
+            image=data_dict[self.data_key],
+            image_properties=image_properties,
+            label=data_dict[self.label_key],
+            target_image_shape=target_image_shape,
+            target_label_shape=target_label_shape,
+            **pad_kwargs,
         )
         return data_dict
