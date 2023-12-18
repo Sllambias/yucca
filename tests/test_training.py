@@ -22,6 +22,7 @@ def test_3D_training():
         disable_logging=True,
         model_name="TinyUNet",
         model_dimensions="3D",
+        num_workers=0,
         precision="bf16-mixed",
         accelerator="cpu",
     )
