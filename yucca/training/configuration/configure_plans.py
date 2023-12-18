@@ -11,7 +11,6 @@ from yucca.utils.files_and_folders import recursive_find_python_class
 
 @dataclass
 class PlanConfig:
-    ckpt_path: Union[str, None]
     image_extension: str
     num_classes: int
     plans: dict
@@ -19,7 +18,6 @@ class PlanConfig:
 
     def lm_hparams(self):
         return {
-            "ckpt_path": self.ckpt_path,
             "image_extension": self.image_extension,
             "num_classes": self.num_classes,
             "plans": self.plans,
@@ -34,7 +32,6 @@ def get_plan_config(ckpt_path: str, continue_from_most_recent: bool, plans_path:
     image_extension = plans.get("image_extension") or plans["dataset_properties"].get("image_extension") or "nii.gz"
 
     return PlanConfig(
-        ckpt_path=ckpt_path,
         image_extension=image_extension,
         num_classes=num_classes,
         plans=plans,

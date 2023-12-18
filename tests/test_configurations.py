@@ -12,6 +12,7 @@ def test_configurations():
     assert task_config is not None and isinstance(task_config.continue_from_most_recent, bool)
 
     path_config = get_path_and_version_config(
+        ckpt_path=None,
         continue_from_most_recent=task_config.continue_from_most_recent,
         manager_name=task_config.manager_name,
         model_dimensions=task_config.model_dimensions,
@@ -23,7 +24,7 @@ def test_configurations():
     assert path_config is not None and isinstance(path_config.version, int)
 
     plan_config = get_plan_config(
-        ckpt_path=None,
+        ckpt_path=path_config.ckpt_path,
         continue_from_most_recent=True,
         plans_path=path_config.plans_path,
         version=path_config.version,

@@ -10,6 +10,7 @@ from yucca.training.configuration.configure_task import TaskConfig
 
 @dataclass
 class PathConfig:
+    ckpt_path: Union[str, None]
     plans_path: str
     save_dir: str
     train_data_dir: str
@@ -18,6 +19,7 @@ class PathConfig:
 
     def lm_hparams(self):
         return {
+            "ckpt_path": self.ckpt_path,
             "plans_path": self.plans_path,
             "save_dir": self.save_dir,
             "train_data_dir": self.train_data_dir,
@@ -27,13 +29,14 @@ class PathConfig:
 
 
 def get_path_and_version_config(
-    continue_from_most_recent, manager_name, model_dimensions, model_name, planner_name, split_idx, task
+    ckpt_path, continue_from_most_recent, manager_name, model_dimensions, model_name, planner_name, split_idx, task
 ):
     save_dir, train_data_dir, version_dir, plans_path, version = setup_paths_and_version(
         continue_from_most_recent, manager_name, model_dimensions, model_name, split_idx, task, planner_name
     )
 
     return PathConfig(
+        ckpt_path=ckpt_path,
         plans_path=plans_path,
         save_dir=save_dir,
         train_data_dir=train_data_dir,

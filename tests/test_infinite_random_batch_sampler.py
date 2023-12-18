@@ -1,8 +1,7 @@
-import numpy as np
-from yucca.training.data_loading.samplers import RandomBatchSampler
-
-
 def test_inifite_random_sampler():
+    import numpy as np
+    from yucca.training.data_loading.samplers import RandomBatchSampler
+
     dataset = np.arange(100)
     batch_size = 10
     sampler = RandomBatchSampler(dataset, batch_size)

@@ -112,6 +112,7 @@ class YuccaManager:
         )
 
         self.path_config = get_path_and_version_config(
+            ckpt_path=self.ckpt_path,
             continue_from_most_recent=task_config.continue_from_most_recent,
             manager_name=task_config.manager_name,
             model_dimensions=task_config.model_dimensions,
@@ -122,7 +123,7 @@ class YuccaManager:
         )
 
         plan_config = get_plan_config(
-            ckpt_path=self.ckpt_path,
+            ckpt_path=self.path_config.ckpt_path,
             continue_from_most_recent=task_config.continue_from_most_recent,
             plans_path=self.path_config.plans_path,
             version=self.path_config.version,
@@ -229,7 +230,7 @@ class YuccaManager:
             self.trainer.predict(
                 model=self.model_module,
                 dataloaders=self.data_module,
-                ckpt_path=self.ckpt_path,
+                ckpt_path=self.path_config.ckpt_path,
             )
 
 
