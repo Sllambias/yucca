@@ -5,7 +5,7 @@ from yucca.training.augmentation.YuccaAugmentationComposer import YuccaAugmentat
 from yucca.training.configuration.split_data import get_split_config
 from yucca.training.configuration.configure_task import get_task_config
 from yucca.training.configuration.configure_callbacks import get_callback_config
-from yucca.training.configuration.configure_paths_and_version import get_path_and_version_config
+from yucca.training.configuration.configure_paths_and_version import get_path_config
 from yucca.training.configuration.configure_plans import get_plan_config
 from yucca.training.data_loading.YuccaDataModule import YuccaDataModule
 from yucca.training.lightning_modules.YuccaLightningModule import YuccaLightningModule
@@ -111,26 +111,15 @@ class YuccaManager:
             task=self.task,
         )
 
-        self.path_config = get_path_and_version_config(
-            ckpt_path=self.ckpt_path,
-            continue_from_most_recent=task_config.continue_from_most_recent,
-            manager_name=task_config.manager_name,
-            model_dimensions=task_config.model_dimensions,
-            model_name=task_config.model_name,
-            planner_name=task_config.planner_name,
-            split_idx=task_config.split_idx,
-            task=task_config.task,
-        )
+        self.path_config = get_path_config(ckpt_path=self.ckpt_path, task_config=task_config)
 
         plan_config = get_plan_config(
-            ckpt_path=self.path_config.ckpt_path,
+            path_config=self.path_config,
             continue_from_most_recent=task_config.continue_from_most_recent,
-            plans_path=self.path_config.plans_path,
-            version=self.path_config.version,
-            version_dir=self.path_config.version_dir,
         )
 
         splits = get_split_config(train_data_dir=self.path_config.train_data_dir, task=task_config.task)
+
         input_dims = get_input_dims(
             plan=plan_config.plans,
             model_dimensions=task_config.model_dimensions,

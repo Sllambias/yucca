@@ -28,11 +28,15 @@ class PathConfig:
         }
 
 
-def get_path_and_version_config(
-    ckpt_path, continue_from_most_recent, manager_name, model_dimensions, model_name, planner_name, split_idx, task
-):
+def get_path_config(ckpt_path: str, task_config: TaskConfig):
     save_dir, train_data_dir, version_dir, plans_path, version = setup_paths_and_version(
-        continue_from_most_recent, manager_name, model_dimensions, model_name, split_idx, task, planner_name
+        task_config.continue_from_most_recent,
+        task_config.manager_name,
+        task_config.model_dimensions,
+        task_config.model_name,
+        task_config.split_idx,
+        task_config.task,
+        task_config.planner_name,
     )
 
     return PathConfig(

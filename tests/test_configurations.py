@@ -1,7 +1,7 @@
 def test_configurations():
     import os
     from yucca.training.configuration.configure_callbacks import get_callback_config
-    from yucca.training.configuration.configure_paths_and_version import get_path_and_version_config
+    from yucca.training.configuration.configure_paths_and_version import get_path_config
     from yucca.training.configuration.configure_plans import get_plan_config
     from yucca.training.configuration.configure_task import get_task_config
     from yucca.training.configuration.input_dimensions import get_input_dims
@@ -11,25 +11,10 @@ def test_configurations():
     task_config = get_task_config(task="Task000_Test")
     assert task_config is not None and isinstance(task_config.continue_from_most_recent, bool)
 
-    path_config = get_path_and_version_config(
-        ckpt_path=None,
-        continue_from_most_recent=task_config.continue_from_most_recent,
-        manager_name=task_config.manager_name,
-        model_dimensions=task_config.model_dimensions,
-        model_name=task_config.model_name,
-        planner_name=task_config.planner_name,
-        split_idx=task_config.split_idx,
-        task=task_config.task,
-    )
+    path_config = get_path_config(ckpt_path=None, task_config=task_config)
     assert path_config is not None and isinstance(path_config.version, int)
 
-    plan_config = get_plan_config(
-        ckpt_path=path_config.ckpt_path,
-        continue_from_most_recent=True,
-        plans_path=path_config.plans_path,
-        version=path_config.version,
-        version_dir=path_config.version_dir,
-    )
+    plan_config = get_plan_config(path_config=path_config, continue_from_most_recent=True)
     assert plan_config is not None and plan_config.task_type in ["classification", "segmentation", "unsupervised"]
 
     input_dims = get_input_dims(
