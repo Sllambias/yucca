@@ -1,5 +1,6 @@
 import numpy as np
 from yucca.image_processing.transforms.YuccaTransform import YuccaTransform
+from typing import Literal, Union
 
 
 class CropPad(YuccaTransform):
@@ -10,19 +11,25 @@ class CropPad(YuccaTransform):
     either padded or cropped to the desired patch size.
     For 3D input to 2D output we extract a slice from the first dimension to attain a 2D image.
     Afterwards the the last 2 dimensions are padded or cropped to the patch size.
+
+    For available modes see: https://numpy.org/doc/stable/reference/generated/numpy.pad.html
     """
 
     def __init__(
         self,
         data_key="image",
         label_key="label",
+        pad_value: Literal["min", "zero", "edge"],
         patch_size: tuple | list = None,
         p_oversample_foreground=0.0,
     ):
         self.data_key = data_key
         self.label_key = label_key
+        self.mode = mode
         self.patch_size = patch_size
         self.p_oversample_foreground = p_oversample_foreground
+
+
 
     @staticmethod
     def get_params(input_shape, target_shape):
@@ -101,7 +108,7 @@ class CropPad(YuccaTransform):
                 crop_start_idx[2] : crop_start_idx[2] + self.patch_size[2],
             ],
             ((0, 0), (pad_lb_x, pad_ub_x), (pad_lb_y, pad_ub_y), (pad_lb_z, pad_ub_z)),
-            mode="edge",
+            mode=self.mode,
         )
         if label is None:
             return image_out, None
