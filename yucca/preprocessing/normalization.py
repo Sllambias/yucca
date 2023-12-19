@@ -14,7 +14,7 @@ def normalizer(array: np.ndarray, scheme: str, intensities: {}):
     Clip = for contrast clipping. This will clip values to the 0.01 and 99.99th percentiles
         and then perform 0-1 normalization.
     """
-    accepted_schemes = ["clipping", "minmax", "no_norm", "standardize", "volume_wise_znorm"]
+    accepted_schemes = ["clipping", "minmax", "no_norm", "standardize", "standardize_zero_one", "volume_wise_znorm"]
 
     assert scheme in accepted_schemes, "invalid normalization scheme inserted" f"attempted scheme: {scheme}"
     assert array is not None
@@ -23,7 +23,8 @@ def normalizer(array: np.ndarray, scheme: str, intensities: {}):
         return array
 
     elif scheme == "minmax":
-        raise NotImplementedError("Min Max normalization is not implemented yet. Use standardize, clip or no_norm.")
+        assert intensities is not None, "ERROR: dataset wide stats are required for standardize"
+        return (array - intensities["min"]) / (intensities["max"] - intensities["min"])
 
     elif scheme == "standardize":
         assert intensities is not None, "ERROR: dataset wide stats are required for standardize"
