@@ -118,7 +118,6 @@ class YuccaManager:
             path_config=self.path_config, continue_from_most_recent=task_config.continue_from_most_recent
         )
 
-        # TODO: Give it the plan config instead of plan
         input_dims_config = get_input_dims_config(
             plan=plan_config.plans,
             model_dimensions=task_config.model_dimensions,

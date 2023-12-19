@@ -46,7 +46,6 @@ class YuccaDataModule(pl.LightningDataModule):
 
     def __init__(
         self,
-        train_data_dir: str,
         input_dims_config: InputDimensionsConfig,
         plan_config: PlanConfig,
         splits_config: SplitConfig,
@@ -57,6 +56,7 @@ class YuccaDataModule(pl.LightningDataModule):
         pred_data_dir: str = None,
         pre_aug_patch_size: list | tuple = None,
         sampler: Sampler = InfiniteRandomSampler,
+        train_data_dir: str = None,
     ):
         super().__init__()
         # extract parameters
@@ -64,6 +64,8 @@ class YuccaDataModule(pl.LightningDataModule):
         self.patch_size = input_dims_config.patch_size
         self.image_extension = plan_config.image_extension
         self.task_type = plan_config.task_type
+
+        self.train_data_dir = train_data_dir
         self.train_split = splits_config.train(split_idx)
         self.val_split = splits_config.val(split_idx)
 
@@ -71,9 +73,6 @@ class YuccaDataModule(pl.LightningDataModule):
         self.composed_train_transforms = composed_train_transforms
         self.composed_val_transforms = composed_val_transforms
         self.pre_aug_patch_size = pre_aug_patch_size
-
-        # Set in the train loop
-        self.train_data_dir = train_data_dir
 
         # Set in the predict loop
         self.pred_data_dir = pred_data_dir
@@ -83,10 +82,6 @@ class YuccaDataModule(pl.LightningDataModule):
         self.val_num_workers = num_workers // 2 if num_workers > 0 else num_workers
         self.sampler = sampler
 
-    def prepare_data(self):
-        self.train_samples = [join(self.train_data_dir, i) for i in self.train_split]
-        self.val_samples = [join(self.train_data_dir, i) for i in self.val_split]
-
     def setup(self, stage: Literal["fit", "test", "predict"]):
         print(f"Setting up data for stage: {stage}")
         expected_stages = ["fit", "test", "predict"]
@@ -94,6 +89,11 @@ class YuccaDataModule(pl.LightningDataModule):
 
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
+            assert self.train_data_dir is not None
+
+            self.train_samples = [join(self.train_data_dir, i) for i in self.train_split]
+            self.val_samples = [join(self.train_data_dir, i) for i in self.val_split]
+
             self.train_dataset = YuccaTrainDataset(
                 self.train_samples,
                 composed_transforms=self.composed_train_transforms,
