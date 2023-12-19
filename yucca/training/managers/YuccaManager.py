@@ -46,6 +46,7 @@ class YuccaManager:
         continue_from_most_recent: bool = True,
         deep_supervision: bool = False,
         disable_logging: bool = False,
+        learning_rate: float = 1e-3,
         loss: str = None,
         max_epochs: int = 1000,
         model_dimensions: str = "3D",
@@ -95,6 +96,7 @@ class YuccaManager:
         self,
         stage: Literal["fit", "test", "predict"],
         disable_tta: bool = False,
+        finetuning: bool = False,
         pred_data_dir: str = None,
         save_softmax: bool = False,
         prediction_output_dir: str = "./",
@@ -103,6 +105,7 @@ class YuccaManager:
         # along with the path to plans file which will also be loaded.
         task_config = get_task_config(
             continue_from_most_recent=self.continue_from_most_recent,
+            finetuning=finetuning,
             manager_name=self.name,
             model_dimensions=self.model_dimensions,
             model_name=self.model_name,
@@ -156,6 +159,7 @@ class YuccaManager:
             profile=self.profile,
             save_softmax=save_softmax,
         )
+
         self.model_module = YuccaLightningModule(
             config=task_config.lm_hparams()
             | self.path_config.lm_hparams()
