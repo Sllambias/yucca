@@ -23,7 +23,7 @@ def normalizer(array: np.ndarray, scheme: str, intensities: {}):
         return array
 
     elif scheme == "minmax":
-        assert intensities is not None, "ERROR: dataset wide stats are required for standardize"
+        assert intensities is not None, "ERROR: dataset wide stats are required for minmax"
         return (array - intensities["min"]) / (intensities["max"] - intensities["min"])
 
     elif scheme == "standardize":
