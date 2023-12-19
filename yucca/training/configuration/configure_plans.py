@@ -6,6 +6,7 @@ from typing import Union
 from yucca.paths import yucca_models, yucca_preprocessed_data
 from yucca.preprocessing.UnsupervisedPreprocessor import UnsupervisedPreprocessor
 from yucca.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
+from yucca.training.configuration.configure_paths_and_version import PathConfig
 from yucca.utils.files_and_folders import recursive_find_python_class
 
 
@@ -25,8 +26,14 @@ class PlanConfig:
         }
 
 
-def get_plan_config(ckpt_path: str, continue_from_most_recent: bool, plans_path: str, version: int, version_dir: str):
-    plans = setup_plans(ckpt_path, continue_from_most_recent, plans_path, version, version_dir)
+def get_plan_config(path_config: PathConfig, continue_from_most_recent: bool):
+    plans = setup_plans(
+        path_config.ckpt_path,
+        continue_from_most_recent,
+        path_config.plans_path,
+        path_config.version,
+        path_config.version_dir,
+    )
     task_type = setup_task_type(plans)
     num_classes = max(1, plans.get("num_classes") or len(plans["dataset_properties"]["classes"]))
     image_extension = plans.get("image_extension") or plans["dataset_properties"].get("image_extension") or "nii.gz"
