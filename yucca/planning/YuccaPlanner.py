@@ -234,7 +234,10 @@ class YuccaPlannerMinMax(YuccaPlanner):
     """
     Standardizes the images to 0-1 range.
     """
+
     def __init__(self, task, preprocessor=None, threads=2, disable_sanity_checks=False, view=None):
-        super().__init__(task, preprocessor=preprocessor, threads=threads, disable_sanity_checks=disable_sanity_checks, view=view)
+        super().__init__(
+            task, preprocessor=preprocessor, threads=threads, disable_sanity_checks=disable_sanity_checks, view=view
+        )
         self.name = str(self.__class__.__name__)
         self.norm_op = "minmax"
