@@ -212,7 +212,7 @@ class YuccaManager:
     def run_finetuning(self):
         self.initialize(stage="fit")
         self.model_module.load_state_dict(
-            torch.load(path_config.ckpt_path, map_location=torch.device("cpu"))["state_dict"], strict=False
+            torch.load(self.ckpt_config.ckpt_path, map_location=torch.device("cpu"))["state_dict"], strict=False
         )
         self.trainer.fit(
             model=self.model_module,
