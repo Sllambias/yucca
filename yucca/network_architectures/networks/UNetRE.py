@@ -31,7 +31,7 @@ class UNetRE(YuccaNet):
         basic_block=DoubleConvDropoutNormNonlin,
         deep_supervision=False,
     ) -> None:
-        super(UNet, self).__init__()
+        super(UNetRE, self).__init__()
 
         # Task specific
         self.num_classes = num_classes
