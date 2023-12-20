@@ -59,7 +59,7 @@ def get_checkpoint_config(path_config: PathConfig, continue_from_most_recent: bo
     )
 
     # If we did not find a checkpoint we just return an empty ckpt_config
-    if not ckpt_path:
+    if ckpt_path is None:
         return CkptConfig(ckpt_path=None, ckpt_seed=None, ckpt_plans=None, ckpt_wandb_id=None)
 
     checkpoint = torch.load(ckpt_path, map_location="cpu")["hyper_parameters"]["config"]
@@ -83,7 +83,7 @@ def find_checkpoint_path(ckpt_path: Union[str, None], continue_from_most_recent:
         print("Using last checkpoint and continuing training")
         return join(version_dir, "checkpoints", "last.ckpt")
     else:
-        return False
+        return None
 
 
 def load_checkpoint(ckpt_path: Union[str, None], continue_from_most_recent: bool, version: int, version_dir: str):
