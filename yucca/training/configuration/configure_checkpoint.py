@@ -51,17 +51,13 @@ class CkptConfig:
 
 
 def get_checkpoint_config(path_config: PathConfig, continue_from_most_recent: bool, ckpt_path: Union[str, None] = None):
-    # First try to load torch checkpoints and extract plans and carry-over information from there.
-    checkpoint = load_checkpoint(
-        ckpt_path,
-        continue_from_most_recent,
-        path_config.version,
-        path_config.version_dir,
-    )
+    ckpt_path = find_checkpoint_path(stuff)
 
-    # If no checkpoint was found we just return a
-    if checkpoint is None:
+    if ckpt_path is None:
         return CkptConfig(ckpt_path=None, ckpt_seed=None, ckpt_plans=None, ckpt_wandb_id=None)
+
+    # First try to load torch checkpoints and extract plans and carry-over information from there.
+    checkpoint = torch.load(ckpt_path, map_location="cpu")["hyper_parameters"]["config"]
 
     # If checkpoint path was supplied we are starting a finetuning run and should save the path to the original weights
     # If it was NOT supplied we are continuing an interrupted training and should save any path already in the
@@ -77,6 +73,17 @@ def get_checkpoint_config(path_config: PathConfig, continue_from_most_recent: bo
         ckpt_plans=plans,
         ckpt_wandb_id=wandb_id,
     )
+
+
+def find_checkpoint_path(ckpt_path: Union[str, None], continue_from_most_recent: bool, version: int, version_dir: str):
+    if ckpt_path is not None:
+        print(f"Trying to find plans in ckpt: {ckpt_path}")
+        return ckpt_path
+    elif version is not None and continue_from_most_recent and isfile(join(version_dir, "checkpoints", "last.ckpt")):
+        print("Trying to find plans in last ckpt")
+        return join(version_dir, "checkpoints", "last.ckpt")
+    else:
+        return None
 
 
 def load_checkpoint(ckpt_path: Union[str, None], continue_from_most_recent: bool, version: int, version_dir: str):
