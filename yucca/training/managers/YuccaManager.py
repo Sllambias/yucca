@@ -5,7 +5,9 @@ from yucca.training.augmentation.YuccaAugmentationComposer import YuccaAugmentat
 from yucca.training.configuration.split_data import get_split_config
 from yucca.training.configuration.configure_task import get_task_config
 from yucca.training.configuration.configure_callbacks import get_callback_config
-from yucca.training.configuration.configure_paths_and_version import get_path_config
+from yucca.training.configuration.configure_checkpoint import get_checkpoint_config
+from yucca.training.configuration.configure_seed import get_seed_config
+from yucca.training.configuration.configure_paths import get_path_config
 from yucca.training.configuration.configure_plans import get_plan_config
 from yucca.training.configuration.input_dimensions import get_input_dims_config
 from yucca.training.data_loading.YuccaDataModule import YuccaDataModule
@@ -105,7 +107,6 @@ class YuccaManager:
         # along with the path to plans file which will also be loaded.
         task_config = get_task_config(
             continue_from_most_recent=self.continue_from_most_recent,
-            # finetuning=finetuning,
             manager_name=self.name,
             model_dimensions=self.model_dimensions,
             model_name=self.model_name,
@@ -114,11 +115,22 @@ class YuccaManager:
             task=self.task,
         )
 
-        self.path_config = get_path_config(ckpt_path=self.ckpt_path, task_config=task_config)
-        splits_config = get_split_config(train_data_dir=self.path_config.train_data_dir, task=task_config.task)
+        path_config = get_path_config(task_config=task_config)
+
+        self.ckpt_config = get_checkpoint_config(
+            path_config=path_config,
+            continue_from_most_recent=task_config.continue_from_most_recent,
+            ckpt_path=self.ckpt_path,
+        )
+
+        seed_config = get_seed_config(seed=self.ckpt_config.ckpt_seed)e)
+
+        splits_config = get_split_config(train_data_dir=path_config.train_data_dir, task=task_config.task)
 
         plan_config = get_plan_config(
-            path_config=self.path_config, continue_from_most_recent=task_config.continue_from_most_recent
+            plans_path=path_config.plans_path,
+            ckpt_plans=self.ckpt_config.ckpt_plans,
+            continue_from_most_recent=task_config.continue_from_most_recent,
         )
 
         input_dims_config = get_input_dims_config(
@@ -138,9 +150,9 @@ class YuccaManager:
 
         callback_config = get_callback_config(
             task=task_config.task,
-            save_dir=self.path_config.save_dir,
-            version_dir=self.path_config.version_dir,
-            version=self.path_config.version,
+            save_dir=path_config.save_dir,
+            version_dir=path_config.version_dir,
+            version=path_config.version,
             disable_logging=self.disable_logging,
             prediction_output_dir=prediction_output_dir,
             profile=self.profile,
@@ -149,10 +161,13 @@ class YuccaManager:
 
         self.model_module = YuccaLightningModule(
             config=task_config.lm_hparams()
-            | self.path_config.lm_hparams()
-            | plan_config.lm_hparams()
+            | path_config.lm_hparams()
+            | self.ckpt_config.lm_hparams()
+            | seed_config.lm_hparams()
             | splits_config.lm_hparams()
-            | input_dims_config.lm_hparams(),
+            | plan_config.lm_hparams()
+            | input_dims_config.lm_hparams()
+            | callback_config.lm_hparams(),
             loss_fn=self.loss,
             stage=stage,
             step_logging=self.step_logging,
@@ -169,12 +184,12 @@ class YuccaManager:
             pre_aug_patch_size=augmenter.pre_aug_patch_size,
             splits_config=splits_config,
             split_idx=task_config.split_idx,
-            train_data_dir=self.path_config.train_data_dir,
+            train_data_dir=path_config.train_data_dir,
         )
 
         self.trainer = L.Trainer(
             callbacks=callback_config.callbacks,
-            default_root_dir=self.path_config.save_dir,
+            default_root_dir=path_config.save_dir,
             limit_train_batches=self.train_batches_per_step,
             limit_val_batches=self.val_batches_per_step,
             logger=callback_config.loggers,
@@ -196,7 +211,7 @@ class YuccaManager:
     def run_finetuning(self):
         self.initialize(stage="fit")
         self.model_module.load_state_dict(
-            torch.load(self.path_config.ckpt_path, map_location=torch.device("cpu"))["state_dict"], strict=False
+            torch.load(path_config.ckpt_path, map_location=torch.device("cpu"))["state_dict"], strict=False
         )
         self.trainer.fit(
             model=self.model_module,
@@ -221,7 +236,7 @@ class YuccaManager:
             self.trainer.predict(
                 model=self.model_module,
                 dataloaders=self.data_module,
-                ckpt_path=self.path_config.ckpt_path,
+                ckpt_path=self.ckpt_config.ckpt_path,
             )
 
 

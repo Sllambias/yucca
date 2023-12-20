@@ -1,7 +1,7 @@
 def test_configurations():
     import os
     from yucca.training.configuration.configure_callbacks import get_callback_config
-    from yucca.training.configuration.configure_paths_and_version import get_path_config
+    from yucca.training.configuration.configure_paths import get_path_config
     from yucca.training.configuration.configure_plans import get_plan_config
     from yucca.training.configuration.configure_task import get_task_config
     from yucca.training.configuration.input_dimensions import get_input_dims_config

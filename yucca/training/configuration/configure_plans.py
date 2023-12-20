@@ -2,11 +2,11 @@ import yucca
 import torch
 from batchgenerators.utilities.file_and_folder_operations import join, isdir, subdirs, maybe_mkdir_p, isfile, load_json
 from dataclasses import dataclass
-from typing import Union
+from typing import Union, stage
 from yucca.paths import yucca_models, yucca_preprocessed_data
 from yucca.preprocessing.UnsupervisedPreprocessor import UnsupervisedPreprocessor
 from yucca.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
-from yucca.training.configuration.configure_paths_and_version import PathConfig
+from yucca.training.configuration.configure_paths import PathConfig
 from yucca.utils.files_and_folders import recursive_find_python_class
 
 
@@ -26,14 +26,20 @@ class PlanConfig:
         }
 
 
-def get_plan_config(path_config: PathConfig, continue_from_most_recent: bool):
-    plans = setup_plans(
-        path_config.ckpt_path,
-        continue_from_most_recent,
-        path_config.plans_path,
-        path_config.version,
-        path_config.version_dir,
-    )
+def get_plan_config(plans_path: str, stage: Literal["fit", "test", "predict"], ckpt_plans: Union[dict, None] = None, continue_from_most_recent: bool):
+    # First try to load torch checkpoints and extract plans and carry-over information from there.
+    if stage == "fit":
+        plans = load_plans(plans_path)
+    elif stage == "test":
+        raise NotImplementedError
+    elif stage == "predict":
+        # In this case we don't want to rely on plans being found in the preprocessed folder,
+        # as it might not exist.
+        assert ckpt_plans is not None
+        plans = ckpt_plans
+    else:
+        raise NotImplementedError(f'Stage: {stage} is not supported')
+    
     task_type = setup_task_type(plans)
     num_classes = max(1, plans.get("num_classes") or len(plans["dataset_properties"]["classes"]))
     image_extension = plans.get("image_extension") or plans["dataset_properties"].get("image_extension") or "nii.gz"
@@ -46,17 +52,10 @@ def get_plan_config(path_config: PathConfig, continue_from_most_recent: bool):
     )
 
 
-def setup_plans(ckpt_path, continue_from_most_recent, plans_path, version, version_dir):
-    if ckpt_path is not None:
-        print("Trying to find plans in specified ckpt")
-        return torch.load(ckpt_path, map_location="cpu")["hyper_parameters"]["config"]["plans"]
-    elif version is not None and continue_from_most_recent and isfile(join(version_dir, "checkpoints", "last.ckpt")):
-        print("Trying to find plans in last ckpt")
-        return torch.load(join(version_dir, "checkpoints", "last.ckpt"), map_location="cpu")["hyper_parameters"]["config"][
-            "plans"
-        ]
-    # If plans is still none the ckpt files were either empty/invalid or didn't exist and we create a new.
-    print("Exhausted other options: loading plans.json and constructing parameters")
+def load_plans(plans_path):
+    # If plans is still none the ckpt files were either empty/invalid or didn't exist and we load the plans
+    # from the preprocessed folder.
+    print("Exhausted other options: loading plans.json")
     return load_json(plans_path)
 
 
