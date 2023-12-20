@@ -9,12 +9,10 @@ class SeedConfig:
     seed: int
 
     def lm_hparams(self):
-        return {
-            "seed": self.seed,
-        }
+        return {"seed": self.seed}
 
 
-def get_seed_config(ckpt_seed: Union[int, None] = None):
+def seed_everything_and_get_seed_config(ckpt_seed: Union[int, None] = None):
     L.seed_everything(seed=ckpt_seed, workers=True)
     seed = torch.initial_seed()
 

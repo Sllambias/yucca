@@ -7,7 +7,7 @@ def test_configurations():
     from yucca.training.configuration.input_dimensions import get_input_dims_config
     from yucca.training.configuration.split_data import get_split_config
     from yucca.training.configuration.configure_checkpoint import get_checkpoint_config
-    from yucca.training.configuration.configure_seed import get_seed_config
+    from yucca.training.configuration.configure_seed import seed_everything_and_get_seed_config
     from yucca.paths import yucca_preprocessed_data
 
     task_config = get_task_config(task="Task000_Test")
@@ -21,7 +21,7 @@ def test_configurations():
     )
     assert ckpt_config.ckpt_wandb_id is None or isinstance(ckpt_config.ckpt_wandb_id, str)
 
-    seed_config = get_seed_config(ckpt_seed=ckpt_config.ckpt_seed)
+    seed_config = seed_everything_and_get_seed_config(ckpt_seed=ckpt_config.ckpt_seed)
     assert isinstance(seed_config.seed, int)
 
     plan_config = get_plan_config(

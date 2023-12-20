@@ -6,7 +6,7 @@ from yucca.training.configuration.split_data import get_split_config
 from yucca.training.configuration.configure_task import get_task_config
 from yucca.training.configuration.configure_callbacks import get_callback_config
 from yucca.training.configuration.configure_checkpoint import get_checkpoint_config
-from yucca.training.configuration.configure_seed import get_seed_config
+from yucca.training.configuration.configure_seed import seed_everything_and_get_seed_config
 from yucca.training.configuration.configure_paths import get_path_config
 from yucca.training.configuration.configure_plans import get_plan_config
 from yucca.training.configuration.input_dimensions import get_input_dims_config
@@ -51,6 +51,7 @@ class YuccaManager:
         learning_rate: float = 1e-3,
         loss: str = None,
         max_epochs: int = 1000,
+        max_vram: int = 12,
         model_dimensions: str = "3D",
         model_name: str = "TinyUNet",
         num_workers: int = 8,
@@ -61,6 +62,8 @@ class YuccaManager:
         split_idx: int = 0,
         step_logging: bool = False,
         task: str = None,
+        train_batches_per_step: int = 250,
+        val_batches_per_step: int = 50,
         **kwargs,
     ):
         self.ckpt_path = ckpt_path
@@ -69,6 +72,7 @@ class YuccaManager:
         self.disable_logging = disable_logging
         self.loss = loss
         self.max_epochs = max_epochs
+        self.max_vram = max_vram
         self.model_dimensions = model_dimensions
         self.model_name = model_name
         self.name = self.__class__.__name__
@@ -79,6 +83,8 @@ class YuccaManager:
         self.split_idx = split_idx
         self.step_logging = step_logging
         self.task = task
+        self.train_batches_per_step = train_batches_per_step
+        self.val_batches_per_step = val_batches_per_step
         self.kwargs = kwargs
 
         if patch_size is None:
@@ -86,19 +92,12 @@ class YuccaManager:
         else:
             self.patch_size = patch_size
 
-        # default settings
-        self.max_vram = 12
-
-        # Trainer settings
-        self.train_batches_per_step = 250
-        self.val_batches_per_step = 50
         self.trainer = L.Trainer
 
     def initialize(
         self,
         stage: Literal["fit", "test", "predict"],
         disable_tta: bool = False,
-        finetuning: bool = False,
         pred_data_dir: str = None,
         save_softmax: bool = False,
         prediction_output_dir: str = "./",
@@ -123,7 +122,7 @@ class YuccaManager:
             ckpt_path=self.ckpt_path,
         )
 
-        seed_config = get_seed_config(ckpt_seed=self.ckpt_config.ckpt_seed)
+        seed_config = seed_everything_and_get_seed_config(ckpt_seed=self.ckpt_config.ckpt_seed)
 
         plan_config = get_plan_config(
             ckpt_plans=self.ckpt_config.ckpt_plans,

@@ -32,18 +32,17 @@ def get_plan_config(
     stage: Literal["fit", "test", "predict"],
     ckpt_plans: Union[dict, None] = None,
 ):
+    assert stage in ["fit", "test", "predict"], f"stage: {stage} is not supported"
     # First try to load torch checkpoints and extract plans and carry-over information from there.
     if stage == "fit":
         plans = load_plans(plans_path)
-    elif stage == "test":
+    if stage == "test":
         raise NotImplementedError
-    elif stage == "predict":
+    if stage == "predict":
         # In this case we don't want to rely on plans being found in the preprocessed folder,
         # as it might not exist.
         assert ckpt_plans is not None
         plans = ckpt_plans
-    else:
-        raise NotImplementedError(f"Stage: {stage} is not supported")
 
     task_type = setup_task_type(plans)
     num_classes = max(1, plans.get("num_classes") or len(plans["dataset_properties"]["classes"]))

@@ -51,19 +51,18 @@ class CkptConfig:
 
 
 def get_checkpoint_config(path_config: PathConfig, continue_from_most_recent: bool, ckpt_path: Union[str, None] = None):
-    ckpt_path = find_checkpoint_path(stuff)
+    ckpt_path = find_checkpoint_path(
+        ckpt_path=ckpt_path,
+        continue_from_most_recent=continue_from_most_recent,
+        version=path_config.version,
+        version_dir=path_config.version_dir,
+    )
 
-    if ckpt_path is None:
+    # If we did not find a checkpoint we just return an empty ckpt_config
+    if not ckpt_path:
         return CkptConfig(ckpt_path=None, ckpt_seed=None, ckpt_plans=None, ckpt_wandb_id=None)
 
-    # First try to load torch checkpoints and extract plans and carry-over information from there.
     checkpoint = torch.load(ckpt_path, map_location="cpu")["hyper_parameters"]["config"]
-
-    # If checkpoint path was supplied we are starting a finetuning run and should save the path to the original weights
-    # If it was NOT supplied we are continuing an interrupted training and should save any path already in the
-    # checkpoint.
-    if ckpt_path is None:
-        ckpt_path = checkpoint["ckpt_path"]
 
     plans, seed, wandb_id = get_checkpoint_params(checkpoint)
 
@@ -76,14 +75,15 @@ def get_checkpoint_config(path_config: PathConfig, continue_from_most_recent: bo
 
 
 def find_checkpoint_path(ckpt_path: Union[str, None], continue_from_most_recent: bool, version: int, version_dir: str):
-    if ckpt_path is not None:
-        print(f"Trying to find plans in ckpt: {ckpt_path}")
+    if ckpt_path:
+        assert isfile(ckpt_path)
+        print(f"Using ckpt file: {ckpt_path}")
         return ckpt_path
     elif version is not None and continue_from_most_recent and isfile(join(version_dir, "checkpoints", "last.ckpt")):
-        print("Trying to find plans in last ckpt")
+        print("Using last checkpoint and continuing training")
         return join(version_dir, "checkpoints", "last.ckpt")
     else:
-        return None
+        return False
 
 
 def load_checkpoint(ckpt_path: Union[str, None], continue_from_most_recent: bool, version: int, version_dir: str):
