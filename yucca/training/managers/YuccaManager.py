@@ -123,15 +123,16 @@ class YuccaManager:
             ckpt_path=self.ckpt_path,
         )
 
-        seed_config = get_seed_config(seed=self.ckpt_config.ckpt_seed)e)
-
-        splits_config = get_split_config(train_data_dir=path_config.train_data_dir, task=task_config.task)
+        seed_config = get_seed_config(ckpt_seed=self.ckpt_config.ckpt_seed)
 
         plan_config = get_plan_config(
-            plans_path=path_config.plans_path,
             ckpt_plans=self.ckpt_config.ckpt_plans,
             continue_from_most_recent=task_config.continue_from_most_recent,
+            plans_path=path_config.plans_path,
+            stage=stage,
         )
+
+        splits_config = get_split_config(train_data_dir=path_config.train_data_dir, task=task_config.task)
 
         input_dims_config = get_input_dims_config(
             plan=plan_config.plans,

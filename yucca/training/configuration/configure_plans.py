@@ -2,7 +2,7 @@ import yucca
 import torch
 from batchgenerators.utilities.file_and_folder_operations import join, isdir, subdirs, maybe_mkdir_p, isfile, load_json
 from dataclasses import dataclass
-from typing import Union, stage
+from typing import Union, Literal
 from yucca.paths import yucca_models, yucca_preprocessed_data
 from yucca.preprocessing.UnsupervisedPreprocessor import UnsupervisedPreprocessor
 from yucca.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
@@ -26,7 +26,12 @@ class PlanConfig:
         }
 
 
-def get_plan_config(plans_path: str, stage: Literal["fit", "test", "predict"], ckpt_plans: Union[dict, None] = None, continue_from_most_recent: bool):
+def get_plan_config(
+    plans_path: str,
+    continue_from_most_recent: bool,
+    stage: Literal["fit", "test", "predict"],
+    ckpt_plans: Union[dict, None] = None,
+):
     # First try to load torch checkpoints and extract plans and carry-over information from there.
     if stage == "fit":
         plans = load_plans(plans_path)
@@ -38,8 +43,8 @@ def get_plan_config(plans_path: str, stage: Literal["fit", "test", "predict"], c
         assert ckpt_plans is not None
         plans = ckpt_plans
     else:
-        raise NotImplementedError(f'Stage: {stage} is not supported')
-    
+        raise NotImplementedError(f"Stage: {stage} is not supported")
+
     task_type = setup_task_type(plans)
     num_classes = max(1, plans.get("num_classes") or len(plans["dataset_properties"]["classes"]))
     image_extension = plans.get("image_extension") or plans["dataset_properties"].get("image_extension") or "nii.gz"

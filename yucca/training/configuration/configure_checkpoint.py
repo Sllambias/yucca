@@ -61,7 +61,7 @@ def get_checkpoint_config(path_config: PathConfig, continue_from_most_recent: bo
 
     # If no checkpoint was found we just return a
     if checkpoint is None:
-        return CkptConfig(ckpt_path=None, seed=None, plans=None, wandb_id=None)
+        return CkptConfig(ckpt_path=None, ckpt_seed=None, ckpt_plans=None, ckpt_wandb_id=None)
 
     # If checkpoint path was supplied we are starting a finetuning run and should save the path to the original weights
     # If it was NOT supplied we are continuing an interrupted training and should save any path already in the
