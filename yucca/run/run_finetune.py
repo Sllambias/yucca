@@ -62,6 +62,12 @@ def main():
     parser.add_argument("--mom", help="Should only be used to employ alternative Momentum.", default=None)
 
     parser.add_argument(
+        "--disable_logging",
+        help="disable logging. ",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
         "--new_version",
         help="Start a new version, instead of continuing from the most recent. ",
         action="store_true",
@@ -84,6 +90,7 @@ def main():
     manager_name = args.man
     split_idx = int(args.f)
     lr = args.lr
+    log = not args.disable_logging
     loss = args.loss
     momentum = args.mom
     new_version = args.new_version
@@ -113,9 +120,9 @@ def main():
 
     manager = manager(
         ckpt_path=checkpoint,
-        continue_from_most_recent=False,
+        continue_from_most_recent=not new_version,
         deep_supervision=False,
-        disable_logging=True,
+        disable_logging=log,
         split_idx=split_idx,
         loss=loss,
         model_dimensions=dimensions,
