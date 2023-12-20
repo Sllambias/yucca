@@ -105,7 +105,7 @@ class YuccaManager:
         # along with the path to plans file which will also be loaded.
         task_config = get_task_config(
             continue_from_most_recent=self.continue_from_most_recent,
-            finetuning=finetuning,
+            # finetuning=finetuning,
             manager_name=self.name,
             model_dimensions=self.model_dimensions,
             model_name=self.model_name,
