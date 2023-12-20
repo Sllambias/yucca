@@ -63,7 +63,6 @@ def get_checkpoint_config(path_config: PathConfig, continue_from_most_recent: bo
         return CkptConfig(ckpt_path=None, ckpt_seed=None, ckpt_plans=None, ckpt_wandb_id=None)
 
     checkpoint = torch.load(ckpt_path, map_location="cpu")["hyper_parameters"]["config"]
-
     plans, seed, wandb_id = get_checkpoint_params(checkpoint)
 
     return CkptConfig(
@@ -82,17 +81,6 @@ def find_checkpoint_path(ckpt_path: Union[str, None], continue_from_most_recent:
     elif version is not None and continue_from_most_recent and isfile(join(version_dir, "checkpoints", "last.ckpt")):
         print("Using last checkpoint and continuing training")
         return join(version_dir, "checkpoints", "last.ckpt")
-    else:
-        return None
-
-
-def load_checkpoint(ckpt_path: Union[str, None], continue_from_most_recent: bool, version: int, version_dir: str):
-    if ckpt_path is not None:
-        print(f"Trying to find plans in ckpt: {ckpt_path}")
-        return torch.load(ckpt_path, map_location="cpu")["hyper_parameters"]["config"]
-    elif version is not None and continue_from_most_recent and isfile(join(version_dir, "checkpoints", "last.ckpt")):
-        print("Trying to find plans in last ckpt")
-        return torch.load(join(version_dir, "checkpoints", "last.ckpt"), map_location="cpu")["hyper_parameters"]["config"]
     else:
         return None
 
