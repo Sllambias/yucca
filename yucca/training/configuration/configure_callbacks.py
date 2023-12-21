@@ -95,8 +95,8 @@ def get_loggers(
 
 
 def get_callbacks(
-    interval_ckpt_epochs: int,
-    latest_ckpt_epochs: int,
+    interval_ckpt_every_n_epochs: int,
+    last_ckpt_every_n_epochs: int,
     prediction_output_dir: str,
     save_softmax: bool,
     write_predictions: bool,
@@ -104,10 +104,10 @@ def get_callbacks(
     log_lr: bool,
 ):
     interval_ckpt = ModelCheckpoint(
-        every_n_epochs=interval_ckpt_epochs, save_top_k=-1, filename="{epoch}", enable_version_counter=False
+        every_n_epochs=interval_ckpt_every_n_epochs, save_top_k=-1, filename="{epoch}", enable_version_counter=False
     )
     latest_ckpt = ModelCheckpoint(
-        every_n_epochs=latest_ckpt_epochs,
+        every_n_epochs=last_ckpt_every_n_epochs,
         save_top_k=1,
         filename="last",
         enable_version_counter=False,
