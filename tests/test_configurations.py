@@ -46,7 +46,7 @@ def test_configurations():
     assert input_dims is not None and len(input_dims.patch_size) in [2, 3]
 
     callback_config = get_callback_config(
-        disable_logging=True,
+        enable_logging=False,
         task=task_config.task,
         save_dir=path_config.save_dir,
         version_dir=path_config.version_dir,

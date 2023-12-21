@@ -1,3 +1,4 @@
+from gc import enable
 from lightning.pytorch.loggers.logger import Logger
 from typing import Union
 from dataclasses import dataclass
@@ -27,22 +28,22 @@ def get_callback_config(
     version: int,
     interval_ckpt_epochs: int = 250,
     latest_ckpt_epochs: int = 25,
-    log_wandb: bool = True,
+    store_best_ckpt: bool = True,
+    enable_logging: bool = True,
     log_lr: bool = True,
-    prediction_output_dir: str = None,
-    profile: bool = False,
-    save_softmax: bool = False,
-    steps_per_epoch: int = 250,
-    project: str = "Yucca",
     log_model: str = "all",
     write_predictions: bool = True,
-    store_best_ckpt: bool = True,
+    prediction_output_dir: str = None,
+    save_softmax: bool = False,
+    profile: bool = False,
+    steps_per_epoch: int = 250,
+    project: str = "Yucca",
 ):
     callbacks = get_callbacks(
         interval_ckpt_epochs, latest_ckpt_epochs, prediction_output_dir, save_softmax, write_predictions, store_best_ckpt
     )
-    loggers = get_loggers(task, save_dir, version_dir, version, log_wandb, log_lr, steps_per_epoch, project, log_model)
-    wandb_id = get_wandb_id(loggers, log_wandb)
+    loggers = get_loggers(task, save_dir, version_dir, version, enable_logging, log_lr, steps_per_epoch, project, log_model)
+    wandb_id = get_wandb_id(loggers, enable_logging)
     profiler = get_profiler(profile, save_dir)
 
     return CallbackConfig(callbacks=callbacks, loggers=loggers, profiler=profiler, wandb_id=wandb_id)
@@ -53,7 +54,7 @@ def get_loggers(
     save_dir: str,
     version_dir: str,
     version: Union[int, str],
-    log_wandb: bool,
+    enable_logging: bool,
     log_lr: bool,
     steps_per_epoch: int,
     project: str,
@@ -66,14 +67,14 @@ def get_loggers(
 
     loggers = [
         YuccaLogger(
-            disable_logging=disable_logging,
+            disable_logging=not enable_logging,
             save_dir=save_dir,
             name=None,
             version=version,
             steps_per_epoch=steps_per_epoch,
         )
     ]
-    if log_wandb:
+    if enable_logging:
         loggers.append(
             WandbLogger(
                 name=f"version_{version}",
@@ -86,7 +87,7 @@ def get_loggers(
         )
 
     if log_lr:
-        lr_monitor = LearningRateMonitor(logging_interval="batch", log_momentum=True)
+        lr_monitor = LearningRateMonitor(logging_interval="epoch", log_momentum=True)
         loggers.append(lr_monitor)
 
     return loggers
@@ -130,12 +131,12 @@ def get_callbacks(
 def get_profiler(profile: bool, outpath: str):
     if profile:
         return SimpleProfiler(dirpath=outpath, filename="simple_profile")
-    else:
-        return None
+    return None
 
 
-def get_wandb_id(loggers: list[Logger], log_wandb: bool):
-    if log_wandb:
-        return loggers[-1].experiment.id
-    else:
-        return None
+def get_wandb_id(loggers: list[Logger], enable_logging: bool):
+    if enable_logging:
+        wandb_logger = loggers[-1]
+        assert isinstance(wandb_logger, WandbLogger)
+        return wandb_logger.experiment.id
+    return None

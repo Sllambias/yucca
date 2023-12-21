@@ -153,7 +153,7 @@ class YuccaManager:
             save_dir=path_config.save_dir,
             version_dir=path_config.version_dir,
             version=path_config.version,
-            log_wandb=not self.disable_logging,
+            enable_logging=not self.disable_logging,
             log_lr=True,
             prediction_output_dir=prediction_output_dir,
             profile=self.profile,
