@@ -31,6 +31,7 @@ def main():
         "-d",
         help="Dimensionality of the Model. Can be 3D or 2D. "
         "Defaults to 3D. Note that this will always be 2D if ensemble is enabled.",
+        default="3D",
     )
     parser.add_argument(
         "-man",

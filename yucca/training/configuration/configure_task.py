@@ -32,6 +32,8 @@ def get_task_config(
     planner_name: str = "YuccaPlanner",
     split_idx: int = 0,
 ):
+    assert model_dimensions is not None
+
     return TaskConfig(
         continue_from_most_recent=continue_from_most_recent,
         manager_name=manager_name,
