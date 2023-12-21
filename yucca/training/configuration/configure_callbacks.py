@@ -1,7 +1,7 @@
 from lightning.pytorch.loggers.logger import Logger
 from typing import Union
 from dataclasses import dataclass
-from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor
 from lightning.pytorch.profilers import SimpleProfiler
 from pytorch_lightning.loggers import WandbLogger
 from yucca.evaluation.loggers import YuccaLogger
@@ -27,7 +27,8 @@ def get_callback_config(
     version: int,
     interval_ckpt_epochs: int = 250,
     latest_ckpt_epochs: int = 25,
-    disable_logging: bool = False,
+    log_wandb: bool = True,
+    log_lr: bool = True,
     prediction_output_dir: str = None,
     profile: bool = False,
     save_softmax: bool = False,
@@ -40,8 +41,8 @@ def get_callback_config(
     callbacks = get_callbacks(
         interval_ckpt_epochs, latest_ckpt_epochs, prediction_output_dir, save_softmax, write_predictions, store_best_ckpt
     )
-    loggers = get_loggers(task, save_dir, version_dir, version, disable_logging, steps_per_epoch, project, log_model)
-    wandb_id = get_wandb_id(loggers, disable_logging)
+    loggers = get_loggers(task, save_dir, version_dir, version, log_wandb, log_lr, steps_per_epoch, project, log_model)
+    wandb_id = get_wandb_id(loggers, log_wandb)
     profiler = get_profiler(profile, save_dir)
 
     return CallbackConfig(callbacks=callbacks, loggers=loggers, profiler=profiler, wandb_id=wandb_id)
@@ -52,7 +53,8 @@ def get_loggers(
     save_dir: str,
     version_dir: str,
     version: Union[int, str],
-    disable_logging: bool,
+    log_wandb: bool,
+    log_lr: bool,
     steps_per_epoch: int,
     project: str,
     log_model: str,
@@ -71,7 +73,7 @@ def get_loggers(
             steps_per_epoch=steps_per_epoch,
         )
     ]
-    if not disable_logging:
+    if log_wandb:
         loggers.append(
             WandbLogger(
                 name=f"version_{version}",
@@ -82,6 +84,11 @@ def get_loggers(
                 log_model=log_model,
             )
         )
+
+    if log_lr:
+        lr_monitor = LearningRateMonitor(logging_interval="batch", log_momentum=True)
+        loggers.append(lr_monitor)
+
     return loggers
 
 
@@ -127,8 +134,8 @@ def get_profiler(profile: bool, outpath: str):
         return None
 
 
-def get_wandb_id(loggers: list[Logger], disable_logging: bool):
-    if not disable_logging:
+def get_wandb_id(loggers: list[Logger], log_wandb: bool):
+    if log_wandb:
         return loggers[-1].experiment.id
     else:
         return None
