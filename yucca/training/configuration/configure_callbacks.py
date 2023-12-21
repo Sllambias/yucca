@@ -40,9 +40,15 @@ def get_callback_config(
     project: str = "Yucca",
 ):
     callbacks = get_callbacks(
-        interval_ckpt_epochs, latest_ckpt_epochs, prediction_output_dir, save_softmax, write_predictions, store_best_ckpt
+        interval_ckpt_epochs,
+        latest_ckpt_epochs,
+        prediction_output_dir,
+        save_softmax,
+        write_predictions,
+        store_best_ckpt,
+        log_lr,
     )
-    loggers = get_loggers(task, save_dir, version_dir, version, enable_logging, log_lr, steps_per_epoch, project, log_model)
+    loggers = get_loggers(task, save_dir, version_dir, version, enable_logging, steps_per_epoch, project, log_model)
     wandb_id = get_wandb_id(loggers, enable_logging)
     profiler = get_profiler(profile, save_dir)
 
@@ -55,7 +61,6 @@ def get_loggers(
     version_dir: str,
     version: Union[int, str],
     enable_logging: bool,
-    log_lr: bool,
     steps_per_epoch: int,
     project: str,
     log_model: str,
@@ -86,10 +91,6 @@ def get_loggers(
             )
         )
 
-    if log_lr:
-        lr_monitor = LearningRateMonitor(logging_interval="epoch", log_momentum=True)
-        loggers.append(lr_monitor)
-
     return loggers
 
 
@@ -100,6 +101,7 @@ def get_callbacks(
     save_softmax: bool,
     write_predictions: bool,
     store_best_ckpt: bool,
+    log_lr: bool,
 ):
     interval_ckpt = ModelCheckpoint(
         every_n_epochs=interval_ckpt_epochs, save_top_k=-1, filename="{epoch}", enable_version_counter=False
@@ -124,6 +126,10 @@ def get_callbacks(
             output_dir=prediction_output_dir, save_softmax=save_softmax, write_interval="batch"
         )
         callbacks.append(pred_writer)
+
+    if log_lr:
+        lr_monitor = LearningRateMonitor(logging_interval="epoch", log_momentum=True)
+        callbacks.append(lr_monitor)
 
     return callbacks
 
