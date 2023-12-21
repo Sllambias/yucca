@@ -1,4 +1,4 @@
-import numpy as np
+from lightning.pytorch.loggers.logger import Logger
 from typing import Union
 from dataclasses import dataclass
 from lightning.pytorch.callbacks import ModelCheckpoint
@@ -52,10 +52,10 @@ def get_loggers(
     save_dir: str,
     version_dir: str,
     version: Union[int, str],
-    disable_logging: bool = False,
-    steps_per_epoch: int = 250,
-    project: str = "Yucca",
-    log_model: str = "all",
+    disable_logging: bool,
+    steps_per_epoch: int,
+    project: str,
+    log_model: str,
 ):
     # The YuccaLogger is the barebones logger needed to save hparams.yaml
     # It should generally never be disabled.
@@ -88,10 +88,10 @@ def get_loggers(
 def get_callbacks(
     interval_ckpt_epochs: int,
     latest_ckpt_epochs: int,
-    prediction_output_dir: str = None,
-    save_softmax: bool = False,
-    write_predictions: bool = True,
-    store_best_ckpt: bool = True,
+    prediction_output_dir: str,
+    save_softmax: bool,
+    write_predictions: bool,
+    store_best_ckpt: bool,
 ):
     interval_ckpt = ModelCheckpoint(
         every_n_epochs=interval_ckpt_epochs, save_top_k=-1, filename="{epoch}", enable_version_counter=False
@@ -120,14 +120,14 @@ def get_callbacks(
     return callbacks
 
 
-def get_profiler(profile, outpath):
+def get_profiler(profile: bool, outpath: str):
     if profile:
         return SimpleProfiler(dirpath=outpath, filename="simple_profile")
     else:
         return None
 
 
-def get_wandb_id(loggers, disable_logging):
+def get_wandb_id(loggers: list[Logger], disable_logging: bool):
     if not disable_logging:
         return loggers[-1].experiment.id
     else:
