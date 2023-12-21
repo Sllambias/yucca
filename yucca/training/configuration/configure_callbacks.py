@@ -25,15 +25,22 @@ def get_callback_config(
     save_dir: str,
     version_dir: str,
     version: int,
-    checkpoint_interval: int = 250,
+    interval_ckpt_epochs: int = 250,
+    latest_ckpt_epochs: int = 25,
     disable_logging: bool = False,
     prediction_output_dir: str = None,
     profile: bool = False,
     save_softmax: bool = False,
     steps_per_epoch: int = 250,
+    project: str = "Yucca",
+    log_model: str = "all",
+    write_predictions: bool = True,
+    store_best_ckpt: bool = True,
 ):
-    callbacks = get_callbacks(checkpoint_interval, prediction_output_dir, save_softmax)
-    loggers = get_loggers(task, save_dir, version_dir, version, disable_logging, steps_per_epoch)
+    callbacks = get_callbacks(
+        interval_ckpt_epochs, latest_ckpt_epochs, prediction_output_dir, save_softmax, write_predictions, store_best_ckpt
+    )
+    loggers = get_loggers(task, save_dir, version_dir, version, disable_logging, steps_per_epoch, project, log_model)
     wandb_id = get_wandb_id(loggers, disable_logging)
     profiler = get_profiler(profile, save_dir)
 
@@ -47,6 +54,8 @@ def get_loggers(
     version: Union[int, str],
     disable_logging: bool = False,
     steps_per_epoch: int = 250,
+    project: str = "Yucca",
+    log_model: str = "all",
 ):
     # The YuccaLogger is the barebones logger needed to save hparams.yaml
     # It should generally never be disabled.
@@ -68,29 +77,47 @@ def get_loggers(
                 name=f"version_{version}",
                 save_dir=version_dir,
                 version=str(version),
-                project="Yucca",
+                project=project,
                 group=task,
-                log_model="all",
+                log_model=log_model,
             )
         )
     return loggers
 
 
-def get_callbacks(checkpoint_interval, prediction_output_dir: str = None, save_softmax: bool = False):
-    best_ckpt = ModelCheckpoint(monitor="val_loss", mode="min", save_top_k=1, filename="best", enable_version_counter=False)
+def get_callbacks(
+    interval_ckpt_epochs: int,
+    latest_ckpt_epochs: int,
+    prediction_output_dir: str = None,
+    save_softmax: bool = False,
+    write_predictions: bool = True,
+    store_best_ckpt: bool = True,
+):
     interval_ckpt = ModelCheckpoint(
-        every_n_epochs=checkpoint_interval, save_top_k=-1, filename="{epoch}", enable_version_counter=False
+        every_n_epochs=interval_ckpt_epochs, save_top_k=-1, filename="{epoch}", enable_version_counter=False
     )
     latest_ckpt = ModelCheckpoint(
-        every_n_epochs=int(np.ceil(checkpoint_interval / 10)),
+        every_n_epochs=latest_ckpt_epochs,
         save_top_k=1,
         filename="last",
         enable_version_counter=False,
     )
-    pred_writer = WritePredictionFromLogits(
-        output_dir=prediction_output_dir, save_softmax=save_softmax, write_interval="batch"
-    )
-    return [best_ckpt, interval_ckpt, latest_ckpt, pred_writer]
+
+    callbacks = [interval_ckpt, latest_ckpt]
+
+    if store_best_ckpt:
+        best_ckpt = ModelCheckpoint(
+            monitor="val_loss", mode="min", save_top_k=1, filename="best", enable_version_counter=False
+        )
+        callbacks.append(best_ckpt)
+
+    if write_predictions:
+        pred_writer = WritePredictionFromLogits(
+            output_dir=prediction_output_dir, save_softmax=save_softmax, write_interval="batch"
+        )
+        callbacks.append(pred_writer)
+
+    return callbacks
 
 
 def get_profiler(profile, outpath):
