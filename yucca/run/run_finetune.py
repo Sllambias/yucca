@@ -1,4 +1,6 @@
 import argparse
+
+from sympy import O
 import yucca
 from yucca.paths import yucca_models
 from yucca.utils.task_ids import maybe_get_task_from_task_id
@@ -62,24 +64,24 @@ def main():
     parser.add_argument("--loss", help="Should only be used to employ alternative Loss Function", default=None)
     parser.add_argument("--mom", help="Should only be used to employ alternative Momentum.", default=None)
 
-    parser.add_argument(
-        "--disable_logging",
-        help="disable logging. ",
-        action="store_true",
-        default=False,
-    )
+    parser.add_argument("--disable_logging", help="disable logging. ", action="store_true", default=False)
     parser.add_argument(
         "--new_version",
         help="Start a new version, instead of continuing from the most recent. ",
         action="store_true",
         default=False,
     )
+    parser.add_argument("--profile", help="Enable profiling.", action="store_true", default=False)
     parser.add_argument(
-        "--profile",
-        help="Enable profiling.",
-        action="store_true",
-        default=False,
+        "--patch_size",
+        type=str,
+        help="Use your own patch_size. Example: if 32 is provided and the model is 3D we will use patch size (32, 32, 32). Can also be min, max or mean.",
     )
+    parser.add_argument("--precision", type=str, default="bf16-mixed")
+    parser.add_argument("--max_epochs", type=int, default=1000)
+    parser.add_argument("--train_batches_per_step", type=int, default=250)
+    parser.add_argument("--val_batches_per_step", type=int, default=50)
+    parser.add_argument("--max_vram", type=int, default=12)
 
     args = parser.parse_args()
 
@@ -97,6 +99,12 @@ def main():
     new_version = args.new_version
     planner = args.pl
     profile = args.profile
+
+    if args.patch_size is not None:
+        if args.patch_size in ["mean", "max", "min"]:
+            patch_size = args.patch_size
+        else:
+            patch_size = (int(args.patch_size),) * 3 if dimensions == "3D" else (int(args.patch_size),) * 2
 
     kwargs = {}
 
@@ -126,14 +134,19 @@ def main():
         disable_logging=log,
         split_idx=split_idx,
         loss=loss,
+        max_epochs=args.max_epochs,
+        max_vram=args.max_vram,
         model_dimensions=dimensions,
         model_name=model_name,
         num_workers=8,
+        patch_size=patch_size,
         planner=planner,
-        precision="16-mixed",
+        precision=args.precision,
         profile=profile,
         step_logging=False,
         task=task,
+        train_batches_per_step=args.train_batches_per_step,
+        val_batches_per_step=args.val_batches_per_step,
         **kwargs,
     )
     manager.run_finetuning()
