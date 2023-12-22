@@ -1,10 +1,9 @@
-from gc import enable
 from lightning.pytorch.loggers.logger import Logger
 from typing import Union
 from dataclasses import dataclass
 from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor
 from lightning.pytorch.profilers import SimpleProfiler
-from pytorch_lightning.loggers import WandbLogger
+from lightning.pytorch.loggers import WandbLogger
 from yucca.evaluation.loggers import YuccaLogger
 from yucca.utils.saving import WritePredictionFromLogits
 from lightning.pytorch.profilers.profiler import Profiler
