@@ -47,7 +47,7 @@ class YuccaManager:
         ckpt_path: str = None,
         continue_from_most_recent: bool = True,
         deep_supervision: bool = False,
-        disable_logging: bool = False,
+        enable_logging: bool = True,
         learning_rate: float = 1e-3,
         loss: str = None,
         max_epochs: int = 1000,
@@ -69,7 +69,7 @@ class YuccaManager:
         self.ckpt_path = ckpt_path
         self.continue_from_most_recent = continue_from_most_recent
         self.deep_supervision = deep_supervision
-        self.disable_logging = disable_logging
+        self.enable_logging = enable_logging
         self.loss = loss
         self.max_epochs = max_epochs
         self.max_vram = max_vram
@@ -153,8 +153,10 @@ class YuccaManager:
             model_name=task_config.model_name,
             save_dir=path_config.save_dir,
             version_dir=path_config.version_dir,
+            ckpt_version_dir=self.ckpt_config.ckpt_version_dir,
+            ckpt_wandb_id=self.ckpt_config.ckpt_wandb_id,
             version=path_config.version,
-            enable_logging=not self.disable_logging,
+            enable_logging=self.enable_logging,
             log_lr=True,
             prediction_output_dir=prediction_output_dir,
             profile=self.profile,
@@ -197,7 +199,7 @@ class YuccaManager:
             logger=callback_config.loggers,
             precision=self.precision,
             profiler=callback_config.profiler,
-            enable_progress_bar=not self.disable_logging,
+            enable_progress_bar=not self.enable_logging,
             max_epochs=self.max_epochs,
             **self.kwargs,
         )

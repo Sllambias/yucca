@@ -179,7 +179,7 @@ def main():
 
         print(f"{'Using manager: ':25} {manager_name}")
         manager = manager(
-            disable_logging=False,
+            enable_logging=False,
             model_name=model,
             model_dimensions=dimensions,
             task=source_task,

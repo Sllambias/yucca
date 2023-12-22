@@ -122,7 +122,7 @@ def main():
         ckpt_path=None,
         continue_from_most_recent=not new_version,
         deep_supervision=False,
-        disable_logging=log,
+        enable_logging=log,
         split_idx=split_idx,
         loss=loss,
         model_dimensions=dimensions,
