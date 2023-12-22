@@ -87,7 +87,6 @@ def get_loggers(
             WandbLogger(
                 name=f"version_{version}",
                 save_dir=version_dir,
-                version=f"{model_name}_{version}",
                 project=project,
                 group=task,
                 log_model=log_model,
