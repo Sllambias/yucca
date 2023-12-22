@@ -39,6 +39,7 @@ class CkptConfig:
     ckpt_path: Union[str, None]
     ckpt_seed: Union[int, None]
     ckpt_plans: Union[dict, None]
+    ckpt_version_dir: Union[str, None]
     ckpt_wandb_id: Union[str, None]
 
     def lm_hparams(self):
@@ -46,6 +47,7 @@ class CkptConfig:
             "ckpt_path": self.ckpt_path,
             "ckpt_seed": self.ckpt_seed,
             "ckpt_plans": self.ckpt_plans,
+            "ckpt_version_dir": self.ckpt_version_dir,
             "ckpt_wandb_id": self.ckpt_wandb_id,
         }
 
@@ -60,15 +62,16 @@ def get_checkpoint_config(path_config: PathConfig, continue_from_most_recent: bo
 
     # If we did not find a checkpoint we just return an empty ckpt_config
     if ckpt_path is None:
-        return CkptConfig(ckpt_path=None, ckpt_seed=None, ckpt_plans=None, ckpt_wandb_id=None)
+        return CkptConfig(ckpt_path=None, ckpt_seed=None, ckpt_plans=None, ckpt_version_dir=None, ckpt_wandb_id=None)
 
     checkpoint = torch.load(ckpt_path, map_location="cpu")["hyper_parameters"]["config"]
-    plans, seed, wandb_id = get_checkpoint_params(checkpoint)
+    plans, seed, version_dir, wandb_id = get_checkpoint_params(checkpoint)
 
     return CkptConfig(
         ckpt_path=ckpt_path,
         ckpt_seed=seed,
         ckpt_plans=plans,
+        ckpt_version_dir=version_dir,
         ckpt_wandb_id=wandb_id,
     )
 
@@ -88,5 +91,6 @@ def find_checkpoint_path(ckpt_path: Union[str, None], continue_from_most_recent:
 def get_checkpoint_params(checkpoint: dict):
     plans = checkpoint.get("plans") if checkpoint.get("plans") != "null" else None
     seed = checkpoint.get("seed") if checkpoint.get("seed") != "null" else None
+    version_dir = checkpoint.get("version_dir") if checkpoint.get("version_dir") != "null" else None
     wandb_id = checkpoint.get("wandb_id") if checkpoint.get("wandb_id") != "null" else None
-    return plans, seed, wandb_id
+    return plans, seed, version_dir, wandb_id

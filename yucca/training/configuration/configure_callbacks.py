@@ -21,23 +21,25 @@ class CallbackConfig:
 
 
 def get_callback_config(
-    task: str,
+    model_name: str,
     save_dir: str,
+    task: str,
     version_dir: str,
     version: int,
-    model_name: str,
+    ckpt_version_dir: Union[str, None] = None,
+    ckpt_wandb_id: Union[str, None] = None,
+    enable_logging: bool = True,
     interval_ckpt_epochs: int = 250,
     latest_ckpt_epochs: int = 25,
-    store_best_ckpt: bool = True,
-    enable_logging: bool = True,
     log_lr: bool = True,
     log_model: str = "all",
-    write_predictions: bool = True,
     prediction_output_dir: str = None,
-    save_softmax: bool = False,
     profile: bool = False,
-    steps_per_epoch: int = 250,
     project: str = "Yucca",
+    save_softmax: bool = False,
+    steps_per_epoch: int = 250,
+    store_best_ckpt: bool = True,
+    write_predictions: bool = True,
 ):
     callbacks = get_callbacks(
         interval_ckpt_epochs,
@@ -49,7 +51,17 @@ def get_callback_config(
         log_lr,
     )
     loggers = get_loggers(
-        task, model_name, save_dir, version_dir, version, enable_logging, steps_per_epoch, project, log_model
+        ckpt_version_dir=ckpt_version_dir,
+        ckpt_wandb_id=ckpt_wandb_id,
+        task=task,
+        model_name=model_name,
+        save_dir=save_dir,
+        version_dir=version_dir,
+        version=version,
+        enable_logging=enable_logging,
+        steps_per_epoch=steps_per_epoch,
+        project=project,
+        log_model=log_model,
     )
     wandb_id = get_wandb_id(loggers, enable_logging)
     profiler = get_profiler(profile, save_dir)
@@ -58,15 +70,17 @@ def get_callback_config(
 
 
 def get_loggers(
-    task: str,
+    ckpt_version_dir: Union[str, None],
+    ckpt_wandb_id: Union[str, None],
+    enable_logging: bool,
+    log_model: str,
     model_name: str,
+    project: str,
     save_dir: str,
+    steps_per_epoch: int,
+    task: str,
     version_dir: str,
     version: Union[int, str],
-    enable_logging: bool,
-    steps_per_epoch: int,
-    project: str,
-    log_model: str,
 ):
     # The YuccaLogger is the barebones logger needed to save hparams.yaml
     # It should generally never be disabled.
@@ -83,6 +97,7 @@ def get_loggers(
         )
     ]
     if enable_logging:
+        use_ckpt_id = should_use_ckpt_wandb_id(ckpt_version_dir, ckpt_wandb_id, version_dir)
         loggers.append(
             WandbLogger(
                 name=f"version_{version}",
@@ -90,6 +105,7 @@ def get_loggers(
                 project=project,
                 group=task,
                 log_model=log_model,
+                version=ckpt_wandb_id if use_ckpt_id else None,
             )
         )
 
@@ -148,3 +164,14 @@ def get_wandb_id(loggers: list[Logger], enable_logging: bool):
         assert isinstance(wandb_logger, WandbLogger)
         return wandb_logger.experiment.id
     return None
+
+
+def should_use_ckpt_wandb_id(ckpt_version_dir, ckpt_wandb_id, version_dir):
+    # If no wandb_id was found we can not (and should not try) reuse it.
+    if ckpt_wandb_id is None:
+        return False
+    # If it exists and our current output directory INCLUDING THE CURRENT VERSION is equal
+    # to the previous output directory we can safely assume we're continuing an
+    # interrupted run.
+    if ckpt_version_dir == version_dir:
+        return True
