@@ -150,6 +150,7 @@ class YuccaManager:
 
         callback_config = get_callback_config(
             task=task_config.task,
+            model_name=task_config.model_name,
             save_dir=path_config.save_dir,
             version_dir=path_config.version_dir,
             version=path_config.version,

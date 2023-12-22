@@ -25,6 +25,7 @@ def get_callback_config(
     save_dir: str,
     version_dir: str,
     version: int,
+    model_name: str,
     interval_ckpt_epochs: int = 250,
     latest_ckpt_epochs: int = 25,
     store_best_ckpt: bool = True,
@@ -47,7 +48,9 @@ def get_callback_config(
         store_best_ckpt,
         log_lr,
     )
-    loggers = get_loggers(task, save_dir, version_dir, version, enable_logging, steps_per_epoch, project, log_model)
+    loggers = get_loggers(
+        task, model_name, save_dir, version_dir, version, enable_logging, steps_per_epoch, project, log_model
+    )
     wandb_id = get_wandb_id(loggers, enable_logging)
     profiler = get_profiler(profile, save_dir)
 
@@ -56,6 +59,7 @@ def get_callback_config(
 
 def get_loggers(
     task: str,
+    model_name: str,
     save_dir: str,
     version_dir: str,
     version: Union[int, str],
@@ -83,7 +87,7 @@ def get_loggers(
             WandbLogger(
                 name=f"version_{version}",
                 save_dir=version_dir,
-                version=str(version),
+                version=f"{model_name}_{version}",
                 project=project,
                 group=task,
                 log_model=log_model,
