@@ -40,6 +40,8 @@ def get_callback_config(
     steps_per_epoch: int = 250,
     store_best_ckpt: bool = True,
     write_predictions: bool = True,
+    run_name: str = None,
+    run_description: str = None,
 ):
     callbacks = get_callbacks(
         interval_ckpt_epochs,
@@ -62,6 +64,8 @@ def get_callback_config(
         steps_per_epoch=steps_per_epoch,
         project=project,
         log_model=log_model,
+        run_name=run_name,
+        run_description=run_description,
     )
     wandb_id = get_wandb_id(loggers, enable_logging)
     profiler = get_profiler(profile, save_dir)
@@ -81,6 +85,8 @@ def get_loggers(
     task: str,
     version_dir: str,
     version: Union[int, str],
+    run_name: str,
+    run_description: str,
 ):
     # The YuccaLogger is the barebones logger needed to save hparams.yaml
     # It should generally never be disabled.
@@ -100,7 +106,8 @@ def get_loggers(
         use_ckpt_id = should_use_ckpt_wandb_id(ckpt_version_dir, ckpt_wandb_id, version_dir)
         loggers.append(
             WandbLogger(
-                name=f"version_{version}",
+                name=run_name or f"version_{version}",
+                notes=run_description,
                 save_dir=version_dir,
                 project=project,
                 group=task,
