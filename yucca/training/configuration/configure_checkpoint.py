@@ -7,6 +7,7 @@ from yucca.paths import yucca_models, yucca_preprocessed_data
 from yucca.preprocessing.UnsupervisedPreprocessor import UnsupervisedPreprocessor
 from yucca.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
 from yucca.training.configuration.configure_paths import PathConfig
+from yucca.utils.dict import without_keys
 from yucca.utils.files_and_folders import recursive_find_python_class
 
 
@@ -42,14 +43,15 @@ class CkptConfig:
     ckpt_version_dir: Union[str, None]
     ckpt_wandb_id: Union[str, None]
 
-    def lm_hparams(self):
-        return {
+    def lm_hparams(self, without: [] = []):
+        hparams = {
             "ckpt_path": self.ckpt_path,
             "ckpt_seed": self.ckpt_seed,
             "ckpt_plans": self.ckpt_plans,
             "ckpt_version_dir": self.ckpt_version_dir,
             "ckpt_wandb_id": self.ckpt_wandb_id,
         }
+        return without_keys(hparams, without)
 
 
 def get_checkpoint_config(path_config: PathConfig, continue_from_most_recent: bool, ckpt_path: Union[str, None] = None):
