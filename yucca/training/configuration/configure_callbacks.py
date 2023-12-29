@@ -113,6 +113,7 @@ def get_loggers(
                 group=task,
                 log_model=log_model,
                 version=ckpt_wandb_id if use_ckpt_id else None,
+                resume="must" if use_ckpt_id else None,
             )
         )
 
