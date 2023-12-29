@@ -35,6 +35,7 @@ def get_path_config(task_config: TaskConfig):
         task_config.split_idx,
         task_config.task,
         task_config.planner_name,
+        task_config.experiment,
     )
 
     return PathConfig(
@@ -67,7 +68,9 @@ def detect_version(save_dir, continue_from_most_recent) -> Union[None, int]:
             return newest_version + 1
 
 
-def setup_paths_and_version(continue_from_most_recent, manager_name, model_dimensions, model_name, split_idx, task, planner):
+def setup_paths_and_version(
+    continue_from_most_recent, manager_name, model_dimensions, model_name, split_idx, task, planner, experiment
+):
     train_data_dir = join(yucca_preprocessed_data, task, planner)
     save_dir = join(
         yucca_models,
@@ -76,6 +79,10 @@ def setup_paths_and_version(continue_from_most_recent, manager_name, model_dimen
         manager_name + "__" + planner,
         f"fold_{split_idx}",
     )
+
+    if experiment is not None:
+        save_dir = join(save_dir, experiment)
+
     version = detect_version(save_dir, continue_from_most_recent)
     version_dir = join(save_dir, f"version_{version}")
     maybe_mkdir_p(version_dir)
