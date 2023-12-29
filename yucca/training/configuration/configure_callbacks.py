@@ -117,6 +117,12 @@ def get_loggers(
             )
         )
 
+        print("WANDB DEBUG INFO:")
+        print("Shoud resume", use_ckpt_id)
+        print("ckpt_wandb_id", ckpt_wandb_id)
+        print("ckpt_version_dir", ckpt_version_dir)
+        print("version_dir", version_dir)
+
     return loggers
 
 
@@ -181,5 +187,4 @@ def should_use_ckpt_wandb_id(ckpt_version_dir, ckpt_wandb_id, version_dir):
     # If it exists and our current output directory INCLUDING THE CURRENT VERSION is equal
     # to the previous output directory we can safely assume we're continuing an
     # interrupted run.
-    if ckpt_version_dir == version_dir:
-        return True
+    return ckpt_version_dir == version_dir
