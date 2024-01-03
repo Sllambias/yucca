@@ -216,7 +216,7 @@ def find_optimal_tensor_dims(
             "Will attempt to run with supplied parameters, but this might cause issues."
         )
         print(
-            f"Estimated GPU memory usage for parameters is: {est}GB and the max vram chosen is: {max_memory_usage_in_gb-offset}GB. \n"
+            f"Estimated GPU memory usage for parameters is: {est}GB and the max requested vram is: {max_memory_usage_in_gb-offset}GB. \n"
             f"This includes an offset of {offset}GB to account for vram used by PyTorch and CUDA. \n"
             "Consider increasing the max vram or working with a smaller batch and/or patch size."
             "\n"
