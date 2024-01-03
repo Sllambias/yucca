@@ -105,6 +105,8 @@ def main():
             patch_size = args.patch_size
         else:
             patch_size = (int(args.patch_size),) * 3 if dimensions == "3D" else (int(args.patch_size),) * 2
+    else:
+        patch_size = args.patch_size
 
     kwargs = {}
 
