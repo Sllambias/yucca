@@ -33,7 +33,7 @@ def get_task_config(
     model_name: str = "UNet",
     planner_name: str = "YuccaPlanner",
     split_idx: int = 0,
-    experiment: str = None,
+    experiment: str = "default",
 ):
     assert model_dimensions is not None
 

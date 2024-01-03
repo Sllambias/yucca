@@ -113,7 +113,7 @@ def get_loggers(
                 notes=run_description,
                 save_dir=version_dir,
                 project=project,
-                group=experiment or task,
+                group=experiment if experiment != "default" else task,
                 log_model=log_model,
                 version=ckpt_wandb_id if use_ckpt_id else None,
                 resume="must" if use_ckpt_id else None,

@@ -77,11 +77,9 @@ def setup_paths_and_version(
         task,
         model_name + "__" + model_dimensions,
         manager_name + "__" + planner,
+        experiment,
         f"fold_{split_idx}",
     )
-
-    if experiment is not None:
-        save_dir = join(save_dir, experiment)
 
     version = detect_version(save_dir, continue_from_most_recent)
     version_dir = join(save_dir, f"version_{version}")

@@ -62,6 +62,7 @@ class YuccaManager:
         split_idx: int = 0,
         step_logging: bool = False,
         task: str = None,
+        experiment: str = "default",
         train_batches_per_step: int = 250,
         val_batches_per_step: int = 50,
         **kwargs,
@@ -83,6 +84,7 @@ class YuccaManager:
         self.split_idx = split_idx
         self.step_logging = step_logging
         self.task = task
+        self.experiment = experiment
         self.train_batches_per_step = train_batches_per_step
         self.val_batches_per_step = val_batches_per_step
         self.kwargs = kwargs
@@ -112,6 +114,7 @@ class YuccaManager:
             planner_name=self.planner,
             split_idx=self.split_idx,
             task=self.task,
+            experiment=self.experiment,
         )
 
         path_config = get_path_config(task_config=task_config)
