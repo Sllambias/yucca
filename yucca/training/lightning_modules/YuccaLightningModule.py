@@ -212,13 +212,23 @@ class YuccaLightningModule(L.LightningModule):
         return {"optimizer": self.optim, "lr_scheduler": self.lr_scheduler}
 
     def load_state_dict(self, state_dict, *args, **kwargs):
+        # First we filter out layers that have changed in size
+        # This is often the case in the output layer.
+        # If we are finetuning on a task with a different number of classes
+        # than the pretraining task, the # output channels will have changed.
+        old_params = copy.deepcopy(self.state_dict())
+        state_dict = {
+            k: v for k, v in state_dict.items() if (k in old_params) and (old_params[k].shape == state_dict[k].shape)
+        }
+
         # Here there's also potential to implement custom loading functions.
         # E.g. to load 2D pretrained models into 3D by repeating or something like that.
+
+        # Now keep track of the # of layers with succesful weight transfers
         successful = 0
         unsuccessful = 0
-        old_params = copy.deepcopy(self.model.state_dict())
         super().load_state_dict(state_dict, *args, **kwargs)
-        new_params = self.model.state_dict()
+        new_params = self.state_dict()
         for p1, p2 in zip(old_params.values(), new_params.values()):
             # If more than one param in layer is NE (not equal) to the original weights we've successfully loaded new weights.
             if p1.data.ne(p2.data).sum() > 0:

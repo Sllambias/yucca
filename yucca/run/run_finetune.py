@@ -97,14 +97,15 @@ def main():
     loss = args.loss
     momentum = args.mom
     new_version = args.new_version
+    patch_size = args.patch_size
     planner = args.pl
     profile = args.profile
 
-    if args.patch_size is not None:
-        if args.patch_size in ["mean", "max", "min"]:
-            patch_size = args.patch_size
+    if patch_size is not None:
+        if patch_size in ["mean", "max", "min"]:
+            patch_size = patch_size
         else:
-            patch_size = (int(args.patch_size),) * 3 if dimensions == "3D" else (int(args.patch_size),) * 2
+            patch_size = (int(patch_size),) * 3 if dimensions == "3D" else (int(patch_size),) * 2
 
     kwargs = {}
 
