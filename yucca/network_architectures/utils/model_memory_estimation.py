@@ -193,6 +193,8 @@ def find_optimal_tensor_dims(
             if len(maxed_idxs) == len(patch_size):
                 # Unless batch_size is maxed
                 if not max_batch_size > batch_size:
+                    final_batch_size = batch_size
+                    final_patch_size = tuple(patch_size)
                     OOM_OR_MAXED = True
 
                 if len(patch_size) == 3:
