@@ -211,13 +211,13 @@ class YuccaLightningModule(L.LightningModule):
         # Finally return the optimizer and scheduler - the loss is not returned.
         return {"optimizer": self.optim, "lr_scheduler": self.lr_scheduler}
 
-    def load_state_dict(self, *args, **kwargs):
+    def load_state_dict(self, state_dict, *args, **kwargs):
         # Here there's also potential to implement custom loading functions.
         # E.g. to load 2D pretrained models into 3D by repeating or something like that.
         successful = 0
         unsuccessful = 0
         old_params = copy.deepcopy(self.model.state_dict())
-        super().load_state_dict(*args, **kwargs)
+        super().load_state_dict(state_dict, *args, **kwargs)
         new_params = self.model.state_dict()
         for p1, p2 in zip(old_params.values(), new_params.values()):
             # If more than one param in layer is NE (not equal) to the original weights we've successfully loaded new weights.
