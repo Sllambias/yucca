@@ -103,6 +103,8 @@ def find_optimal_tensor_dims(
     offset = 2.5
 
     OOM_OR_MAXED = False
+    final_batch_size = None
+    final_patch_size = None
 
     if dimensionality == "2D":
         if len(max_patch_size) == 3:
@@ -154,13 +156,17 @@ def find_optimal_tensor_dims(
     while not OOM_OR_MAXED:
         try:
             if np.prod(patch_size) >= absolute_max:
-                OOM_OR_MAXED = True
+                max_patch_size = patch_size
+
             inp = torch.zeros((batch_size, modalities, *patch_size))
             est = estimate_memory_training(model, inp)
 
+            # If estimated usage is still within acceptable bounds we set the (maybe temporary) final dimensions
             if est < max_memory_usage_in_gb - offset:
                 final_batch_size = batch_size
                 final_patch_size = tuple(patch_size)
+            else:
+                OOM_OR_MAXED = True
 
             if patch_size[idx] + 16 < max_patch_size[idx]:
                 patch_size[idx] += 16
@@ -193,14 +199,32 @@ def find_optimal_tensor_dims(
             if len(maxed_idxs) == len(patch_size):
                 # Unless batch_size is maxed
                 if not max_batch_size > batch_size:
+                    final_batch_size = batch_size
+                    final_patch_size = tuple(patch_size)
                     OOM_OR_MAXED = True
-
                 if len(patch_size) == 3:
                     batch_size += 2
                 else:
                     batch_size += 8
         except torch.cuda.OutOfMemoryError:
             OOM_OR_MAXED = True
+    if final_batch_size is None or final_batch_size is None:
+        print(
+            "\n"
+            "Final batch and/or patch size was not found. \n"
+            "This is likely caused by supplying large fixed parameters causing (or almost causing) OOM errors. \n"
+            "Will attempt to run with supplied parameters, but this might cause issues."
+        )
+        print(
+            f"Estimated GPU memory usage for parameters is: {est}GB and the max vram chosen is: {max_memory_usage_in_gb-offset}GB. \n"
+            f"This includes an offset of {offset}GB to account for vram used by PyTorch and CUDA. \n"
+            "Consider increasing the max vram or working with a smaller batch and/or patch size."
+            "\n"
+        )
+        if final_batch_size is None:
+            final_batch_size = batch_size
+        if final_patch_size is None:
+            final_patch_size = tuple(patch_size)
     return final_batch_size, final_patch_size
 
 

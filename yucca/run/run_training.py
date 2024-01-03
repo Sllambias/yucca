@@ -106,6 +106,7 @@ def main():
         "MultiResUNet",
         "UNet",
         "UNetR",
+        "UNetRE",
         "UXNet",
         "ResNet50",
         "TinyUNet",

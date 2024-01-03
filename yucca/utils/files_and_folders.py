@@ -40,9 +40,10 @@ def rename_file_or_dir(file: str, patterns: dict):
             shutil.move(file, newfile)
     elif os.path.isfile(file):
         os.rename(file, newfile)
+    return newfile
 
 
-def recursive_rename(folder, patterns_in_file, patterns_in_name):
+def recursive_rename(folder, patterns_in_file={}, patterns_in_name={}, file_ext=".py"):
     """
     Takes a top folder and recursively looks through all subfolders and files.
     For all file contents it will replace patterns_in_file keys with the corresponding values.
@@ -72,14 +73,16 @@ def recursive_rename(folder, patterns_in_file, patterns_in_name):
     dirs = subdirs(folder)
     files = subfiles(folder)
     for file in files:
-        replace_in_file(
-            file,
-            patterns_in_file,
-        )
+        if len(patterns_in_file) > 0:
+            if os.path.splitext(file)[-1] == file_ext:
+                replace_in_file(
+                    file,
+                    patterns_in_file,
+                )
         rename_file_or_dir(file, patterns_in_name)
     for direc in dirs:
-        rename_file_or_dir(direc, patterns_in_name)
-        recursive_rename(direc)
+        direc = rename_file_or_dir(direc, patterns_in_name)
+        recursive_rename(direc, patterns_in_file, patterns_in_name)
 
 
 def recursive_find_python_class(folder: list, class_name: str, current_module: str):
