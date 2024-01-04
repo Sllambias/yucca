@@ -42,6 +42,7 @@ def get_callback_config(
     write_predictions: bool = True,
     run_name: str = None,
     run_description: str = None,
+    experiment: str = None,
 ):
     callbacks = get_callbacks(
         interval_ckpt_epochs,
@@ -66,6 +67,7 @@ def get_callback_config(
         log_model=log_model,
         run_name=run_name,
         run_description=run_description,
+        experiment=experiment,
     )
     wandb_id = get_wandb_id(loggers, enable_logging)
     profiler = get_profiler(profile, save_dir)
@@ -87,6 +89,7 @@ def get_loggers(
     version: Union[int, str],
     run_name: str,
     run_description: str,
+    experiment: str,
 ):
     # The YuccaLogger is the barebones logger needed to save hparams.yaml
     # It should generally never be disabled.
@@ -110,9 +113,10 @@ def get_loggers(
                 notes=run_description,
                 save_dir=version_dir,
                 project=project,
-                group=task,
+                group=experiment,
                 log_model=log_model,
                 version=ckpt_wandb_id if use_ckpt_id else None,
+                resume="must" if use_ckpt_id else None,
             )
         )
 
@@ -180,5 +184,4 @@ def should_use_ckpt_wandb_id(ckpt_version_dir, ckpt_wandb_id, version_dir):
     # If it exists and our current output directory INCLUDING THE CURRENT VERSION is equal
     # to the previous output directory we can safely assume we're continuing an
     # interrupted run.
-    if ckpt_version_dir == version_dir:
-        return True
+    return ckpt_version_dir == version_dir

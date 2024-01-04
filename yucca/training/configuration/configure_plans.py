@@ -7,6 +7,7 @@ from yucca.paths import yucca_models, yucca_preprocessed_data
 from yucca.preprocessing.UnsupervisedPreprocessor import UnsupervisedPreprocessor
 from yucca.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
 from yucca.training.configuration.configure_paths import PathConfig
+from yucca.utils.dict import without_keys
 from yucca.utils.files_and_folders import recursive_find_python_class
 
 
@@ -17,13 +18,14 @@ class PlanConfig:
     plans: dict
     task_type: str
 
-    def lm_hparams(self):
-        return {
+    def lm_hparams(self, without: [] = []):
+        hparams = {
             "image_extension": self.image_extension,
             "num_classes": self.num_classes,
             "plans": self.plans,
             "task_type": self.task_type,
         }
+        return without_keys(hparams, without)
 
 
 def get_plan_config(

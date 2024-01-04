@@ -79,6 +79,12 @@ def main():
         default=False,
     )
 
+    parser.add_argument(
+        "--experiment",
+        help="A name for the experiment being performed, wiht no spaces.",
+        default="default",
+    )
+
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
@@ -94,6 +100,7 @@ def main():
     new_version = args.new_version
     planner = args.pl
     profile = args.profile
+    experiment = args.experiment
 
     # checkpoint = args.chk
     kwargs = {}
@@ -134,6 +141,7 @@ def main():
         profile=profile,
         step_logging=False,
         task=task,
+        experiment=experiment,
         **kwargs,
     )
     manager.run_training()
