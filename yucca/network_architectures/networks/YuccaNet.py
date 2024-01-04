@@ -14,7 +14,7 @@ class YuccaNet(nn.Module):
 
     def forward(self):
         """
-        implement in individual trainers.
+        Implement in individual networks.
         DO NOT INCLUDE FINAL SOFTMAX/SIGMOID ETC.
         WILL BE HANDLED BY LOSS FUNCTIONS
         """

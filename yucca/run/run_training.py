@@ -109,6 +109,7 @@ def main():
         "UXNet",
         "ResNet50",
         "TinyUNet",
+        "ComplexUNet",
     ], f"{model_name} is an invalid model name. This is case sensitive."
 
     print(f"{'Using manager: ':25} {manager_name}")
