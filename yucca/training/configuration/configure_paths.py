@@ -10,7 +10,6 @@ from yucca.training.configuration.configure_task import TaskConfig
 
 @dataclass
 class PathConfig:
-    ckpt_path: Union[str, None]
     plans_path: str
     save_dir: str
     train_data_dir: str
@@ -19,7 +18,6 @@ class PathConfig:
 
     def lm_hparams(self):
         return {
-            "ckpt_path": self.ckpt_path,
             "plans_path": self.plans_path,
             "save_dir": self.save_dir,
             "train_data_dir": self.train_data_dir,
@@ -28,7 +26,7 @@ class PathConfig:
         }
 
 
-def get_path_config(ckpt_path: str, task_config: TaskConfig):
+def get_path_config(task_config: TaskConfig):
     save_dir, train_data_dir, version_dir, plans_path, version = setup_paths_and_version(
         task_config.continue_from_most_recent,
         task_config.manager_name,
@@ -37,10 +35,10 @@ def get_path_config(ckpt_path: str, task_config: TaskConfig):
         task_config.split_idx,
         task_config.task,
         task_config.planner_name,
+        task_config.experiment,
     )
 
     return PathConfig(
-        ckpt_path=ckpt_path,
         plans_path=plans_path,
         save_dir=save_dir,
         train_data_dir=train_data_dir,
@@ -70,15 +68,19 @@ def detect_version(save_dir, continue_from_most_recent) -> Union[None, int]:
             return newest_version + 1
 
 
-def setup_paths_and_version(continue_from_most_recent, manager_name, model_dimensions, model_name, split_idx, task, planner):
+def setup_paths_and_version(
+    continue_from_most_recent, manager_name, model_dimensions, model_name, split_idx, task, planner, experiment
+):
     train_data_dir = join(yucca_preprocessed_data, task, planner)
     save_dir = join(
         yucca_models,
         task,
         model_name + "__" + model_dimensions,
         manager_name + "__" + planner,
+        experiment,
         f"fold_{split_idx}",
     )
+
     version = detect_version(save_dir, continue_from_most_recent)
     version_dir = join(save_dir, f"version_{version}")
     maybe_mkdir_p(version_dir)

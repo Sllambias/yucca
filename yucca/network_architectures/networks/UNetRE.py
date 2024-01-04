@@ -6,7 +6,7 @@ from yucca.network_architectures.blocks_and_layers.conv_layers import (
 )
 
 
-class UNet(YuccaNet):
+class UNetRE(YuccaNet):
     def __init__(
         self,
         input_channels: int,
@@ -31,7 +31,7 @@ class UNet(YuccaNet):
         basic_block=DoubleConvDropoutNormNonlin,
         deep_supervision=False,
     ) -> None:
-        super(UNet, self).__init__()
+        super(UNetRE, self).__init__()
 
         # Task specific
         self.num_classes = num_classes
@@ -188,7 +188,7 @@ class UNet(YuccaNet):
             self.nonlin_kwargs,
         )
 
-        self.out_conv = self.conv_op(self.filters, self.num_classes, kernel_size=1)
+        self.out_convRE = self.conv_op(self.filters, self.num_classes, kernel_size=1)
 
         if self.deep_supervision:
             self.ds_out_conv0 = self.conv_op(self.filters * 16, self.num_classes, kernel_size=1)
@@ -237,8 +237,8 @@ class UNet(YuccaNet):
             ds1 = self.ds_out_conv1(x5)
             ds2 = self.ds_out_conv2(x6)
             ds3 = self.ds_out_conv3(x7)
-            ds4 = self.out_conv(x8)
+            ds4 = self.out_convRE(x8)
             return [ds4, ds3, ds2, ds1, ds0]
 
-        logits = self.out_conv(x8)
+        logits = self.out_convRE(x8)
         return logits

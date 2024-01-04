@@ -4,7 +4,7 @@ def test_2D_training():
     manager = YuccaManager(
         task="Task000_Test",
         fast_dev_run=True,
-        disable_logging=True,
+        enable_logging=False,
         model_name="TinyUNet",
         model_dimensions="2D",
         precision="bf16-mixed",
@@ -19,7 +19,7 @@ def test_3D_training():
     manager = YuccaManager(
         task="Task000_Test",
         fast_dev_run=True,
-        disable_logging=True,
+        enable_logging=False,
         model_name="TinyUNet",
         model_dimensions="3D",
         num_workers=0,

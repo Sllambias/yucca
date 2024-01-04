@@ -1,9 +1,9 @@
-import numpy as np
+from lightning.pytorch.loggers.logger import Logger
 from typing import Union
 from dataclasses import dataclass
-from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor
 from lightning.pytorch.profilers import SimpleProfiler
-from pytorch_lightning.loggers import WandbLogger, CSVLogger
+from lightning.pytorch.loggers import WandbLogger
 from yucca.evaluation.loggers import YuccaLogger
 from yucca.utils.saving import WritePredictionFromLogits
 from lightning.pytorch.profilers.profiler import Profiler
@@ -14,34 +14,82 @@ class CallbackConfig:
     callbacks: list
     loggers: list
     profiler: Profiler
+    wandb_id: str
+
+    def lm_hparams(self):
+        return {"wandb_id": self.wandb_id}
 
 
 def get_callback_config(
-    task: str,
+    model_name: str,
     save_dir: str,
+    task: str,
     version_dir: str,
     version: int,
-    checkpoint_interval: int = 250,
-    disable_logging: bool = False,
+    ckpt_version_dir: Union[str, None] = None,
+    ckpt_wandb_id: Union[str, None] = None,
+    enable_logging: bool = True,
+    interval_ckpt_epochs: int = 250,
+    latest_ckpt_epochs: int = 25,
+    log_lr: bool = True,
+    log_model: str = "all",
     prediction_output_dir: str = None,
     profile: bool = False,
+    project: str = "Yucca",
     save_softmax: bool = False,
     steps_per_epoch: int = 250,
+    store_best_ckpt: bool = True,
+    write_predictions: bool = True,
+    run_name: str = None,
+    run_description: str = None,
+    experiment: str = None,
 ):
-    callbacks = get_callbacks(checkpoint_interval, prediction_output_dir, save_softmax)
-    loggers = get_loggers(task, save_dir, version_dir, version, disable_logging, steps_per_epoch)
+    callbacks = get_callbacks(
+        interval_ckpt_epochs,
+        latest_ckpt_epochs,
+        prediction_output_dir,
+        save_softmax,
+        write_predictions,
+        store_best_ckpt,
+        log_lr,
+    )
+    loggers = get_loggers(
+        ckpt_version_dir=ckpt_version_dir,
+        ckpt_wandb_id=ckpt_wandb_id,
+        task=task,
+        model_name=model_name,
+        save_dir=save_dir,
+        version_dir=version_dir,
+        version=version,
+        enable_logging=enable_logging,
+        steps_per_epoch=steps_per_epoch,
+        project=project,
+        log_model=log_model,
+        run_name=run_name,
+        run_description=run_description,
+        experiment=experiment,
+    )
+    wandb_id = get_wandb_id(loggers, enable_logging)
     profiler = get_profiler(profile, save_dir)
 
-    return CallbackConfig(callbacks=callbacks, loggers=loggers, profiler=profiler)
+    return CallbackConfig(callbacks=callbacks, loggers=loggers, profiler=profiler, wandb_id=wandb_id)
 
 
 def get_loggers(
-    task: str,
+    ckpt_version_dir: Union[str, None],
+    ckpt_wandb_id: Union[str, None],
+    enable_logging: bool,
+    log_model: str,
+    model_name: str,
+    project: str,
     save_dir: str,
+    steps_per_epoch: int,
+    task: str,
     version_dir: str,
     version: Union[int, str],
-    disable_logging: bool = False,
-    steps_per_epoch: int = 250,
+    run_name: str,
+    run_description: str,
+    experiment: str,
 ):
     # The YuccaLogger is the barebones logger needed to save hparams.yaml
     # It should generally never be disabled.
@@ -50,46 +98,90 @@ def get_loggers(
 
     loggers = [
         YuccaLogger(
-            disable_logging=disable_logging,
+            disable_logging=not enable_logging,
             save_dir=save_dir,
             name=None,
             version=version,
             steps_per_epoch=steps_per_epoch,
         )
     ]
-    if not disable_logging:
+    if enable_logging:
+        use_ckpt_id = should_use_ckpt_wandb_id(ckpt_version_dir, ckpt_wandb_id, version_dir)
         loggers.append(
             WandbLogger(
-                name=f"version_{version}",
+                name=run_name or f"version_{version}",
+                notes=run_description,
                 save_dir=version_dir,
-                version=str(version),
-                project="Yucca",
-                group=task,
-                log_model="all",
+                project=project,
+                group=experiment,
+                log_model=log_model,
+                version=ckpt_wandb_id if use_ckpt_id else None,
+                resume="must" if use_ckpt_id else None,
             )
         )
+
     return loggers
 
 
-def get_callbacks(checkpoint_interval, prediction_output_dir: str = None, save_softmax: bool = False):
-    best_ckpt = ModelCheckpoint(monitor="val_loss", mode="min", save_top_k=1, filename="best", enable_version_counter=False)
+def get_callbacks(
+    interval_ckpt_every_n_epochs: int,
+    last_ckpt_every_n_epochs: int,
+    prediction_output_dir: str,
+    save_softmax: bool,
+    write_predictions: bool,
+    store_best_ckpt: bool,
+    log_lr: bool,
+):
     interval_ckpt = ModelCheckpoint(
-        every_n_epochs=checkpoint_interval, save_top_k=-1, filename="{epoch}", enable_version_counter=False
+        every_n_epochs=interval_ckpt_every_n_epochs, save_top_k=-1, filename="{epoch}", enable_version_counter=False
     )
     latest_ckpt = ModelCheckpoint(
-        every_n_epochs=int(np.ceil(checkpoint_interval / 10)),
+        every_n_epochs=last_ckpt_every_n_epochs,
         save_top_k=1,
         filename="last",
         enable_version_counter=False,
     )
-    pred_writer = WritePredictionFromLogits(
-        output_dir=prediction_output_dir, save_softmax=save_softmax, write_interval="batch"
-    )
-    return [best_ckpt, interval_ckpt, latest_ckpt, pred_writer]
+
+    callbacks = [interval_ckpt, latest_ckpt]
+
+    if store_best_ckpt:
+        best_ckpt = ModelCheckpoint(
+            monitor="val_loss", mode="min", save_top_k=1, filename="best", enable_version_counter=False
+        )
+        callbacks.append(best_ckpt)
+
+    if write_predictions:
+        pred_writer = WritePredictionFromLogits(
+            output_dir=prediction_output_dir, save_softmax=save_softmax, write_interval="batch"
+        )
+        callbacks.append(pred_writer)
+
+    if log_lr:
+        lr_monitor = LearningRateMonitor(logging_interval="epoch", log_momentum=True)
+        callbacks.append(lr_monitor)
+
+    return callbacks
 
 
-def get_profiler(profile, outpath):
+def get_profiler(profile: bool, outpath: str):
     if profile:
         return SimpleProfiler(dirpath=outpath, filename="simple_profile")
-    else:
-        return None
+    return None
+
+
+def get_wandb_id(loggers: list[Logger], enable_logging: bool):
+    if enable_logging:
+        wandb_logger = loggers[-1]
+        assert isinstance(wandb_logger, WandbLogger)
+        return wandb_logger.experiment.id
+    return None
+
+
+def should_use_ckpt_wandb_id(ckpt_version_dir, ckpt_wandb_id, version_dir):
+    # If no wandb_id was found we can not (and should not try) reuse it.
+    if ckpt_wandb_id is None:
+        return False
+    # If it exists and our current output directory INCLUDING THE CURRENT VERSION is equal
+    # to the previous output directory we can safely assume we're continuing an
+    # interrupted run.
+    return ckpt_version_dir == version_dir

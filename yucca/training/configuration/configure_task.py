@@ -10,6 +10,7 @@ class TaskConfig:
     planner_name: str
     split_idx: int
     task: str
+    experiment: str
 
     def lm_hparams(self):
         return {
@@ -20,6 +21,7 @@ class TaskConfig:
             "planner_name": self.planner_name,
             "task": self.task,
             "split_idx": self.split_idx,
+            "experiment": self.experiment,
         }
 
 
@@ -31,7 +33,10 @@ def get_task_config(
     model_name: str = "UNet",
     planner_name: str = "YuccaPlanner",
     split_idx: int = 0,
+    experiment: str = "default",
 ):
+    assert model_dimensions is not None
+
     return TaskConfig(
         continue_from_most_recent=continue_from_most_recent,
         manager_name=manager_name,
@@ -40,4 +45,5 @@ def get_task_config(
         planner_name=planner_name,
         split_idx=split_idx,
         task=task,
+        experiment=experiment,
     )

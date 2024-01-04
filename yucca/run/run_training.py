@@ -79,6 +79,12 @@ def main():
         default=False,
     )
 
+    parser.add_argument(
+        "--experiment",
+        help="A name for the experiment being performed, wiht no spaces.",
+        default="default",
+    )
+
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
@@ -94,6 +100,7 @@ def main():
     new_version = args.new_version
     planner = args.pl
     profile = args.profile
+    experiment = args.experiment
 
     # checkpoint = args.chk
     kwargs = {}
@@ -106,6 +113,7 @@ def main():
         "MultiResUNet",
         "UNet",
         "UNetR",
+        "UNetRE",
         "UXNet",
         "ResNet50",
         "TinyUNet",
@@ -123,7 +131,7 @@ def main():
         ckpt_path=None,
         continue_from_most_recent=not new_version,
         deep_supervision=False,
-        disable_logging=log,
+        enable_logging=log,
         split_idx=split_idx,
         loss=loss,
         model_dimensions=dimensions,
@@ -134,6 +142,7 @@ def main():
         profile=profile,
         step_logging=False,
         task=task,
+        experiment=experiment,
         **kwargs,
     )
     manager.run_training()
