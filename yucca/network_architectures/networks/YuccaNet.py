@@ -20,6 +20,16 @@ class YuccaNet(nn.Module):
         """
         pass
 
+    def load_state_dict(self, target_state_dict, *args, **kwargs):
+        current_state_dict = self.state_dict()
+        # filter unnecessary keys
+        target_state_dict = {
+            k: v
+            for k, v in target_state_dict.items()
+            if (k in current_state_dict) and (current_state_dict[k].shape == target_state_dict[k].shape)
+        }
+        super().load_state_dict(target_state_dict, *args, **kwargs)
+
     def predict(self, mode, data, patch_size, overlap, mirror=False):
         if torch.cuda.is_available():
             data = data.to("cuda")

@@ -132,8 +132,6 @@ class UNet(YuccaNet):
             old_dropout_p = self.dropout_op_kwargs["p"]
             self.dropout_op_kwargs["p"] = 0.0
 
-        self.ds_out_conv0 = self.conv_op(self.filters * 16, self.num_classes, kernel_size=1)
-
         self.upsample1 = self.upsample(self.filters * 16, self.filters * 8, kernel_size=2, stride=2)
         self.decoder_conv1 = self.basic_block(
             self.filters * 16,
@@ -147,7 +145,6 @@ class UNet(YuccaNet):
             self.nonlin,
             self.nonlin_kwargs,
         )
-        self.ds_out_conv1 = self.conv_op(self.filters * 8, self.num_classes, kernel_size=1)
 
         self.upsample2 = self.upsample(self.filters * 8, self.filters * 4, kernel_size=2, stride=2)
         self.decoder_conv2 = self.basic_block(
@@ -162,7 +159,6 @@ class UNet(YuccaNet):
             self.nonlin,
             self.nonlin_kwargs,
         )
-        self.ds_out_conv2 = self.conv_op(self.filters * 4, self.num_classes, kernel_size=1)
 
         self.upsample3 = self.upsample(self.filters * 4, self.filters * 2, kernel_size=2, stride=2)
         self.decoder_conv3 = self.basic_block(
@@ -177,7 +173,6 @@ class UNet(YuccaNet):
             self.nonlin,
             self.nonlin_kwargs,
         )
-        self.ds_out_conv3 = self.conv_op(self.filters * 2, self.num_classes, kernel_size=1)
 
         self.upsample4 = self.upsample(self.filters * 2, self.filters, kernel_size=2, stride=2)
         self.decoder_conv4 = self.basic_block(
@@ -194,6 +189,12 @@ class UNet(YuccaNet):
         )
 
         self.out_conv = self.conv_op(self.filters, self.num_classes, kernel_size=1)
+
+        if self.deep_supervision:
+            self.ds_out_conv0 = self.conv_op(self.filters * 16, self.num_classes, kernel_size=1)
+            self.ds_out_conv1 = self.conv_op(self.filters * 8, self.num_classes, kernel_size=1)
+            self.ds_out_conv2 = self.conv_op(self.filters * 4, self.num_classes, kernel_size=1)
+            self.ds_out_conv3 = self.conv_op(self.filters * 2, self.num_classes, kernel_size=1)
 
         if not dropout_in_decoder:
             self.dropout_op_kwargs["p"] = old_dropout_p
