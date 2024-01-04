@@ -60,6 +60,7 @@ class YuccaPlanner(object):
 
         self.determine_transpose()
         self.determine_spacing()
+        self.drop_keys_from_dict(dict=self.dataset_properties, keys=["original_sizes", "original_spacings"])
 
         self.populate_plans_file()
 
@@ -106,6 +107,10 @@ class YuccaPlanner(object):
 
     def determine_spacing(self):
         self.target_spacing = np.median(self.dataset_properties["original_spacings"], 0).tolist()
+
+    def drop_keys_from_dict(self, dict, keys):
+        for key in keys:
+            dict.pop(key)
 
     def preprocess(self):
         preprocessor = recursive_find_python_class(
