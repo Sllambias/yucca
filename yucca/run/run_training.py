@@ -85,6 +85,13 @@ def main():
         default="default",
     )
 
+    parser.add_argument(
+        "--patch_size",
+        type=str,
+        help="Use your own patch_size. Example: if 32 is provided and the model is 3D we will use patch size (32, 32, 32). Can also be min, max or mean.",
+        default=None,
+    )
+
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
@@ -97,10 +104,15 @@ def main():
     log = not args.disable_logging
     loss = args.loss
     momentum = args.mom
+    patch_size = args.patch_size
     new_version = args.new_version
     planner = args.pl
     profile = args.profile
     experiment = args.experiment
+
+    if patch_size is not None:
+        if patch_size not in ["mean", "max", "min"]:
+            patch_size = (int(patch_size),) * 3 if dimensions == "3D" else (int(patch_size),) * 2
 
     # checkpoint = args.chk
     kwargs = {}
