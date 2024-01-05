@@ -92,6 +92,8 @@ def main():
         default=None,
     )
 
+    parser.add_argument("--precision", type=str, default="bf16-mixed")
+
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
@@ -149,7 +151,7 @@ def main():
         model_name=model_name,
         num_workers=8,
         planner=planner,
-        precision="16-mixed",
+        precision=args.precision,
         profile=profile,
         step_logging=False,
         task=task,
