@@ -84,7 +84,7 @@ def main():
         help="Use your own patch_size. Example: if 32 is provided and the model is 3D we will use patch size (32, 32, 32). Can also be min, max or mean.",
     )
     parser.add_argument("--precision", type=str, default="bf16-mixed")
-    parser.add_argument("--max_epochs", type=int, default=1000)
+    parser.add_argument("--epochs", type=int, default=1000)
     parser.add_argument("--train_batches_per_step", type=int, default=250)
     parser.add_argument("--val_batches_per_step", type=int, default=50)
     parser.add_argument("--max_vram", type=int, default=12)
@@ -109,9 +109,7 @@ def main():
     profile = args.profile
 
     if patch_size is not None:
-        if patch_size in ["mean", "max", "min"]:
-            patch_size = patch_size
-        else:
+        if patch_size not in ["mean", "max", "min"]:
             patch_size = (int(patch_size),) * 3 if dimensions == "3D" else (int(patch_size),) * 2
 
     kwargs = {}
@@ -142,7 +140,7 @@ def main():
         enable_logging=log,
         experiment=experiment,
         loss=loss,
-        max_epochs=args.max_epochs,
+        max_epochs=args.epochs,
         max_vram=args.max_vram,
         model_dimensions=dimensions,
         model_name=model_name,
