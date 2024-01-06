@@ -109,7 +109,7 @@ def get_loggers(
         use_ckpt_id = should_use_ckpt_wandb_id(ckpt_version_dir, ckpt_wandb_id, version_dir)
         loggers.append(
             WandbLogger(
-                name=run_name or f"version_{version}",
+                name=run_name or f"{experiment}_V{version}",
                 notes=run_description,
                 save_dir=version_dir,
                 project=project,

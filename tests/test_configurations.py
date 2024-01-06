@@ -17,7 +17,10 @@ def test_configurations():
     assert path_config is not None and isinstance(path_config.version, int)
 
     ckpt_config = get_checkpoint_config(
-        path_config=path_config, continue_from_most_recent=task_config.continue_from_most_recent, ckpt_path=None
+        path_config=path_config,
+        continue_from_most_recent=task_config.continue_from_most_recent,
+        ckpt_path=None,
+        current_experiment=task_config.experiment,
     )
     assert ckpt_config.ckpt_wandb_id is None or isinstance(ckpt_config.ckpt_wandb_id, str)
 

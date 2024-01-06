@@ -54,6 +54,13 @@ def main():
         "Defaults to training on fold 0",
         default=0,
     )
+
+    parser.add_argument("--epochs", help="Used to specify the number of epochs for training. Default is 1000")
+    parser.add_argument(
+        "--experiment",
+        help="A name for the experiment being performed, wiht no spaces.",
+        default="default",
+    )
     # The following can be changed to run training with alternative LR, Loss and/or Momentum ###
     parser.add_argument(
         "--lr",
@@ -88,6 +95,8 @@ def main():
     checkpoint = args.checkpoint
     model_name = args.m
     dimensions = args.d
+    epochs = args.epochs
+    experiment = args.experiment
     manager_name = args.man
     split_idx = int(args.f)
     lr = args.lr
@@ -129,7 +138,7 @@ def main():
         continue_from_most_recent=not new_version,
         deep_supervision=False,
         enable_logging=log,
-        split_idx=split_idx,
+        experiment=experiment,
         loss=loss,
         max_epochs=args.epochs,
         max_vram=args.max_vram,
@@ -140,6 +149,7 @@ def main():
         planner=planner,
         precision=args.precision,
         profile=profile,
+        split_idx=split_idx,
         step_logging=False,
         task=task,
         train_batches_per_step=args.train_batches_per_step,
