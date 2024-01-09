@@ -59,7 +59,7 @@ def main():
     parser.add_argument(
         "--experiment",
         help="A name for the experiment being performed, wiht no spaces.",
-        default="default",
+        default="finetune",
     )
     # The following can be changed to run training with alternative LR, Loss and/or Momentum ###
     parser.add_argument(

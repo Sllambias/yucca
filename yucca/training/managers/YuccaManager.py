@@ -159,6 +159,7 @@ class YuccaManager:
             version_dir=path_config.version_dir,
             ckpt_version_dir=self.ckpt_config.ckpt_version_dir,
             ckpt_wandb_id=self.ckpt_config.ckpt_wandb_id,
+            experiment=task_config.experiment,
             version=path_config.version,
             enable_logging=self.enable_logging,
             log_lr=True,
