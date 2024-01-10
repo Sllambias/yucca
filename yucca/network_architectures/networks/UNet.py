@@ -279,7 +279,7 @@ class UNet(YuccaNet):
                 elif "encoder" in section_name:
                     k = self.max_block_number - section_number
                 elif "decoder" in section_name:
-                    k = self.num_encoder_blocks - section_number
+                    k = self.num_encoder_blocks - section_number + 1
                 else:
                     raise NotImplementedError("Parameters are not yet supported using parameter groups:", param_name)
 
