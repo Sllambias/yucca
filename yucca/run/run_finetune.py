@@ -89,6 +89,13 @@ def main():
     parser.add_argument("--val_batches_per_step", type=int, default=50)
     parser.add_argument("--max_vram", type=int, default=12)
 
+    parser.add_argument(
+        "--layer_wise_lr_decay_factor",
+        type=float,
+        help="Multiply each parameter group with factor to the power of parameter groups from the top.",
+        default=None,
+    )
+
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
@@ -107,6 +114,7 @@ def main():
     patch_size = args.patch_size
     planner = args.pl
     profile = args.profile
+    layer_wise_lr_decay_factor = args.layer_wise_lr_decay_factor
 
     if patch_size is not None:
         if patch_size not in ["mean", "max", "min"]:
@@ -157,6 +165,7 @@ def main():
         task=task,
         train_batches_per_step=args.train_batches_per_step,
         val_batches_per_step=args.val_batches_per_step,
+        layer_wise_lr_decay_factor=layer_wise_lr_decay_factor,
         **kwargs,
     )
     manager.run_finetuning()
