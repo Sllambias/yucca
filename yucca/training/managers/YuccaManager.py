@@ -126,9 +126,10 @@ class YuccaManager:
         path_config = get_path_config(task_config=task_config)
 
         self.ckpt_config = get_checkpoint_config(
-            path_config=path_config,
-            continue_from_most_recent=task_config.continue_from_most_recent,
             ckpt_path=self.ckpt_path,
+            continue_from_most_recent=task_config.continue_from_most_recent,
+            current_experiment=task_config.experiment,
+            path_config=path_config,
         )
 
         seed_config = seed_everything_and_get_seed_config(ckpt_seed=self.ckpt_config.ckpt_seed)
@@ -165,6 +166,7 @@ class YuccaManager:
             version_dir=path_config.version_dir,
             ckpt_version_dir=self.ckpt_config.ckpt_version_dir,
             ckpt_wandb_id=self.ckpt_config.ckpt_wandb_id,
+            experiment=task_config.experiment,
             version=path_config.version,
             enable_logging=self.enable_logging,
             log_lr=True,
