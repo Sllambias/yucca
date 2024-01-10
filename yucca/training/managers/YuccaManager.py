@@ -56,6 +56,7 @@ class YuccaManager:
         model_name: str = "TinyUNet",
         num_workers: int = 8,
         patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
+        batch_size: Union[int, None] = None,
         planner: str = "YuccaPlanner",
         precision: str = "16-mixed",
         profile: bool = False,
@@ -65,6 +66,7 @@ class YuccaManager:
         experiment: str = "default",
         train_batches_per_step: int = 250,
         val_batches_per_step: int = 50,
+        layer_wise_lr_decay_factor: Union[float, None] = None,
         **kwargs,
     ):
         self.ckpt_path = ckpt_path
@@ -89,10 +91,14 @@ class YuccaManager:
         self.val_batches_per_step = val_batches_per_step
         self.kwargs = kwargs
 
+        self.layer_wise_lr_decay_factor = layer_wise_lr_decay_factor
+
         if patch_size is None:
             self.patch_size = "tiny" if self.model_name == "TinyUNet" else None
         else:
             self.patch_size = patch_size
+
+        self.batch_size = batch_size
 
         self.trainer = L.Trainer
 
@@ -143,6 +149,7 @@ class YuccaManager:
             model_name=task_config.model_name,
             max_vram=self.max_vram,
             patch_size=self.patch_size,
+            batch_size=self.batch_size,
         )
 
         augmenter = YuccaAugmentationComposer(
@@ -179,6 +186,7 @@ class YuccaManager:
             stage=stage,
             step_logging=self.step_logging,
             test_time_augmentation=not disable_tta if disable_tta is True else bool(augmenter.mirror_p_per_sample),
+            layer_wise_lr_decay_factor=self.layer_wise_lr_decay_factor,
         )
 
         self.data_module = YuccaDataModule(
@@ -195,6 +203,7 @@ class YuccaManager:
         )
 
         self.trainer = L.Trainer(
+            accelerator="cpu",
             callbacks=callback_config.callbacks,
             default_root_dir=path_config.save_dir,
             limit_train_batches=self.train_batches_per_step,

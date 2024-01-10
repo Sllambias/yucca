@@ -76,6 +76,7 @@ def main():
         type=str,
         help="Use your own patch_size. Example: if 32 is provided and the model is 3D we will use patch size (32, 32, 32). Can also be min, max or mean.",
     )
+    parser.add_argument("--batch_size", type=int, help="Use a fixed batch size")
     parser.add_argument("--precision", type=str, default="bf16-mixed")
     parser.add_argument("--epochs", type=int, default=1000)
     parser.add_argument("--train_batches_per_step", type=int, default=250)
@@ -102,6 +103,8 @@ def main():
     if patch_size is not None:
         if patch_size not in ["mean", "max", "min"]:
             patch_size = (int(patch_size),) * 3 if dimensions == "3D" else (int(patch_size),) * 2
+
+    batch_size = args.batch_size
 
     kwargs = {}
 
@@ -140,6 +143,8 @@ def main():
         planner=planner,
         precision=args.precision,
         profile=profile,
+        patch_size=patch_size,
+        batch_size=batch_size,
         step_logging=False,
         task=task,
         train_batches_per_step=args.train_batches_per_step,

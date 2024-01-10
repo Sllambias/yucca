@@ -92,6 +92,15 @@ def main():
         default=None,
     )
 
+    parser.add_argument("--batch_size", type=int, help="Custom batch size", default=None)
+
+    parser.add_argument(
+        "--layer_wise_lr_decay_factor",
+        type=float,
+        help="Multiply each parameter group with factor to the power of parameter groups from the top.",
+        default=None,
+    )
+
     parser.add_argument("--precision", type=str, default="bf16-mixed")
 
     args = parser.parse_args()
@@ -107,14 +116,18 @@ def main():
     loss = args.loss
     momentum = args.mom
     patch_size = args.patch_size
+    batch_size = args.batch_size
     new_version = args.new_version
     planner = args.pl
     profile = args.profile
     experiment = args.experiment
+    layer_wise_lr_decay_factor = args.layer_wise_lr_decay_factor
 
     if patch_size is not None:
         if patch_size not in ["mean", "max", "min"]:
             patch_size = (int(patch_size),) * 3 if dimensions == "3D" else (int(patch_size),) * 2
+
+    print("Using patch and batch size", patch_size, batch_size)
 
     # checkpoint = args.chk
     kwargs = {}
@@ -153,9 +166,12 @@ def main():
         planner=planner,
         precision=args.precision,
         profile=profile,
+        patch_size=patch_size,
+        batch_size=batch_size,
         step_logging=False,
         task=task,
         experiment=experiment,
+        layer_wise_lr_decay_factor=layer_wise_lr_decay_factor,
         **kwargs,
     )
     manager.run_training()

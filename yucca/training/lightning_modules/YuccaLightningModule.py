@@ -9,7 +9,7 @@ from torchmetrics.classification import Dice, Precision
 from torchmetrics.regression import MeanAbsoluteError
 from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.utils.kwargs import filter_kwargs
-from typing import Literal
+from typing import Literal, Union
 
 
 class YuccaLightningModule(L.LightningModule):
@@ -33,6 +33,7 @@ class YuccaLightningModule(L.LightningModule):
         stage: Literal["fit", "test", "predict"] = "fit",
         step_logging: bool = False,
         test_time_augmentation: bool = False,
+        layer_wise_lr_decay_factor: Union[float, None] = None,
     ):
         super().__init__()
         # Extract parameters from the configurator
@@ -45,6 +46,8 @@ class YuccaLightningModule(L.LightningModule):
         self.model_dimensions = config["model_dimensions"]
         self.patch_size = config["patch_size"]
         self.task_type = config["task_type"]
+
+        self.layer_wise_lr_decay_factor = layer_wise_lr_decay_factor
 
         # Loss, optimizer and scheduler parameters
         self.lr = learning_rate
@@ -193,7 +196,13 @@ class YuccaLightningModule(L.LightningModule):
 
         optim_kwargs = filter_kwargs(self.optim, optim_kwargs)
 
-        self.optim = self.optim(self.model.parameters(), **optim_kwargs)
+        if self.layer_wise_lr_decay_factor is None:
+            parameters = self.model.parameters()
+        else:
+            # We give each parameter group it's own learning rate, so we start by grouping the params
+            parameters = self.model.get_parameter_groups(self.lr, self.layer_wise_lr_decay_factor, print_parameter_groups=True)
+
+        self.optim = self.optim(parameters, **optim_kwargs)
 
         # Initialize and configure LR scheduler(s) here
         # lr_scheduler_kwargs holds args for any scheduler class,
