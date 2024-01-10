@@ -55,7 +55,6 @@ def main():
         default=0,
     )
 
-    parser.add_argument("--epochs", help="Used to specify the number of epochs for training. Default is 1000")
     parser.add_argument(
         "--experiment",
         help="A name for the experiment being performed, wiht no spaces.",
