@@ -50,6 +50,10 @@ class UNet(YuccaNet):
         self.basic_block = basic_block
         self.deep_supervision = deep_supervision
 
+        # For parameter groups
+        self.max_block_number = 9  # amount of calls to self.basic_block(...)
+        self.num_encoder_blocks = 4  # number of self.encoder_convX blocks
+
         # Dimensions
         if self.conv_op == nn.Conv2d:
             self.pool_op = torch.nn.MaxPool2d
@@ -242,3 +246,60 @@ class UNet(YuccaNet):
 
         logits = self.out_conv(x8)
         return logits
+
+    def get_parameter_groups(self, base_lr, lr_scale, print_parameter_groups=False):
+        assert not self.deep_supervision, "Parameter groups for deep supervision is not yet supported... Sorry :-)"
+
+        def param_group(name, k, lr, lr_scale):
+            return {"name": name, "params": [], "param_names": [], "k": k, "lr_scale": lr_scale, "lr": lr * lr_scale}
+
+        param_groups = {}
+
+        for param_name, params in dict(self.named_parameters()).items():
+            name_parts = param_name.split(".")
+            section = name_parts[0]
+
+            section_number = int(section[-1]) if section[-1] != "v" else None
+
+            # Add param group without params if not present
+            if section.startswith("upsample"):
+                # upsamplex is part of decocder_convx group
+                section_name = "decoder_conv" + str(section_number)
+            elif section.startswith("ds") and not self.deep_supervision:
+                assert not self.deep_supervision
+                continue
+            else:
+                section_name = section
+
+            if section_name not in param_groups.keys():
+                if section_name == "in_conv":
+                    k = self.max_block_number
+                elif section_name == "out_conv":
+                    k = 0
+                elif "encoder" in section_name:
+                    k = self.max_block_number - section_number
+                elif "decoder" in section_name:
+                    k = self.num_encoder_blocks - section_number
+                else:
+                    raise NotImplementedError("Parameters are not yet supported using parameter groups:", param_name)
+
+                param_groups[section_name] = param_group(section_name, k, base_lr, lr_scale**k)
+
+            # Add parameters to param group
+            param_groups[section_name]["params"].append(params)
+            param_groups[section_name]["param_names"].append(param_name)
+
+        parameters = list(param_groups.values())
+
+        if print_parameter_groups:
+            params_sorted = sorted(parameters, key=lambda x: x["k"])
+            indent = " " * 4
+
+            for p in params_sorted:
+                print(p["name"])
+                print(indent, "k:", p["k"])
+                print(indent, "lr_scale:", p["lr_scale"])
+                print(indent, "lr:", p["lr"])
+                print(indent, "param_name:", p["param_names"])
+
+        return parameters
