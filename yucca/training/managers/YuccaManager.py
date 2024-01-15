@@ -71,6 +71,7 @@ class YuccaManager:
         self.continue_from_most_recent = continue_from_most_recent
         self.deep_supervision = deep_supervision
         self.enable_logging = enable_logging
+        self.experiment = experiment
         self.loss = loss
         self.max_epochs = max_epochs
         self.max_vram = max_vram
@@ -78,21 +79,20 @@ class YuccaManager:
         self.model_name = model_name
         self.name = self.__class__.__name__
         self.num_workers = num_workers
+        self.patch_size = patch_size
         self.planner = planner
         self.precision = precision
         self.profile = profile
         self.split_idx = split_idx
         self.step_logging = step_logging
         self.task = task
-        self.experiment = experiment
         self.train_batches_per_step = train_batches_per_step
         self.val_batches_per_step = val_batches_per_step
         self.kwargs = kwargs
 
-        if patch_size is None:
-            self.patch_size = "tiny" if self.model_name == "TinyUNet" else None
-        else:
-            self.patch_size = patch_size
+        # Configure basic parameters
+        if self.patch_size is None and self.model_name == "TinyUNet":
+            self.patch_size = "tiny"
 
         self.trainer = L.Trainer
 
