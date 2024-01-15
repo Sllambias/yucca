@@ -25,14 +25,6 @@ from yucca.network_architectures.utils.model_memory_estimation import (
 
 
 class YuccaAugmentationComposer:
-    """
-
-    Deep Supervision:
-        When enabled it must also be applied in the validation transforms, since the DeepSupervisionLoss (which is a wrapper around a regular loss)
-        expects a LIST of ground truth tensors rather than the raw ground truth tensor. Since the factors used in the
-        val_transforms is only (1., ) it simply wraps the tensor in a list.
-    """
-
     def __init__(
         self,
         patch_size: list | tuple,

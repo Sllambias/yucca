@@ -125,7 +125,7 @@ class YuccaLightningModule(L.LightningModule):
     def training_step(self, batch, batch_idx):
         inputs, target = batch["image"], batch["label"]
         output = self(inputs)
-        loss = self.loss_fn_tr(output, target)
+        loss = self.loss_fn_train(output, target)
 
         if self.deep_supervision:
             # If deep_supervision is enabled output and target will be a list of (downsampled) tensors.
@@ -187,13 +187,13 @@ class YuccaLightningModule(L.LightningModule):
 
         loss_kwargs = filter_kwargs(self.loss_fn, loss_kwargs)
 
-        self.loss_fn_tr = self.loss_fn(**loss_kwargs)
+        self.loss_fn_train = self.loss_fn(**loss_kwargs)
         self.loss_fn_val = self.loss_fn(**loss_kwargs)
 
         # If deep_supervision is enabled we wrap our training loss (and potentially specify weights)
         # We leave the validation loss as is, as deep_supervision is not used for validation.
         if self.deep_supervision:
-            self.loss_fn_tr = DeepSupervisionLoss(self.loss_fn_tr, weights=None)
+            self.loss_fn_train = DeepSupervisionLoss(self.loss_fn_train, weights=None)
 
         # Initialize and configure the optimizer(s) here.
         # optim_kwargs holds args for any scheduler class,
