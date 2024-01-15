@@ -147,6 +147,7 @@ class YuccaManager:
         )
 
         augmenter = YuccaAugmentationComposer(
+            deep_supervision=self.deep_supervision,
             patch_size=input_dims_config.patch_size,
             is_2D=True if self.model_dimensions == "2D" else False,
             task_type_preset=plan_config.task_type,
@@ -177,6 +178,7 @@ class YuccaManager:
             | plan_config.lm_hparams()
             | input_dims_config.lm_hparams()
             | callback_config.lm_hparams(),
+            deep_supervision=self.deep_supervision,
             loss_fn=self.loss,
             stage=stage,
             step_logging=self.step_logging,
