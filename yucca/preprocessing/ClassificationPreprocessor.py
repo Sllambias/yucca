@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import nibabel as nib
 import os
+import logging
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from yucca.preprocessing.normalization import normalizer
@@ -96,11 +97,6 @@ class ClassificationPreprocessor(YuccaPreprocessor):
         images = [nifti_or_np_to_np(image) for image in images]
         label = nifti_or_np_to_np(label)
 
-        if self.target_spacing.size:
-            target_spacing = self.target_spacing
-        else:
-            target_spacing = original_spacing
-
         # Cropping is performed to save computational resources. We are only removing background.
         if self.plans["crop_to_nonzero"]:
             nonzero_box = get_bbox_for_foreground(images[0], background_label=0)
@@ -111,20 +107,22 @@ class ClassificationPreprocessor(YuccaPreprocessor):
             image_props["crop_to_nonzero"] = self.plans["crop_to_nonzero"]
 
         images = self._transpose_case(images, self.transpose_forward, label=None)
-        target_shape = self.determine_target_shape(
+
+        resample_target_size, final_target_size = self.determine_target_size(
             images_transposed=images,
-            plans=self.plans,
             original_spacing=original_spacing,
-            target_spacing=target_spacing,
             transpose_forward=self.transpose_forward,
         )
 
         images = self._resample_and_normalize_case(
-            images,
-            None,
-            self.plans["normalization_scheme"],
-            target_shape=target_shape,
+            images=images,
+            target_size=resample_target_size,
+            label=None,
+            norm_op=self.plans["normalization_scheme"],
         )
+
+        if final_target_size is not None:
+            images = self._pad_to_size(images, size=final_target_size, label=None)
 
         images = np.array((np.array(images).T, label), dtype="object")
         images[0] = images[0].T
@@ -133,20 +131,20 @@ class ClassificationPreprocessor(YuccaPreprocessor):
         # For classification there's no foreground classes
         # And no connected components to analyze.
         foreground_locs = []
-        numbered_ground_truth = ground_truth_numb_lesion = object_sizes = 0
+        label_cc_n = label_cc_sizes = 0
 
         # save relevant values
         image_props["original_spacing"] = original_spacing
         image_props["original_size"] = original_size
         image_props["original_orientation"] = original_orientation
-        image_props["new_spacing"] = target_spacing[self.transpose_forward].tolist()
+        image_props["new_spacing"] = self.target_spacing
         image_props["new_size"] = final_size
         image_props["new_direction"] = final_direction
         image_props["foreground_locations"] = foreground_locs
-        image_props["n_cc"] = ground_truth_numb_lesion
-        image_props["size_cc"] = object_sizes
+        image_props["label_cc_n"] = label_cc_n
+        image_props["label_cc_sizes"] = label_cc_sizes
 
-        print(
+        logging.info(
             f"size before: {original_size} size after: {image_props['new_size']} \n"
             f"spacing before: {original_spacing} spacing after: {image_props['new_spacing']} \n"
             f"Saving {subject_id} in {arraypath} \n"

@@ -17,7 +17,7 @@ def crop_to_box(array, bbox):
     return array[bbox_slices]
 
 
-def pad_to_size(array, size, mode=""):
+def pad_to_size(array, size, **kwargs):
     pad_box = get_pad_box(array, size)
     if len(pad_box) > 5:
         array_padded = np.pad(
@@ -27,11 +27,15 @@ def pad_to_size(array, size, mode=""):
                 (pad_box[2], pad_box[3]),
                 (pad_box[4], pad_box[5]),
             ),
-            mode="edge",
+            **kwargs,
         )
         return array_padded, pad_box
 
-    array_padded = np.pad(array, ((pad_box[0], pad_box[1]), (pad_box[2], pad_box[3])), mode="edge")
+    array_padded = np.pad(
+        array,
+        ((pad_box[0], pad_box[1]), (pad_box[2], pad_box[3])),
+        **kwargs,
+    )
     return array_padded, pad_box
 
 
@@ -58,7 +62,7 @@ def get_pad_box(original_array, min_size):
     return pad_box
 
 
-def get_pad_kwargs(pad_value):
+def get_pad_kwargs(data, pad_value):
     if pad_value == "min":
         pad_kwargs = {"constant_values": data.min(), "mode": "constant"}
     elif pad_value == "zero":

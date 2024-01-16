@@ -175,9 +175,9 @@ class YuccaPlanner(object):
             pkl_file = load_pickle(pkl_file)
             new_spacings.append(pkl_file["new_spacing"])
             new_sizes.append(pkl_file["new_size"])
-            n_cc.append(pkl_file["n_cc"])
-            if np.mean(pkl_file["size_cc"]) > 0:
-                size_cc.append(np.mean(pkl_file["size_cc"], dtype=int))
+            n_cc.append(pkl_file["label_cc_n"])
+            if np.mean(pkl_file["label_cc_sizes"]) > 0:
+                size_cc.append(np.mean(pkl_file["label_cc_sizes"], dtype=int))
 
         mean_size = np.mean(new_sizes, 0, dtype=int).tolist()
         min_size = np.min(new_sizes, 0).tolist()
