@@ -54,7 +54,13 @@ def main():
         "Defaults to training on fold 0",
         default=0,
     )
+
     parser.add_argument("--epochs", help="Used to specify the number of epochs for training. Default is 1000")
+    parser.add_argument(
+        "--experiment",
+        help="A name for the experiment being performed, wiht no spaces.",
+        default="finetune",
+    )
     # The following can be changed to run training with alternative LR, Loss and/or Momentum ###
     parser.add_argument(
         "--lr",
@@ -78,7 +84,7 @@ def main():
         help="Use your own patch_size. Example: if 32 is provided and the model is 3D we will use patch size (32, 32, 32). Can also be min, max or mean.",
     )
     parser.add_argument("--precision", type=str, default="bf16-mixed")
-    parser.add_argument("--max_epochs", type=int, default=1000)
+    parser.add_argument("--epochs", type=int, default=1000)
     parser.add_argument("--train_batches_per_step", type=int, default=250)
     parser.add_argument("--val_batches_per_step", type=int, default=50)
     parser.add_argument("--max_vram", type=int, default=12)
@@ -90,6 +96,7 @@ def main():
     model_name = args.m
     dimensions = args.d
     epochs = args.epochs
+    experiment = args.experiment
     manager_name = args.man
     split_idx = int(args.f)
     lr = args.lr
@@ -102,9 +109,7 @@ def main():
     profile = args.profile
 
     if patch_size is not None:
-        if patch_size in ["mean", "max", "min"]:
-            patch_size = patch_size
-        else:
+        if patch_size not in ["mean", "max", "min"]:
             patch_size = (int(patch_size),) * 3 if dimensions == "3D" else (int(patch_size),) * 2
 
     kwargs = {}
@@ -133,9 +138,9 @@ def main():
         continue_from_most_recent=not new_version,
         deep_supervision=False,
         enable_logging=log,
-        split_idx=split_idx,
+        experiment=experiment,
         loss=loss,
-        max_epochs=args.max_epochs,
+        max_epochs=args.epochs,
         max_vram=args.max_vram,
         model_dimensions=dimensions,
         model_name=model_name,
@@ -144,6 +149,7 @@ def main():
         planner=planner,
         precision=args.precision,
         profile=profile,
+        split_idx=split_idx,
         step_logging=False,
         task=task,
         train_batches_per_step=args.train_batches_per_step,

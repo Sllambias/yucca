@@ -232,7 +232,10 @@ class UNet(YuccaNet):
         x8 = torch.cat([self.upsample4(x7), x0], dim=1)
         x8 = self.decoder_conv4(x8)
 
-        if self.deep_supervision:
+        # We only want to do multiple outputs during training, therefore it is only enabled
+        # when grad is also enabled because that means we're training. And if for some reason
+        # grad is enabled and you're not training, then there's other, bigger problems.
+        if self.deep_supervision and torch.is_grad_enabled():
             ds0 = self.ds_out_conv0(x4)
             ds1 = self.ds_out_conv1(x5)
             ds2 = self.ds_out_conv2(x6)

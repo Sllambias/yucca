@@ -1,12 +1,12 @@
 [project]
 name = "yucca"
-version = "0.2.11"
+version = "0.2.16"
 authors = [
   { name="Sebastian Llambias", email="llambias@live.dk" },
   { name="Asbjørn Munk", email="9844416+asbjrnmunk@users.noreply.github.com" },
   { name="Jakob Ambsdorf", email="20045425+jakobamb@users.noreply.github.com" },
 ]
-description = "The modern framework for out-of-the box mahine Learning on medical data."
+description = "The modern framework for out-of-the box machine Learning on medical data."
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [

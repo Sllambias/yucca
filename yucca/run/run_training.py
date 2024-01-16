@@ -59,7 +59,7 @@ def main():
     )
     parser.add_argument("--loss", help="Should only be used to employ alternative Loss Function", default=None)
     parser.add_argument("--mom", help="Should only be used to employ alternative Momentum.", default=None)
-
+    parser.add_argument("--ds", help="Used to enable deep supervision", default=False, action="store_true")
     parser.add_argument(
         "--disable_logging",
         help="disable logging. ",
@@ -85,11 +85,21 @@ def main():
         default="default",
     )
 
+    parser.add_argument(
+        "--patch_size",
+        type=str,
+        help="Use your own patch_size. Example: if 32 is provided and the model is 3D we will use patch size (32, 32, 32). Can also be min, max or mean.",
+        default=None,
+    )
+
+    parser.add_argument("--precision", type=str, default="bf16-mixed")
+
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
     model_name = args.m
     dimensions = args.d
+    deep_supervision = args.ds
     epochs = args.epochs
     manager_name = args.man
     split_idx = int(args.f)
@@ -97,10 +107,15 @@ def main():
     log = not args.disable_logging
     loss = args.loss
     momentum = args.mom
+    patch_size = args.patch_size
     new_version = args.new_version
     planner = args.pl
     profile = args.profile
     experiment = args.experiment
+
+    if patch_size is not None:
+        if patch_size not in ["mean", "max", "min"]:
+            patch_size = (int(patch_size),) * 3 if dimensions == "3D" else (int(patch_size),) * 2
 
     # checkpoint = args.chk
     kwargs = {}
@@ -130,7 +145,7 @@ def main():
     manager = manager(
         ckpt_path=None,
         continue_from_most_recent=not new_version,
-        deep_supervision=False,
+        deep_supervision=deep_supervision,
         enable_logging=log,
         split_idx=split_idx,
         loss=loss,
@@ -138,7 +153,7 @@ def main():
         model_name=model_name,
         num_workers=8,
         planner=planner,
-        precision="16-mixed",
+        precision=args.precision,
         profile=profile,
         step_logging=False,
         task=task,

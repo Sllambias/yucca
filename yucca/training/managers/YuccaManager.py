@@ -120,9 +120,10 @@ class YuccaManager:
         path_config = get_path_config(task_config=task_config)
 
         self.ckpt_config = get_checkpoint_config(
-            path_config=path_config,
-            continue_from_most_recent=task_config.continue_from_most_recent,
             ckpt_path=self.ckpt_path,
+            continue_from_most_recent=task_config.continue_from_most_recent,
+            current_experiment=task_config.experiment,
+            path_config=path_config,
         )
 
         seed_config = seed_everything_and_get_seed_config(ckpt_seed=self.ckpt_config.ckpt_seed)
@@ -146,6 +147,7 @@ class YuccaManager:
         )
 
         augmenter = YuccaAugmentationComposer(
+            deep_supervision=self.deep_supervision,
             patch_size=input_dims_config.patch_size,
             is_2D=True if self.model_dimensions == "2D" else False,
             task_type_preset=plan_config.task_type,
@@ -158,6 +160,7 @@ class YuccaManager:
             version_dir=path_config.version_dir,
             ckpt_version_dir=self.ckpt_config.ckpt_version_dir,
             ckpt_wandb_id=self.ckpt_config.ckpt_wandb_id,
+            experiment=task_config.experiment,
             version=path_config.version,
             enable_logging=self.enable_logging,
             log_lr=True,
@@ -175,6 +178,7 @@ class YuccaManager:
             | plan_config.lm_hparams()
             | input_dims_config.lm_hparams()
             | callback_config.lm_hparams(),
+            deep_supervision=self.deep_supervision,
             loss_fn=self.loss,
             stage=stage,
             step_logging=self.step_logging,

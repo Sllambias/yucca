@@ -1,12 +1,12 @@
-import numpy as np
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.task_conversion.utils import generate_dataset_json
 import shutil
 import gzip
 from yucca.paths import yucca_raw_data
+from tqdm import tqdm
 
 
-def convert(path: str, subdir: str = "OASIS"):
+def convert(path: str, subdir: str = "Hammers"):
     # INPUT DATA
     path = f"{path}/{subdir}"
     file_suffix = ".nii"
@@ -18,12 +18,18 @@ def convert(path: str, subdir: str = "OASIS"):
     # S01 to S30 are used as training samples
     # S31 to S40 are used as test samples
     all_samples = subfiles(labels_dir, join=False, suffix=file_suffix)
+
+    assert len(all_samples) > 0
+
     tr_ids = ["a" + f"{id:02}" for id in range(1, 21)]
     training_samples = [sample for sample in all_samples if sample[: -len(file_suffix)] in tr_ids]
     ts_ids = ["a" + f"{id:02}" for id in range(21, 31)]
     test_samples = [sample for sample in all_samples if sample[: -len(file_suffix)] in ts_ids]
 
-    ###OUTPUT DATA
+    assert len(training_samples) > 0
+    assert len(test_samples) > 0
+
+    # OUTPUT DATA
     # Target names
     task_name = "Task003_Hammers"
     prefix = "Hammers"
@@ -42,16 +48,16 @@ def convert(path: str, subdir: str = "OASIS"):
     maybe_mkdir_p(target_imagesTs)
     maybe_mkdir_p(target_labelsTr)
 
-    ###Populate Target Directory###
+    # Populate Target Directory
     # This is likely also the place to apply any re-orientation, resampling and/or label correction.
-    for sTr in training_samples:
+    for sTr in tqdm(training_samples):
         serial_number = sTr[:-4]
         image_file = open(join(images_dir, sTr), "rb")
         label = open(join(labels_dir, sTr), "rb")
         shutil.copyfileobj(image_file, gzip.open(f"{target_imagesTr}/{prefix}_{serial_number}_000.nii.gz", "wb"))
         shutil.copyfileobj(label, gzip.open(f"{target_labelsTr}/{prefix}_{serial_number}.nii.gz", "wb"))
 
-    for sTs in test_samples:
+    for sTs in tqdm(test_samples):
         serial_number = sTs[:-4]
         image_file = open(join(images_dir, sTs), "rb")
         label = open(join(labels_dir, sTs), "rb")

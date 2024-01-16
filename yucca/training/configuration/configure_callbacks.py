@@ -32,7 +32,7 @@ def get_callback_config(
     interval_ckpt_epochs: int = 250,
     latest_ckpt_epochs: int = 25,
     log_lr: bool = True,
-    log_model: str = "all",
+    log_model: Union[str, bool] = True,
     prediction_output_dir: str = None,
     profile: bool = False,
     project: str = "Yucca",
@@ -79,7 +79,7 @@ def get_loggers(
     ckpt_version_dir: Union[str, None],
     ckpt_wandb_id: Union[str, None],
     enable_logging: bool,
-    log_model: str,
+    log_model: Union[bool, str],
     model_name: str,
     project: str,
     save_dir: str,
@@ -109,7 +109,7 @@ def get_loggers(
         use_ckpt_id = should_use_ckpt_wandb_id(ckpt_version_dir, ckpt_wandb_id, version_dir)
         loggers.append(
             WandbLogger(
-                name=run_name or f"version_{version}",
+                name=run_name or f"{experiment}_V{version}",
                 notes=run_description,
                 save_dir=version_dir,
                 project=project,

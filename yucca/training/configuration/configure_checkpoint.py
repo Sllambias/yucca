@@ -37,6 +37,7 @@ class CkptConfig:
         for workaround see: https://github.com/Lightning-AI/pytorch-lightning/issues/13524
     """
 
+    base_experiment: Union[str, None]
     ckpt_path: Union[str, None]
     ckpt_seed: Union[int, None]
     ckpt_plans: Union[dict, None]
@@ -45,6 +46,7 @@ class CkptConfig:
 
     def lm_hparams(self, without: [] = []):
         hparams = {
+            "base_experiment": self.base_experiment,
             "ckpt_path": self.ckpt_path,
             "ckpt_seed": self.ckpt_seed,
             "ckpt_plans": self.ckpt_plans,
@@ -54,7 +56,9 @@ class CkptConfig:
         return without_keys(hparams, without)
 
 
-def get_checkpoint_config(path_config: PathConfig, continue_from_most_recent: bool, ckpt_path: Union[str, None] = None):
+def get_checkpoint_config(
+    continue_from_most_recent: bool, current_experiment: str, path_config: PathConfig, ckpt_path: Union[str, None] = None
+):
     ckpt_path = find_checkpoint_path(
         ckpt_path=ckpt_path,
         continue_from_most_recent=continue_from_most_recent,
@@ -64,12 +68,20 @@ def get_checkpoint_config(path_config: PathConfig, continue_from_most_recent: bo
 
     # If we did not find a checkpoint we just return an empty ckpt_config
     if ckpt_path is None:
-        return CkptConfig(ckpt_path=None, ckpt_seed=None, ckpt_plans=None, ckpt_version_dir=None, ckpt_wandb_id=None)
+        return CkptConfig(
+            base_experiment=current_experiment,
+            ckpt_path=None,
+            ckpt_seed=None,
+            ckpt_plans=None,
+            ckpt_version_dir=None,
+            ckpt_wandb_id=None,
+        )
 
     checkpoint = torch.load(ckpt_path, map_location="cpu")["hyper_parameters"]["config"]
-    plans, seed, version_dir, wandb_id = get_checkpoint_params(checkpoint)
+    base_experiment, plans, seed, version_dir, wandb_id = get_checkpoint_params(checkpoint)
 
     return CkptConfig(
+        base_experiment=base_experiment,
         ckpt_path=ckpt_path,
         ckpt_seed=seed,
         ckpt_plans=plans,
@@ -91,8 +103,9 @@ def find_checkpoint_path(ckpt_path: Union[str, None], continue_from_most_recent:
 
 
 def get_checkpoint_params(checkpoint: dict):
+    base_experiment = checkpoint.get("base_experiment") if checkpoint.get("base_experiment") != "null" else None
     plans = checkpoint.get("plans") if checkpoint.get("plans") != "null" else None
     seed = checkpoint.get("seed") if checkpoint.get("seed") != "null" else None
     version_dir = checkpoint.get("version_dir") if checkpoint.get("version_dir") != "null" else None
     wandb_id = checkpoint.get("wandb_id") if checkpoint.get("wandb_id") != "null" else None
-    return plans, seed, version_dir, wandb_id
+    return base_experiment, plans, seed, version_dir, wandb_id
