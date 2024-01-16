@@ -59,14 +59,14 @@ class YuccaPreprocessor(object):
     which is used later to oversample foreground.
     """
 
-    def __init__(self, plans_path, task=None, threads=12, disable_sanity_checks=False, cc_analysis=False):
+    def __init__(self, plans_path, task=None, threads=12, disable_sanity_checks=False, disable_cc_analysis=True):
         self.name = str(self.__class__.__name__)
         self.task = task
         self.plans_path = plans_path
         self.plans = self.load_plans(plans_path)
         self.threads = threads
         self.disable_sanity_checks = disable_sanity_checks
-        self.cc_analysis = cc_analysis
+        self.disable_cc_analysis = disable_cc_analysis
 
         # lists for information we would like to attain
         self.transpose_forward = []
@@ -94,31 +94,34 @@ class YuccaPreprocessor(object):
         self.transpose_forward = np.array(self.plans["transpose_forward"], dtype=int)
         self.transpose_backward = np.array(self.plans["transpose_backward"], dtype=int)
         self.target_spacing = np.array(self.plans["target_spacing"], dtype=float)
+        self.target_size = self.plans["target_size"]
 
-    def determine_target_shape(
+    def determine_target_size(
         self,
         images_transposed: list,
-        patch_size: np.ndarray,
         original_spacing,
-        target_spacing,
         transpose_forward,
     ):
-        image_shape_t = images[0].shape
+        image_shape_t = images_transposed[0].shape
         # We do not want to change the aspect ratio so we resample using the minimum alpha required
         # to attain 1 correct dimension, and then the rest will be cropped/padded.
-        if self.plans["fixed_size"] == "max":
-            target_shape = self.plans["dataset_properties"][f"original_max_size"][transpose_forward].astype(int)
-        if self.plans["fixed_size"] == "min":
-            target_shape = self.plans["dataset_properties"][f"original_min_size"][transpose_forward].astype(int)
-
+        if self.target_size is not None:
+            final_target_size = self.target_size
+            if self.plans["keep_aspect_ratio_when_using_target_size"] is True:
+                
         # Otherwise we need to calculate a new target shape, and we need to factor in that
         # the images will first be transposed and THEN resampled.
         # Find new shape based on the target spacing
         else:
-            original_spacing_t = original_spacing[transpose_forward]
-            target_spacing_t = target_spacing[transpose_forward]
-            target_shape = np.round((original_spacing_t / target_spacing_t).astype(float) * shape_t).astype(int)
-        return target_shape
+            image_shape_t = images_transposed[0].shape
+            if self.target_spacing is not None:
+                target_spacing = np.array(self.target_spacing, dtype=float)
+                original_spacing_t = original_spacing[transpose_forward]
+                target_spacing_t = target_spacing[transpose_forward]
+                target_size = np.round((original_spacing_t / target_spacing_t).astype(float) * shape_t).astype(int)
+            else:
+                target_size = image_shape_t
+        return target_size
 
     @staticmethod
     def load_plans(plans_path):
@@ -218,11 +221,6 @@ class YuccaPreprocessor(object):
         original_spacing = get_nib_spacing(images[0])
         original_size = np.array(images[0].shape)
 
-        if self.target_spacing.size:
-            target_spacing = self.target_spacing
-        else:
-            target_spacing = original_spacing
-
         # If qform and sform are both missing the header is corrupt and we do not trust the
         # direction from the affine
         # Make sure you know what you're doing
@@ -257,20 +255,20 @@ class YuccaPreprocessor(object):
 
         images, label = self._transpose_case(images, self.transpose_forward, label)
 
-        target_shape = self.determine_target_shape(
+        resample_target_size, final_target_size = self.determine_target_size(
             images_transposed=images,
-            plans=self.plans,
             original_spacing=original_spacing,
-            target_spacing=target_spacing,
             transpose_forward=self.transpose_forward,
         )
 
         images, label = self._resample_and_normalize_case(
-            images,
-            label,
-            self.plans["normalization_scheme"],
-            target_shape=target_shape,
+            images=images,
+            resample_target_size=resample_target_size,
+            label=label,
+            norm_op=self.plans["normalization_scheme"],
         )
+
+        images, label = self._pad_to_final_size(images, pad_final_size=final_target_size, label=label)
 
         # Stack and fix dimensions
         images = np.vstack((np.array(images), np.array(label)[np.newaxis]))
@@ -279,7 +277,7 @@ class YuccaPreprocessor(object):
         # locations of foreground, that we will later use in the
         # oversampling of foreground classes
         foreground_locs = np.array(np.nonzero(images[-1])).T[::10]
-        if self.cc_analysis:
+        if self.disable_cc_analysis:
             numbered_ground_truth, ground_truth_numb_lesion = cc3d.connected_components(
                 images[-1], connectivity=26, return_N=True
             )
@@ -344,7 +342,7 @@ class YuccaPreprocessor(object):
     def _resample_and_normalize_case(
         self,
         images: list,
-        target_shape,
+        target_size,
         label: np.ndarray = None,
         norm_op=None,
     ):
@@ -369,17 +367,21 @@ class YuccaPreprocessor(object):
         # Resample to target shape and spacing
         for i in range(len(images)):
             try:
-                images[i] = resize(images[i], output_shape=target_shape, order=3)
+                images[i] = resize(images[i], output_shape=target_size, order=3)
             except OverflowError:
                 logging.error("Unexpected values in either shape or image for resize")
         if label is not None:
             try:
-                label = resize(label, output_shape=target_shape, order=0, anti_aliasing=False)
+                label = resize(label, output_shape=target_size, order=0, anti_aliasing=False)
             except OverflowError:
                 logging.error("Unexpected values in either shape or label for resize")
             return images, label
 
         return images
+
+    def _pad_to_final_size(self, images: list, pad_to_size, labels=None):
+        for i in range(len(images)):
+            images[i], padding = pad_to_size(images[i], patch_size)
 
     def preprocess_case_for_inference(self, images: list | tuple, patch_size: tuple):
         """
@@ -566,13 +568,13 @@ class YuccaPreprocessor(object):
             canvas = images
         return canvas.numpy(), image_properties
 
-    def run_sanity_checks(self, images, labels, subject_id, imagepaths):
-        self.sanity_check_standard_formats(images, labels, subject_id, imagepaths)
+    def run_sanity_checks(self, images, label, subject_id, imagepaths):
+        self.sanity_check_standard_formats(images, label, subject_id, imagepaths)
 
         if isinstance(images[0], nib.Nifti1Image):
-            self.sanity_check_niftis(images, labels, subject_id)
+            self.sanity_check_niftis(images, label, subject_id)
 
-    def sanity_check_standard_formats(self, images, labels, subject_id, imagepaths):
+    def sanity_check_standard_formats(self, images, label, subject_id, imagepaths):
         assert len(images) > 0, f"found no images for {subject_id + '_'}, " f"attempted imagepaths: {imagepaths}"
 
         assert (
@@ -590,7 +592,7 @@ class YuccaPreprocessor(object):
                     f"Sizes do not match for {subject_id}" f"One is: {images[0].shape} while another is {image.shape}"
                 )
 
-    def sanity_check_niftis(self, images, labels, subject_id):
+    def sanity_check_niftis(self, images, label, subject_id):
         assert np.allclose(get_nib_spacing(images[0]), get_nib_spacing(label)), (
             f"Spacings do not match for {subject_id}"
             f"Image is: {get_nib_spacing(images[0])} while the label is {get_nib_spacing(label)}"

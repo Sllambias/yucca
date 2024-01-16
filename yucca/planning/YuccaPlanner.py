@@ -30,7 +30,15 @@ class YuccaPlanner(object):
     this means 2D models will be trained on sagittal slices with this planner.
     """
 
-    def __init__(self, task, preprocessor="YuccaPreprocessor", threads=2, disable_sanity_checks=False, view=None):
+    def __init__(
+        self,
+        task,
+        preprocessor="YuccaPreprocessor",
+        threads=2,
+        disable_cc_analysis=True,
+        disable_sanity_checks=False,
+        view=None,
+    ):
         # Required arguments
         self.task = task
 
@@ -39,13 +47,16 @@ class YuccaPlanner(object):
         self.target_coordinate_system = "RAS"
         self.crop_to_nonzero = True
         self.norm_op = "standardize"
-        self.patch_based_training = True
+
+        # This is only relevant for planners with fixed sizes.
+        self.keep_aspect_ratio_when_using_target_size = True
 
         # Don't change the remaining variables unless you know what you're doing
         # Threading speeds up the process. Unittests should by default be enabled.
         self.preprocessor = preprocessor
         self.threads = threads
         self.disable_sanity_checks = disable_sanity_checks
+        self.disable_cc_analysis = disable_cc_analysis
 
         self.plans = {}
         self.suggested_dimensionality = "3D"
@@ -60,7 +71,7 @@ class YuccaPlanner(object):
         self.dataset_properties = load_pickle(join(self.target_dir, "dataset_properties.pkl"))
 
         self.determine_transpose()
-        self.determine_spacing()
+        self.determine_target_spacing_or_size()
         self.drop_keys_from_dict(dict=self.dataset_properties, keys=["original_sizes", "original_spacings"])
 
         self.populate_plans_file()
@@ -106,8 +117,16 @@ class YuccaPlanner(object):
 
         assert self.transpose_fw is not None, "no transposition, something is wrong."
 
-    def determine_spacing(self):
-        self.target_spacing = np.median(self.dataset_properties["original_spacings"], 0).tolist()
+    def determine_target_spacing_or_size(self):
+        self._determine_target_spacing_or_size()
+        assert self.target_size is None or self.target_spacing is None, (
+            "only one of target size or target spacing should be specified"
+            f" but both are specified here as {self.target_size} and {self.target_spacing} respectively"
+        )
+
+    def _determine_target_spacing_or_size(self):
+        self.target_size = None
+        self.target_spacing = self.dataset_properties["original_median_spacings"]
 
     def drop_keys_from_dict(self, dict, keys):
         for key in keys:
@@ -137,7 +156,8 @@ class YuccaPlanner(object):
 
         # Defaults to the median spacing of the training data.
         # Change the determine_spacing() function to use different spacings
-        self.plans["patch_based_training"] = self.patch_based_training
+        self.plans["keep_aspect_ratio_when_using_target_size"] = self.keep_aspect_ratio_when_using_target_size
+        self.plans["target_size"] = self.target_size
         self.plans["target_spacing"] = self.target_spacing
         self.plans["preprocessor"] = self.preprocessor
         self.plans["dataset_properties"] = self.dataset_properties
