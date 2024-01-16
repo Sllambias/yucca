@@ -1,7 +1,7 @@
 # Original filename; CUNet_conjlayer_after_first_conv_with_bn.py
 ##############################################################################################
 #                                                                                            #
-#     coded by FaMo (faezeh.mosayyebi@gmail.com)                                             #
+#     Minor modifications of the original code, coded by FaMo (faezeh.mosayyebi@gmail.com)                                             #
 #     Description: This code implements U-Net with batch normalization in both complex and   #
 #     real modes. In the complex mode architecture, a conjugate layer is strategically       #
 #     positioned after the first convolution layer. It is important to note that             #
@@ -302,10 +302,10 @@ class ComplexUNet(nn.Module):
                 mag_out = (
                     conv_for_softmax[:, 0] ** 2 + conv_for_softmax[:, 1] ** 2
                 )  # calculating the magnitude
-                seg_outputs.append(F.softmax(mag_out, 1))  # applying softmax
+                seg_outputs.append(mag_out)  # FaMo used softmax here. Since it was used with CrossEntropyLoss wich assumes logits, the softmax has been removed.
 
             elif self.mode == "real":
-                seg_outputs.append(F.softmax(self.seg_outputs[u](x), 1))
+                seg_outputs.append(self.seg_outputs[u](x))
 
         if self.do_ds:
             return tuple(
