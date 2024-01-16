@@ -17,7 +17,7 @@ def crop_to_box(array, bbox):
     return array[bbox_slices]
 
 
-def pad_to_size(array, size):
+def pad_to_size(array, size, mode=""):
     pad_box = get_pad_box(array, size)
     if len(pad_box) > 5:
         array_padded = np.pad(
@@ -56,3 +56,17 @@ def get_pad_box(original_array, min_size):
         pad_box.append(val // 2)
         pad_box.append(val // 2 + val % 2)
     return pad_box
+
+
+def get_pad_kwargs(pad_value):
+    if pad_value == "min":
+        pad_kwargs = {"constant_values": data.min(), "mode": "constant"}
+    elif pad_value == "zero":
+        pad_kwargs = {"constant_values": np.zeros(1, dtype=data.dtype), "mode": "constant"}
+    elif isinstance(pad_value, int) or isinstance(pad_value, float):
+        pad_kwargs = {"constant_values": pad_value, "mode": "constant"}
+    elif pad_value == "edge":
+        pad_kwargs = {"mode": "edge"}
+    else:
+        print("Unrecognized pad value detected.")
+    return pad_kwargs

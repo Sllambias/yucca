@@ -110,8 +110,20 @@ class ClassificationPreprocessor(YuccaPreprocessor):
         else:
             image_props["crop_to_nonzero"] = self.plans["crop_to_nonzero"]
 
+        images = self._transpose_case(images, self.transpose_forward, label=None)
+        target_shape = self.determine_target_shape(
+            images_transposed=images,
+            plans=self.plans,
+            original_spacing=original_spacing,
+            target_spacing=target_spacing,
+            transpose_forward=self.transpose_forward,
+        )
+
         images = self._resample_and_normalize_case(
-            images, None, self.plans["normalization_scheme"], self.transpose_forward, original_spacing, target_spacing
+            images,
+            None,
+            self.plans["normalization_scheme"],
+            target_shape=target_shape,
         )
 
         images = np.array((np.array(images).T, label), dtype="object")

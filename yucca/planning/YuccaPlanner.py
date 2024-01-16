@@ -39,6 +39,7 @@ class YuccaPlanner(object):
         self.target_coordinate_system = "RAS"
         self.crop_to_nonzero = True
         self.norm_op = "standardize"
+        self.patch_based_training = True
 
         # Don't change the remaining variables unless you know what you're doing
         # Threading speeds up the process. Unittests should by default be enabled.
@@ -136,6 +137,7 @@ class YuccaPlanner(object):
 
         # Defaults to the median spacing of the training data.
         # Change the determine_spacing() function to use different spacings
+        self.plans["patch_based_training"] = self.patch_based_training
         self.plans["target_spacing"] = self.target_spacing
         self.plans["preprocessor"] = self.preprocessor
         self.plans["dataset_properties"] = self.dataset_properties

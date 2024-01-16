@@ -112,4 +112,7 @@ def create_properties_pkl(data_dir, save_dir, suffix=".nii.gz"):
     properties["original_sizes"] = sizes
     properties["original_spacings"] = spacings
     properties["intensities"] = intensity_results
+    properties["original_max_size"] = np.max(new_sizes, 0).tolist()
+    properties["original_min_size"] = np.min(new_sizes, 0).tolist()
+    properties["original_median_size"] = np.median(new_sizes, 0).tolist()
     save_pickle(properties, join(save_dir, "dataset_properties.pkl"))
