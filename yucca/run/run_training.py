@@ -59,7 +59,7 @@ def main():
     )
     parser.add_argument("--loss", help="Should only be used to employ alternative Loss Function", default=None)
     parser.add_argument("--mom", help="Should only be used to employ alternative Momentum.", default=None)
-
+    parser.add_argument("--ds", help="Used to enable deep supervision", default=False, action="store_true")
     parser.add_argument(
         "--disable_logging",
         help="disable logging. ",
@@ -108,6 +108,7 @@ def main():
     task = maybe_get_task_from_task_id(args.task)
     model_name = args.m
     dimensions = args.d
+    deep_supervision = args.ds
     epochs = args.epochs
     manager_name = args.man
     split_idx = int(args.f)
@@ -156,7 +157,7 @@ def main():
     manager = manager(
         ckpt_path=None,
         continue_from_most_recent=not new_version,
-        deep_supervision=False,
+        deep_supervision=deep_supervision,
         enable_logging=log,
         split_idx=split_idx,
         loss=loss,

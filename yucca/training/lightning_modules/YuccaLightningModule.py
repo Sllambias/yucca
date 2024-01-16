@@ -7,6 +7,7 @@ from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Dice, Precision
 from torchmetrics.regression import MeanAbsoluteError
+from yucca.training.loss_and_optim.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.utils.kwargs import filter_kwargs
 from typing import Literal, Union
@@ -24,6 +25,7 @@ class YuccaLightningModule(L.LightningModule):
     def __init__(
         self,
         config: dict,
+        deep_supervision: bool = False,
         learning_rate: float = 1e-3,
         loss_fn: str = None,
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler = torch.optim.lr_scheduler.CosineAnnealingLR,
@@ -50,6 +52,7 @@ class YuccaLightningModule(L.LightningModule):
         self.layer_wise_lr_decay_factor = layer_wise_lr_decay_factor
 
         # Loss, optimizer and scheduler parameters
+        self.deep_supervision = deep_supervision
         self.lr = learning_rate
         self.loss_fn = loss_fn
 
@@ -105,7 +108,7 @@ class YuccaLightningModule(L.LightningModule):
             "num_classes": self.num_classes,
             # Applies to most CNN-based architectures
             "conv_op": conv_op,
-            # Applies to most CNN-based architectures (exceptions: UXNet)
+            "deep_supervision": self.deep_supervision,
             "norm_op": norm_op,
             # UNetR
             "patch_size": self.patch_size,
@@ -125,7 +128,14 @@ class YuccaLightningModule(L.LightningModule):
     def training_step(self, batch, batch_idx):
         inputs, target = batch["image"], batch["label"]
         output = self(inputs)
-        loss = self.loss_fn(output, target)
+        loss = self.loss_fn_train(output, target)
+
+        if self.deep_supervision:
+            # If deep_supervision is enabled output and target will be a list of (downsampled) tensors.
+            # We only need the original ground truth and its corresponding prediction which is always the first entry in each list.
+            output = output[0]
+            target = target[0]
+
         metrics = self.train_metrics(output, target)
         self.log_dict({"train_loss": loss} | metrics, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
         return loss
@@ -133,7 +143,7 @@ class YuccaLightningModule(L.LightningModule):
     def validation_step(self, batch, batch_idx):
         inputs, target = batch["image"], batch["label"]
         output = self(inputs)
-        loss = self.loss_fn(output, target)
+        loss = self.loss_fn_val(output, target)
         metrics = self.val_metrics(output, target)
         self.log_dict({"val_loss": loss} | metrics, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
 
@@ -180,7 +190,13 @@ class YuccaLightningModule(L.LightningModule):
 
         loss_kwargs = filter_kwargs(self.loss_fn, loss_kwargs)
 
-        self.loss_fn = self.loss_fn(**loss_kwargs)
+        self.loss_fn_train = self.loss_fn(**loss_kwargs)
+        self.loss_fn_val = self.loss_fn(**loss_kwargs)
+
+        # If deep_supervision is enabled we wrap our training loss (and potentially specify weights)
+        # We leave the validation loss as is, as deep_supervision is not used for validation.
+        if self.deep_supervision:
+            self.loss_fn_train = DeepSupervisionLoss(self.loss_fn_train, weights=None)
 
         # Initialize and configure the optimizer(s) here.
         # optim_kwargs holds args for any scheduler class,

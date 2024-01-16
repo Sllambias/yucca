@@ -28,11 +28,13 @@ class YuccaAugmentationComposer:
     def __init__(
         self,
         patch_size: list | tuple,
+        deep_supervision: bool = False,
         is_2D: bool = False,
         parameter_dict: dict = {},
         task_type_preset: str = None,
     ):
         self._pre_aug_patch_size = None
+        self.deep_supervision = deep_supervision
         self.setup_default_params(is_2D, patch_size)
         self.apply_task_type_specific_preset(task_type_preset)
         self.overwrite_params(parameter_dict)
@@ -186,7 +188,7 @@ class YuccaAugmentationComposer:
                     p_mirror_per_axis=self.mirror_p_per_axis,
                     skip_label=self.skip_label,
                 ),
-                # DownsampleSegForDS() if self.deep_supervision else None,
+                DownsampleSegForDS(deep_supervision=self.deep_supervision),
                 CopyImageToSeg(copy=self.copy_image_to_label),
                 Masking(mask=self.mask_image_for_reconstruction),
                 RemoveBatchDimension(),
