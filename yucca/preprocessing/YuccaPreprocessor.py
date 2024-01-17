@@ -6,6 +6,7 @@ import nibabel as nib
 import os
 import cc3d
 import logging
+import math
 from yucca.utils.loading import load_yaml, read_file_to_nifti_or_np
 from yucca.image_processing.objects.BoundingBox import get_bbox_for_foreground
 from yucca.image_processing.cropping_and_padding import crop_to_box, pad_to_size, get_pad_kwargs
@@ -154,13 +155,30 @@ class YuccaPreprocessor(object):
         Print information about the size and spacing before and after preprocessing.
         Print the path where the preprocessed data is saved.
         """
+        images, label, image_props = self._preprocess_train_subject(subject_id, label_exists=True, preprocess_label=True)
+        # Stack and fix dimensions
+        images = np.vstack((np.array(images), np.array(label)[np.newaxis]))
+
+        logging.info(
+            f"size before: {image_props['original_size']} size after: {image_props['new_size']} \n"
+            f"spacing before: {image_props['original_spacing']} spacing after: {image_props['new_spacing']} \n"
+            f"Saving {subject_id} in {image_props['arraypath']} \n"
+        )
+
+        # save the image
+        np.save(image_props["arraypath"], images)
+
+        # save metadata as .pkl
+        save_pickle(image_props, image_props["picklepath"])
+
+    def _preprocess_train_subject(self, subject_id, label_exists: bool, preprocess_label: bool):
         image_props = {}
         subject_id = subject_id.split(os.extsep, 1)[0]
         logging.info(f"Preprocessing: {subject_id}")
-        arraypath = join(self.target_dir, subject_id + ".npy")
-        picklepath = join(self.target_dir, subject_id + ".pkl")
+        image_props["arraypath"] = join(self.target_dir, subject_id + ".npy")
+        image_props["picklepath"] = join(self.target_dir, subject_id + ".pkl")
 
-        if isfile(arraypath) and isfile(picklepath):
+        if isfile(image_props["arraypath"]) and isfile(image_props["picklepath"]):
             logging.info(f"Case: {subject_id} already exists. Skipping.")
             return
         # First find relevant images by their paths and save them in the image property pickle
@@ -172,18 +190,24 @@ class YuccaPreprocessor(object):
         image_props["image files"] = imagepaths
         images = [read_file_to_nifti_or_np(image) for image in imagepaths]
 
-        # Do the same with label
-        label = [
-            labelpath
-            for labelpath in subfiles(join(self.input_dir, "labelsTr"))
-            if os.path.split(labelpath)[-1].startswith(subject_id + ".")
-        ]
-        assert len(label) < 2, f"unexpected number of labels found. Expected 1 or 0 and found {len(label)}"
-        image_props["label file"] = label[0]
-        label = read_file_to_nifti_or_np(label[0], dtype=np.uint8)
+        if label_exists:
+            # Do the same with label
+            label = [
+                labelpath
+                for labelpath in subfiles(join(self.input_dir, "labelsTr"))
+                if os.path.split(labelpath)[-1].startswith(subject_id + ".")
+            ]
+            assert len(label) < 2, f"unexpected number of labels found. Expected 1 or 0 and found {len(label)}"
+            image_props["label file"] = label[0]
+            label = read_file_to_nifti_or_np(label[0], dtype=np.uint8)
+        else:
+            label = None
 
         if not self.disable_sanity_checks:
-            self.run_sanity_checks(images, label, subject_id, imagepaths)
+            if label_exists and preprocess_label:
+                self.run_sanity_checks(images, label, subject_id, imagepaths)
+            else:
+                self.run_sanity_checks(images, None, subject_id, imagepaths)
 
         original_size = np.array(images[0].shape)
 
@@ -191,7 +215,8 @@ class YuccaPreprocessor(object):
             images, original_size, label
         )
 
-        self.verify_label_validity(label)
+        if label_exists and preprocess_label:
+            self.verify_label_validity(label)
 
         # Cropping is performed to save computational resources. We are only removing background.
         if self.plans["crop_to_nonzero"]:
@@ -199,11 +224,15 @@ class YuccaPreprocessor(object):
             image_props["crop_to_nonzero"] = nonzero_box
             for i in range(len(images)):
                 images[i] = crop_to_box(images[i], nonzero_box)
-            label = crop_to_box(label, nonzero_box)
+            if label_exists and preprocess_label:
+                label = crop_to_box(label, nonzero_box)
         else:
             image_props["crop_to_nonzero"] = self.plans["crop_to_nonzero"]
 
-        images, label = self.transpose_case(images, self.transpose_forward, label)
+        if label_exists and preprocess_label:
+            images, label = self.transpose_case(images, self.transpose_forward, label)
+        else:
+            images = self.transpose_case(images, self.transpose_forward, None)
 
         resample_target_size, final_target_size = self.determine_target_size(
             images_transposed=images,
@@ -211,44 +240,45 @@ class YuccaPreprocessor(object):
             transpose_forward=self.transpose_forward,
         )
 
-        images, label = self.resample_and_normalize_case(
-            images=images,
-            target_size=resample_target_size,
-            label=label,
-            norm_op=self.plans["normalization_scheme"],
-        )
+        if label_exists and preprocess_label:
+            images, label = self.resample_and_normalize_case(
+                images=images,
+                target_size=resample_target_size,
+                label=label,
+                norm_op=self.plans["normalization_scheme"],
+            )
+        else:
+            images = self.resample_and_normalize_case(
+                images=images,
+                target_size=resample_target_size,
+                label=None,
+                norm_op=self.plans["normalization_scheme"],
+            )
 
         if final_target_size is not None:
-            images, label = self.pad_to_size(images, size=final_target_size, label=label)
+            if label_exists and preprocess_label:
+                images, label = self.pad_to_size(images, size=final_target_size, label=label)
+            else:
+                images = self.pad_to_size(images, size=final_target_size, label=None)
 
-        # Stack and fix dimensions
-        images = np.vstack((np.array(images), np.array(label)[np.newaxis]))
-        final_size = list(images[0].shape)
+        if label_exists and preprocess_label:
+            image_props["foreground_locs"], image_props["label_cc_n"], image_props["label_cc_sizes"] = self.analyze_label(
+                label=images[-1]
+            )
+        else:
+            image_props["label_cc_n"] = image_props["label_cc_sizes"] = 0
+            image_props["foreground_locs"] = []
 
-        foreground_locs, label_cc_n, label_cc_sizes = self.analyze_label(label=images[-1])
+        image_props["new_size"] = list(images[0].shape)
 
         # save relevant values
         image_props["original_spacing"] = image_props["nifti_metadata"]["original_spacing"]
         image_props["original_size"] = original_size
         image_props["original_orientation"] = image_props["nifti_metadata"]["original_orientation"]
         image_props["new_spacing"] = self.target_spacing
-        image_props["new_size"] = final_size
         image_props["new_direction"] = image_props["nifti_metadata"]["final_direction"]
-        image_props["foreground_locations"] = foreground_locs
-        image_props["label_cc_n"] = label_cc_n
-        image_props["label_cc_sizes"] = label_cc_sizes
 
-        logging.info(
-            f"size before: {original_size} size after: {image_props['new_size']} \n"
-            f"spacing before: {original_spacing} spacing after: {image_props['new_spacing']} \n"
-            f"Saving {subject_id} in {arraypath} \n"
-        )
-
-        # save the image
-        np.save(arraypath, images)
-
-        # save metadata as .pkl
-        save_pickle(image_props, picklepath)
+        return images, label, image_props
 
     def preprocess_case_for_inference(self, images: list | tuple, patch_size: tuple):
         """
@@ -280,7 +310,7 @@ class YuccaPreprocessor(object):
             3,
         ], "images must be either 2D or 3D for preprocessing"
 
-        images, _, original_spacing, image_properties["nifti_metadata"] = self.apply_nifti_preprocessing_and_return_numpy(
+        images, _, image_properties["nifti_metadata"] = self.apply_nifti_preprocessing_and_return_numpy(
             images, image_properties["original_shape"], label=None
         )
 
@@ -436,15 +466,15 @@ class YuccaPreprocessor(object):
         # And we also potentially analyze the connected components of the label
         foreground_locs = np.array(np.nonzero(label)).T[::10]
         if self.disable_cc_analysis:
-            label_cc_n = "NOT ANALYZED"
-            label_cc_sizes = "NOT ANALYZED"
+            label_cc_n = 0
+            label_cc_sizes = 0
         else:
             numbered_ground_truth, label_cc_n = cc3d.connected_components(label, connectivity=26, return_N=True)
-            if ground_truth_numb_lesion == 0:
+            if len(numbered_ground_truth) == 0:
                 label_cc_sizes = 0
             else:
                 label_cc_sizes = [
-                    i * np.prod(target_spacing) for i in np.unique(numbered_ground_truth, return_counts=True)[-1][1:]
+                    i * np.prod(self.target_spacing) for i in np.unique(numbered_ground_truth, return_counts=True)[-1][1:]
                 ]
         return foreground_locs, label_cc_n, label_cc_sizes
 
@@ -517,9 +547,9 @@ class YuccaPreprocessor(object):
         elif self.target_spacing is not None:
             target_spacing = np.array(self.target_spacing, dtype=float)
             original_spacing_t = original_spacing[transpose_forward]
-            target_spacing = target_spacing[transpose_forward]
-            resample_target_size = np.round((original_spacing_t / target_spacing).astype(float) * shape_t).astype(int)
-            self.target_spacing = target_spacing.tolist()
+            target_spacing_t = target_spacing[transpose_forward]
+            resample_target_size = np.round((original_spacing_t / target_spacing_t).astype(float) * image_shape_t).astype(int)
+            self.target_spacing = target_spacing_t.tolist()
         else:
             resample_target_size = image_shape_t
         return resample_target_size, final_target_size
@@ -560,7 +590,6 @@ class YuccaPreprocessor(object):
             except OverflowError:
                 logging.error("Unexpected values in either shape or label for resize")
             return images, label
-
         return images
 
     def run_sanity_checks(self, images, label, subject_id, imagepaths):
@@ -576,10 +605,11 @@ class YuccaPreprocessor(object):
             len(images[0].shape) == self.plans["dataset_properties"]["data_dimensions"]
         ), f"image should be shape (x, y(, z)) but is {images[0].shape}"
 
-        # make sure images and labels are correctly registered
-        assert images[0].shape == label.shape, (
-            f"Sizes do not match for {subject_id}" f"Image is: {images[0].shape} while the label is {label.shape}"
-        )
+        if label is not None:
+            # make sure images and labels are correctly registered
+            assert images[0].shape == label.shape, (
+                f"Sizes do not match for {subject_id}" f"Image is: {images[0].shape} while the label is {label.shape}"
+            )
         # Make sure all modalities are correctly registered
         if len(images) > 1:
             for image in images:
@@ -588,15 +618,16 @@ class YuccaPreprocessor(object):
                 )
 
     def sanity_check_niftis(self, images, label, subject_id):
-        assert np.allclose(get_nib_spacing(images[0]), get_nib_spacing(label)), (
-            f"Spacings do not match for {subject_id}"
-            f"Image is: {get_nib_spacing(images[0])} while the label is {get_nib_spacing(label)}"
-        )
+        if label is not None:
+            assert np.allclose(get_nib_spacing(images[0]), get_nib_spacing(label)), (
+                f"Spacings do not match for {subject_id}"
+                f"Image is: {get_nib_spacing(images[0])} while the label is {get_nib_spacing(label)}"
+            )
 
-        assert get_nib_orientation(images[0]) == get_nib_orientation(label), (
-            f"Directions do not match for {subject_id}"
-            f"Image is: {get_nib_orientation(images[0])} while the label is {get_nib_orientation(label)}"
-        )
+            assert get_nib_orientation(images[0]) == get_nib_orientation(label), (
+                f"Directions do not match for {subject_id}"
+                f"Image is: {get_nib_orientation(images[0])} while the label is {get_nib_orientation(label)}"
+            )
         if len(images) > 1:
             assert np.allclose(get_nib_spacing(images[0]), get_nib_spacing(image)), (
                 f"Spacings do not match for {subject_id}"

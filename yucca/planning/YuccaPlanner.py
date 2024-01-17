@@ -126,7 +126,7 @@ class YuccaPlanner(object):
 
     def _determine_target_spacing_or_size(self):
         self.target_size = None
-        self.target_spacing = self.dataset_properties["original_median_spacings"]
+        self.target_spacing = self.dataset_properties["original_median_spacing"]
 
     def drop_keys_from_dict(self, dict, keys):
         for key in keys:
