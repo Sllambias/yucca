@@ -9,7 +9,7 @@ from yucca.training.configuration.configure_checkpoint import get_checkpoint_con
 from yucca.training.configuration.configure_seed import seed_everything_and_get_seed_config
 from yucca.training.configuration.configure_paths import get_path_config
 from yucca.training.configuration.configure_plans import get_plan_config
-from yucca.training.configuration.input_dimensions import get_input_dims_config
+from yucca.training.configuration.configure_input_dims import get_input_dims_config
 from yucca.training.data_loading.YuccaDataModule import YuccaDataModule
 from yucca.training.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from yucca.paths import yucca_results
@@ -80,6 +80,7 @@ class YuccaManager:
         self.model_name = model_name
         self.name = self.__class__.__name__
         self.num_workers = num_workers
+        self.patch_based_training = patch_based_training
         self.patch_size = patch_size
         self.planner = planner
         self.precision = precision
@@ -112,6 +113,7 @@ class YuccaManager:
             manager_name=self.name,
             model_dimensions=self.model_dimensions,
             model_name=self.model_name,
+            patch_based_training=self.patch_based_training,
             planner_name=self.planner,
             split_idx=self.split_idx,
             task=self.task,
@@ -144,6 +146,7 @@ class YuccaManager:
             num_classes=plan_config.num_classes,
             model_name=task_config.model_name,
             max_vram=self.max_vram,
+            patch_based_training=task_config.patch_based_training,
             patch_size=self.patch_size,
         )
 

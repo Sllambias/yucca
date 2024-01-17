@@ -457,31 +457,39 @@ class YuccaPreprocessor(object):
         # If qform and sform are both missing the header is corrupt and we do not trust the
         # direction from the affine
         # Make sure you know what you're doing
-        valid_header = False
-        if isinstance(images[0], nib.Nifti1Image):
-            if images[0].get_qform(coded=True)[1] or images[0].get_sform(coded=True)[1]:
-                valid_header = True
+        metadata = {
+            "original_spacing": np.array([1.0] * len(original_size)),
+            "original_orientation": None,
+            "final_direction": None,
+            "qform": None,
+            "sform": None,
+            "affine": None,
+            "reoriented": False,
+        }
 
-        # If qform and sform are both missing the header is corrupt and we do not trust the
-        # direction from the affine
-        # Make sure you know what you're doing
-        if valid_header:
-            original_spacing = get_nib_spacing(images[0])
-            original_orientation = get_nib_orientation(images[0])
-            final_direction = self.plans["target_coordinate_system"]
-            images = [reorient_nib_image(image, original_orientation, final_direction) for image in images]
-            if label is not None and isinstance(label, nib.Nifti1Image):
-                label = reorient_nib_image(label, original_orientation, final_direction)
-        else:
-            original_spacing = np.array([1.0] * len(original_size))
-            original_orientation = "INVALID"
-            final_direction = "INVALID"
+        if isinstance(images[0], nib.Nifti1Image):
+            # If qform and sform are both missing the header is corrupt and we do not trust the
+            # direction from the affine
+            # Make sure you know what you're doing
+            metadata["original_spacing"] = get_nib_spacing(images[0])
+            metadata["qform"] = images[0].get_qform()
+            metadata["sform"] = images[0].get_sform()
+            if images[0].get_qform(coded=True)[1] or images[0].get_sform(coded=True)[1]:
+                metadata["reoriented"] = True
+                metadata["original_orientation"] = get_nib_orientation(images[0])
+                metadata["final_direction"] = self.plans["target_coordinate_system"]
+                images = [
+                    reorient_nib_image(image, metadata["original_orientation"], metadata["final_direction"])
+                    for image in images
+                ]
+                if label is not None and isinstance(label, nib.Nifti1Image):
+                    label = reorient_nib_image(label, metadata["original_orientation"], metadata["final_direction"])
+            metadata["affine"] = images[0].affine
 
         images = [nifti_or_np_to_np(image) for image in images]
         if label is not None:
             label = nifti_or_np_to_np(label)
-            return images, original_spacing, original_orientation, final_direction, label
-        return images, original_spacing, original_orientation, final_direction
+        return images, label, metadata
 
     def determine_target_size(
         self,
