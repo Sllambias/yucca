@@ -47,6 +47,7 @@ class YuccaLightningModule(L.LightningModule):
         self.model_dimensions = config["model_dimensions"]
         self.patch_size = config["patch_size"]
         self.task_type = config["task_type"]
+        self.sliding_window_prediction = config["patch_based_training"]
 
         # Loss, optimizer and scheduler parameters
         self.deep_supervision = deep_supervision
@@ -158,7 +159,7 @@ class YuccaLightningModule(L.LightningModule):
         (
             case_preprocessed,
             case_properties,
-        ) = self.preprocessor.preprocess_case_for_inference(case, self.patch_size)
+        ) = self.preprocessor.preprocess_case_for_inference(case, self.patch_size, self.sliding_window_prediction)
 
         logits = self.model.predict(
             mode=self.model_dimensions,

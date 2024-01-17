@@ -262,12 +262,12 @@ class YuccaPreprocessor(object):
                 images = self.pad_to_size(images, size=final_target_size, label=None)
 
         if label_exists and preprocess_label:
-            image_props["foreground_locs"], image_props["label_cc_n"], image_props["label_cc_sizes"] = self.analyze_label(
+            image_props["foreground_locations"], image_props["label_cc_n"], image_props["label_cc_sizes"] = self.analyze_label(
                 label=images[-1]
             )
         else:
             image_props["label_cc_n"] = image_props["label_cc_sizes"] = 0
-            image_props["foreground_locs"] = []
+            image_props["foreground_locations"] = []
 
         image_props["new_size"] = list(images[0].shape)
 
@@ -280,7 +280,7 @@ class YuccaPreprocessor(object):
 
         return images, label, image_props
 
-    def preprocess_case_for_inference(self, images: list | tuple, patch_size: tuple):
+    def preprocess_case_for_inference(self, images: list | tuple, patch_size: tuple, sliding_window_prediction: bool = True):
         """
         Will reorient ONLY if we have valid qform or sform codes.
         with coded=True the methods will return {affine or None} and {0 or 1}.
@@ -295,6 +295,10 @@ class YuccaPreprocessor(object):
         """
         assert isinstance(images, (list, tuple)), "image(s) should be a list or tuple, even if only one " "image is passed"
         self.initialize_properties()
+
+        if sliding_window_prediction is False:
+            self.target_size = patch_size
+
         image_properties = {}
         ext = images[0][0].split(os.extsep, 1)[1] if isinstance(images[0], tuple) else images[0].split(os.extsep, 1)[1]
         images = [
@@ -324,12 +328,19 @@ class YuccaPreprocessor(object):
 
         image_properties["cropped_shape"] = np.array(images[0].shape)
 
+        images = self.transpose_case(images, self.transpose_forward, None)
+
+        resample_target_size, _ = self.determine_target_size(
+            images_transposed=images,
+            original_spacing=image_properties["nifti_metadata"]["original_spacing"],
+            transpose_forward=self.transpose_forward,
+        )
+
         images = self.resample_and_normalize_case(
-            images,
+            images=images,
+            target_size=resample_target_size,
+            label=None,
             norm_op=self.plans["normalization_scheme"],
-            transpose=self.transpose_forward,
-            original_spacing=image_properties["original_spacing"],
-            target_spacing=self.target_spacing,
         )
 
         # From this point images are shape (1, c, x, y, z)

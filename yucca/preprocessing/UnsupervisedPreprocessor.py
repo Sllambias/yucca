@@ -5,6 +5,7 @@ import numpy as np
 import re
 import os
 import nibabel as nib
+import logging
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yucca.preprocessing.normalization import normalizer
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data

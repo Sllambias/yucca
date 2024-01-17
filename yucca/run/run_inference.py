@@ -24,7 +24,7 @@ def main():
 
     filterwarnings("ignore")
     parser = argparse.ArgumentParser()
-    #Required Arguments
+    # Required Arguments
     parser.add_argument(
         "-s",
         help="Name of the source task i.e. what the model is trained on. " "Should be of format: TaskXXX_MYTASK",
@@ -38,31 +38,41 @@ def main():
 
     # Optionals (frequently changed)
     parser.add_argument(
-        "-chk", "--checkpoint",
+        "-chk",
+        "--checkpoint",
         help="Checkpoint to use for inference. Defaults to model_best.",
         default="best",
     )
     parser.add_argument("-d", "--dimensions", help="2D or 3D model. Defaults to 3D.", default="3D")
 
     parser.add_argument(
-        "-f", "--fold"
+        "-f",
+        "--fold",
         help="Select the fold that was used to train the model desired for inference. "
         "Defaults to looking for a model trained on fold 0.",
         default="0",
     )
     parser.add_argument("-m", "--model", help="Model Architecture. Defaults to UNet.", default="UNet")
     parser.add_argument(
-        "-man", "--manager",
+        "-man",
+        "--manager",
         help="Full name of Trainer Class. \n" "e.g. 'YuccaTrainer_DCE' or 'YuccaTrainer'. Defaults to YuccaTrainer.",
         default="YuccaManager",
     )
-    parser.add_argument("-pl", "--planner",help="Planner. Defaults to YuccaPlanner", default="YuccaPlanner")
+    parser.add_argument("-pl", "--planner", help="Planner. Defaults to YuccaPlanner", default="YuccaPlanner")
     parser.add_argument(
-        "-v", "--version",
+        "-v",
+        "--version",
         help="Version to use for inference. Defaults to the newest version.",
         default=None,
     )
     # Optionals (occasionally changed)
+    parser.add_argument(
+        "--experiment",
+        help="A name for the experiment being performed, wiht no spaces.",
+        default="default",
+    )
+
     parser.add_argument(
         "--disable_tta",
         help="Used to disable test-time augmentations (mirroring)",
@@ -118,16 +128,17 @@ def main():
     target_task = maybe_get_task_from_task_id(args.t)
 
     # Optionals (frequently changed)
-    checkpoint = args.chk
-    dimensions = args.d
-    manager_name = args.man
-    model = args.m
-    planner = args.pl
+    checkpoint = args.checkpoint
+    dimensions = args.dimensions
+    manager_name = args.manager
+    model = args.model
+    planner = args.planner
     profile = args.profile
-    split_idx = int(args.f)
-    version = args.v
+    split_idx = int(args.fold)
+    version = args.version
 
     # Optionals (occasionally changed)
+    experiment = args.experiment
     disable_tta = args.disable_tta
     no_eval = args.no_eval
     no_sliding_window = args.no_sliding_window
@@ -136,7 +147,7 @@ def main():
     save_softmax = args.save_softmax
 
     path_to_versions = join(
-        yucca_models, source_task, model + "__" + dimensions, manager_name + "__" + planner, f"fold_{split_idx}"
+        yucca_models, source_task, model + "__" + dimensions, manager_name + "__" + planner, experiment, f"fold_{split_idx}"
     )
     if version is None:
         versions = [int(i.split("_")[-1]) for i in subdirs(path_to_versions, join=False)]
@@ -147,6 +158,7 @@ def main():
         source_task,
         model + "__" + dimensions,
         manager_name + "__" + planner,
+        experiment,
         f"fold_{split_idx}",
         f"version_{version}",
         "checkpoints",
@@ -154,9 +166,7 @@ def main():
     )
 
     assert isfile(modelfile), "Can't find .cpkt file with trained model weights. " f"Should be located at: {modelfile}"
-    print(
-        f"######################################################################## \n" f"{'Using model: ':25} {modelfile}"
-    )
+    print(f"######################################################################## \n" f"{'Using model: ':25} {modelfile}")
 
     manager = recursive_find_python_class(
         folder=[join(yucca.__path__[0], "training", "managers")],
@@ -217,7 +227,6 @@ def main():
             folder_with_ground_truth=ground_truth,
         )
         evaluator.run()
-
 
 
 if __name__ == "__main__":
