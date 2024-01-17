@@ -642,15 +642,16 @@ class YuccaPreprocessor(object):
                 f"Image is: {get_nib_orientation(images[0])} while the label is {get_nib_orientation(label)}"
             )
         if len(images) > 1:
-            assert np.allclose(get_nib_spacing(images[0]), get_nib_spacing(image)), (
-                f"Spacings do not match for {subject_id}"
-                f"One is: {get_nib_spacing(images[0])} while another is {get_nib_spacing(image)}"
-            )
+            for image in images:
+                assert np.allclose(get_nib_spacing(images[0]), get_nib_spacing(image)), (
+                    f"Spacings do not match for {subject_id}"
+                    f"One is: {get_nib_spacing(images[0])} while another is {get_nib_spacing(image)}"
+                )
 
-            assert get_nib_orientation(images[0]) == get_nib_orientation(image), (
-                f"Directions do not match for {subject_id}"
-                f"One is: {get_nib_orientation(images[0])} while another is {get_nib_orientation(image)}"
-            )
+                assert get_nib_orientation(images[0]) == get_nib_orientation(image), (
+                    f"Directions do not match for {subject_id}"
+                    f"One is: {get_nib_orientation(images[0])} while another is {get_nib_orientation(image)}"
+                )
 
     def verify_label_validity(self, label):
         # Check if the ground truth only contains expected values
