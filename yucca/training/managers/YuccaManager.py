@@ -143,7 +143,7 @@ class YuccaManager:
             stage=stage,
         )
 
-        splits_config = get_split_config(train_data_dir=path_config.train_data_dir, task=task_config.task)
+        splits_config = get_split_config(train_data_dir=path_config.train_data_dir, task=task_config.task, stage=stage)
 
         input_dims_config = get_input_dims_config(
             plan=plan_config.plans,
