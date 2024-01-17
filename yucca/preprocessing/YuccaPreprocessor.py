@@ -218,7 +218,7 @@ class YuccaPreprocessor(object):
         )
 
         if label_exists and preprocess_label:
-            self.verify_label_validity(label)
+            self.verify_label_validity(label, subject_id)
 
         # Cropping is performed to save computational resources. We are only removing background.
         if self.plans["crop_to_nonzero"]:
@@ -653,7 +653,7 @@ class YuccaPreprocessor(object):
                     f"One is: {get_nib_orientation(images[0])} while another is {get_nib_orientation(image)}"
                 )
 
-    def verify_label_validity(self, label):
+    def verify_label_validity(self, label, subject_id):
         # Check if the ground truth only contains expected values
         expected_labels = np.array(self.plans["dataset_properties"]["classes"], dtype=np.float32)
         actual_labels = np.unique(label).astype(np.float32)
