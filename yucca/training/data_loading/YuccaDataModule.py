@@ -65,9 +65,9 @@ class YuccaDataModule(pl.LightningDataModule):
         self.image_extension = plan_config.image_extension
         self.task_type = plan_config.task_type
 
+        self.split_idx = split_idx
+        self.splits_config = splits_config
         self.train_data_dir = train_data_dir
-        self.train_split = splits_config.train(split_idx)
-        self.val_split = splits_config.val(split_idx)
 
         # Set by initialize()
         self.composed_train_transforms = composed_train_transforms
@@ -91,8 +91,8 @@ class YuccaDataModule(pl.LightningDataModule):
         if stage == "fit":
             assert self.train_data_dir is not None
 
-            self.train_samples = [join(self.train_data_dir, i) for i in self.train_split]
-            self.val_samples = [join(self.train_data_dir, i) for i in self.val_split]
+            self.train_samples = [join(self.train_data_dir, i) for i in self.splits_config.train(self.split_idx)]
+            self.val_samples = [join(self.train_data_dir, i) for i in self.splits_config.val(self.split_idx)]
 
             self.train_dataset = YuccaTrainDataset(
                 self.train_samples,

@@ -10,7 +10,7 @@ from typing import Union
 
 @dataclass
 class SplitConfig:
-    splits: Union[list[dict], None]
+    splits: Union[list[dict], None] = None
     k: int = None
     p: float = None
 
