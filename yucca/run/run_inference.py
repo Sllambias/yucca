@@ -179,14 +179,14 @@ def main():
 
     print(f"{'Using manager: ':25} {manager_name}")
     manager = manager(
-        disable_sliding_window_prediction=no_sliding_window,
+        ckpt_path=modelfile,
         enable_logging=False,
+        experiment=experiment,
         model_name=model,
         model_dimensions=dimensions,
         task=source_task,
         split_idx=split_idx,
         planner=planner,
-        ckpt_path=modelfile,
         profile=profile,
     )
 

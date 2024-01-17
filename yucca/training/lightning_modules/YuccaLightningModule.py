@@ -162,11 +162,12 @@ class YuccaLightningModule(L.LightningModule):
         ) = self.preprocessor.preprocess_case_for_inference(case, self.patch_size, self.sliding_window_prediction)
 
         logits = self.model.predict(
-            mode=self.model_dimensions,
             data=case_preprocessed,
-            patch_size=self.patch_size,
-            overlap=self.sliding_window_overlap,
+            mode=self.model_dimensions,
             mirror=self.test_time_augmentation,
+            overlap=self.sliding_window_overlap,
+            patch_size=self.patch_size,
+            sliding_window_prediction=self.sliding_window_prediction,
         )
 
         logits, case_properties = self.preprocessor.reverse_preprocessing(logits, case_properties)

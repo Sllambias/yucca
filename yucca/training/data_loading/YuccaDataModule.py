@@ -112,7 +112,7 @@ class YuccaDataModule(pl.LightningDataModule):
             assert self.pred_data_dir is not None, "set a pred_data_dir for inference to work"
             # This dataset contains ONLY the images (and not the labels)
             # It will return a tuple of (case, case_id)
-            self.pred_dataset = YuccaTestDataset(self.pred_data_dir, patch_size=self.patch_size, suffix=self.image_extension)
+            self.pred_dataset = YuccaTestDataset(self.pred_data_dir, suffix=self.image_extension)
 
     def train_dataloader(self):
         print(f"Starting training with data from: {self.train_data_dir}")

@@ -95,7 +95,7 @@ class YuccaPreprocessor(object):
         self.transpose_forward = np.array(self.plans["transpose_forward"], dtype=int)
         self.transpose_backward = np.array(self.plans["transpose_backward"], dtype=int)
         self.target_spacing = self.plans["target_spacing"]
-        self.target_size = self.plans["target_size"]
+        self.target_size = self.plans.get("target_size") if self.plans.get("target_size") else None
 
     def run(self):
         self.initialize_properties()
