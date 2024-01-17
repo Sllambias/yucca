@@ -58,7 +58,7 @@ class YuccaManager:
         patch_based_training: bool = True,
         patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
         planner: str = "YuccaPlanner",
-        precision: str = "16-mixed",
+        precision: str = "bf16-mixed",
         profile: bool = False,
         split_idx: int = 0,
         step_logging: bool = False,
@@ -95,6 +95,11 @@ class YuccaManager:
         # Configure basic parameters
         if self.patch_size is None and self.model_name == "TinyUNet":
             self.patch_size = "tiny"
+
+        # Automatically changes bfloat training if we're running on a GPU
+        # that doesn't support it (otherwise it just crashes.)
+        if "bf" in self.precision and not torch.cuda.is_bf16_supported():
+            self.precision = self.precision.replace("bf", "")
 
         self.trainer = L.Trainer
 

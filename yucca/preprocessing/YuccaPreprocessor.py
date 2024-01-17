@@ -155,6 +155,14 @@ class YuccaPreprocessor(object):
         Print information about the size and spacing before and after preprocessing.
         Print the path where the preprocessed data is saved.
         """
+        subject_id = subject_id.split(os.extsep, 1)[0]
+        arraypath = join(self.target_dir, subject_id + ".npy")
+        picklepath = join(self.target_dir, subject_id + ".pkl")
+
+        if isfile(arraypath) and isfile(picklepath):
+            logging.info(f"Case: {subject_id} already exists. Skipping.")
+            return
+
         images, label, image_props = self._preprocess_train_subject(subject_id, label_exists=True, preprocess_label=True)
         # Stack and fix dimensions
         images = np.vstack((np.array(images), np.array(label)[np.newaxis]))
@@ -162,25 +170,19 @@ class YuccaPreprocessor(object):
         logging.info(
             f"size before: {image_props['original_size']} size after: {image_props['new_size']} \n"
             f"spacing before: {image_props['original_spacing']} spacing after: {image_props['new_spacing']} \n"
-            f"Saving {subject_id} in {image_props['arraypath']} \n"
+            f"Saving {subject_id} in {arraypath} \n"
         )
 
         # save the image
-        np.save(image_props["arraypath"], images)
+        np.save(arraypath, images)
 
         # save metadata as .pkl
-        save_pickle(image_props, image_props["picklepath"])
+        save_pickle(image_props, picklepath)
 
     def _preprocess_train_subject(self, subject_id, label_exists: bool, preprocess_label: bool):
         image_props = {}
-        subject_id = subject_id.split(os.extsep, 1)[0]
         logging.info(f"Preprocessing: {subject_id}")
-        image_props["arraypath"] = join(self.target_dir, subject_id + ".npy")
-        image_props["picklepath"] = join(self.target_dir, subject_id + ".pkl")
 
-        if isfile(image_props["arraypath"]) and isfile(image_props["picklepath"]):
-            logging.info(f"Case: {subject_id} already exists. Skipping.")
-            return
         # First find relevant images by their paths and save them in the image property pickle
         # Then load them as images
         # The '_' in the end is to avoid treating Case_4_000 AND Case_42_000 as different versions
