@@ -57,6 +57,7 @@ class YuccaManager:
         num_workers: int = 8,
         patch_based_training: bool = True,
         patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
+        augmentation_params: dict = {},
         planner: str = "YuccaPlanner",
         precision: str = "bf16-mixed",
         profile: bool = False,
@@ -80,6 +81,7 @@ class YuccaManager:
         self.model_name = model_name
         self.name = self.__class__.__name__
         self.num_workers = num_workers
+        self.augmentation_params = augmentation_params
         self.patch_based_training = patch_based_training
         self.patch_size = patch_size
         self.planner = planner
@@ -159,6 +161,7 @@ class YuccaManager:
             deep_supervision=self.deep_supervision,
             patch_size=input_dims_config.patch_size,
             is_2D=True if self.model_dimensions == "2D" else False,
+            parameter_dict=self.augmentation_params,
             task_type_preset=plan_config.task_type,
         )
 
