@@ -3,7 +3,7 @@ import torchvision
 from typing import Literal
 from torch.utils.data import DataLoader, Sampler
 from batchgenerators.utilities.file_and_folder_operations import join
-from yucca.training.configuration.input_dimensions import InputDimensionsConfig
+from yucca.training.configuration.configure_input_dims import InputDimensionsConfig
 from yucca.training.configuration.split_data import SplitConfig
 from yucca.training.configuration.configure_plans import PlanConfig
 from yucca.training.data_loading.YuccaDataset import YuccaTestDataset, YuccaTrainDataset

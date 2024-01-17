@@ -501,12 +501,15 @@ class YuccaPreprocessor(object):
         image_shape_t = np.array(images_transposed[0].shape)
         # We do not want to change the aspect ratio so we resample using the minimum alpha required
         # to attain 1 correct dimension, and then the rest will be padded.
+        # Additionally we make sure each dimension is divisible by 16 to avoid issues with standard pooling/stride settings
         if self.target_size is not None:
             if self.plans["keep_aspect_ratio_when_using_target_size"] is True:
                 resample_target_size = np.array(image_shape_t * np.min(self.target_size / image_shape_t))
                 final_target_size = self.target_size
+                final_target_size = [math.ceil(i / 16) * 16 for i in final_target_size]
             else:
                 resample_target_size = self.target_size
+                resample_target_size = [math.ceil(i / 16) * 16 for i in resample_target_size]
 
         # Otherwise we need to calculate a new target shape, and we need to factor in that
         # the images will first be transposed and THEN resampled.
