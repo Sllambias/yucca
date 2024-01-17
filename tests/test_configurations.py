@@ -35,7 +35,7 @@ def test_configurations():
     )
     assert plan_config is not None and plan_config.task_type in ["classification", "segmentation", "unsupervised"]
 
-    splits_config = get_split_config(train_data_dir=path_config.train_data_dir, task=task_config.task)
+    splits_config = get_split_config(train_data_dir=path_config.train_data_dir, task=task_config.task, stage="fit")
     assert splits_config is not None and len(splits_config.train(0)) > 0
 
     input_dims = get_input_dims_config(

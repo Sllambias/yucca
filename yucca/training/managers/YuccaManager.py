@@ -100,8 +100,9 @@ class YuccaManager:
 
         # Automatically changes bfloat training if we're running on a GPU
         # that doesn't support it (otherwise it just crashes.)
-        if "bf" in self.precision and not torch.cuda.is_bf16_supported():
-            self.precision = self.precision.replace("bf", "")
+        if "bf" in self.precision and torch.cuda.is_available():
+            if not torch.cuda.is_bf16_supported():
+                self.precision = self.precision.replace("bf", "")
 
         self.trainer = L.Trainer
 
