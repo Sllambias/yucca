@@ -96,47 +96,6 @@ class YuccaPreprocessor(object):
         self.target_spacing = self.plans["target_spacing"]
         self.target_size = self.plans["target_size"]
 
-    def determine_target_size(
-        self,
-        images_transposed: list,
-        original_spacing,
-        transpose_forward,
-    ):
-        final_target_size = None
-        image_shape_t = np.array(images_transposed[0].shape)
-        # We do not want to change the aspect ratio so we resample using the minimum alpha required
-        # to attain 1 correct dimension, and then the rest will be padded.
-        if self.target_size is not None:
-            if self.plans["keep_aspect_ratio_when_using_target_size"] is True:
-                resample_target_size = np.array(image_shape_t * np.min(self.target_size / image_shape_t))
-                final_target_size = self.target_size
-            else:
-                resample_target_size = self.target_size
-
-        # Otherwise we need to calculate a new target shape, and we need to factor in that
-        # the images will first be transposed and THEN resampled.
-        # Find new shape based on the target spacing
-        elif self.target_spacing is not None:
-            target_spacing = np.array(self.target_spacing, dtype=float)
-            original_spacing_t = original_spacing[transpose_forward]
-            target_spacing = target_spacing[transpose_forward]
-            resample_target_size = np.round((original_spacing_t / target_spacing).astype(float) * shape_t).astype(int)
-            self.target_spacing = target_spacing.tolist()
-        else:
-            resample_target_size = image_shape_t
-        return resample_target_size, final_target_size
-
-    @staticmethod
-    def load_plans(plans_path):
-        if os.path.splitext(plans_path)[-1] == ".json":
-            return load_json(plans_path)
-        if os.path.splitext(plans_path)[-1] == ".yaml":
-            return load_yaml(plans_path)["config"]["plans"]
-        else:
-            raise FileNotFoundError(
-                f"Plan file not found. Got {plans_path} with ext {os.path.splitext(plans_path)[-1]}. Expects either a '.json' or '.yaml' file."
-            )
-
     def run(self):
         self.initialize_properties()
         self.initialize_paths()
@@ -152,11 +111,11 @@ class YuccaPreprocessor(object):
         )
         p = Pool(self.threads)
 
-        p.map(self._preprocess_train_subject, self.subject_ids)
+        p.map(self.preprocess_train_subject, self.subject_ids)
         p.close()
         p.join()
 
-    def _preprocess_train_subject(self, subject_id):
+    def preprocess_train_subject(self, subject_id):
         """
         This is the bread and butter of the preprocessor.
         The following steps are taken:
@@ -228,30 +187,9 @@ class YuccaPreprocessor(object):
 
         original_size = np.array(images[0].shape)
 
-        # If qform and sform are both missing the header is corrupt and we do not trust the
-        # direction from the affine
-        # Make sure you know what you're doing
-        valid_header = False
-        if isinstance(images[0], nib.Nifti1Image):
-            if images[0].get_qform(coded=True)[1] or images[0].get_sform(coded=True)[1]:
-                valid_header = True
-
-        # If qform and sform are both missing the header is corrupt and we do not trust the
-        # direction from the affine
-        # Make sure you know what you're doing
-        if valid_header:
-            original_spacing = get_nib_spacing(images[0])
-            original_orientation = get_nib_orientation(images[0])
-            final_direction = self.plans["target_coordinate_system"]
-            images = [reorient_nib_image(image, original_orientation, final_direction) for image in images]
-            label = reorient_nib_image(label, original_orientation, final_direction)
-        else:
-            original_spacing = np.array([1.0] * len(original_size))
-            original_orientation = "INVALID"
-            final_direction = "INVALID"
-
-        images = [nifti_or_np_to_np(image) for image in images]
-        label = nifti_or_np_to_np(label)
+        images, label, image_props["nifti_metadata"] = self.apply_nifti_preprocessing_and_return_numpy(
+            images, original_size, label
+        )
 
         self.verify_label_validity(label)
 
@@ -265,15 +203,15 @@ class YuccaPreprocessor(object):
         else:
             image_props["crop_to_nonzero"] = self.plans["crop_to_nonzero"]
 
-        images, label = self._transpose_case(images, self.transpose_forward, label)
+        images, label = self.transpose_case(images, self.transpose_forward, label)
 
         resample_target_size, final_target_size = self.determine_target_size(
             images_transposed=images,
-            original_spacing=original_spacing,
+            original_spacing=image_props["nifti_metadata"]["original_spacing"],
             transpose_forward=self.transpose_forward,
         )
 
-        images, label = self._resample_and_normalize_case(
+        images, label = self.resample_and_normalize_case(
             images=images,
             target_size=resample_target_size,
             label=label,
@@ -281,21 +219,21 @@ class YuccaPreprocessor(object):
         )
 
         if final_target_size is not None:
-            images, label = self._pad_to_size(images, size=final_target_size, label=label)
+            images, label = self.pad_to_size(images, size=final_target_size, label=label)
 
         # Stack and fix dimensions
         images = np.vstack((np.array(images), np.array(label)[np.newaxis]))
         final_size = list(images[0].shape)
 
-        foreground_locs, label_cc_n, label_cc_sizes = self._analyze_label(label=images[-1])
+        foreground_locs, label_cc_n, label_cc_sizes = self.analyze_label(label=images[-1])
 
         # save relevant values
-        image_props["original_spacing"] = original_spacing
+        image_props["original_spacing"] = image_props["nifti_metadata"]["original_spacing"]
         image_props["original_size"] = original_size
-        image_props["original_orientation"] = original_orientation
+        image_props["original_orientation"] = image_props["nifti_metadata"]["original_orientation"]
         image_props["new_spacing"] = self.target_spacing
         image_props["new_size"] = final_size
-        image_props["new_direction"] = final_direction
+        image_props["new_direction"] = image_props["nifti_metadata"]["final_direction"]
         image_props["foreground_locations"] = foreground_locs
         image_props["label_cc_n"] = label_cc_n
         image_props["label_cc_sizes"] = label_cc_sizes
@@ -311,103 +249,6 @@ class YuccaPreprocessor(object):
 
         # save metadata as .pkl
         save_pickle(image_props, picklepath)
-
-    def verify_label_validity(self, label):
-        # Check if the ground truth only contains expected values
-        expected_labels = np.array(self.plans["dataset_properties"]["classes"], dtype=np.float32)
-        actual_labels = np.unique(label).astype(np.float32)
-        assert np.all(np.isin(actual_labels, expected_labels)), (
-            f"Unexpected labels found for {subject_id} \n" f"expected: {expected_labels} \n" f"found: {actual_labels}"
-        )
-
-    def _analyze_label(self, label):
-        # we get some (no need to get all) locations of foreground, that we will later use in the
-        # oversampling of foreground classes
-        # And we also potentially analyze the connected components of the label
-        foreground_locs = np.array(np.nonzero(label)).T[::10]
-        if self.disable_cc_analysis:
-            label_cc_n = "NOT ANALYZED"
-            label_cc_sizes = "NOT ANALYZED"
-        else:
-            numbered_ground_truth, label_cc_n = cc3d.connected_components(label, connectivity=26, return_N=True)
-            if ground_truth_numb_lesion == 0:
-                label_cc_sizes = 0
-            else:
-                label_cc_sizes = [
-                    i * np.prod(target_spacing) for i in np.unique(numbered_ground_truth, return_counts=True)[-1][1:]
-                ]
-        return foreground_locs, label_cc_n, label_cc_sizes
-
-    def _transpose_case(
-        self,
-        images: list,
-        transpose: np.ndarray,
-        label=None,
-    ):
-        for i in range(len(images)):
-            assert len(images[i].shape) == len(transpose), (
-                "image and transpose axes do not match. \n"
-                f"images[i].shape == {images[i].shape} \n"
-                f"transpose == {transpose} \n"
-                f"len(images[i].shape) == {len(images[i]).shape} \n"
-                f"len(transpose) == {len(transpose)} \n"
-            )
-            images[i] = images[i].transpose(transpose)
-            logging.info(f"Transposed with: {transpose} \n")
-
-        if label is not None:
-            label = label.transpose(transpose)
-            return images, label
-
-        return images
-
-    def _resample_and_normalize_case(
-        self,
-        images: list,
-        target_size,
-        label: np.ndarray = None,
-        norm_op=None,
-    ):
-        # Normalize and Transpose images to target view.
-        # Transpose labels to target view.
-        assert len(images) == len(norm_op) == len(self.intensities), (
-            "number of images, "
-            "normalization  operations and intensities does not match. \n"
-            f"len(images) == {len(images)} \n"
-            f"len(norm_op) == {len(norm_op)} \n"
-            f"len(self.intensities) == {len(self.intensities)} \n"
-        )
-
-        for i in range(len(images)):
-            image = images[i]
-            assert image is not None
-            images[i] = normalizer(image, scheme=norm_op[i], intensities=self.intensities[i])
-
-        logging.info(f"Normalized with: {norm_op[0]} \n")
-
-        # Resample to target shape and spacing
-        for i in range(len(images)):
-            try:
-                images[i] = resize(images[i], output_shape=target_size, order=3)
-            except OverflowError:
-                logging.error("Unexpected values in either shape or image for resize")
-        if label is not None:
-            try:
-                label = resize(label, output_shape=target_size, order=0, anti_aliasing=False)
-            except OverflowError:
-                logging.error("Unexpected values in either shape or label for resize")
-            return images, label
-
-        return images
-
-    def _pad_to_size(self, images: list, size, pad_value="min", label=None):
-        for i in range(len(images)):
-            pad_kwargs = get_pad_kwargs(data=images[i], pad_value=pad_value)
-            images[i], _ = pad_to_size(images[i], size, **pad_kwargs)
-        if label is None:
-            return images
-        label, _ = pad_to_size(label, size, **pad_kwargs)
-        return images, label
 
     def preprocess_case_for_inference(self, images: list | tuple, patch_size: tuple):
         """
@@ -439,58 +280,9 @@ class YuccaPreprocessor(object):
             3,
         ], "images must be either 2D or 3D for preprocessing"
 
-        image_properties["original_spacing"] = np.array([1.0] * len(image_properties["original_shape"]))
-        image_properties["qform"] = None
-        image_properties["sform"] = None
-        image_properties["reoriented"] = False
-        image_properties["affine"] = None
-
-        if isinstance(images[0], nib.Nifti1Image):
-            image_properties["original_spacing"] = get_nib_spacing(images[0])
-            image_properties["qform"] = images[0].get_qform()
-            image_properties["sform"] = images[0].get_sform()
-            # Check if header is valid and then attempt to orient to target orientation.
-            if (
-                images[0].get_qform(coded=True)[1]
-                or images[0].get_sform(coded=True)[1]
-                and self.plans.get("target_coordinate_system")
-            ):
-                image_properties["reoriented"] = True
-                original_orientation = get_nib_orientation(images[0])
-                image_properties["original_orientation"] = original_orientation
-                images = [
-                    reorient_nib_image(image, original_orientation, self.plans["target_coordinate_system"]) for image in images
-                ]
-                image_properties["new_orientation"] = get_nib_orientation(images[0])
-            image_properties["affine"] = images[0].affine
-
-        images = [nifti_or_np_to_np(image) for image in images]
-        image_properties["original_spacing"] = np.array([1.0] * len(image_properties["original_shape"]))
-        image_properties["qform"] = None
-        image_properties["sform"] = None
-        image_properties["reoriented"] = False
-        image_properties["affine"] = None
-
-        if isinstance(images[0], nib.Nifti1Image):
-            image_properties["original_spacing"] = get_nib_spacing(images[0])
-            image_properties["qform"] = images[0].get_qform()
-            image_properties["sform"] = images[0].get_sform()
-            # Check if header is valid and then attempt to orient to target orientation.
-            if (
-                images[0].get_qform(coded=True)[1]
-                or images[0].get_sform(coded=True)[1]
-                and self.plans.get("target_coordinate_system")
-            ):
-                image_properties["reoriented"] = True
-                original_orientation = get_nib_orientation(images[0])
-                image_properties["original_orientation"] = original_orientation
-                images = [
-                    reorient_nib_image(image, original_orientation, self.plans["target_coordinate_system"]) for image in images
-                ]
-                image_properties["new_orientation"] = get_nib_orientation(images[0])
-            image_properties["affine"] = images[0].affine
-
-        images = [nifti_or_np_to_np(image) for image in images]
+        images, _, original_spacing, image_properties["nifti_metadata"] = self.apply_nifti_preprocessing_and_return_numpy(
+            images, image_properties["original_shape"], label=None
+        )
 
         image_properties["uncropped_shape"] = np.array(images[0].shape)
 
@@ -502,7 +294,7 @@ class YuccaPreprocessor(object):
 
         image_properties["cropped_shape"] = np.array(images[0].shape)
 
-        images = self._resample_and_normalize_case(
+        images = self.resample_and_normalize_case(
             images,
             norm_op=self.plans["normalization_scheme"],
             transpose=self.transpose_forward,
@@ -594,6 +386,172 @@ class YuccaPreprocessor(object):
             canvas = images
         return canvas.numpy(), image_properties
 
+    @staticmethod
+    def load_plans(plans_path):
+        if os.path.splitext(plans_path)[-1] == ".json":
+            return load_json(plans_path)
+        if os.path.splitext(plans_path)[-1] == ".yaml":
+            return load_yaml(plans_path)["config"]["plans"]
+        else:
+            raise FileNotFoundError(
+                f"Plan file not found. Got {plans_path} with ext {os.path.splitext(plans_path)[-1]}. Expects either a '.json' or '.yaml' file."
+            )
+
+    @staticmethod
+    def pad_to_size(images: list, size, pad_value="min", label=None):
+        for i in range(len(images)):
+            pad_kwargs = get_pad_kwargs(data=images[i], pad_value=pad_value)
+            images[i], _ = pad_to_size(images[i], size, **pad_kwargs)
+        if label is None:
+            return images
+        label, _ = pad_to_size(label, size, **pad_kwargs)
+        return images, label
+
+    @staticmethod
+    def transpose_case(
+        images: list,
+        transpose: np.ndarray,
+        label=None,
+    ):
+        for i in range(len(images)):
+            assert len(images[i].shape) == len(transpose), (
+                "image and transpose axes do not match. \n"
+                f"images[i].shape == {images[i].shape} \n"
+                f"transpose == {transpose} \n"
+                f"len(images[i].shape) == {len(images[i]).shape} \n"
+                f"len(transpose) == {len(transpose)} \n"
+            )
+            images[i] = images[i].transpose(transpose)
+            logging.info(f"Transposed with: {transpose} \n")
+
+        if label is not None:
+            label = label.transpose(transpose)
+            return images, label
+
+        return images
+
+    def analyze_label(self, label):
+        # we get some (no need to get all) locations of foreground, that we will later use in the
+        # oversampling of foreground classes
+        # And we also potentially analyze the connected components of the label
+        foreground_locs = np.array(np.nonzero(label)).T[::10]
+        if self.disable_cc_analysis:
+            label_cc_n = "NOT ANALYZED"
+            label_cc_sizes = "NOT ANALYZED"
+        else:
+            numbered_ground_truth, label_cc_n = cc3d.connected_components(label, connectivity=26, return_N=True)
+            if ground_truth_numb_lesion == 0:
+                label_cc_sizes = 0
+            else:
+                label_cc_sizes = [
+                    i * np.prod(target_spacing) for i in np.unique(numbered_ground_truth, return_counts=True)[-1][1:]
+                ]
+        return foreground_locs, label_cc_n, label_cc_sizes
+
+    def apply_nifti_preprocessing_and_return_numpy(
+        self,
+        images,
+        original_size,
+        label=None,
+    ):
+        # If qform and sform are both missing the header is corrupt and we do not trust the
+        # direction from the affine
+        # Make sure you know what you're doing
+        valid_header = False
+        if isinstance(images[0], nib.Nifti1Image):
+            if images[0].get_qform(coded=True)[1] or images[0].get_sform(coded=True)[1]:
+                valid_header = True
+
+        # If qform and sform are both missing the header is corrupt and we do not trust the
+        # direction from the affine
+        # Make sure you know what you're doing
+        if valid_header:
+            original_spacing = get_nib_spacing(images[0])
+            original_orientation = get_nib_orientation(images[0])
+            final_direction = self.plans["target_coordinate_system"]
+            images = [reorient_nib_image(image, original_orientation, final_direction) for image in images]
+            if label is not None and isinstance(label, nib.Nifti1Image):
+                label = reorient_nib_image(label, original_orientation, final_direction)
+        else:
+            original_spacing = np.array([1.0] * len(original_size))
+            original_orientation = "INVALID"
+            final_direction = "INVALID"
+
+        images = [nifti_or_np_to_np(image) for image in images]
+        if label is not None:
+            label = nifti_or_np_to_np(label)
+            return images, original_spacing, original_orientation, final_direction, label
+        return images, original_spacing, original_orientation, final_direction
+
+    def determine_target_size(
+        self,
+        images_transposed: list,
+        original_spacing,
+        transpose_forward,
+    ):
+        final_target_size = None
+        image_shape_t = np.array(images_transposed[0].shape)
+        # We do not want to change the aspect ratio so we resample using the minimum alpha required
+        # to attain 1 correct dimension, and then the rest will be padded.
+        if self.target_size is not None:
+            if self.plans["keep_aspect_ratio_when_using_target_size"] is True:
+                resample_target_size = np.array(image_shape_t * np.min(self.target_size / image_shape_t))
+                final_target_size = self.target_size
+            else:
+                resample_target_size = self.target_size
+
+        # Otherwise we need to calculate a new target shape, and we need to factor in that
+        # the images will first be transposed and THEN resampled.
+        # Find new shape based on the target spacing
+        elif self.target_spacing is not None:
+            target_spacing = np.array(self.target_spacing, dtype=float)
+            original_spacing_t = original_spacing[transpose_forward]
+            target_spacing = target_spacing[transpose_forward]
+            resample_target_size = np.round((original_spacing_t / target_spacing).astype(float) * shape_t).astype(int)
+            self.target_spacing = target_spacing.tolist()
+        else:
+            resample_target_size = image_shape_t
+        return resample_target_size, final_target_size
+
+    def resample_and_normalize_case(
+        self,
+        images: list,
+        target_size,
+        label: np.ndarray = None,
+        norm_op=None,
+    ):
+        # Normalize and Transpose images to target view.
+        # Transpose labels to target view.
+        assert len(images) == len(norm_op) == len(self.intensities), (
+            "number of images, "
+            "normalization  operations and intensities does not match. \n"
+            f"len(images) == {len(images)} \n"
+            f"len(norm_op) == {len(norm_op)} \n"
+            f"len(self.intensities) == {len(self.intensities)} \n"
+        )
+
+        for i in range(len(images)):
+            image = images[i]
+            assert image is not None
+            images[i] = normalizer(image, scheme=norm_op[i], intensities=self.intensities[i])
+
+        logging.info(f"Normalized with: {norm_op[0]} \n")
+
+        # Resample to target shape and spacing
+        for i in range(len(images)):
+            try:
+                images[i] = resize(images[i], output_shape=target_size, order=3)
+            except OverflowError:
+                logging.error("Unexpected values in either shape or image for resize")
+        if label is not None:
+            try:
+                label = resize(label, output_shape=target_size, order=0, anti_aliasing=False)
+            except OverflowError:
+                logging.error("Unexpected values in either shape or label for resize")
+            return images, label
+
+        return images
+
     def run_sanity_checks(self, images, label, subject_id, imagepaths):
         self.sanity_check_standard_formats(images, label, subject_id, imagepaths)
 
@@ -639,8 +597,10 @@ class YuccaPreprocessor(object):
                 f"One is: {get_nib_orientation(images[0])} while another is {get_nib_orientation(image)}"
             )
 
-
-# %%
-
-
-# %%
+    def verify_label_validity(self, label):
+        # Check if the ground truth only contains expected values
+        expected_labels = np.array(self.plans["dataset_properties"]["classes"], dtype=np.float32)
+        actual_labels = np.unique(label).astype(np.float32)
+        assert np.all(np.isin(actual_labels, expected_labels)), (
+            f"Unexpected labels found for {subject_id} \n" f"expected: {expected_labels} \n" f"found: {actual_labels}"
+        )

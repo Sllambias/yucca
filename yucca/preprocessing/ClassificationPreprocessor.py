@@ -59,43 +59,16 @@ class ClassificationPreprocessor(YuccaPreprocessor):
         label = read_file_to_nifti_or_np(label[0], dtype=np.uint8)
 
         if not self.disable_sanity_checks:
-            assert len(images) > 0, f"found no images for {subject_id + '_'}, " f"attempted imagepaths: {imagepaths}"
-            assert (
-                len(images[0].shape) == self.plans["dataset_properties"]["data_dimensions"]
-            ), f"image should be shape (x, y(, z)) but is {images[0].shape}"
-
-            # Make sure all modalities are correctly registered
-            if len(images) > 1:
-                for image in images:
-                    assert images[0].shape == image.shape, (
-                        f"Sizes do not match for {subject_id}" f"One is: {images[0].shape} while another is {image.shape}"
-                    )
+            self.run_sanity_checks(images, label, subject_id, imagepaths)
 
         original_size = np.array(images[0].shape)
-
-        # If qform and sform are both missing the header is corrupt and we do not trust the
-        # direction from the affine
-        # Make sure you know what you're doing
-        valid_header = False
-        if isinstance(images[0], nib.Nifti1Image):
-            if images[0].get_qform(coded=True)[1] or images[0].get_sform(coded=True)[1]:
-                valid_header = True
-
-        if valid_header:
-            original_spacing = get_nib_spacing(images[0])
-            original_orientation = get_nib_orientation(images[0])
-            final_direction = self.plans["target_coordinate_system"]
-            images = [reorient_nib_image(image, original_orientation, final_direction) for image in images]
-            if isinstance(label, nib.Nifti1Image):
-                label = reorient_nib_image(label, original_orientation, final_direction)
-        else:
-            original_spacing = np.array([1.0] * len(original_size))
-            original_orientation = "INVALID"
-            final_direction = "INVALID"
-
-        # And now we ensure images are numpy - if we're not working with niftis they will already be at this point
-        images = [nifti_or_np_to_np(image) for image in images]
-        label = nifti_or_np_to_np(label)
+        (
+            images,
+            original_spacing,
+            original_orientation,
+            final_direction,
+            label,
+        ) = self.apply_nifti_preprocessing_and_return_numpy(images, original_size, label)
 
         # Cropping is performed to save computational resources. We are only removing background.
         if self.plans["crop_to_nonzero"]:
@@ -106,7 +79,7 @@ class ClassificationPreprocessor(YuccaPreprocessor):
         else:
             image_props["crop_to_nonzero"] = self.plans["crop_to_nonzero"]
 
-        images = self._transpose_case(images, self.transpose_forward, label=None)
+        images = self.transpose_case(images, self.transpose_forward, label=None)
 
         resample_target_size, final_target_size = self.determine_target_size(
             images_transposed=images,
@@ -122,7 +95,7 @@ class ClassificationPreprocessor(YuccaPreprocessor):
         )
 
         if final_target_size is not None:
-            images = self._pad_to_size(images, size=final_target_size, label=None)
+            images = self.pad_to_size(images, size=final_target_size, label=None)
 
         images = np.array((np.array(images).T, label), dtype="object")
         images[0] = images[0].T
@@ -163,3 +136,42 @@ class ClassificationPreprocessor(YuccaPreprocessor):
         """
         image_properties["save_format"] = "txt"
         return images.cpu().numpy(), image_properties
+
+    def apply_nifti_preprocessing_and_return_numpy(
+        self,
+        images,
+        original_size,
+        label=None,
+    ):
+        # If qform and sform are both missing the header is corrupt and we do not trust the
+        # direction from the affine
+        # Make sure you know what you're doing
+        metadata = {
+            "original_spacing" : np.array([1.0] * len(original_size)),
+            "original_orientation" : None,
+            "final_direction" : None,
+            "qform" : None,
+            "sform" : None,
+            "affine" : None,
+            "reoriented": False,}
+
+        if isinstance(images[0], nib.Nifti1Image):
+            # If qform and sform are both missing the header is corrupt and we do not trust the
+            # direction from the affine
+            # Make sure you know what you're doing
+            metadata["original_spacing"] = get_nib_spacing(images[0])
+            metadata["qform"] = images[0].get_qform()
+            metadata["sform"] = images[0].get_sform()
+            if images[0].get_qform(coded=True)[1] or images[0].get_sform(coded=True)[1]:
+                metadata["reoriented"] = True
+                metadata["original_orientation"] = get_nib_orientation(images[0])
+                metadata["final_direction"] = self.plans["target_coordinate_system"]
+                images = [reorient_nib_image(image, metadata["original_orientation"], metadata["final_direction"]) for image in images]
+                if label is not None and isinstance(label, nib.Nifti1Image):
+                    label = reorient_nib_image(label, metadata["original_orientation"],  metadata["final_direction"])
+            metadata["affine"] = images[0]affine
+
+        images = [nifti_or_np_to_np(image) for image in images]
+        if label is not None:
+            label = nifti_or_np_to_np(label)
+        return images, label, metadata

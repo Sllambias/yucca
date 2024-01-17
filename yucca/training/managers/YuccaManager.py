@@ -55,6 +55,7 @@ class YuccaManager:
         model_dimensions: str = "3D",
         model_name: str = "TinyUNet",
         num_workers: int = 8,
+        patch_based_training: bool = True,
         patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
         planner: str = "YuccaPlanner",
         precision: str = "16-mixed",
