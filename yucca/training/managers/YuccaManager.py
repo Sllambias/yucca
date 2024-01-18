@@ -61,6 +61,8 @@ class YuccaManager:
         precision: str = "16-mixed",
         profile: bool = False,
         split_idx: int = 0,
+        p: float = None,
+        k: int = 5,
         step_logging: bool = False,
         task: str = None,
         experiment: str = "default",
@@ -84,6 +86,8 @@ class YuccaManager:
         self.precision = precision
         self.profile = profile
         self.split_idx = split_idx
+        self.k = k
+        self.p = p
         self.step_logging = step_logging
         self.task = task
         self.experiment = experiment
@@ -137,7 +141,7 @@ class YuccaManager:
             stage=stage,
         )
 
-        splits_config = get_split_config(train_data_dir=path_config.train_data_dir, task=task_config.task)
+        splits_config = get_split_config(train_data_dir=path_config.train_data_dir, task=task_config.task, k=self.k, p=self.p)
 
         input_dims_config = get_input_dims_config(
             plan=plan_config.plans,

@@ -43,13 +43,7 @@ def main():
         "on the given task. Defaults to the YuccaPlanne folder",
         default="YuccaPlanner",
     )
-    parser.add_argument(
-        "-f",
-        help="Fold to use for training. Unless manually assigned, "
-        "folds [0,1,2,3,4] will be created automatically. "
-        "Defaults to training on fold 0",
-        default=0,
-    )
+
     parser.add_argument("--epochs", help="Used to specify the number of epochs for training. Default is 1000")
     # The following can be changed to run training with alternative LR, Loss and/or Momentum ###
     parser.add_argument(
@@ -92,6 +86,16 @@ def main():
         default=None,
     )
 
+    # Split configs
+    parser.add_argument(
+        "-p",
+        type=float,
+        help="Use a simple train/val split where `p` is the fraction of items used for the val split.",
+        default=None,
+    )
+    parser.add_argument("-k", type=int, help="Use kfold split where `k` is amount of folds.", default=None)
+    parser.add_argument("-f", "--split_idx", type=int, help="idx of splits to use for training.", default=0)
+
     parser.add_argument("--precision", type=str, default="bf16-mixed")
 
     args = parser.parse_args()
@@ -102,7 +106,6 @@ def main():
     deep_supervision = args.ds
     epochs = args.epochs
     manager_name = args.man
-    split_idx = int(args.f)
     lr = args.lr
     log = not args.disable_logging
     loss = args.loss
@@ -112,6 +115,13 @@ def main():
     planner = args.pl
     profile = args.profile
     experiment = args.experiment
+
+    split_idx = args.split_idx
+    k = args.k
+    p = args.p
+
+    if k is None and p is None:
+        k = 5
 
     if patch_size is not None:
         if patch_size not in ["mean", "max", "min"]:
@@ -147,6 +157,8 @@ def main():
         deep_supervision=deep_supervision,
         enable_logging=log,
         split_idx=split_idx,
+        k=k,
+        p=p,
         loss=loss,
         model_dimensions=dimensions,
         model_name=model_name,
