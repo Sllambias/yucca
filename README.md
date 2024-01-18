@@ -95,25 +95,7 @@ An example of preprocessing a task called `Task001_Brains` with the default plan
 
 # Training
 
-Training is carried out using the `yucca_train` command, which calls the [`run_training.py`](yucca/run/run_training.py) script. Prior to training the `yucca_preprocessing` command must be used to preprocess data and create the appropriate plan folder and `_plans.json` file. For help and all the available arguments see the output of the `-h` flag below.
-
-```console
-> yucca_train -h
-usage: yucca_train [-h] [-t TASK] [-m M] [-d D] [-tr TR] [-pl PL] [-f F] [--lr LR] [--loss LOSS] [--mom MOM] [--continue_train]
-
-options:
-  -h, --help            show this help message and exit
-  -t TASK, --task TASK  Name of the task used for training. The data should already be preprocessed using yucca_preprocessArgument should be of format: TaskXXX_MYTASK
-  -m M                  Model Architecture. Should be one of MultiResUNet or UNet Note that this is case sensitive. Defaults to the standard UNet.
-  -d D                  Dimensionality of the Model. Can be 3D, 25D or 2D. Defaults to 3D.
-  -tr TR                Trainer Class to be used. Defaults to the basic YuccaTrainer
-  -pl PL                Plan ID to be used. This specifies which plan and preprocessed data to use for training on the given task. Defaults to the YuccaPlans folder
-  -f F                  Fold to use for training. Unless manually assigned, folds [0,1,2,3,4] will be created automatically. Defaults to training on fold 0
-  --lr LR               Should only be used to employ alternative Learning Rate. Format should be scientific notation e.g. 1e-4.
-  --loss LOSS           Should only be used to employ alternative Loss Function
-  --mom MOM             Should only be used to employ alternative Momentum.
-  --continue_train      continue training a previously saved checkpoint.
-```
+Training is carried out using the `yucca_train` command, which calls the [`run_training.py`](yucca/run/run_training.py) script. Prior to training the `yucca_preprocessing` command must be used to preprocess data and create the appropriate plan folder and `_plans.json` file. 
 To start training using the default Trainer Class and plans file simply supply (1) the task with `-t` (2) the model architecture with `-m` and (3) the dimensions with `-d`. An example of training on a task called `Task001_Brains`, using a 3D `MultiResUnet`:
 ```
 > yucca_train -t Task001_Brains -m MultiResUNet
