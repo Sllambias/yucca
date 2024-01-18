@@ -123,6 +123,8 @@ def main():
     if k is None and p is None:
         k = 5
 
+    assert (k is not None and p is None) or (k is None and p is not None), "It is not allowed to provide both `k` and `p`."
+
     if patch_size is not None:
         if patch_size not in ["mean", "max", "min"]:
             patch_size = (int(patch_size),) * 3 if dimensions == "3D" else (int(patch_size),) * 2
