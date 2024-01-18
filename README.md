@@ -115,8 +115,8 @@ An example of training a `MultiResUNet` on a task called `Task001_Brains` that h
 Inference is carried out using the `yucca_inference` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#inference). Prior to inference the model must be trained using the `yucca_train` command and the target dataset must be task-converted.
 
 Basic Yucca inference relies on four components.
-  1. The source task on which the model was trained. This is specified using the **-s** flag.
-  2. The target task-converted raw data on which to run inference. This is specified using the **-t** flag.
+  1. The target task-converted raw data on which to run inference. This is specified using the **-t** flag.
+  2. The source task on which the model was trained. This is specified using the **-s** flag.
   3. The architecture of the trained model. Specified by the **-m** flag.
   4. The dimensions of the trained model. Specified by the **-d** flag.
 
@@ -125,11 +125,11 @@ To run inference using the default Trainer Class, plan file and folds supply (1)
 
 An example of running inference on the test set of a task called `Task001_Brains`, using a 3D `MultiResUnet` trained on the train set of the same task:
 ```
-> yucca_inference -s Task001_Brains -t Task001_Brains -m MultiResUNet
+> yucca_inference -t Task001_Brains -s Task001_Brains -m MultiResUNet
 ```
 An example of running inference on the test set of a task called `Task002_Lungs`, using a 2D `UNet` trained on a task called `Task001_Brains`:
 ```
-> yucca_inference -s Task001_Brains -t Task002_NotBrains -d 2D -m UNet
+> yucca_inference -t Task002_NotBrains -s Task001_Brains -d 2D -m UNet
 ```
 
 # Ensembles
