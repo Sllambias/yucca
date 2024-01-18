@@ -50,8 +50,10 @@ def main():
         "Defaults to training on fold 0",
         default=0,
     )
+    parser.add_argument("--ds", help="Used to enable deep supervision", default=False, action="store_true")
     parser.add_argument("--epochs", help="Used to specify the number of epochs for training. Default is 1000")
-    # The following can be changed to run training with alternative LR, Loss and/or Momentum ###
+
+    # Optionals that can be changed experimentally. For long term solutions these should be specified by a unique Manager.
     parser.add_argument(
         "--lr",
         help="Should only be used to employ alternative Learning Rate. Format should be scientific notation e.g. 1e-4.",
@@ -59,7 +61,14 @@ def main():
     )
     parser.add_argument("--loss", help="Should only be used to employ alternative Loss Function", default=None)
     parser.add_argument("--mom", help="Should only be used to employ alternative Momentum.", default=None)
-    parser.add_argument("--ds", help="Used to enable deep supervision", default=False, action="store_true")
+    parser.add_argument(
+        "--patch_size",
+        type=str,
+        help="Use your own patch_size. Example: if 32 is provided and the model is 3D we will use patch size (32, 32, 32). Can also be min, max or mean.",
+        default=None,
+    )
+    
+    # Optionals to change logging and pathing behaviour 
     parser.add_argument(
         "--disable_logging",
         help="disable logging. ",
@@ -78,21 +87,13 @@ def main():
         action="store_true",
         default=False,
     )
-
     parser.add_argument(
         "--experiment",
-        help="A name for the experiment being performed, wiht no spaces.",
+        help="A name for the experiment being performed, with no spaces.",
         default="default",
     )
-
-    parser.add_argument(
-        "--patch_size",
-        type=str,
-        help="Use your own patch_size. Example: if 32 is provided and the model is 3D we will use patch size (32, 32, 32). Can also be min, max or mean.",
-        default=None,
-    )
-
-    parser.add_argument("--precision", type=str, default="bf16-mixed")
+    parser.add_argument("--precision", type=str, help="Precision settings for model training. "
+                        "For valid arguments see PyTorch Lightning N-Bit Precision. Defaults to bf16-mixed", default="bf16-mixed")
 
     args = parser.parse_args()
 
