@@ -10,7 +10,7 @@
 </div>
 
 # Yucca
-All-Purpose Segmentation Framework. Yucca is designed to be plug-and-play while still being heavily customizable. This allows users to employ the basic Yucca models as solid baselines but it also allows users to change and experiment with exact features in a robust and thoroughly tested research environment. The Yucca project is inspired by Fabien Isensee's [nnUNet](https://github.com/MIC-DKFZ/nnUNet).
+End-to-end modular machine learning framework for classification, segmentation and unsupervised learning. Yucca is designed to be plug-and-play while still allowing for effortless customization. This allows users to employ the basic Yucca models as solid baselines, but it also allows users to change and experiment with exact features in a robust and thoroughly tested research environment. The Yucca project is inspired by Fabien Isensee's [nnUNet](https://github.com/MIC-DKFZ/nnUNet).
 
 ![alt text](yucca/documentation/illustrations/end_to_end_diagram.svg?raw=true)
 
@@ -31,9 +31,9 @@ All-Purpose Segmentation Framework. Yucca is designed to be plug-and-play while 
 
 # Installation
 
-## Install the project after clone using Conda
+## Install an editable version of the project with Cuda support using Conda
 
-Create a python=3.10 environment for Yucca to avoid conflicts with other projects. 
+Create a python=3.10 environment exclusively for Yucca to avoid conflicts with other projects. 
 
 IMPORTANT: First install Pytorch for GPU following appropriate instructions from e.g. https://pytorch.org/get-started/locally/.
 Then navigate to Yucca and install the package from there.
@@ -45,6 +45,7 @@ For an Ubuntu system with Cuda 11.7:
 > conda install -c anaconda setuptools
 > conda install -c "nvidia/label/cuda-11.7.1" cuda-toolkit
 > conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 pytorch-cuda=11.7 -c pytorch -c nvidia
+> git clone https://github.com/Sllambias/yucca.git
 > cd yucca
 > pip install -e .
 ```
@@ -80,29 +81,17 @@ Prior to preprocessing and training all datasets must be converted to a Yucca-co
 
 # Preprocessing
 
-Preprocessing is carried out using the `yucca_preprocess` command, which calls the [`run_preprocessing.py`](yucca/run/run_preprocessing.py) script. For help and all the available arguments see the output of the `-h` flag below.
+Preprocessing is carried out using the `yucca_preprocess` command. For advanced use see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#preprocessing)
 
-```console
-> yucca_preprocess -h
-usage: yucca_preprocess [-h] -t TASK [-pl PL] [--disable_unit_tests DISABLE_UNIT_TESTS] [--threads THREADS]
-
-options:
-  -h, --help            show this help message and exit
-  -t TASK, --task TASK  Name of the task to preprocess. Should be of format: TaskXXX_MYTASK
-  -pl PL                Experiment Planner Class to employ. Defaults to the YuccaPlanner
-  --disable_unit_tests DISABLE_UNIT_TESTS
-                        Enable or disable unittesting
-```
+Basic usage of the preprocessing command relies on three components. 
+  1. The target data to be preprocessed specified with the required **-t** flag. This data must be converted into a Yucca-compliant task beforehand.
+  2. The Planner class. The Planner is responsible for determining *what* we do in preprocessing and *how* it is done. This includes setting the normalization, resizing, resampling and transposition operations and any values associated with them. The planner class defaults to the YuccaPlanner but it can also be any custom planner found or created in the [Planner directory](yucca/planning) and its subdirectories.  The planner can be changed using the **-pl** flag.  
+  3. The Preprocessor class. The Preprocessor is a work horse, that receives an instruction manual from the Planner which it carries out. The Preprocessor can be one YuccaPreprocessor, ClassificationPreprocessor and UnsupervisedPreprocessor. The only aspect in which they differ is how they expect the ground truth to look. The YuccaPreprocessor expects images while the ClassificationPreprocessor expects .txt files with image-level classes and the UnsupervisedPreprocessor expects to not find any ground truth. The default is the YuccaPreprocessor, but this can be changed using the **-pr** flag. 
 
 An example of preprocessing a task called `Task001_Brains` with the default planner:
 ```
 > yucca_preprocess -t Task001_Brains
 ```
-
-Internally, the `yucca_preprocess` command calls a planner and preprocessor class.
-Initially, the appropriate planner is called. This is by default the [`YuccaPlannerV2`](yucca/planning/YuccaPlannerV2.py). The planner defines the normalization operation, spacing/resolution and orientation and saves relevant properties in a .pkl file for later use.
-
-Afterwards, the preprocessor is called. This is by default the [`YuccaPreprocessor`](yucca/preprocessing/YuccaPreprocessor.py). This preprocesses training data according to the operations and values supplied by the chosen planner. As such the preprocessor should very rarely be changed, while the planner will often be changed to employ alternative preprocessing schemes.
 
 # Training
 
