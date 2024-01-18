@@ -81,68 +81,55 @@ Prior to preprocessing and training all datasets must be converted to a Yucca-co
 
 # Preprocessing
 
-Preprocessing is carried out using the `yucca_preprocess` command. For advanced use see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#preprocessing)
+Preprocessing is carried out using the `yucca_preprocess` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#preprocessing)
 
-Basic usage of the preprocessing command relies on three components. 
-  1. The target data to be preprocessed specified with the required **-t** flag. This data must be converted into a Yucca-compliant task beforehand.
-  2. The Planner class. The Planner is responsible for determining *what* we do in preprocessing and *how* it is done. This includes setting the normalization, resizing, resampling and transposition operations and any values associated with them. The planner class defaults to the YuccaPlanner but it can also be any custom planner found or created in the [Planner directory](yucca/planning) and its subdirectories.  The planner can be changed using the **-pl** flag.  
-  3. The Preprocessor class. The Preprocessor is a work horse, that receives an instruction manual from the Planner which it carries out. The Preprocessor can be one YuccaPreprocessor, ClassificationPreprocessor and UnsupervisedPreprocessor. The only aspect in which they differ is how they expect the ground truth to look. The YuccaPreprocessor expects to find images, the ClassificationPreprocessor expects to find .txt files with image-level classes and the UnsupervisedPreprocessor expects to not find any ground truth. The default is the YuccaPreprocessor, but this can be changed using the **-pr** flag. 
+Basic Yucca preprocessing relies on three components. 
+  1. The target task-converted raw data to be preprocessed specified with the required **-t** flag.
+  2. The Planner class. The Planner is responsible for determining *what* we do in preprocessing and *how* it is done. This includes setting the normalization, resizing, resampling and transposition operations and any values associated with them. The planner class defaults to the `YuccaPlanner` but it can also be any custom planner found or created in the [Planner directory](yucca/planning) and its subdirectories.  The planner can be changed using the **-pl** flag.  
+  3. The Preprocessor class. The Preprocessor is a work horse, that receives an instruction manual from the Planner which it carries out. The Preprocessor can be one of `YuccaPreprocessor` (default), `ClassificationPreprocessor` and `UnsupervisedPreprocessor`. The only aspect in which they differ is how they expect the ground truth to look. The `YuccaPreprocessor` expects to find images, the `ClassificationPreprocessor` expects to find .txt files with image-level classes and the `UnsupervisedPreprocessor` expects to not find any ground truth. This can be changed using the **-pr** flag. 
 
-An example of preprocessing a task called `Task001_Brains` with the default planner and the ClassificationPreprocessor:
+An example of preprocessing a task called `Task001_Brains` with the default planner and the `ClassificationPreprocessor`:
 ```
 > yucca_preprocess -t Task001_Brains -pr ClassificationPreprocessor
 ```
 
 # Training
 
-Training is carried out using the `yucca_train` command, which calls the [`run_training.py`](yucca/run/run_training.py) script. Prior to training the `yucca_preprocessing` command must be used to preprocess data and create the appropriate plan folder and `_plans.json` file. 
-To start training using the default Trainer Class and plans file simply supply (1) the task with `-t` (2) the model architecture with `-m` and (3) the dimensions with `-d`. An example of training on a task called `Task001_Brains`, using a 3D `MultiResUnet`:
+Training is carried out using the `yucca_train` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#training). Prior to training any models a preprocessed dataset must be prepared using the `yucca_preprocessing` command.
+
+Basic Yucca training relies on four components.
+  1. The target preprocessed data on which the model will be trained. This is specified using the **-t** flag.
+  2. The model architecture. This includes any model implemented in the [Model directory](yucca/network_architectures/networks). Including, but not limited to, `U-Net`, `UNetR`, `MultiResUNet` and `ResNet50`. Specified by the **-m** flag.
+  3. The model dimensions. This can be either 2D or 3D (default) and is specified with the **-d** flag.
+  4. The planner used to determine preprocessing. This defaults to the `YuccaPlanner` but can be any planner found or created in the [Planner directory](yucca/planning).
+
+An example of training a `MultiResUNet` on a task called `Task001_Brains` that has been preprocessed using the default `YuccaPlanner`:
+ using a 2D `MultiResUnet`:
 ```
-> yucca_train -t Task001_Brains -m MultiResUNet
+> yucca_train -t Task001_Brains -m MultiResUNet -d 2D
 ```
 
-By default this will use the [YuccaTrainerV2](yucca/training/trainers/YuccaTrainerV2.py). To change Trainer use the `-tr` flag. The Trainer Class defines the model training parameters. This includes: learning rate, learning rate scheduler, momentum, loss function, optimizer, batch size, epochs, foreground oversampling, patch size and data augmentation scheme. To change the values of these parameters see [Changing Parameters](yucca/documentation/tutorials/changing_parameters.md#model--training). To use plan files created by non-default Planners use `-pl` and specify the name of the alternative plan file. To specify which fold to train on use `-f`. By default training is done on fold 0 (unless manually specified we create 5 random splits).
-
-An example of training on a task called `Task002_NotBrains`, using a 2D `MultiResUnet` with the `CustomTrainer` and `CustomPlans` on fold 3:
-```
-> yucca_train -t Task002_NotBrains -m MultiResUNet -d 2D -tr CustomTrainer -pl CustomPlans -f 3
-```
 
 # Inference
 
-Inference is carried out using the `yucca_inference` command, which calls the [`run_inference.py`](yucca/run/run_inference.py) script. This relies on models previously trained using the `yucca_train` command. For help and all the available arguments see the output of the `-h` flag below. 
+Inference is carried out using the `yucca_inference` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#inference). Prior to inference the model must be trained using the `yucca_train` command and the target dataset must be task-converted.
 
-```console
-> yucca_inference -h
-usage: yucca_inference [-h] -s S -t T [-f F] [-m M] [-d D] [-tr TR] [-pl PL] [-chk CHK] [--ensemble] [--not_strict] [--save_softmax] [--overwrite] [--no_eval] [--predict_train]
+Basic Yucca inference relies on four components.
+  1. The source task on which the model was trained. This is specified using the **-s** flag.
+  2. The target task-converted raw data on which to run inference. This is specified using the **-t** flag.
+  3. The architecture of the trained model. Specified by the **-m** flag.
+  4. The dimensions of the trained model. Specified by the **-d** flag.
 
-options:
-  -h, --help       show this help message and exit
-  -s S             Name of the source task i.e. what the model is trained on. Should be of format: TaskXXX_MYTASK
-  -t T             Name of the target task i.e. the data to be predicted. Should be of format: TaskXXX_MYTASK
-  -f F             Select the fold that was used to train the model desired for inference. Defaults to looking for a model trained on fold 0.
-  -m M             Model Architecture. Defaults to UNet.
-  -d D             2D, 25D or 3D model. Defaults to 3D.
-  -tr TR           Full name of Trainer Class. e.g. 'YuccaTrainer_DCE' or 'YuccaTrainerV2'. Defaults to YuccaTrainerV2.
-  -pl PL           Plan ID. Defaults to YuccaPlannerV2
-  -chk CHK         Checkpoint to use for inference. Defaults to checkpoint_best.
-  --ensemble       Used to initialize data preprocessing for ensemble/2.5D training
-  --not_strict     Strict determines if all expected modalities must be present, with the appropriate suffixes (e.g. '_000.nii.gz'). Only touch if you know what you're doing.
-  --save_softmax   Save softmax outputs. Required for softmax fusion.
-  --overwrite      Overwrite existing predictions
-  --no_eval        Disable evaluation and creation of metrics file (result.json)
-  --predict_train  Predict on the training set. Useful for debugging.
-```
 
 To run inference using the default Trainer Class, plan file and folds supply (1) the source task (what the model is trained on) with `-s` (2) the target task (what we want to predict) with `-t` (3) the model architecture with `-m` and (4) the dimensions with `-d`.
 
-An example of running inference on the test set of a task called `Task001_Brains`, using a 3D `MultiResUnet` trained on the same task:
+An example of running inference on the test set of a task called `Task001_Brains`, using a 3D `MultiResUnet` trained on the train set of the same task:
 ```
 > yucca_inference -s Task001_Brains -t Task001_Brains -m MultiResUNet
 ```
-If, on the other hand, we were to run inference on a new task called Task002_NotBrains, using a 2D UNet trained on Task001_Brains with a custom Trainer Class:
+An example of running inference on the test set of a task called `Task002_Lungs`, using a 2D `UNet` trained on a task called `Task001_Brains`:
 ```
-> yucca_inference -s Task001_Brains -t Task002_NotBrains -d 2D -tr CustomTrainer
+> yucca_inference -s Task001_Brains -t Task002_NotBrains -d 2D -m UNet
 ```
 
 # Ensembles
