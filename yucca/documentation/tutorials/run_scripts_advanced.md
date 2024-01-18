@@ -1,5 +1,7 @@
 # Preprocessing
 
+, which calls the [`run_preprocessing.py`](yucca/run/run_preprocessing.py) script
+
 For help and all the available arguments see the output of the `-h` flag below.
 
 ```console
@@ -16,4 +18,9 @@ options:
                         Enable or disable sanity checks
 ```
 
+
+Internally, the `yucca_preprocess` command calls a planner and preprocessor class.
+Initially, the appropriate planner is called. This is by default the [`YuccaPlanner`](yucca/planning/YuccaPlanner.py). The planner defines the normalization operation, spacing/resolution and orientation and saves relevant properties in a .pkl file for later use.
+
+Afterwards, the preprocessor is called. This is by default the [`YuccaPreprocessor`](yucca/preprocessing/YuccaPreprocessor.py). This preprocesses training data according to the operations and values supplied by the chosen planner. As such the preprocessor should very rarely be changed, while the planner will often be changed to employ alternative preprocessing schemes.
 
