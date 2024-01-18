@@ -45,3 +45,37 @@ options:
   --mom MOM             Should only be used to employ alternative Momentum.
   --continue_train      continue training a previously saved checkpoint.
 ```
+
+
+By default this will use the [YuccaTrainerV2](yucca/training/trainers/YuccaTrainerV2.py). To change Trainer use the `-tr` flag. The Trainer Class defines the model training parameters. This includes: learning rate, learning rate scheduler, momentum, loss function, optimizer, batch size, epochs, foreground oversampling, patch size and data augmentation scheme. To change the values of these parameters see [Changing Parameters](yucca/documentation/tutorials/changing_parameters.md#model--training). To use plan files created by non-default Planners use `-pl` and specify the name of the alternative plan file. To specify which fold to train on use `-f`. By default training is done on fold 0 (unless manually specified we create 5 random splits).
+
+An example of training on a task called `Task002_NotBrains`, using a 2D `MultiResUnet` with the `CustomTrainer` and `CustomPlans` on fold 3:
+```
+> yucca_train -t Task002_NotBrains -m MultiResUNet -d 2D -tr CustomTrainer -pl CustomPlans -f 3
+```
+
+# Inference
+
+For help and all the available arguments see the output of the `-h` flag below. 
+
+```console
+> yucca_inference -h
+usage: yucca_inference [-h] -s S -t T [-f F] [-m M] [-d D] [-tr TR] [-pl PL] [-chk CHK] [--ensemble] [--not_strict] [--save_softmax] [--overwrite] [--no_eval] [--predict_train]
+
+options:
+  -h, --help       show this help message and exit
+  -s S             Name of the source task i.e. what the model is trained on. Should be of format: TaskXXX_MYTASK
+  -t T             Name of the target task i.e. the data to be predicted. Should be of format: TaskXXX_MYTASK
+  -f F             Select the fold that was used to train the model desired for inference. Defaults to looking for a model trained on fold 0.
+  -m M             Model Architecture. Defaults to UNet.
+  -d D             2D, 25D or 3D model. Defaults to 3D.
+  -tr TR           Full name of Trainer Class. e.g. 'YuccaTrainer_DCE' or 'YuccaTrainerV2'. Defaults to YuccaTrainerV2.
+  -pl PL           Plan ID. Defaults to YuccaPlannerV2
+  -chk CHK         Checkpoint to use for inference. Defaults to checkpoint_best.
+  --ensemble       Used to initialize data preprocessing for ensemble/2.5D training
+  --not_strict     Strict determines if all expected modalities must be present, with the appropriate suffixes (e.g. '_000.nii.gz'). Only touch if you know what you're doing.
+  --save_softmax   Save softmax outputs. Required for softmax fusion.
+  --overwrite      Overwrite existing predictions
+  --no_eval        Disable evaluation and creation of metrics file (result.json)
+  --predict_train  Predict on the training set. Useful for debugging.
+```
