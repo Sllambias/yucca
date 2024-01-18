@@ -86,11 +86,11 @@ Preprocessing is carried out using the `yucca_preprocess` command. For advanced 
 Basic usage of the preprocessing command relies on three components. 
   1. The target data to be preprocessed specified with the required **-t** flag. This data must be converted into a Yucca-compliant task beforehand.
   2. The Planner class. The Planner is responsible for determining *what* we do in preprocessing and *how* it is done. This includes setting the normalization, resizing, resampling and transposition operations and any values associated with them. The planner class defaults to the YuccaPlanner but it can also be any custom planner found or created in the [Planner directory](yucca/planning) and its subdirectories.  The planner can be changed using the **-pl** flag.  
-  3. The Preprocessor class. The Preprocessor is a work horse, that receives an instruction manual from the Planner which it carries out. The Preprocessor can be one YuccaPreprocessor, ClassificationPreprocessor and UnsupervisedPreprocessor. The only aspect in which they differ is how they expect the ground truth to look. The YuccaPreprocessor expects images while the ClassificationPreprocessor expects .txt files with image-level classes and the UnsupervisedPreprocessor expects to not find any ground truth. The default is the YuccaPreprocessor, but this can be changed using the **-pr** flag. 
+  3. The Preprocessor class. The Preprocessor is a work horse, that receives an instruction manual from the Planner which it carries out. The Preprocessor can be one YuccaPreprocessor, ClassificationPreprocessor and UnsupervisedPreprocessor. The only aspect in which they differ is how they expect the ground truth to look. The YuccaPreprocessor expects to find images, the ClassificationPreprocessor expects to find .txt files with image-level classes and the UnsupervisedPreprocessor expects to not find any ground truth. The default is the YuccaPreprocessor, but this can be changed using the **-pr** flag. 
 
-An example of preprocessing a task called `Task001_Brains` with the default planner:
+An example of preprocessing a task called `Task001_Brains` with the default planner and the ClassificationPreprocessor:
 ```
-> yucca_preprocess -t Task001_Brains
+> yucca_preprocess -t Task001_Brains -pr ClassificationPreprocessor
 ```
 
 # Training
