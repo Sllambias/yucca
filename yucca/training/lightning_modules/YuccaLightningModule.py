@@ -60,6 +60,8 @@ class YuccaLightningModule(L.LightningModule):
 
         # Evaluation and logging
         self.step_logging = step_logging
+
+        # Set up standard settings based on the task
         if self.task_type in ["classification", "segmentation"]:
             self.train_metrics = MetricCollection(
                 {"train_dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}

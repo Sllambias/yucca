@@ -54,10 +54,10 @@ class YuccaManager:
         max_vram: int = 12,
         model_dimensions: str = "3D",
         model_name: str = "TinyUNet",
+        momentum: float = 0.9,
         num_workers: int = 8,
         patch_based_training: bool = True,
         patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
-        augmentation_params: dict = {},
         planner: str = "YuccaPlanner",
         precision: str = "bf16-mixed",
         profile: bool = False,
@@ -74,14 +74,15 @@ class YuccaManager:
         self.deep_supervision = deep_supervision
         self.enable_logging = enable_logging
         self.experiment = experiment
+        self.learning_rate = learning_rate
         self.loss = loss
         self.max_epochs = max_epochs
         self.max_vram = max_vram
         self.model_dimensions = model_dimensions
         self.model_name = model_name
+        self.momentum = momentum
         self.name = self.__class__.__name__
         self.num_workers = num_workers
-        self.augmentation_params = augmentation_params
         self.patch_based_training = patch_based_training
         self.patch_size = patch_size
         self.planner = planner
@@ -104,6 +105,10 @@ class YuccaManager:
             if not torch.cuda.is_bf16_supported():
                 self.precision = self.precision.replace("bf", "")
 
+        # variables that can be overwritten by managers.
+        self.augmentation_params = {}
+
+        # Lightning Trainer
         self.trainer = L.Trainer
 
     def initialize(
@@ -192,7 +197,9 @@ class YuccaManager:
             | input_dims_config.lm_hparams()
             | callback_config.lm_hparams(),
             deep_supervision=self.deep_supervision,
+            learning_rate=self.learning_rate,
             loss_fn=self.loss,
+            momentum=self.momentum,
             stage=stage,
             step_logging=self.step_logging,
             test_time_augmentation=not disable_tta if disable_tta is True else bool(augmenter.mirror_p_per_sample),

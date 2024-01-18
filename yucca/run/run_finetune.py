@@ -64,12 +64,12 @@ def main():
     # The following can be changed to run training with alternative LR, Loss and/or Momentum ###
     parser.add_argument(
         "--lr",
+        type=float,
         help="Should only be used to employ alternative Learning Rate. Format should be scientific notation e.g. 1e-4.",
-        default=None,
+        default=1e-3,
     )
     parser.add_argument("--loss", help="Should only be used to employ alternative Loss Function", default=None)
-    parser.add_argument("--mom", help="Should only be used to employ alternative Momentum.", default=None)
-
+    parser.add_argument("--mom", type=float, help="Should only be used to employ alternative Momentum.", default=0.9)
     parser.add_argument("--disable_logging", help="disable logging. ", action="store_true", default=False)
     parser.add_argument(
         "--new_version",
@@ -139,11 +139,13 @@ def main():
         deep_supervision=False,
         enable_logging=log,
         experiment=experiment,
+        learning_rate=lr,
         loss=loss,
         max_epochs=args.epochs,
         max_vram=args.max_vram,
         model_dimensions=dimensions,
         model_name=model_name,
+        momentum=momentum,
         num_workers=8,
         patch_size=patch_size,
         planner=planner,
