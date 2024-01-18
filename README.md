@@ -134,17 +134,29 @@ An example of running inference on the test set of a task called `Task002_Lungs`
 
 # Ensembles
 
-Using an ensemble of models can be achieved manually and automatically. 
-The automatic method trains 3 models on the axial, sagittal and coronal views and combine these in inference. It is called using the `--ensemble` flag available for [`yucca_preprocess`](#preprocessing), [yucca_train](#training) and [yucca_inference](#inference). The preprocessor will preprocess the selected Task 3 times, one for each of the views, and save the preprocessed datasets in separate folders with the suffixes `X`, `Y` and `Z`, e.g. `yucca_preprocessed/TaskXXX_MYTASK/YuccaPlannerV2X`. The trainer will train a model on each of the three views and save the trained models using the same suffixes, e.g. `yucca_models/TaskXXX_MYTASK/YuccaTrainerV2_YuccaPlannerV2X`. Then, the softmax outputs from the three models are fused to create the final prediction and saved in a folder suffixed by `_Ensemble`, e.g. `yucca_results/TaskXXX_MYTASK/UNet2D/YuccaTrainerV2_YuccaPlannerV2_Ensemble`.
+Ensembling models is carried out using the `yucca_preprocess`, `yucca_train` and `yucca_inference` commands. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#ensembles). A common application of model ensembles is to train 2D models on each of the three axes of 3D data (either denoted as the X-, Y- and Z-axis or, in medical imaging, the axial, sagittal and coronal views) and then fuse their predictions in inference. 
 
-The manual method can be used to speed up the process or use different ensembles og e.g. different folds rather than views. The speedup comes from the fact that the `--ensemble` flag isn't capable of handling parallel model training, it is therefore quite slow as models will only be trained sequentially. To "parallelize" this, you can train models on each of the three preprocessed datasets:
+To train 3 models on the three axes of a 3D dataset called `Task001_Brains` prepare three preprocessed versions of the dataset using the three Planners `YuccaPlannerX`, `YuccaPlannerY` and `YuccaPlannerZ`:
 ```console
-> yucca_train -t Task002_NotBrains -d 2D -pl YuccaPlannerV2X
-> yucca_train -t Task002_NotBrains -d 2D -pl YuccaPlannerV2Y
-> yucca_train -t Task002_NotBrains -d 2D -pl YuccaPlannerV2Z
+> yucca_preprocess -t Task001_Brains -pl YuccaPlannerX
+> yucca_preprocess -t Task001_Brains -pl YuccaPlannerY
+> yucca_preprocess -t Task001_Brains -pl YuccaPlannerZ
 ```
-Preprocessing and inference can also be "parallelized" in the same way, but that will rarely be necessary for speed optimization as these are fairly fast operations. 
-
-
+Then, train three 2D models one on each version of the preprocessed dataset:
+```console
+> yucca_train -t Task001_Brains -pl YuccaPlannerX -d 2D
+> yucca_train -t Task001_Brains -pl YuccaPlannerY -d 2D
+> yucca_train -t Task001_Brains -pl YuccaPlannerZ -d 2D
+```
+Then, run inference on the target dataset with each trained model.
+```console
+> yucca_inference -t Task001_Brains -pl YuccaPlannerX -d 2D
+> yucca_inference -t Task001_Brains -pl YuccaPlannerY -d 2D
+> yucca_inference -t Task001_Brains -pl YuccaPlannerZ -d 2D
+```
+Finally, fuse their results and evaluate the predictions.
+```console
+> yucca_ensemble --in_dirs /path/to/predictionsX /path/to/predictionsY /path/to/predictionsZ --out_dir /path/to/ensemble_predictionsXYZ
+```
 
 
