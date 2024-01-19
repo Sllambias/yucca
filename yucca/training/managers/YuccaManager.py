@@ -2,14 +2,14 @@ import lightning as L
 import torch
 from typing import Literal, Union, Optional
 from yucca.training.augmentation.YuccaAugmentationComposer import YuccaAugmentationComposer
-from yucca.training.configuration.split_data import get_split_config
+from yucca.training.configuration.split_data import get_split_config, SplitConfig
 from yucca.training.configuration.configure_task import get_task_config
 from yucca.training.configuration.configure_callbacks import get_callback_config
 from yucca.training.configuration.configure_checkpoint import get_checkpoint_config
 from yucca.training.configuration.configure_seed import seed_everything_and_get_seed_config
 from yucca.training.configuration.configure_paths import get_path_config
 from yucca.training.configuration.configure_plans import get_plan_config
-from yucca.training.configuration.input_dimensions import get_input_dims_config
+from yucca.training.configuration.configure_input_dims import get_input_dims_config
 from yucca.training.data_loading.YuccaDataModule import YuccaDataModule
 from yucca.training.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from yucca.paths import yucca_results
@@ -55,10 +55,11 @@ class YuccaManager:
         model_dimensions: str = "3D",
         model_name: str = "TinyUNet",
         num_workers: int = 8,
+        patch_based_training: bool = True,
         patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
         augmentation_params: dict = {},
         planner: str = "YuccaPlanner",
-        precision: str = "16-mixed",
+        precision: str = "bf16-mixed",
         profile: bool = False,
         split_idx: int = 0,
         step_logging: bool = False,
@@ -72,6 +73,7 @@ class YuccaManager:
         self.continue_from_most_recent = continue_from_most_recent
         self.deep_supervision = deep_supervision
         self.enable_logging = enable_logging
+        self.experiment = experiment
         self.loss = loss
         self.max_epochs = max_epochs
         self.max_vram = max_vram
@@ -80,21 +82,27 @@ class YuccaManager:
         self.name = self.__class__.__name__
         self.num_workers = num_workers
         self.augmentation_params = augmentation_params
+        self.patch_based_training = patch_based_training
+        self.patch_size = patch_size
         self.planner = planner
         self.precision = precision
         self.profile = profile
         self.split_idx = split_idx
         self.step_logging = step_logging
         self.task = task
-        self.experiment = experiment
         self.train_batches_per_step = train_batches_per_step
         self.val_batches_per_step = val_batches_per_step
         self.kwargs = kwargs
 
-        if patch_size is None:
-            self.patch_size = "tiny" if self.model_name == "TinyUNet" else None
-        else:
-            self.patch_size = patch_size
+        # Configure basic parameters
+        if self.patch_size is None and self.model_name == "TinyUNet":
+            self.patch_size = "tiny"
+
+        # Automatically changes bfloat training if we're running on a GPU
+        # that doesn't support it (otherwise it just crashes.)
+        if "bf" in self.precision and torch.cuda.is_available():
+            if not torch.cuda.is_bf16_supported():
+                self.precision = self.precision.replace("bf", "")
 
         self.trainer = L.Trainer
 
@@ -113,6 +121,7 @@ class YuccaManager:
             manager_name=self.name,
             model_dimensions=self.model_dimensions,
             model_name=self.model_name,
+            patch_based_training=self.patch_based_training,
             planner_name=self.planner,
             split_idx=self.split_idx,
             task=self.task,
@@ -137,7 +146,10 @@ class YuccaManager:
             stage=stage,
         )
 
-        splits_config = get_split_config(train_data_dir=path_config.train_data_dir, task=task_config.task)
+        if stage == "fit":
+            splits_config = get_split_config(train_data_dir=path_config.train_data_dir, task=task_config.task)
+        else:
+            splits_config = SplitConfig()
 
         input_dims_config = get_input_dims_config(
             plan=plan_config.plans,
@@ -145,6 +157,7 @@ class YuccaManager:
             num_classes=plan_config.num_classes,
             model_name=task_config.model_name,
             max_vram=self.max_vram,
+            patch_based_training=task_config.patch_based_training,
             patch_size=self.patch_size,
         )
 
