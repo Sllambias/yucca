@@ -1,4 +1,5 @@
 import os
+from typing import Literal
 import numpy as np
 import nibabel as nib
 import json
@@ -16,6 +17,8 @@ from yucca.evaluation.metrics import (
     total_pos_gt,
     total_pos_pred,
     volume_similarity,
+    accuracy,
+    auroc,
 )
 from yucca.evaluation.obj_metrics import get_obj_stats_for_label
 from yucca.paths import yucca_raw_data
@@ -25,45 +28,84 @@ from tqdm import tqdm
 
 class YuccaEvaluator(object):
     def __init__(
-        self, labels: list | int, folder_with_predictions, folder_with_ground_truth, do_object_eval=False, as_binary=False
+        self, labels: list | int, 
+        folder_with_predictions, 
+        folder_with_ground_truth, 
+        do_object_eval=False, 
+        as_binary=False, 
+        task_type: Literal["segmentation", "classification", "regression"] = "segmentation"
     ):
         self.name = "results"
-        self.metrics = {
-            "Dice": dice,
-            "Sensitivity": sensitivity,
-            "Precision": precision,
-            "Volume Similarity": volume_similarity,
-            "True Positives": TP,
-            "False Positives": FP,
-            "False Negatives": FN,
-            "Total Positives Ground Truth": total_pos_gt,
-            "Total Positives Prediction": total_pos_pred,
-        }
+
         self.obj_metrics = []
-        if do_object_eval:
-            self.name += "_OBJ"
-            self.obj_metrics = [
-                "_OBJ Total Objects Prediction",
-                "_OBJ Total Objects Ground Truth",
-                "_OBJ True Positives",
-                "_OBJ False Positives",
-                "_OBJ False Negatives",
-                "_OBJ Mean Volume Prediction",
-                "_OBJ Mean Volume Ground Truth",
+
+        self.task_type = task_type
+
+        if self.task_type == "segmentation":
+            self.metrics = {
+                "Dice": dice,
+                "Sensitivity": sensitivity,
+                "Precision": precision,
+                "Volume Similarity": volume_similarity,
+                "True Positives": TP,
+                "False Positives": FP,
+                "False Negatives": FN,
+                "Total Positives Ground Truth": total_pos_gt,
+                "Total Positives Prediction": total_pos_pred,
+            }
+            
+            if do_object_eval:
+                self.name += "_OBJ"
+                self.obj_metrics = [
+                    "_OBJ Total Objects Prediction",
+                    "_OBJ Total Objects Ground Truth",
+                    "_OBJ True Positives",
+                    "_OBJ False Positives",
+                    "_OBJ False Negatives",
+                    "_OBJ Mean Volume Prediction",
+                    "_OBJ Mean Volume Ground Truth",
+                    "_OBJ sensitivity",
+                    "_OBJ precision",
+                    "_OBJ F1",
+                ]
+
+            self.metrics_included_in_streamtable = [
+                "Dice",
+                "Sensitivity",
+                "Precision",
+                "Volume Similarity",
                 "_OBJ sensitivity",
                 "_OBJ precision",
                 "_OBJ F1",
             ]
+        elif self.task_type == "classification":
+            self.metrics = {
+                "accuracy": accuracy,
+                "sensitivity": sensitivity,  # recall
+                "precision": precision,
+                "F1": dice,
+                "AUROC": auroc,
+            }
 
-        self.metrics_included_in_streamtable = [
-            "Dice",
-            "Sensitivity",
-            "Precision",
-            "Volume Similarity",
-            "_OBJ sensitivity",
-            "_OBJ precision",
-            "_OBJ F1",
-        ]
+            self.metrics_included_in_streamtable = [
+                "Dice",
+                "Sensitivity",
+                "Precision",
+                "Volume Similarity",
+                "_OBJ sensitivity",
+                "_OBJ precision",
+                "_OBJ F1",
+            ]
+        elif self.task_type == "regression":
+            raise NotImplementedError
+            # self.metrics = {
+            #     "MAE": mae,
+            #     "RMSE": rmse,
+            #     "R2": r2,
+            # }
+        else:
+            raise ValueError(f"Unknown task type {self.task_type}")
+
 
         if isinstance(labels, int):
             self.labels = [str(i) for i in range(labels)]
@@ -80,8 +122,12 @@ class YuccaEvaluator(object):
 
         self.outpath = join(self.folder_with_predictions, f"{self.name}.json")
 
-        self.pred_subjects = subfiles(self.folder_with_predictions, suffix=".nii.gz", join=False)
-        self.gt_subjects = subfiles(self.folder_with_ground_truth, suffix=".nii.gz", join=False)
+        if self.task_type == "classification":
+            self.pred_subjects = subfiles(self.folder_with_predictions, suffix=".txt", join=False)
+            self.gt_subjects = subfiles(self.folder_with_ground_truth, suffix=".txt", join=False)
+        else:
+            self.pred_subjects = subfiles(self.folder_with_predictions, suffix=".nii.gz", join=False)
+            self.gt_subjects = subfiles(self.folder_with_ground_truth, suffix=".nii.gz", join=False)
 
         print(
             f"\n"
@@ -116,7 +162,44 @@ class YuccaEvaluator(object):
             self.save_as_json(dict)
             self.update_streamtable(dict["mean"])
 
+    def _evaluate_folder_cls(self):
+        """
+        Evaluate classification results
+        """
+        sys.stdout.flush()
+        # for classification, we need to load all predicitons and gts and calculate the metrics dataset-wide
+
+        # self.metrics = {
+        #     "accuracy": accuracy,
+        #     "sensitivity": sensitivity,  # recall
+        #     "precision": precision,
+        #     "F1": dice,
+        #     "AUROC": auroc,
+        # }
+
+        resultdict = {}
+        predictions = []
+        ground_truths = []
+
+        for case in tqdm(self.pred_subjects, desc="Evaluating"):
+            predpath = join(self.folder_with_predictions, case)
+            gtpath = join(self.folder_with_ground_truth, case)
+
+            pred = np.loadtxt(predpath)  # contains output probabilities
+            gt = np.loadtxt(gtpath)  # contains single integer label
+
+            predictions.append(pred)
+            ground_truths.append(gt)
+
     def evaluate_folder(self):
+        if self.task_type == "classification":
+            return self._evaluate_folder_cls()
+        elif self.task_type == "segmentation":
+            return self._evaluate_folder_segm()
+        else:
+            raise NotImplementedError("Invalid task type")
+        
+    def _evaluate_folder_segm(self):
         sys.stdout.flush()
         resultdict = {}
         meandict = {}
@@ -131,6 +214,7 @@ class YuccaEvaluator(object):
 
             pred = nib.load(predpath)
             gt = nib.load(gtpath)
+
             if self.as_binary:
                 cmat = confusion_matrix(
                     np.around(gt.get_fdata().flatten()).astype(bool).astype(int),
@@ -152,7 +236,10 @@ class YuccaEvaluator(object):
                 fn = sum(cmat[label, :]) - tp
                 tn = np.sum(cmat) - tp - fp - fn  # often a redundant and meaningless metric
                 for k, v in self.metrics.items():
-                    labeldict[k] = round(v(tp, fp, tn, fn), 4)
+                    if k == "AUROC":
+                        labeldict[k] = round(v(gt.get_fdata().flatten(), pred.get_fdata().flatten()), 4)  # XXX Test this
+                    else:
+                        labeldict[k] = round(v(tp, fp, tn, fn), 4)
                     meandict[str(label)][k].append(labeldict[k])
 
                 if self.obj_metrics:
