@@ -62,6 +62,8 @@ class YuccaManager:
         precision: str = "bf16-mixed",
         profile: bool = False,
         split_idx: int = 0,
+        split_data_ratio: float = None,
+        split_data_kfold: int = 5,
         step_logging: bool = False,
         task: str = None,
         experiment: str = "default",
@@ -88,6 +90,8 @@ class YuccaManager:
         self.precision = precision
         self.profile = profile
         self.split_idx = split_idx
+        self.split_data_ratio = split_data_ratio
+        self.split_data_kfold = split_data_kfold
         self.step_logging = step_logging
         self.task = task
         self.train_batches_per_step = train_batches_per_step
@@ -117,15 +121,17 @@ class YuccaManager:
         # Here we configure the outpath we will use to store model files and metadata
         # along with the path to plans file which will also be loaded.
         task_config = get_task_config(
+            task=self.task,
             continue_from_most_recent=self.continue_from_most_recent,
             manager_name=self.name,
             model_dimensions=self.model_dimensions,
             model_name=self.model_name,
             patch_based_training=self.patch_based_training,
             planner_name=self.planner,
-            split_idx=self.split_idx,
-            task=self.task,
             experiment=self.experiment,
+            split_idx=self.split_idx,
+            split_data_ratio=self.split_data_ratio,
+            split_data_kfold=self.split_data_kfold,
         )
 
         path_config = get_path_config(task_config=task_config)
@@ -147,7 +153,7 @@ class YuccaManager:
         )
 
         if stage == "fit":
-            splits_config = get_split_config(train_data_dir=path_config.train_data_dir, task=task_config.task)
+            splits_config = get_split_config(task_config.split_method, task_config.split_param, path_config)
         else:
             splits_config = SplitConfig()
 
