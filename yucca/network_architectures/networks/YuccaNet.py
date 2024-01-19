@@ -35,8 +35,9 @@ class YuccaNet(nn.Module):
             data = data.to("cuda")
 
         if not sliding_window_prediction:
-            return self._predict(data)
-        elif mode == "3D":
+            return self._full_image_predict(data)
+
+        if mode == "3D":
             predict = self._sliding_window_predict3D
         elif mode == "2D":
             predict = self._sliding_window_predict2D
@@ -59,7 +60,7 @@ class YuccaNet(nn.Module):
             pred /= div
         return pred
 
-    def _predict(self, data):
+    def _full_image_predict(self, data):
         """
         Standard prediction used in cases where models predict on full-size images.
         This is opposed to patch-based predictions where we use a sliding window approach to generate

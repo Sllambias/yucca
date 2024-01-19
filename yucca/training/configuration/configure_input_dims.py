@@ -33,7 +33,7 @@ def get_input_dims_config(
     if patch_based_training is False:
         assert plan.get("new_max_size") == plan.get(
             "new_min_size"
-        ), "sizes in dataset are not uniform. Patch based training only works for datasets with uniform data shapes."
+        ), "sizes in dataset are not uniform. Non-patch based training only works for datasets with uniform data shapes."
         patch_size = plan.get("new_max_size")
 
     # If batch_size or patch_size is not provided, try to infer it from the plan

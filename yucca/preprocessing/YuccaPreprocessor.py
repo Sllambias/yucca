@@ -60,14 +60,14 @@ class YuccaPreprocessor(object):
     which is used later to oversample foreground.
     """
 
-    def __init__(self, plans_path, task=None, threads=12, disable_sanity_checks=False, disable_cc_analysis=True):
+    def __init__(self, plans_path, task=None, threads=12, disable_sanity_checks=False, enable_cc_analysis=False):
         self.name = str(self.__class__.__name__)
         self.task = task
         self.plans_path = plans_path
         self.plans = self.load_plans(plans_path)
         self.threads = threads
         self.disable_sanity_checks = disable_sanity_checks
-        self.disable_cc_analysis = disable_cc_analysis
+        self.enable_cc_analysis = enable_cc_analysis
 
         # lists for information we would like to attain
         self.transpose_forward = []
@@ -478,7 +478,7 @@ class YuccaPreprocessor(object):
         # oversampling of foreground classes
         # And we also potentially analyze the connected components of the label
         foreground_locs = np.array(np.nonzero(label)).T[::10]
-        if self.disable_cc_analysis:
+        if self.enable_cc_analysis:
             label_cc_n = 0
             label_cc_sizes = 0
         else:

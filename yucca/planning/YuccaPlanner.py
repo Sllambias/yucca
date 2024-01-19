@@ -71,7 +71,8 @@ class YuccaPlanner(object):
         self.dataset_properties = load_pickle(join(self.target_dir, "dataset_properties.pkl"))
 
         self.determine_transpose()
-        self.determine_target_spacing_or_size()
+        self.determine_target_size_from_fixed_size_or_spacing()
+        self.validate_target_size()
         self.drop_keys_from_dict(dict=self.dataset_properties, keys=["original_sizes", "original_spacings"])
 
         self.populate_plans_file()
@@ -117,16 +118,15 @@ class YuccaPlanner(object):
 
         assert self.transpose_fw is not None, "no transposition, something is wrong."
 
-    def determine_target_spacing_or_size(self):
-        self._determine_target_spacing_or_size()
-        assert self.target_size is None or self.target_spacing is None, (
+    def validate_target_size(self):
+        assert self.fixed_target_size is None or self.fixed_target_spacing is None, (
             "only one of target size or target spacing should be specified"
-            f" but both are specified here as {self.target_size} and {self.target_spacing} respectively"
+            f" but both are specified here as {self.fixed_target_size} and {self.fixed_target_spacing} respectively"
         )
 
-    def _determine_target_spacing_or_size(self):
-        self.target_size = None
-        self.target_spacing = self.dataset_properties["original_median_spacing"]
+    def determine_target_size_from_fixed_size_or_spacing(self):
+        self.fixed_target_size = None
+        self.fixed_target_spacing = self.dataset_properties["original_median_spacing"]
 
     def drop_keys_from_dict(self, dict, keys):
         for key in keys:
@@ -157,8 +157,8 @@ class YuccaPlanner(object):
         # Defaults to the median spacing of the training data.
         # Change the determine_spacing() function to use different spacings
         self.plans["keep_aspect_ratio_when_using_target_size"] = self.keep_aspect_ratio_when_using_target_size
-        self.plans["target_size"] = self.target_size
-        self.plans["target_spacing"] = self.target_spacing
+        self.plans["target_size"] = self.fixed_target_size
+        self.plans["target_spacing"] = self.fixed_target_spacing
         self.plans["preprocessor"] = self.preprocessor
         self.plans["dataset_properties"] = self.dataset_properties
         self.plans["plans_name"] = self.name

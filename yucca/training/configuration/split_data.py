@@ -27,7 +27,6 @@ class SplitConfig:
 def get_split_config(
     train_data_dir: str,
     task: str,
-    stage: str,
     k: int = 5,
     p: float = None,
 ):
@@ -41,8 +40,6 @@ def get_split_config(
         - If `k` is provided we will split with `k-fold`.
         - If `p` is provided it determines the fraction of items used for the val split.
     """
-    if stage == "predict":
-        return SplitConfig()
 
     assert (k is not None and p is None) or (k is None and p is not None), "You can only provide one of `k` or `p`."
     if p is not None:

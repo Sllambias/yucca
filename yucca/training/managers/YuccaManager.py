@@ -2,7 +2,7 @@ import lightning as L
 import torch
 from typing import Literal, Union, Optional
 from yucca.training.augmentation.YuccaAugmentationComposer import YuccaAugmentationComposer
-from yucca.training.configuration.split_data import get_split_config
+from yucca.training.configuration.split_data import get_split_config, SplitConfig
 from yucca.training.configuration.configure_task import get_task_config
 from yucca.training.configuration.configure_callbacks import get_callback_config
 from yucca.training.configuration.configure_checkpoint import get_checkpoint_config
@@ -146,7 +146,10 @@ class YuccaManager:
             stage=stage,
         )
 
-        splits_config = get_split_config(train_data_dir=path_config.train_data_dir, task=task_config.task, stage=stage)
+        if stage == "fit":
+            splits_config = get_split_config(train_data_dir=path_config.train_data_dir, task=task_config.task)
+        else:
+            splits_config = SplitConfig()
 
         input_dims_config = get_input_dims_config(
             plan=plan_config.plans,
