@@ -88,12 +88,14 @@ def main():
 
     # Split configs
     parser.add_argument(
-        "-p",
+        "-split_data_ratio",
         type=float,
-        help="Use a simple train/val split where `p` is the fraction of items used for the val split.",
+        help="Use a simple train/val split where `split_data_ratio` is the fraction of items used for the val split.",
         default=None,
     )
-    parser.add_argument("-k", type=int, help="Use kfold split where `k` is amount of folds.", default=None)
+    parser.add_argument(
+        "-split_data_kfold", type=int, help="Use kfold split where `split_data_kfold` is amount of folds.", default=None
+    )
     parser.add_argument("-f", "--split_idx", type=int, help="idx of splits to use for training.", default=0)
 
     parser.add_argument("--precision", type=str, default="bf16-mixed")
@@ -117,13 +119,15 @@ def main():
     experiment = args.experiment
 
     split_idx = args.split_idx
-    k = args.k
-    p = args.p
+    split_data_ratio = args.split_data_ratio
+    split_data_kfold = args.split_data_kfold
 
-    if k is None and p is None:
-        k = 5
+    if split_data_kfold is None and split_data_ratio is None:
+        split_data_kfold = 5
 
-    assert (k is not None and p is None) or (k is None and p is not None), "It is not allowed to provide both `k` and `p`."
+    assert (split_data_kfold is not None and split_data_ratio is None) or (
+        split_data_kfold is None and split_data_ratio is not None
+    ), "It is not allowed to provide both `split_data_ratio` and `split_data_kfold`."
 
     if patch_size is not None:
         if patch_size not in ["mean", "max", "min"]:
@@ -159,8 +163,8 @@ def main():
         deep_supervision=deep_supervision,
         enable_logging=log,
         split_idx=split_idx,
-        k=k,
-        p=p,
+        split_data_ratio=split_data_ratio,
+        split_data_kfold=split_data_kfold,
         loss=loss,
         model_dimensions=dimensions,
         model_name=model_name,

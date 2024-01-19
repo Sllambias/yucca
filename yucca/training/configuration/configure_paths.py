@@ -12,6 +12,7 @@ from yucca.training.configuration.configure_task import TaskConfig
 class PathConfig:
     plans_path: str
     save_dir: str
+    task_dir: str
     train_data_dir: str
     version_dir: str
     version: int
@@ -27,20 +28,26 @@ class PathConfig:
 
 
 def get_path_config(task_config: TaskConfig):
-    save_dir, train_data_dir, version_dir, plans_path, version = setup_paths_and_version(
-        task_config.continue_from_most_recent,
-        task_config.manager_name,
-        task_config.model_dimensions,
-        task_config.model_name,
-        task_config.split_idx,
+    task_dir = join(yucca_preprocessed_data, task_config.task)
+    train_data_dir = join(task_dir, task_config.planner_name)
+    save_dir = join(
+        yucca_models,
         task_config.task,
-        task_config.planner_name,
+        task_config.model_name + "__" + task_config.model_dimensions,
+        task_config.manager_name + "__" + task_config.planner_name,
         task_config.experiment,
+        f"{task_config.split_method}_{task_config.split_param}_fold_{task_config.split_idx}",
     )
+
+    version = detect_version(save_dir, task_config.continue_from_most_recent)
+    version_dir = join(save_dir, f"version_{version}")
+    maybe_mkdir_p(version_dir)
+    plans_path = join(task_dir, task_config.planner_name, task_config.planner_name + "_plans.json")
 
     return PathConfig(
         plans_path=plans_path,
         save_dir=save_dir,
+        task_dir=task_dir,
         train_data_dir=train_data_dir,
         version_dir=version_dir,
         version=version,
@@ -66,23 +73,3 @@ def detect_version(save_dir, continue_from_most_recent) -> Union[None, int]:
             return newest_version
         else:
             return newest_version + 1
-
-
-def setup_paths_and_version(
-    continue_from_most_recent, manager_name, model_dimensions, model_name, split_idx, task, planner, experiment
-):
-    train_data_dir = join(yucca_preprocessed_data, task, planner)
-    save_dir = join(
-        yucca_models,
-        task,
-        model_name + "__" + model_dimensions,
-        manager_name + "__" + planner,
-        experiment,
-        f"fold_{split_idx}",
-    )
-
-    version = detect_version(save_dir, continue_from_most_recent)
-    version_dir = join(save_dir, f"version_{version}")
-    maybe_mkdir_p(version_dir)
-    plans_path = join(yucca_preprocessed_data, task, planner, planner + "_plans.json")
-    return save_dir, train_data_dir, version_dir, plans_path, version
