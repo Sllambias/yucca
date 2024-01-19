@@ -53,7 +53,7 @@ def get_split_config(method: SplitMethods, param: Union[float, int], path_config
             )
             return SplitConfig(splits, method, param)
         else:
-            logging.warning("Generating new split since splits did not contain a split computed with the same `k` or `p`.")
+            logging.warning("Generating new split since splits did not contain a split computed with the same parameters.")
     else:
         splits = {}
 
@@ -65,7 +65,7 @@ def get_split_config(method: SplitMethods, param: Union[float, int], path_config
         kfold_split(file_names, param) if method == SplitMethods.kfold else simple_split(file_names, param)
     )
 
-    split_cfg = SplitConfig(splits, k, p)
+    split_cfg = SplitConfig(splits, method, param)
     save_pickle(splits, splits_path)
     return split_cfg
 
