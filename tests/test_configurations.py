@@ -4,7 +4,7 @@ def test_configurations():
     from yucca.training.configuration.configure_paths import get_path_config
     from yucca.training.configuration.configure_plans import get_plan_config
     from yucca.training.configuration.configure_task import get_task_config
-    from yucca.training.configuration.input_dimensions import get_input_dims_config
+    from yucca.training.configuration.configure_input_dims import get_input_dims_config
     from yucca.training.configuration.split_data import get_split_config
     from yucca.training.configuration.configure_checkpoint import get_checkpoint_config
     from yucca.training.configuration.configure_seed import seed_everything_and_get_seed_config

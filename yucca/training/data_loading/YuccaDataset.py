@@ -112,14 +112,13 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
 
 
 class YuccaTestDataset(torch.utils.data.Dataset):
-    def __init__(self, raw_data_dir, patch_size, suffix="nii.gz"):
+    def __init__(self, raw_data_dir, suffix="nii.gz"):
         self.data_path = raw_data_dir
         self.suffix = suffix
         self.unique_cases = np.unique(
             [i[: -len("_000." + suffix)] for i in subfiles(self.data_path, suffix=self.suffix, join=False)]
         )
         assert len(self.unique_cases) > 0, f"No cases found in {self.data_path}. Looking for files with suffix: {self.suffix}"
-        self.patch_size = patch_size
 
     def __len__(self):
         return len(self.unique_cases)

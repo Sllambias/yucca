@@ -1,16 +1,16 @@
-from dataclasses import dataclass
 import logging
 import math
 import numpy as np
 from batchgenerators.utilities.file_and_folder_operations import join, subfiles, isfile, save_pickle, load_pickle
-
 from sklearn.model_selection import KFold
 from yucca.paths import yucca_preprocessed_data
+from dataclasses import dataclass
+from typing import Union
 
 
 @dataclass
 class SplitConfig:
-    splits: list[dict]
+    splits: Union[list[dict], None] = None
     k: int = None
     p: float = None
 
@@ -40,6 +40,7 @@ def get_split_config(
         - If `k` is provided we will split with `k-fold`.
         - If `p` is provided it determines the fraction of items used for the val split.
     """
+
     assert (k is not None and p is None) or (k is None and p is not None), "You can only provide one of `k` or `p`."
     if p is not None:
         assert 0 < p < 1, "`p` must be a number between 0 and 1 and determines the fraction of items used for the val split"
