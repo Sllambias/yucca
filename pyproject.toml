@@ -36,7 +36,8 @@ dependencies = [
     "wandb",
     "weave",
     "python-dotenv==1.0.0",
-    "monai"
+    "monai",
+    "flake8-unused-arguments"
 ]
 
 [project.optional-dependencies]
