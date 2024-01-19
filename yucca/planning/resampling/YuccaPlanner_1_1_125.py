@@ -1,6 +1,3 @@
-# This planner can be used for highly anisotropic data.
-# It will not resample data to a uniform spacing but rather leave all samples
-# with their native spacing.
 from yucca.planning.YuccaPlanner import YuccaPlanner
 
 
@@ -12,5 +9,6 @@ class YuccaPlanner_1_1_125(YuccaPlanner):
         self.name = str(self.__class__.__name__) + str(view or "")
         self.view = view
 
-    def determine_spacing(self):
-        self.target_spacing = [1, 1, 1.25]
+    def determine_target_size_from_fixed_size_or_spacing(self):
+        self.fixed_target_spacing = [1, 1, 1.25]
+        self.fixed_target_size = None

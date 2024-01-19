@@ -1,14 +1,13 @@
-from ast import List
-from ctypes import ArgumentError
 from dataclasses import dataclass
 import logging
 import math
 from typing import Union
 import numpy as np
 from batchgenerators.utilities.file_and_folder_operations import join, subfiles, isfile, save_pickle, load_pickle
-
 from sklearn.model_selection import KFold
 from yucca.paths import yucca_preprocessed_data
+from dataclasses import dataclass
+from typing import Union
 
 from yucca.training.configuration.configure_paths import PathConfig
 from yucca.training.configuration.configure_task import SplitMethods
@@ -16,7 +15,7 @@ from yucca.training.configuration.configure_task import SplitMethods
 
 @dataclass
 class SplitConfig:
-    splits: dict[dict[list[dict]]]  # Contains `{ method: { parameter_value: [splits] }}`
+    splits: Union[dict[dict[list[dict]]], None]  # Contains `{ method: { parameter_value: [splits] }}`
     method: SplitMethods = None
     param: Union[int, float] = None
 

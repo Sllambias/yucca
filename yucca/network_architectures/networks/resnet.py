@@ -143,8 +143,3 @@ class ResNet50(YuccaNet):
         x = self.fc(x)
 
         return x
-
-    def predict(self, mode, data, patch_size, overlap, mirror=False):
-        if torch.cuda.is_available():
-            data = data.to("cuda")
-        return self.forward(data)
