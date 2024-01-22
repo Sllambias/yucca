@@ -53,8 +53,6 @@ from yucca.image_processing.transforms.Spatial import Spatial
 
 class base_manager(object):
     def __init__(self):
-        __metaclass__ = ABCMeta
-
         self.train_command = None
         self.is_initialized = False
         self.log_file = None
@@ -129,7 +127,7 @@ class base_manager(object):
         self.best_val_loss = 99999
 
     @abstractmethod
-    def comprehensive_eval(self, pred, seg):
+    def comprehensive_eval(self):
         """
         implement in trainer subclass
         """

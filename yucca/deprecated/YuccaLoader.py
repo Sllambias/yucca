@@ -33,7 +33,6 @@ class YuccaLoader(object):
         batch_size,
         gen_patch_size,
         p_oversample_foreground=0.5,
-        random_state=None,
         keep_in_ram=True,
     ):
         self.batch_size = batch_size

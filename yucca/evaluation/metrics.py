@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def dice(tp, fp, tn, fn):
+def dice(tp, fp, tn, fn):  # noqa: U100
     try:
         return (2 * tp) / (2 * tp + fp + fn)
     except (ZeroDivisionError, RuntimeWarning):

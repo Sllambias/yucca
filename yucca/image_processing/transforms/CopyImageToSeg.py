@@ -1,6 +1,4 @@
 from yucca.image_processing.transforms.YuccaTransform import YuccaTransform
-import numpy as np
-from typing import Tuple
 
 
 class CopyImageToSeg(YuccaTransform):
