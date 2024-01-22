@@ -44,13 +44,6 @@ def main():
         "on the given task. Defaults to the YuccaPlanne folder",
         default="YuccaPlanner",
     )
-    parser.add_argument(
-        "-f",
-        help="Fold to use for training. Unless manually assigned, "
-        "folds [0,1,2,3,4] will be created automatically. "
-        "Defaults to training on fold 0",
-        default=0,
-    )
 
     parser.add_argument(
         "--epochs", help="Used to specify the number of epochs for training. Default is 1000", type=int, default=1000
