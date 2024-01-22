@@ -88,13 +88,13 @@ def main():
 
     # Split configs
     parser.add_argument(
-        "-split_data_ratio",
+        "--split_data_ratio",
         type=float,
         help="Use a simple train/val split where `split_data_ratio` is the fraction of items used for the val split.",
         default=None,
     )
     parser.add_argument(
-        "-split_data_kfold", type=int, help="Use kfold split where `split_data_kfold` is amount of folds.", default=None
+        "--split_data_kfold", type=int, help="Use kfold split where `split_data_kfold` is amount of folds.", default=None
     )
     parser.add_argument("-f", "--split_idx", type=int, help="idx of splits to use for training.", default=0)
 
