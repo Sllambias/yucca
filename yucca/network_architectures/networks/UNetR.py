@@ -19,7 +19,6 @@ class UNetR(YuccaNet):
         num_classes: int = 1,
         starting_filters: int = 16,
         weightInitializer=None,
-        basic_block=None,
     ) -> None:
         """
         Args:

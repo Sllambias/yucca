@@ -2,7 +2,6 @@ from batchgenerators.utilities.file_and_folder_operations import join, isdir, su
 from dataclasses import dataclass
 from typing import Union
 from yucca.paths import yucca_models, yucca_preprocessed_data
-from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.training.configuration.configure_task import TaskConfig
 
 

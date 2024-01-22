@@ -1,5 +1,5 @@
 import yucca
-from batchgenerators.utilities.file_and_folder_operations import join, subdirs, load_json
+from batchgenerators.utilities.file_and_folder_operations import join, load_json
 from dataclasses import dataclass
 from typing import Union, Literal
 from yucca.preprocessing.UnsupervisedPreprocessor import UnsupervisedPreprocessor

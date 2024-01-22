@@ -1,4 +1,3 @@
-import numpy as np
 from yucca.image_processing.transforms.YuccaTransform import YuccaTransform
 
 

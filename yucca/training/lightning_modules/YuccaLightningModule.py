@@ -10,7 +10,6 @@ from torchmetrics.regression import MeanAbsoluteError
 from yucca.training.loss_and_optim.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.utils.kwargs import filter_kwargs
-from typing import Literal
 
 
 class YuccaLightningModule(L.LightningModule):

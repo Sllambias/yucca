@@ -321,7 +321,7 @@ class LayerNorm(nn.Module):
             raise NotImplementedError
         self.normalized_shape = (normalized_shape,)
 
-    def forward(self, x, dummy_tensor=False):
+    def forward(self, x, _dummy_tensor=False):
         if self.data_format == "channels_last":
             return F.layer_norm(x, self.normalized_shape, self.weight, self.bias, self.eps)
         elif self.data_format == "channels_first":

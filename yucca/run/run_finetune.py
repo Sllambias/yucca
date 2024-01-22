@@ -1,6 +1,5 @@
 import argparse
 import yucca
-from yucca.paths import yucca_models
 from yucca.utils.task_ids import maybe_get_task_from_task_id
 from yucca.utils.files_and_folders import recursive_find_python_class
 from batchgenerators.utilities.file_and_folder_operations import join
