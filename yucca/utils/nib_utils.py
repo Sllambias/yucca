@@ -1,7 +1,6 @@
 import nibabel.orientations as nio
 import numpy as np
 import nibabel as nib
-from typing import Tuple
 
 
 def get_nib_spacing(nib_image: nib.Nifti1Image) -> np.ndarray:

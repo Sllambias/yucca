@@ -4,11 +4,7 @@
 Task_conversion file for the SONAI data, without labels and with 2D jpg images (cache).
 """
 import shutil
-
-import numpy as np
-import pandas as pd
 from tqdm import tqdm
-
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p
 from yucca.paths import yucca_raw_data
 from yucca.task_conversion.utils import generate_dataset_json

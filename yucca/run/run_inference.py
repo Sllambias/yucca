@@ -5,10 +5,8 @@ from yucca.paths import yucca_raw_data, yucca_results, yucca_models
 from yucca.evaluation.YuccaEvaluator import YuccaEvaluator
 from yucca.training.managers.YuccaManager import YuccaManager
 from yucca.utils.files_and_folders import recursive_find_python_class
-from yucca.utils.saving import merge_softmax_from_folders
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
-    load_json,
     isfile,
     maybe_mkdir_p,
     isdir,
@@ -86,20 +84,13 @@ def main():
         action="store_true",
         required=False,
     )
-    parser.add_argument(
-        "--no_sliding_window",
-        help="Disable sliding window prediction and instead use fixed patch/input size",
-        default=False,
-        action="store_true",
-        required=False,
-    )
-    parser.add_argument(
-        "--overwrite",
-        default=False,
-        action="store_true",
-        required=False,
-        help="Overwrite existing predictions",
-    )
+    # parser.add_argument(
+    #    "--overwrite",
+    #    default=False,
+    #    action="store_true",
+    #    required=False,
+    #    help="Overwrite existing predictions",
+    # )
     parser.add_argument(
         "--predict_train",
         default=False,
@@ -141,8 +132,7 @@ def main():
     experiment = args.experiment
     disable_tta = args.disable_tta
     no_eval = args.no_eval
-    no_sliding_window = args.no_sliding_window
-    overwrite = args.overwrite
+    # overwrite = args.overwrite
     predict_train = args.predict_train
     save_softmax = args.save_softmax
 

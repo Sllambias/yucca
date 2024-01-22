@@ -1,14 +1,10 @@
-from dataclasses import dataclass
 import logging
 import math
 from typing import Union
 import numpy as np
 from batchgenerators.utilities.file_and_folder_operations import join, subfiles, isfile, save_pickle, load_pickle
 from sklearn.model_selection import KFold
-from yucca.paths import yucca_preprocessed_data
 from dataclasses import dataclass
-from typing import Union
-
 from yucca.training.configuration.configure_paths import PathConfig
 from yucca.training.configuration.configure_task import SplitMethods
 

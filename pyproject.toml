@@ -1,6 +1,6 @@
 [project]
 name = "yucca"
-version = "0.2.19"
+version = "0.2.20"
 authors = [
   { name="Sebastian Llambias", email="llambias@live.dk" },
   { name="Asbjørn Munk", email="9844416+asbjrnmunk@users.noreply.github.com" },
@@ -8,7 +8,7 @@ authors = [
 ]
 description = "The modern framework for out-of-the box machine Learning on medical data."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -36,7 +36,8 @@ dependencies = [
     "wandb",
     "weave",
     "python-dotenv==1.0.0",
-    "monai"
+    "monai",
+    "flake8-unused-arguments"
 ]
 
 [project.optional-dependencies]

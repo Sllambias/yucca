@@ -1,15 +1,11 @@
-# %%
 import numpy as np
 import os
 import shutil
-import gzip
 from yucca.paths import yucca_raw_data
-from typing import Tuple, Union
+from typing import Union
 from batchgenerators.utilities.file_and_folder_operations import save_json, subfiles, join
 from tqdm import tqdm
-
 import nibabel as nib
-
 from pathlib import Path
 
 

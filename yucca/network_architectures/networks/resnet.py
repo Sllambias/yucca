@@ -11,10 +11,6 @@ class ResNet50(YuccaNet):
     def __init__(
         self,
         input_channels: int,
-        patch_size=None,
-        conv_op=nn.Conv2d,
-        dropout_op=nn.Dropout2d,
-        norm_op=nn.InstanceNorm2d,
         starting_filters: int = 64,
         block=Bottleneck,
         layers=[3, 4, 6, 3],
@@ -24,7 +20,6 @@ class ResNet50(YuccaNet):
         width_per_group: int = 64,
         replace_stride_with_dilation=[False, False, True],
         norm_layer=nn.BatchNorm2d,
-        deep_supervision=False,
     ) -> None:
         super().__init__()
         self._norm_layer = norm_layer
@@ -123,7 +118,7 @@ class ResNet50(YuccaNet):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x: Tensor, task: str = None) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         # See note [TorchScript super()]
         x = self.conv1(x)
         x = self.bn1(x)

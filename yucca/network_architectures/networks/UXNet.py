@@ -1,4 +1,3 @@
-from typing import Tuple
 import torch.nn as nn
 from monai.networks.blocks import UnetrBasicBlock, UnetrUpBlock
 from monai.networks.blocks.dynunet_block import UnetOutBlock
