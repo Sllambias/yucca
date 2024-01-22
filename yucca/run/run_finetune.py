@@ -126,8 +126,8 @@ def main():
 
     kwargs = {}
 
-    if lr:
-        assert "e" in lr, f"Learning Rate should be in scientific notation e.g. 1e-4, but is {lr}"
+    #    if lr:
+    #        assert "e" in lr, f"Learning Rate should be in scientific notation e.g. 1e-4, but is {lr}"
 
     manager = recursive_find_python_class(
         folder=[join(yucca.__path__[0], "training", "managers")],
