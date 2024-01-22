@@ -40,7 +40,7 @@ Then navigate to Yucca and install the package from there.
 
 For an Ubuntu system with Cuda=>12.1:
 ```
-> conda create -n yuccaenv python=3.12
+> conda create -n yuccaenv python=3.11
 > conda activate yuccaenv
 > conda install -c anaconda setuptools
 > conda install -c "nvidia/label/cuda-12.1.1" cuda-toolkit
