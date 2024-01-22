@@ -87,13 +87,24 @@ def main():
     parser.add_argument("--val_batches_per_step", type=int, default=50)
     parser.add_argument("--max_vram", type=int, default=12)
 
+    # Split configs
+    parser.add_argument(
+        "--split_data_ratio",
+        type=float,
+        help="Use a simple train/val split where `split_data_ratio` is the fraction of items used for the val split.",
+        default=None,
+    )
+    parser.add_argument(
+        "--split_data_kfold", type=int, help="Use kfold split where `split_data_kfold` is amount of folds.", default=None
+    )
+    parser.add_argument("-f", "--split_idx", type=int, help="idx of splits to use for training.", default=0)
+
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
     checkpoint = args.checkpoint
     model_name = args.m
     dimensions = args.d
-    epochs = args.epochs
     experiment = args.experiment
     manager_name = args.man
     momentum = args.mom
@@ -104,7 +115,18 @@ def main():
     patch_size = args.patch_size
     planner = args.pl
     profile = args.profile
-    split_idx = int(args.f)
+
+    split_idx = args.split_idx
+    split_data_ratio = args.split_data_ratio
+    split_data_kfold = args.split_data_kfold
+
+    if split_data_kfold is None and split_data_ratio is None:
+        split_data_kfold = 5
+
+    assert (split_data_kfold is not None and split_data_ratio is None) or (
+        split_data_kfold is None and split_data_ratio is not None
+    ), "It is not allowed to provide both `split_data_ratio` and `split_data_kfold`."
+
     if patch_size is not None:
         if patch_size not in ["mean", "max", "min"]:
             patch_size = (int(patch_size),) * 3 if dimensions == "3D" else (int(patch_size),) * 2
