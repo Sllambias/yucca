@@ -5,7 +5,7 @@ import gzip
 from yucca.paths import yucca_raw_data
 
 
-def convert(path: str, subdir: str = "OASIS"):
+def convert(path: str, subdir: str = "HarP"):
     # INPUT DATA
     path = f"{path}/{subdir}"
     file_suffix = ".nii"
@@ -14,8 +14,8 @@ def convert(path: str, subdir: str = "OASIS"):
     labels_dir = join(path, "Labels")
     images_dir = join(path, "Images")
 
-    # S01 to S30 are used as training samples
-    # S31 to S40 are used as test samples
+    # 2 to 99 are used as training samples
+    # 100 to 137 are used as test samples
     all_samples = subfiles(labels_dir, join=False, suffix=file_suffix)
     tr_ids = ["ADNI_" + f"{id:03}" for id in range(2, 99)]
     training_samples = [sample for sample in all_samples if sample[:8] in tr_ids]

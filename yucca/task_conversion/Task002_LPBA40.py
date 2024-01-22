@@ -6,7 +6,7 @@ from yucca.paths import yucca_raw_data
 from tqdm import tqdm
 
 
-def convert(path: str, subdir: str = "OASIS"):
+def convert(path: str, subdir: str = "LPBA40"):
     # INPUT DATA
     path = f"{path}/{subdir}"
     file_suffix = ".nii"

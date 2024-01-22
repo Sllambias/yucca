@@ -6,15 +6,15 @@ from yucca.paths import yucca_raw_data
 from multiprocessing import Pool
 
 
-def convert_case(sample, input_image_dir, input_label_dir, target_image_dir, target_label_dir, prefix):
-    serial_number = sample[:-4]
+def convert_case(sample, input_image_dir, input_label_dir, target_image_dir, target_label_dir, prefix, suffix):
+    serial_number = sample[: -len(suffix)]
     image_file = open(join(input_image_dir, sample), "rb")
     label = open(join(input_label_dir, sample), "rb")
     shutil.copyfileobj(image_file, gzip.open(f"{target_image_dir}/{prefix}_{serial_number}_000.nii.gz", "wb"))
     shutil.copyfileobj(label, gzip.open(f"{target_label_dir}/{prefix}_{serial_number}.nii.gz", "wb"))
 
 
-def convert(path: str, subdir: str = "OASIS"):
+def convert(path: str, subdir: str = "DatasetName"):
     # INPUT DATA
     path = join(path, subdir)
     file_suffix = ".nii"
@@ -30,8 +30,8 @@ def convert(path: str, subdir: str = "OASIS"):
 
     # OUTPUT DATA
     # Target names
-    task_name = "Task050_OASISMP"
-    prefix = "OASISMP"
+    task_name = "Task000_MyTask"
+    prefix = "MyTask"
 
     # Target paths
     target_base = join(yucca_raw_data, task_name)
@@ -51,10 +51,14 @@ def convert(path: str, subdir: str = "OASIS"):
     # This is likely also the place to apply any re-orientation, resampling and/or label correction.
 
     tr_cases = [
-        (sample, images_dir_tr, labels_dir_tr, target_imagesTr, target_labelsTr, prefix) for sample in training_samples
+        (sample, images_dir_tr, labels_dir_tr, target_imagesTr, target_labelsTr, prefix, file_suffix)
+        for sample in training_samples
     ]
 
-    ts_cases = [(sample, images_dir_ts, labels_dir_ts, target_imagesTs, target_labelsTs, prefix) for sample in test_samples]
+    ts_cases = [
+        (sample, images_dir_ts, labels_dir_ts, target_imagesTs, target_labelsTs, prefix, file_suffix)
+        for sample in test_samples
+    ]
 
     all_cases = tr_cases + ts_cases
 
@@ -67,10 +71,10 @@ def convert(path: str, subdir: str = "OASIS"):
         join(target_base, "dataset.json"),
         target_imagesTr,
         target_imagesTs,
-        ("T1",),
-        labels={0: "background", 1: "Left Hippocampus", 2: "Right Hippocampus"},
+        ("T1.. or maybe CT?",),
+        labels={0: "background", 1: "Fake Label", 2: "Also Fake Label"},
         dataset_name=task_name,
         license="hands off!",
-        dataset_description="OASIS Dataset",
+        dataset_description="Fake Dataset",
         dataset_reference="",
     )

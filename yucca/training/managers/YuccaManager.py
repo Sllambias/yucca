@@ -204,7 +204,6 @@ class YuccaManager:
             learning_rate=self.learning_rate,
             loss_fn=self.loss,
             momentum=self.momentum,
-            stage=stage,
             step_logging=self.step_logging,
             test_time_augmentation=not disable_tta if disable_tta is True else bool(augmenter.mirror_p_per_sample),
         )

@@ -118,7 +118,7 @@ class YuccaLightningModule(L.LightningModule):
     def forward(self, inputs):
         return self.model(inputs)
 
-    def teardown(self, _stage: str):
+    def teardown(self, stage: str):  # noqa: U100
         wandb.finish()
 
     def training_step(self, batch, _batch_idx):
