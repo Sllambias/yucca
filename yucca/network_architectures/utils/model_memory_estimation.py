@@ -23,7 +23,6 @@ Max memory consumption = m + f*batch_size*b + d*g + o*m
 import torch
 import numpy as np
 import yucca
-import yucca
 import warnings
 import math
 from yucca.utils.files_and_folders import recursive_find_python_class
@@ -54,7 +53,7 @@ def estimate_memory_training(model, model_input, optimizer_type=torch.optim.Adam
     model.to(device)
     b = torch.cuda.memory_allocated(device)
     model_memory = b - a
-    output = model(model_input.to(device)).sum()
+    _output = model(model_input.to(device)).sum()
     c = torch.cuda.memory_allocated(device)
     if use_amp:
         amp_multiplier = 0.5

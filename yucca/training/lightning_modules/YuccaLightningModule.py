@@ -5,7 +5,7 @@ import wandb
 import copy
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
-from torchmetrics.classification import Dice, Precision
+from torchmetrics.classification import Dice
 from torchmetrics.regression import MeanAbsoluteError
 from yucca.training.loss_and_optim.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.utils.files_and_folders import recursive_find_python_class
@@ -32,7 +32,6 @@ class YuccaLightningModule(L.LightningModule):
         momentum: float = 0.9,
         optimizer: torch.optim.Optimizer = torch.optim.SGD,
         sliding_window_overlap: float = 0.5,
-        stage: Literal["fit", "test", "predict"] = "fit",
         step_logging: bool = False,
         test_time_augmentation: bool = False,
     ):
@@ -120,10 +119,10 @@ class YuccaLightningModule(L.LightningModule):
     def forward(self, inputs):
         return self.model(inputs)
 
-    def teardown(self, stage: str):
+    def teardown(self, _stage: str):
         wandb.finish()
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch, _batch_idx):
         inputs, target = batch["image"], batch["label"]
         output = self(inputs)
         loss = self.loss_fn_train(output, target)
@@ -138,7 +137,7 @@ class YuccaLightningModule(L.LightningModule):
         self.log_dict({"train_loss": loss} | metrics, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch, _batch_idx):
         inputs, target = batch["image"], batch["label"]
         output = self(inputs)
         loss = self.loss_fn_val(output, target)
@@ -153,7 +152,7 @@ class YuccaLightningModule(L.LightningModule):
         )
         self.preprocessor = preprocessor_class(join(self.version_dir, "hparams.yaml"))
 
-    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+    def predict_step(self, batch, _batch_idx, _dataloader_idx=0):
         case, case_id = batch
 
         (

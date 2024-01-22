@@ -27,7 +27,7 @@ def sensitivity(tp, fp, tn, fn):
             return np.nan
 
 
-def specificity(tp, fp, tn, fn):
+def specificity(tp, fp, tn, fn):  # noqa: U100
     # beware with using TN-metrics.
     try:
         return tn / (tn + fp)
@@ -38,7 +38,7 @@ def specificity(tp, fp, tn, fn):
             return np.nan
 
 
-def precision(tp, fp, tn, fn):
+def precision(tp, fp, tn, fn):  # noqa: U100
     # When X is predicted, how often is it truly X?
     try:
         return tp / (tp + fp)
@@ -49,7 +49,7 @@ def precision(tp, fp, tn, fn):
             return np.nan
 
 
-def volume_similarity(tp, fp, tn, fn):
+def volume_similarity(tp, fp, tn, fn):  # noqa: U100
     try:
         return 1 - abs(fn - fp) / (2 * tp + fn + fp)
     except (ZeroDivisionError, RuntimeWarning):
@@ -59,7 +59,7 @@ def volume_similarity(tp, fp, tn, fn):
             return np.nan
 
 
-def f1(tp, fp, tn, fn):
+def f1(tp, fp, tn, fn):  # noqa: U100
     try:
         prec = precision(tp, fp, tn, fn)
         sens = sensitivity(tp, fp, tn, fn)
@@ -71,21 +71,21 @@ def f1(tp, fp, tn, fn):
             return np.nan
 
 
-def TP(tp, fp, tn, fn):
+def TP(tp, fp, tn, fn):  # noqa: U100
     return tp
 
 
-def FP(tp, fp, tn, fn):
+def FP(tp, fp, tn, fn):  # noqa: U100
     return fp
 
 
-def FN(tp, fp, tn, fn):
+def FN(tp, fp, tn, fn):  # noqa: U100
     return fn
 
 
-def total_pos_gt(tp, fp, tn, fn):
+def total_pos_gt(tp, fp, tn, fn):  # noqa: U100
     return tp + fn
 
 
-def total_pos_pred(tp, fp, tn, fn):
+def total_pos_pred(tp, fp, tn, fn):  # noqa: U100
     return tp + fp

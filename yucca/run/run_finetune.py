@@ -1,6 +1,4 @@
 import argparse
-
-from sympy import O
 import yucca
 from yucca.paths import yucca_models
 from yucca.utils.task_ids import maybe_get_task_from_task_id
@@ -65,10 +63,10 @@ def main():
     parser.add_argument(
         "--lr",
         help="Should only be used to employ alternative Learning Rate. Format should be scientific notation e.g. 1e-4.",
-        default=None,
+        default=1e-3,
     )
     parser.add_argument("--loss", help="Should only be used to employ alternative Loss Function", default=None)
-    parser.add_argument("--mom", help="Should only be used to employ alternative Momentum.", default=None)
+    parser.add_argument("--mom", help="Should only be used to employ alternative Momentum.", default=0.9)
 
     parser.add_argument("--disable_logging", help="disable logging. ", action="store_true", default=False)
     parser.add_argument(
@@ -98,16 +96,15 @@ def main():
     epochs = args.epochs
     experiment = args.experiment
     manager_name = args.man
-    split_idx = int(args.f)
+    momentum = args.mom
     lr = args.lr
     log = not args.disable_logging
     loss = args.loss
-    momentum = args.mom
     new_version = args.new_version
     patch_size = args.patch_size
     planner = args.pl
     profile = args.profile
-
+    split_idx = int(args.f)
     if patch_size is not None:
         if patch_size not in ["mean", "max", "min"]:
             patch_size = (int(patch_size),) * 3 if dimensions == "3D" else (int(patch_size),) * 2
@@ -140,10 +137,12 @@ def main():
         enable_logging=log,
         experiment=experiment,
         loss=loss,
+        learning_rate=lr,
         max_epochs=args.epochs,
         max_vram=args.max_vram,
         model_dimensions=dimensions,
         model_name=model_name,
+        momentum=momentum,
         num_workers=8,
         patch_size=patch_size,
         planner=planner,

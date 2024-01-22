@@ -13,10 +13,10 @@ class Masking(YuccaTransform):
         self.mask_ratio = mask_ratio
 
     @staticmethod
-    def get_params(shape, ratio, start_idx):
+    def get_params():
         pass
 
-    def __mask__(self, image, label, crop_start_idx):
+    def __mask__(self):
         pass
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):

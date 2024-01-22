@@ -3,7 +3,6 @@ from yucca.task_conversion.utils import generate_dataset_json
 import shutil
 import gzip
 from yucca.paths import yucca_raw_data
-from tqdm import tqdm
 from multiprocessing import Pool
 
 

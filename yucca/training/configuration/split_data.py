@@ -5,7 +5,6 @@ from batchgenerators.utilities.file_and_folder_operations import join, subfiles,
 from sklearn.model_selection import KFold
 from yucca.paths import yucca_preprocessed_data
 from dataclasses import dataclass
-from typing import Union
 
 
 @dataclass

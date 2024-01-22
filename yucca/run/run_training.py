@@ -55,10 +55,10 @@ def main():
     parser.add_argument(
         "--lr",
         help="Should only be used to employ alternative Learning Rate. Format should be scientific notation e.g. 1e-4.",
-        default=None,
+        default=1e-3,
     )
     parser.add_argument("--loss", help="Should only be used to employ alternative Loss Function", default=None)
-    parser.add_argument("--mom", help="Should only be used to employ alternative Momentum.", default=None)
+    parser.add_argument("--mom", help="Should only be used to employ alternative Momentum.", default=0.9)
     parser.add_argument("--ds", help="Used to enable deep supervision", default=False, action="store_true")
     parser.add_argument(
         "--disable_logging",
@@ -148,8 +148,10 @@ def main():
         enable_logging=log,
         split_idx=split_idx,
         loss=loss,
+        learning_rate=lr,
         model_dimensions=dimensions,
         model_name=model_name,
+        momentum=momentum,
         num_workers=8,
         planner=planner,
         precision=args.precision,

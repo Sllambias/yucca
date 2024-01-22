@@ -6,7 +6,7 @@ import sys
 import random
 import yucca
 from time import localtime, strftime, time, mktime
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 from collections import OrderedDict
 from torch import nn, autocast
 from batchgenerators.utilities.file_and_folder_operations import (

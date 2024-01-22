@@ -3,7 +3,7 @@ from yucca.task_conversion.utils import combine_imagesTr_from_tasks, generate_da
 from yucca.paths import yucca_raw_data
 
 
-def convert(path: str, subdir: str = None):
+def convert(_path: str, _subdir: str = None):
     # Define the name of the new task
     task_name = "Task299_Combine"
 

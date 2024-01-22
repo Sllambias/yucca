@@ -1,12 +1,9 @@
 import yucca
-import torch
-from batchgenerators.utilities.file_and_folder_operations import join, isdir, subdirs, maybe_mkdir_p, isfile, load_json
+from batchgenerators.utilities.file_and_folder_operations import join, subdirs, load_json
 from dataclasses import dataclass
 from typing import Union, Literal
-from yucca.paths import yucca_models, yucca_preprocessed_data
 from yucca.preprocessing.UnsupervisedPreprocessor import UnsupervisedPreprocessor
 from yucca.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
-from yucca.training.configuration.configure_paths import PathConfig
 from yucca.utils.dict import without_keys
 from yucca.utils.files_and_folders import recursive_find_python_class
 
@@ -30,7 +27,6 @@ class PlanConfig:
 
 def get_plan_config(
     plans_path: str,
-    continue_from_most_recent: bool,
     stage: Literal["fit", "test", "predict"],
     ckpt_plans: Union[dict, None] = None,
 ):

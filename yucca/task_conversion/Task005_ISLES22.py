@@ -1,7 +1,5 @@
-# %%
 import nibabel as nib
 import nibabel.processing as nibpro
-import os
 import argparse
 from tqdm import tqdm
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subdirs

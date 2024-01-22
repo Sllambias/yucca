@@ -1,5 +1,4 @@
 import nibabel as nib
-import nibabel.processing as nibpro
 from sklearn.model_selection import train_test_split
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.task_conversion.utils import generate_dataset_json
