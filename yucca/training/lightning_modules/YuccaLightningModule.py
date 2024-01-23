@@ -5,7 +5,7 @@ import wandb
 import copy
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
-from torchmetrics.classification import Dice, Precision
+from torchmetrics.classification import Dice, Precision, Accuracy, F1Score, Recall, AUROC
 from torchmetrics.regression import MeanAbsoluteError
 from yucca.training.loss_and_optim.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.utils.files_and_folders import recursive_find_python_class
@@ -60,7 +60,24 @@ class YuccaLightningModule(L.LightningModule):
 
         # Evaluation and logging
         self.step_logging = step_logging
-        if self.task_type in ["classification", "segmentation"]:
+
+        if self.task_type == "classification":
+            tmetrics_task = "multiclass" if self.num_classes > 2 else "binary"
+            # can we get per-class?
+            self.train_metrics = MetricCollection(
+                {
+                    "train_acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
+                    "train_roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
+                }
+            )
+            self.val_metrics = MetricCollection(
+                {
+                    "val_acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
+                    "val_roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
+                }
+            )
+
+        if self.task_type == "segmentation":
             self.train_metrics = MetricCollection(
                 {"train_dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
             )
@@ -134,7 +151,7 @@ class YuccaLightningModule(L.LightningModule):
             output = output[0]
             target = target[0]
 
-        metrics = self.train_metrics(output, target)
+        metrics = self.train_metrics(output, target.squeeze())
         self.log_dict({"train_loss": loss} | metrics, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
         return loss
 
@@ -142,7 +159,7 @@ class YuccaLightningModule(L.LightningModule):
         inputs, target = batch["image"], batch["label"]
         output = self(inputs)
         loss = self.loss_fn_val(output, target)
-        metrics = self.val_metrics(output, target)
+        metrics = self.val_metrics(output, target.squeeze())
         self.log_dict({"val_loss": loss} | metrics, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
 
     def on_predict_start(self):
