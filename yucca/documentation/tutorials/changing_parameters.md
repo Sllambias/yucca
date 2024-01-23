@@ -31,7 +31,6 @@ We call this new trainer "YuccaManager_1e5" and save it as "YuccaManager_1e5.py"
 ```
 from yucca.training.managers.YuccaManager import YuccaManager
 
-
 class YuccaManager_1e5(YuccaManager):
     def __init__(self, learning_rate=1e-5, *args, **kwargs):
         super().__init__(learning_rate=learning_rate, *args, **kwargs)
@@ -43,17 +42,25 @@ Unless otherwise mentioned, preprocessing variables and functions are handled by
 
 **Default Planner Class: [YuccaPlanner](/yucca/planning/YuccaPlanner.py)**
 
-## Spacing
+## Size OR Spacing
 Parent: default planner class
 
 Function: *determine_target_size_from_fixed_size_or_spacing*
 
-E.g. if a fixed spacing of [0.5, 0.5, 1.] is desired:
+Either a fixed target size or a fixed target spacing can be specified. By default the preprocessor will set the fixed target spacing to the median spacing of the dataset but this can be overriden if a fixed spacing is desired. To facilitate training on full images (as opposed to the default patch-based training) a fixed target size must be used. 
 
+To set the fixed target spacing to [0.5, 0.5, 1.]:
 ```
 def determine_target_size_from_fixed_size_or_spacing(self):
     self.fixed_target_size = None
     self.fixed_target_spacing = [0.5, 0.5, 1.]
+```
+
+To set the fixed target size to the size of the largest image of the original/unprocessed dataset:
+```
+def determine_target_size_from_fixed_size_or_spacing(self):
+    self.fixed_target_size = self.dataset_properties["original_max_size"]
+    self.fixed_target_spacing = None
 ```
 
 ## Orientation
@@ -93,38 +100,27 @@ self.norm_op = 'minmax'
 ```
 
 # Training
-Unless otherwise mentioned, preprocessing variables and functions are handled by the YuccaTrainers. For optimal results, it is advisable to subclass the default class when applying changes.
+Unless otherwise mentioned, training variables and functions are handled by the YuccaManagers. For optimal results, it is advisable to subclass the default class when applying changes.
 
 **Default Trainer Class: [YuccaManager](/yucca/training/managers/YuccaManager.py)**
 
 ## Data Augmentation
 Parent: default trainer class
 
-Method: *setup_DA*
-Variable: *self.augmentation_parameters*
+Variable: *self.augmentation_params*
 
-Changing the data augmentation scheme can be done in two ways. The first method is suitable for minor changes. The second is suitable for major changes.
+Changing the data augmentation parameters is achieved by defining a dictionary of augmentation parameters in the Manager, which will then automatically apply these settings to the composed augmentations. The default augmentation parameters can be seed in the `setup_default_params` method of the [`YuccaAugmentationComposer`](/yucca/yucca/training/augmentation/YuccaAugmentationComposer.py).
 
-To make minor changes you should subclass the parent and redefine the *setup_DA* method. Use the super() function to call the parent *setup_DA* function first, and then change the appropriate parameters.
-
+To disable blurring entirely and modify the scaling range do:
 ```
-def setup_DA(self):
-    super().setup_DA()
-    self.augmentation_parameters["do_ElasticDeform"] = False
-```
+from yucca.training.managers.YuccaManager import YuccaManager
 
-Refer to the [default_augmentation_params](/yucca/training/augmentation/default_augmentation_params.py) for all valid arguments.
+class YuccaManager_NewUserSetup(YuccaManager):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-To make major changes you should (1) subclass the parent and redefine the *setup_DA* method and (2) create a new dictionary of augmentation parameters with the same keys as the [default_augmentation_params](/yucca/training/augmentation/default_augmentation_params.py) (3) change the desired values (4) save this as a new .py file in the /yucca/training/augmentation folder (5) import and assign your new dictionary to *self.augmentation_parameters* in your subclassed trainer:
-
-```
-from yucca.training.augmentation.my_new_params import MyNew_3D_params, MyNew_2D_params
-
-def setup_DA(self):
-    if self.model_dimensions == '3D':
-        self.augmentation_parameters = MyNew_3D_params
-    if self.model_dimensions in ['2D', '25D']:
-        self.augmentation_parameters = MyNew_2D_params
+    self.augmentation_parameters = {"blurring_p_per_sample": 0.0,
+                                    "scale_factor": (0.7, 1.3)}
 ```
 
 ## Data Splits
