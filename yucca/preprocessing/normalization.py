@@ -10,11 +10,12 @@ def normalizer(array: np.ndarray, scheme: str, intensities: {}):
     supported schemes can be either:
     None = for no normalization. Generally not recommended.
     MinMax = for 0-1 or Min-Max normalization.
+    255to1 = for 0-1 normalization of 8 bit images.
     Standardize = (array - mean) / std. Based on modality wide stats.
     Clip = for contrast clipping. This will clip values to the 0.01 and 99.99th percentiles
         and then perform 0-1 normalization.
     """
-    accepted_schemes = ["clipping", "minmax", "no_norm", "standardize", "volume_wise_znorm"]
+    accepted_schemes = ["clipping", "minmax", "no_norm", "standardize", "volume_wise_znorm", "255to1"]
 
     assert scheme in accepted_schemes, "invalid normalization scheme inserted" f"attempted scheme: {scheme}"
     assert array is not None
@@ -25,6 +26,9 @@ def normalizer(array: np.ndarray, scheme: str, intensities: {}):
     elif scheme == "minmax":
         assert intensities is not None, "ERROR: dataset wide stats are required for minmax"
         return (array - intensities["min"]) / (intensities["max"] - intensities["min"])
+    
+    elif scheme == "255to1":
+        return array / 255
 
     elif scheme == "standardize":
         assert intensities is not None, "ERROR: dataset wide stats are required for standardize"
