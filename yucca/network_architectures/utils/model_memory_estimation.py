@@ -32,8 +32,6 @@ from yucca.utils.kwargs import filter_kwargs
 from batchgenerators.utilities.file_and_folder_operations import join
 from torch import nn
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
 
 def estimate_memory_training(model, model_input, optimizer_type=torch.optim.Adam, use_amp=True, device=None):
     """Predict the maximum memory usage of the model.
