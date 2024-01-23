@@ -28,12 +28,13 @@ from tqdm import tqdm
 
 class YuccaEvaluator(object):
     def __init__(
-        self, labels: list | int, 
-        folder_with_predictions, 
-        folder_with_ground_truth, 
-        do_object_eval=False, 
-        as_binary=False, 
-        task_type: Literal["segmentation", "classification", "regression"] = "segmentation"
+        self,
+        labels: list | int,
+        folder_with_predictions,
+        folder_with_ground_truth,
+        do_object_eval=False,
+        as_binary=False,
+        task_type: Literal["segmentation", "classification", "regression"] = "segmentation",
     ):
         self.name = "results"
 
@@ -53,7 +54,7 @@ class YuccaEvaluator(object):
                 "Total Positives Ground Truth": total_pos_gt,
                 "Total Positives Prediction": total_pos_pred,
             }
-            
+
             if do_object_eval:
                 self.name += "_OBJ"
                 self.obj_metrics = [
@@ -80,21 +81,19 @@ class YuccaEvaluator(object):
             ]
         elif self.task_type == "classification":
             self.metrics = {
-                "accuracy": accuracy,
-                "sensitivity": sensitivity,  # recall
-                "precision": precision,
+                "Accuracy": accuracy,
                 "F1": dice,
-                "AUROC": auroc,
+                # "AUROC": auroc, # TODO: Implement this. Will only work if we pass probabilities along labels
+                "Sensitivity": sensitivity,
+                "Precision": precision,
             }
 
             self.metrics_included_in_streamtable = [
-                "Dice",
+                "Accuracy",
                 "Sensitivity",
                 "Precision",
-                "Volume Similarity",
-                "_OBJ sensitivity",
-                "_OBJ precision",
-                "_OBJ F1",
+                # "AUROC",
+                "F1",
             ]
         elif self.task_type == "regression":
             raise NotImplementedError
@@ -105,7 +104,6 @@ class YuccaEvaluator(object):
             # }
         else:
             raise ValueError(f"Unknown task type {self.task_type}")
-
 
         if isinstance(labels, int):
             self.labels = [str(i) for i in range(labels)]
@@ -175,17 +173,8 @@ class YuccaEvaluator(object):
         Evaluate classification results
         """
         sys.stdout.flush()
-        # for classification, we need to load all predicitons and gts and calculate the metrics dataset-wide
-
-        # self.metrics = {
-        #     "accuracy": accuracy,
-        #     "sensitivity": sensitivity,  # recall
-        #     "precision": precision,
-        #     "F1": dice,
-        #     "AUROC": auroc,
-        # }
-
         resultdict = {}
+
         predictions = []
         ground_truths = []
 
@@ -193,12 +182,42 @@ class YuccaEvaluator(object):
             predpath = join(self.folder_with_predictions, case)
             gtpath = join(self.folder_with_ground_truth, case)
 
-            pred = np.loadtxt(predpath)  # contains output probabilities
+            pred = np.loadtxt(predpath)  # contains output probabilities OR output label
             gt = np.loadtxt(gtpath)  # contains single integer label
 
             predictions.append(pred)
             ground_truths.append(gt)
-        
+
+        predictions = np.array(predictions)
+        ground_truths = np.array(ground_truths)
+
+        cmat = confusion_matrix(ground_truths, predictions, labels=self.labelarr)
+
+        resultdict["per_class"] = {}
+
+        for label in self.labelarr:
+            tp = cmat[label, label]
+            fp = sum(cmat[:, label]) - tp
+            fn = sum(cmat[label, :]) - tp
+            tn = np.sum(cmat) - tp - fp - fn
+
+            labeldict = {}
+
+            for k, v in self.metrics.items():
+                labeldict[k] = round(v(tp, fp, tn, fn), 4)
+
+            resultdict["per_class"][str(label)] = labeldict
+
+        resultdict["mean"] = {}
+
+        # global metrics
+        for k, _ in self.metrics.items():
+            # calculate mean of the per-class metrics
+            resultdict["mean"][k] = sum([resultdict["per_class"][str(label)][k] for label in self.labelarr])
+            resultdict["mean"][k] = round(resultdict["mean"][k] / len(self.labelarr), 4)
+
+        return resultdict
+
     def _evaluate_folder_segm(self):
         sys.stdout.flush()
         resultdict = {}
@@ -236,10 +255,7 @@ class YuccaEvaluator(object):
                 fn = sum(cmat[label, :]) - tp
                 tn = np.sum(cmat) - tp - fp - fn  # often a redundant and meaningless metric
                 for k, v in self.metrics.items():
-                    if k == "AUROC":
-                        labeldict[k] = round(v(gt.get_fdata().flatten(), pred.get_fdata().flatten()), 4)  # XXX Test this
-                    else:
-                        labeldict[k] = round(v(tp, fp, tn, fn), 4)
+                    labeldict[k] = round(v(tp, fp, tn, fn), 4)
                     meandict[str(label)][k].append(labeldict[k])
 
                 if self.obj_metrics:

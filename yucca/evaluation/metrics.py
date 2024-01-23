@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.typing as npt
+from typing import Literal
 from sklearn.metrics import roc_auc_score
 
 
@@ -81,19 +82,20 @@ def accuracy(tp, fp, tn, fn):
             return 0
         else:
             return np.nan
-        
 
-def auroc(y_true: npt.ArrayLike, y_score: npt.ArrayLike):
+
+def auroc(y_true: npt.ArrayLike, y_score: npt.ArrayLike, multi_class_mode: Literal["ovr", "ovo"] = "ovr"):
     """
     Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC/AUROC) from prediction scores.
 
-    :param y_true: ground truth labels, shape (n_samples,n_classes) for multiclass or (n_samples,) for binary. 
+    :param y_true: ground truth labels, shape (n_samples,n_classes) for multiclass or (n_samples,) for binary.
                     Both probabilities and labels are accepted.
     :param y_score: predicted scores, shape (n_samples,n_classes)
-    
+    :param multi_class_mode: In multiclass setting, calculate ROC AUC one-vs-one (ovo), or one-vs-rest (ovr). One of {'ovr', 'ovo'}, default='ovr'
+
     """
     assert len(y_true.shape) == 1 or y_true.shape == y_score.shape, "y_true must be 1D or 2D"
-    roc_auc_score(y_true, y_score)
+    roc_auc_score(y_true, y_score, multi_class=multi_class_mode)
 
 
 def TP(tp, fp, tn, fn):

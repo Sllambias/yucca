@@ -41,9 +41,7 @@ def main():
         default="YuccaManager",
     )
     parser.add_argument("-pl", help="Plan ID. Defaults to YuccaPlanner", default="YuccaPlanner")
-    parser.add_argument(
-        "-chk", help="Checkpoint to use for inference. Defaults to checkpoint_best.", default="checkpoint_best"
-    )
+    parser.add_argument("-chk", help="Checkpoint to use for inference. Defaults to best.", default="best")
 
     parser.add_argument("-c", nargs="*", help="Classes to include for evaluation", type=str)
     parser.add_argument("--pred", help="path to predicted segmentations", default=None, required=False)
@@ -52,12 +50,22 @@ def main():
     parser.add_argument(
         "--as_binary", help="run evaluation as if data was binary", action="store_true", default=None, required=False
     )
+    parser.add_argument(
+        "--version", "-v", help="version number of the model. Defaults to 0.", default=0, type=int, required=False
+    )
+    parser.add_argument(
+        "--task_type",
+        default="segmentation",
+        type=str,
+        required=False,
+        help="Defaults to segmentation. Set to 'classification' for classification tasks.",
+    )
 
     args = parser.parse_args()
 
     source_task = maybe_get_task_from_task_id(args.s)
     target_task = maybe_get_task_from_task_id(args.t)
-    trainer_name = args.tr
+    manager_name = args.man
     model = args.m
     dimensions = args.d
     folds = args.f
@@ -68,6 +76,8 @@ def main():
     classes = args.c
     predpath = args.pred
     gtpath = args.gt
+    num_version = args.version
+    task_type = args.task_type
 
     assert (predpath and gtpath) or source_task, "Either supply BOTH paths or the source task"
 
@@ -75,19 +85,26 @@ def main():
         if not target_task:
             target_task = source_task
 
-        predpath = join(
+        predpath = join(  # TODO: Extract this into a function
             yucca_results,
             target_task,
             source_task,
-            model + dimensions,
-            trainer_name + "__" + plan_id,
-            "fold_" + folds + "_" + checkpoint,
+            model + "__" + dimensions,
+            manager_name + "__" + plan_id,
+            "fold_" + folds,
+            "version_" + str(num_version),
+            checkpoint,
         )
         gtpath = join(yucca_raw_data, target_task, "labelsTs")
         classes = list(load_json(join(yucca_raw_data, target_task, "dataset.json"))["labels"].keys())
 
     evaluator = YuccaEvaluator(
-        classes, folder_with_predictions=predpath, folder_with_ground_truth=gtpath, do_object_eval=obj, as_binary=as_binary
+        classes,
+        folder_with_predictions=predpath,
+        folder_with_ground_truth=gtpath,
+        do_object_eval=obj,
+        as_binary=as_binary,
+        task_type=task_type,
     )
     evaluator.run()
 
