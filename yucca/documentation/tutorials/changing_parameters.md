@@ -22,40 +22,38 @@
 
 # Guide to Changing Yucca Parameters
 ## Subclassing
-Changing parameters in Yucca is generally achieved using subclasses. (1) Subclass the class defining the parameter of interest, (2) change the variable to the desired value and (3) create a new .py file in the (sub)directory of the parent class.
+Changing parameters in Yucca is generally achieved using subclasses. This means, to change a given parameter (1) Subclass the class defining the parameter, (2) change the value of the parameter to the desired value and (3) create a new .py file in the (sub)directory of the parent class.
 
-E.g. to lower the starting Learning Rate we subclass YuccaTrainerV2 - the default class responsible for handling model training, and change the variable \_DEFAULT\_STARTING\_LR variable from 1e-3 to 1e-5.
+E.g. to lower the starting Learning Rate we subclass YuccaManager - the default class responsible for handling model training, and change the variable self.learning_rate variable from 1e-3 to 1e-5.
 
-We call this new trainer "YuccaTrainerV2_LowerLR" and save it as "YuccaTrainerV2_LowerLR.py" in the /yucca/training/trainers directory as this is where the Parent Class is located. Alternatively it can be saved in a subdirectory of the directory of the parent class e.g. /yucca/training/trainers/lr. 
+We call this new trainer "YuccaManager_1e5" and save it as "YuccaManager_1e5.py" in the /yucca/training/managers directory as this is where the Parent Class is located. Alternatively it can be saved in a subdirectory of the directory of the parent class e.g. /yucca/training/managers/lr. 
 
 ```
-from yucca.training.trainers.YuccaTrainerV2 import YuccaTrainerV2
+from yucca.training.managers.YuccaManager import YuccaManager
 
-class YuccaTrainerV2_1e5(YuccaTrainerV2):
-    def __init__(self, model, model_dimensions: str, task: str, folds: str | int, plan_id: str,
-                 starting_lr: float = None, loss_fn: str = None, momentum: float = None,
-                 continue_training: bool = False):
-        super().__init__(model, model_dimensions, task, folds, plan_id, starting_lr, 
-                         loss_fn, momentum, continue_training)
-        self._DEFAULT_STARTING_LR = 1e-5
-        
+
+class YuccaManager_1e5(YuccaManager):
+    def __init__(self, learning_rate=1e-5, *args, **kwargs):
+        super().__init__(learning_rate=learning_rate, *args, **kwargs)
+
 ```
 
 # Preprocessing
 Unless otherwise mentioned, preprocessing variables and functions are handled by the YuccaPlanners. For optimal results, it is advisable to subclass the default planner when applying changes.
 
-**Default Planner Class: [YuccaPlannerV2](/yucca/planning/YuccaPlannerV2.py)**
+**Default Planner Class: [YuccaPlanner](/yucca/planning/YuccaPlanner.py)**
 
 ## Spacing
 Parent: default planner class
 
-Function: *determine_spacing*
+Function: *determine_target_size_from_fixed_size_or_spacing*
 
 E.g. if a fixed spacing of [0.5, 0.5, 1.] is desired:
 
 ```
-def determine_spacing(self):
-    return [0.5, 0.5, 1.]
+def determine_target_size_from_fixed_size_or_spacing(self):
+    self.fixed_target_size = None
+    self.fixed_target_spacing = [0.5, 0.5, 1.]
 ```
 
 ## Orientation
@@ -70,7 +68,8 @@ Variable 2: *self.transpose_forward*
 Variable 3: *self.transpose_backward*
 - used to transpose samples back from the target orientation to the starting position. This should only be used if samples are transposed by *transpose_forward*. This is applied during inference to revert any transform applied by *transpose_forward*.
 
-For example, if it is desired to first reorient all samples to 'LPS' as the starting position, and then transpose them from [x, y, z] to [z, x, y] during training so it effectively becomes SLP, and finally back from [z, x, y] to [x, y, z] in inference do:
+For example, if it is desired to first reorient all NIFTI samples to 'LPS' as the starting position, and then transpose them from [h, w, d] to [d, h, w] during training, and finally back from [d, h, w] to [h, w, d] in inference do:
+
 ```
 self.target_coordinate_system = 'LPS'
 self.transpose_forward = [2, 0, 1]
@@ -96,7 +95,7 @@ self.norm_op = 'minmax'
 # Training
 Unless otherwise mentioned, preprocessing variables and functions are handled by the YuccaTrainers. For optimal results, it is advisable to subclass the default class when applying changes.
 
-**Default Trainer Class: [YuccaTrainerV2](/yucca/training/trainers/YuccaTrainerV2.py)**
+**Default Trainer Class: [YuccaManager](/yucca/training/managers/YuccaManager.py)**
 
 ## Data Augmentation
 Parent: default trainer class
@@ -169,9 +168,9 @@ Variable: self.\_DEFAULT\_STARTING\_LR
 Subclass the parent and change the variable to the desired value using scientific notation.
 
 ```
-from yucca.training.trainers.YuccaTrainerV2 import YuccaTrainerV2
+from yucca.training.managers.YuccaManager import YuccaManager
 
-class YuccaTrainerV2_LowerLR(YuccaTrainerV2):
+class YuccaManager_LowerLR(YuccaManager):
     def __init__(self, model, model_dimensions: str, task: str, folds: str | int, plan_id: str,
                  starting_lr: float = None, loss_fn: str = None, momentum: float = None,
                  continue_training: bool = False):
@@ -195,10 +194,10 @@ Variable 2: self.lr\_scheduler\_kwargs
 Subclass the parent and change the variables to the desired values.
 
 ```
-from yucca.training.trainers.YuccaTrainerV2 import YuccaTrainerV2
+from yucca.training.managers.YuccaManager import YuccaManager
 from torch import optim
 
-class YuccaTrainerV2_StepLRS(YuccaTrainerV2):
+class YuccaManager_StepLRS(YuccaManager):
     def __init__(self, model, model_dimensions: str, task: str, folds: str | int, plan_id: str,
                  starting_lr: float = None, loss_fn: str = None, momentum: float = None,
                  continue_training: bool = False):
@@ -216,10 +215,10 @@ Variable: self.\_DEFAULT\_LOSS
 Subclass the parent and change the variable to the desired loss class. The loss class must be saved in /yucca/training/loss_functions and be a subclass of nn.Module.
 
 ```
-from yucca.training.trainers.YuccaTrainerV2 import YuccaTrainerV2
+from yucca.training.managers.YuccaManager import YuccaManager
 from yucca.training.loss_functions import NLL
 
-class YuccaTrainerV2_NLL(YuccaTrainerV2):
+class YuccaManager_NLL(YuccaManager):
     def __init__(self, model, model_dimensions: str, task: str, folds: str | int, plan_id: str,
                  starting_lr: float = None, loss_fn: str = None, momentum: float = None,
                  continue_training: bool = False):
@@ -245,9 +244,9 @@ Variable: self.\_DEFAULT\_MOMENTUM
 Subclass the parent and change the variable to the desired value.
 
 ```
-from yucca.training.trainers.YuccaTrainerV2 import YuccaTrainerV2
+from yucca.training.managers.YuccaManager import YuccaManager
 
-class YuccaTrainerV2_mom95(YuccaTrainerV2):
+class YuccaManager_mom95(YuccaManager):
     def __init__(self, model, model_dimensions: str, task: str, folds: str | int, plan_id: str,
                  starting_lr: float = None, loss_fn: str = None, momentum: float = None,
                  continue_training: bool = False):
@@ -267,10 +266,10 @@ Variable: self.optim
 Subclass the parent and change the variable to the desired torch optimizer class.
 
 ```
-from yucca.training.trainers.YuccaTrainerV2 import YuccaTrainerV2
+from yucca.training.managers.YuccaManager import YuccaManager
 from torch import optim
 
-class YuccaTrainerV2_Adam(YuccaTrainerV2):
+class YuccaManager_Adam(YuccaManager):
     def __init__(self, model, model_dimensions: str, task: str, folds: str | int, plan_id: str,
                  starting_lr: float = None, loss_fn: str = None, momentum: float = None,
                  continue_training: bool = False):

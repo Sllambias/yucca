@@ -1,6 +1,6 @@
 # Task Conversion
 
-Yucca uses the data structure presented in the Medical Segmentation Challenge [see @https://arxiv.org/pdf/1902.09063.pdf; https://arxiv.org/pdf/1902.09063.pdf]. This includes naming conventions, directory structures and descriptor files (dataset.json).
+Yucca uses the data structure presented in the Medical Segmentation Challenge [see @https://arxiv.org/pdf/1902.09063.pdf]. This includes naming conventions, directory structures and descriptor files (dataset.json).
 
 # File and Folder Structure
 Yucca reads/writes data from/to four directories specified by the user where the directories contain respectively `raw_data`, `preprocessed_data`, `models` and `results`. The paths to these directories should be specified in your environment variables as seen [here](/yucca/documentation/tutorials/environment_variables.md).
