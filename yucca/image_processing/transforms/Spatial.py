@@ -17,16 +17,6 @@ from typing import Tuple
 
 
 class Spatial(YuccaTransform):
-    """
-    variables in aug_params:
-            do_Rotation
-            Rotation_p_per_sample
-            Rotation_p_per_channel
-            Rotation_x_rot
-            Rotation_y_rot
-            Rotation_z_rot
-    """
-
     def __init__(
         self,
         data_key="image",

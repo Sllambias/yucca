@@ -4,8 +4,6 @@ from skimage.transform import resize
 
 
 class SimulateLowres(YuccaTransform):
-    """ """
-
     def __init__(
         self,
         data_key="image",

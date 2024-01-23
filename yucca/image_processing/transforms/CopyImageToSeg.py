@@ -2,13 +2,6 @@ from yucca.image_processing.transforms.YuccaTransform import YuccaTransform
 
 
 class CopyImageToSeg(YuccaTransform):
-    """
-    variables in CopyImageToSeg
-    data_key
-    label_key
-
-    """
-
     def __init__(self, copy=False, data_key="image", label_key="label"):
         self.copy = copy
         self.data_key = data_key
