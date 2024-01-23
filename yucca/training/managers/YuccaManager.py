@@ -55,6 +55,7 @@ class YuccaManager:
         model_dimensions: str = "3D",
         model_name: str = "TinyUNet",
         num_workers: int = 8,
+        batch_size: Union[int, Literal["tiny"]] = None,
         patch_based_training: bool = True,
         patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
         augmentation_params: dict = {},
@@ -82,6 +83,7 @@ class YuccaManager:
         self.name = self.__class__.__name__
         self.num_workers = num_workers
         self.augmentation_params = augmentation_params
+        self.batch_size = batch_size
         self.patch_based_training = patch_based_training
         self.patch_size = patch_size
         self.planner = planner
@@ -157,6 +159,7 @@ class YuccaManager:
             num_classes=plan_config.num_classes,
             model_name=task_config.model_name,
             max_vram=self.max_vram,
+            batch_size=self.batch_size,
             patch_based_training=task_config.patch_based_training,
             patch_size=self.patch_size,
         )

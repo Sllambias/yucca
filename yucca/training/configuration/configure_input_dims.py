@@ -40,7 +40,7 @@ def get_input_dims_config(
     if batch_size is None and plan.get("batch_size"):
         batch_size = plan.get("batch_size")
     if patch_size is None and plan.get("patch_size"):
-        patch_size = plan.get("patch_size")
+        patch_size = tuple(plan.get("patch_size"))
 
     # onvert batch_size provided as string to int
     if isinstance(batch_size, str):
@@ -53,7 +53,7 @@ def get_input_dims_config(
     if isinstance(patch_size, str):
         if patch_size in ["max", "min", "mean"]:
             # Get patch size from dataset
-            patch_size = plan[f"new_{patch_size}_size"]
+            patch_size = tuple(plan[f"new_{patch_size}_size"])
         elif patch_size == "tiny":
             patch_size = (32, 32, 32)
         else:
