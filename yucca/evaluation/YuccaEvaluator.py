@@ -162,6 +162,14 @@ class YuccaEvaluator(object):
             self.save_as_json(dict)
             self.update_streamtable(dict["mean"])
 
+    def evaluate_folder(self):
+        if self.task_type == "classification":
+            return self._evaluate_folder_cls()
+        elif self.task_type == "segmentation":
+            return self._evaluate_folder_segm()
+        else:
+            raise NotImplementedError("Invalid task type")
+
     def _evaluate_folder_cls(self):
         """
         Evaluate classification results
@@ -190,14 +198,6 @@ class YuccaEvaluator(object):
 
             predictions.append(pred)
             ground_truths.append(gt)
-
-    def evaluate_folder(self):
-        if self.task_type == "classification":
-            return self._evaluate_folder_cls()
-        elif self.task_type == "segmentation":
-            return self._evaluate_folder_segm()
-        else:
-            raise NotImplementedError("Invalid task type")
         
     def _evaluate_folder_segm(self):
         sys.stdout.flush()

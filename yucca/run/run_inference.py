@@ -120,6 +120,20 @@ def main():
         required=False,
         help="Save softmax outputs. Required for softmax fusion.",
     )
+    parser.add_argument(
+        "--batch_size", "-bs",
+        default=16,
+        type=int,
+        required=False,
+        help="Batch size for inference. Defaults to 16.",
+    )
+    parser.add_argument(
+        "--task_type",
+        default="segmentation",
+        type=str,
+        required=False,
+        help="Defaults to segmentation. Set to 'classification' for classification tasks.",
+    )
 
     args = parser.parse_args()
 
@@ -136,6 +150,8 @@ def main():
     profile = args.profile
     split_idx = int(args.fold)
     version = args.version
+    batch_size = args.batch_size
+    task_type = args.task_type
 
     # Optionals (occasionally changed)
     experiment = args.experiment
@@ -188,6 +204,7 @@ def main():
         split_idx=split_idx,
         planner=planner,
         profile=profile,
+        batch_size=batch_size,
     )
 
     # Setting up input paths and output paths
@@ -225,6 +242,7 @@ def main():
             manager.model_module.num_classes,
             folder_with_predictions=outpath,
             folder_with_ground_truth=ground_truth,
+            task_type=task_type
         )
         evaluator.run()
 
