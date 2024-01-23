@@ -100,6 +100,9 @@ def main():
 
     parser.add_argument("--precision", type=str, default="bf16-mixed")
 
+    parser.add_argument("--train_batches_per_step", type=int, default=250)
+    parser.add_argument("--val_batches_per_step", type=int, default=50)
+
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
@@ -177,6 +180,8 @@ def main():
         step_logging=False,
         task=task,
         experiment=experiment,
+        train_batches_per_step=args.train_batches_per_step,
+        val_batches_per_step=args.val_batches_per_step,
         **kwargs,
     )
     manager.run_training()
