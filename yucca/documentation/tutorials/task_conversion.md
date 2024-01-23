@@ -65,19 +65,3 @@ Each image(s)/label pair must be properly registered and shaped. This implies id
 Ensure that only the correct labels are present in the ground truth segmentations.
 
 In some cases each token of a given type is assigned a unique label. E.g. in a microbleed segmentation/detection task each bleed in an image is labeled with incrementing integers. This is often highly undesirable as the segmentation network will treat each label as unique types rather than tokens of the same type.
-
-Changing all non-background labels to a single label can be achieved using:
-```
-# SITK METHOD
-      import SimpleITK as sitk
-      segmentation = sitk.ReadImage('path/to/seg01.nii.gz')
-      label = sitk.Mask(label, sitk.Not(label != 0), 1)
-
-# NIBABEL METHOD
-      import nibabel as nib
-      segmentation = nib.load('path/to/seg01.nii.gz')
-      data = segmentation.get_fdata()
-      data[data != 0] = 1
-      segmentation = nib.Nifti1Image(data, segmentation.affine, segmentation.header)
-```
-However, beware to not use this in cases where it is desirable to have multiple labels (e.g. for a left and right hippocampus or white and gray matter)

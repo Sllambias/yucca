@@ -77,15 +77,19 @@ wandb: Paste an API key from your profile and hit enter, or press ctrl+c to quit
 
 # Usage
 
-The Yucca pipeline is comprised of the 4 processes illustrated in the [diagram](#yucca). The first process 
+The Yucca pipeline is comprised of the 4 processes illustrated in the [diagram](#yucca). In the first step the user is expected to prepare the data for Yucca. In the remaining three steps Yucca will take over with regards to file management.
   1. The Task Conversion step requires that the user _converts_ their arbitrarly structured data to the file and folder structure required by Yucca. Hereafter, Yucca handles the data. Task Conversion involves moving and renaming the data along with creating a metadata file.
   2. The Preprocessing step takes the Task Converted data and preprocesses it and then subsequently saves it in its preprocessed state in the format expected by the Yucca training process.
   3. The Training step takes the preprocessed data and trains a model and then subsequently saves it along with its checkpoints and metadata.
   4. The Inference step takes the trained model and applies it to a task converted (but not preprocessed) test set. During inference the unseen samples are preprocessed with the same preprocessor used in the preprocessing step. Predictions are then saved. When inference is concluded the predictions are evaluated against the ground truth and a .json file containing the results are saved next to the predictions.
 
+# Environment Variables
+
+Initially, the environment variables used in Yucca must be defined. To set these see: [Environment Variables](yucca/documentation/tutorials/environment_variables.md). 
+
 # Task Conversion
 
-Prior to preprocessing and training all datasets must be converted to a Yucca-compliant task. This is done to ensure reproducibility and eliminate data leakage. For a tutorial see the [Task Conversion Guide](yucca/documentation/tutorials/task_conversion.md).
+Prior to preprocessing and training all datasets must be converted to Yucca-compliant tasks. This is done to ensure reproducibility and eliminate data leakage. For a tutorial see the [Task Conversion Guide](yucca/documentation/tutorials/task_conversion.md).
 
 # Preprocessing
 
