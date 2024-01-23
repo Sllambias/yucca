@@ -49,19 +49,7 @@ For an Ubuntu system with Cuda=>12.1:
 > pip install -e .
 ```
 
-
-For an Ubuntu system with Cuda 11.7:
-```
-> conda create -n yuccaenv python=3.10
-> conda activate yuccaenv
-> conda install -c anaconda setuptools
-> conda install -c "nvidia/label/cuda-11.7.1" cuda-toolkit
-> conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 pytorch-cuda=11.7 -c pytorch -c nvidia
-> git clone https://github.com/Sllambias/yucca.git
-> cd yucca
-> pip install -e .
-```
-To use other CUDA or PyTorch versions refer to 1. for the current PyTorch installation, 2. for previous versions and 3. for the appropriate CUDA toolkit. Note that the CUDA versions used in the PyTorch and CUDA-toolkit installations should match (in the example above both use 11.7) 
+To use other CUDA or PyTorch versions refer to 1. for the current PyTorch installation, 2. for previous versions and 3. for the appropriate CUDA toolkit. Note that the CUDA versions used in the PyTorch and CUDA-toolkit installations should match (in the example above both use 12.1).
 
 1. https://pytorch.org/get-started/locally/
 2. https://pytorch.org/get-started/previous-versions/
@@ -86,6 +74,14 @@ wandb: Logging into wandb.ai. (Learn how to deploy a W&B server locally: https:/
 wandb: You can find your API key in your browser here: https://wandb.ai/authorize
 wandb: Paste an API key from your profile and hit enter, or press ctrl+c to quit:
 ```
+
+# Usage
+
+The Yucca pipeline is comprised of the 4 processes illustrated in the [diagram](#yucca). The first process 
+  1. The Task Conversion step requires that the user _converts_ their arbitrarly structured data to the file and folder structure required by Yucca. Hereafter, Yucca handles the data. Task Conversion involves moving and renaming the data along with creating a metadata file.
+  2. The Preprocessing step takes the Task Converted data and preprocesses it and then subsequently saves it in its preprocessed state in the format expected by the Yucca training process.
+  3. The Training step takes the preprocessed data and trains a model and then subsequently saves it along with its checkpoints and metadata.
+  4. The Inference step takes the trained model and applies it to a task converted (but not preprocessed) test set. During inference the unseen samples are preprocessed with the same preprocessor used in the preprocessing step. Predictions are then saved. When inference is concluded the predictions are evaluated against the ground truth and a .json file containing the results are saved next to the predictions.
 
 # Task Conversion
 
