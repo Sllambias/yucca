@@ -39,7 +39,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
     def keep_in_ram(self):
         if self._keep_in_ram is not None:
             return self._keep_in_ram
-        if len(self.all_cases) < 1000:
+        if len(self.all_cases) < 50:
             self._keep_in_ram = True
         else:
             print("Large dataset detected. Will not keep cases in RAM during training.")
