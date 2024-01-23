@@ -161,6 +161,8 @@ def main():
         precision=args.precision,
         profile=profile,
         split_idx=split_idx,
+        split_data_kfold=split_data_kfold,
+        split_data_ratio=split_data_ratio,
         step_logging=False,
         task=task,
         train_batches_per_step=args.train_batches_per_step,
