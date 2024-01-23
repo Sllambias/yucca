@@ -21,9 +21,7 @@ class CallbackConfig:
 
 
 def get_callback_config(
-    model_name: str,
     save_dir: str,
-    task: str,
     version_dir: str,
     version: int,
     ckpt_version_dir: Union[str, None] = None,
@@ -56,8 +54,6 @@ def get_callback_config(
     loggers = get_loggers(
         ckpt_version_dir=ckpt_version_dir,
         ckpt_wandb_id=ckpt_wandb_id,
-        task=task,
-        model_name=model_name,
         save_dir=save_dir,
         version_dir=version_dir,
         version=version,
@@ -80,11 +76,9 @@ def get_loggers(
     ckpt_wandb_id: Union[str, None],
     enable_logging: bool,
     log_model: Union[bool, str],
-    model_name: str,
     project: str,
     save_dir: str,
     steps_per_epoch: int,
-    task: str,
     version_dir: str,
     version: Union[int, str],
     run_name: str,

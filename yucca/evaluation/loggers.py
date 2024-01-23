@@ -4,24 +4,14 @@ from argparse import Namespace
 from lightning.pytorch.loggers.logger import Logger
 from pytorch_lightning.utilities.rank_zero import rank_zero_only
 from pytorch_lightning.core.saving import save_hparams_to_yaml
-from pytorch_lightning.loggers.csv_logs import ExperimentWriter
-
-from lightning_fabric.loggers.logger import rank_zero_experiment
-
-from lightning_fabric.loggers.csv_logs import (
-    _ExperimentWriter as _FabricExperimentWriter,
-)
-from lightning_fabric.utilities.cloud_io import _is_dir, get_filesystem
-
 from lightning_fabric.utilities.logger import _convert_params
 from time import localtime, strftime, time
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     maybe_mkdir_p,
     isdir,
-    subdirs,
 )
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, Optional, Union
 
 
 class YuccaLogger(Logger):
@@ -130,7 +120,7 @@ class YuccaLogger(Logger):
         save_hparams_to_yaml(hparams_file, self.hparams)
 
     @rank_zero_only
-    def finalize(self, status: str) -> None:
+    def finalize(self) -> None:
         # When using multiprocessing, finalize() should be a no-op on the main process, as no experiment has been
         # initialized there
         self.save()

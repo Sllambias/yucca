@@ -3,7 +3,7 @@ import torchvision
 from typing import Literal
 from torch.utils.data import DataLoader, Sampler
 from batchgenerators.utilities.file_and_folder_operations import join
-from yucca.training.configuration.input_dimensions import InputDimensionsConfig
+from yucca.training.configuration.configure_input_dims import InputDimensionsConfig
 from yucca.training.configuration.split_data import SplitConfig
 from yucca.training.configuration.configure_plans import PlanConfig
 from yucca.training.data_loading.YuccaDataset import YuccaTestDataset, YuccaTrainDataset
@@ -65,9 +65,9 @@ class YuccaDataModule(pl.LightningDataModule):
         self.image_extension = plan_config.image_extension
         self.task_type = plan_config.task_type
 
+        self.split_idx = split_idx
+        self.splits_config = splits_config
         self.train_data_dir = train_data_dir
-        self.train_split = splits_config.train(split_idx)
-        self.val_split = splits_config.val(split_idx)
 
         # Set by initialize()
         self.composed_train_transforms = composed_train_transforms
@@ -91,8 +91,8 @@ class YuccaDataModule(pl.LightningDataModule):
         if stage == "fit":
             assert self.train_data_dir is not None
 
-            self.train_samples = [join(self.train_data_dir, i) for i in self.train_split]
-            self.val_samples = [join(self.train_data_dir, i) for i in self.val_split]
+            self.train_samples = [join(self.train_data_dir, i) for i in self.splits_config.train(self.split_idx)]
+            self.val_samples = [join(self.train_data_dir, i) for i in self.splits_config.val(self.split_idx)]
 
             self.train_dataset = YuccaTrainDataset(
                 self.train_samples,
@@ -112,7 +112,7 @@ class YuccaDataModule(pl.LightningDataModule):
             assert self.pred_data_dir is not None, "set a pred_data_dir for inference to work"
             # This dataset contains ONLY the images (and not the labels)
             # It will return a tuple of (case, case_id)
-            self.pred_dataset = YuccaTestDataset(self.pred_data_dir, patch_size=self.patch_size, suffix=self.image_extension)
+            self.pred_dataset = YuccaTestDataset(self.pred_data_dir, suffix=self.image_extension)
 
     def train_dataloader(self):
         print(f"Starting training with data from: {self.train_data_dir}")

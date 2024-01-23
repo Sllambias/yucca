@@ -71,7 +71,7 @@ def main():
     # parser.add_argument("--chk", help="used to specify checkpoint to continue training from "
     #                    "when --continue_train is supplied. "
     #                    "The default is the latest model.", default='latest')
-    parser.add_argument("--threads", help="number of threads/processes", default=2)
+    # parser.add_argument("--threads", help="number of threads/processes", default=2)
 
     args = parser.parse_args()
 
@@ -87,7 +87,7 @@ def main():
     loss = args.loss
     momentum = args.mom
     continue_training = args.continue_train
-    threads = args.threads
+    # threads = args.threads
     # checkpoint = args.chk
 
     assert model in [

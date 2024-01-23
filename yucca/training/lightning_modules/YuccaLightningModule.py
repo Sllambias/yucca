@@ -5,12 +5,11 @@ import wandb
 import copy
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
-from torchmetrics.classification import Dice, Precision
+from torchmetrics.classification import Dice
 from torchmetrics.regression import MeanAbsoluteError
 from yucca.training.loss_and_optim.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.utils.kwargs import filter_kwargs
-from typing import Literal
 
 
 class YuccaLightningModule(L.LightningModule):
@@ -32,7 +31,6 @@ class YuccaLightningModule(L.LightningModule):
         momentum: float = 0.9,
         optimizer: torch.optim.Optimizer = torch.optim.SGD,
         sliding_window_overlap: float = 0.5,
-        stage: Literal["fit", "test", "predict"] = "fit",
         step_logging: bool = False,
         test_time_augmentation: bool = False,
     ):
@@ -47,6 +45,7 @@ class YuccaLightningModule(L.LightningModule):
         self.model_dimensions = config["model_dimensions"]
         self.patch_size = config["patch_size"]
         self.task_type = config["task_type"]
+        self.sliding_window_prediction = config["patch_based_training"]
 
         # Loss, optimizer and scheduler parameters
         self.deep_supervision = deep_supervision
@@ -119,10 +118,10 @@ class YuccaLightningModule(L.LightningModule):
     def forward(self, inputs):
         return self.model(inputs)
 
-    def teardown(self, stage: str):
+    def teardown(self, stage: str):  # noqa: U100
         wandb.finish()
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch, _batch_idx):
         inputs, target = batch["image"], batch["label"]
         output = self(inputs)
         loss = self.loss_fn_train(output, target)
@@ -137,7 +136,7 @@ class YuccaLightningModule(L.LightningModule):
         self.log_dict({"train_loss": loss} | metrics, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch, _batch_idx):
         inputs, target = batch["image"], batch["label"]
         output = self(inputs)
         loss = self.loss_fn_val(output, target)
@@ -152,20 +151,21 @@ class YuccaLightningModule(L.LightningModule):
         )
         self.preprocessor = preprocessor_class(join(self.version_dir, "hparams.yaml"))
 
-    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+    def predict_step(self, batch, _batch_idx, _dataloader_idx=0):
         case, case_id = batch
 
         (
             case_preprocessed,
             case_properties,
-        ) = self.preprocessor.preprocess_case_for_inference(case, self.patch_size)
+        ) = self.preprocessor.preprocess_case_for_inference(case, self.patch_size, self.sliding_window_prediction)
 
         logits = self.model.predict(
-            mode=self.model_dimensions,
             data=case_preprocessed,
-            patch_size=self.patch_size,
-            overlap=self.sliding_window_overlap,
+            mode=self.model_dimensions,
             mirror=self.test_time_augmentation,
+            overlap=self.sliding_window_overlap,
+            patch_size=self.patch_size,
+            sliding_window_prediction=self.sliding_window_prediction,
         )
 
         logits, case_properties = self.preprocessor.reverse_preprocessing(logits, case_properties)
