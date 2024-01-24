@@ -82,9 +82,6 @@ class YuccaDataModule(pl.LightningDataModule):
         self.num_workers = num_workers
         self.val_num_workers = num_workers // 2 if num_workers > 0 else num_workers
         self.sampler = sampler
-        
-        # Do not change this
-        self.log = logging.getLogger("lightning.pytorch")
 
     def setup(self, stage: Literal["fit", "test", "predict"]):
         logging.info(f"Setting up data for stage: {stage}")
@@ -98,8 +95,8 @@ class YuccaDataModule(pl.LightningDataModule):
             self.train_samples = [join(self.train_data_dir, i) for i in self.splits_config.train(self.split_idx)]
             self.val_samples = [join(self.train_data_dir, i) for i in self.splits_config.val(self.split_idx)]
 
-            self.log.info(f"Training on samples: {self.train_samples}")
-            self.log.info(f"Validating on samples: {self.val_samples}")
+            logging.info(f"Training on samples: {self.train_samples}")
+            logging.info(f"Validating on samples: {self.val_samples}")
 
             self.train_dataset = YuccaTrainDataset(
                 self.train_samples,
@@ -122,7 +119,7 @@ class YuccaDataModule(pl.LightningDataModule):
             self.pred_dataset = YuccaTestDataset(self.pred_data_dir, suffix=self.image_extension)
 
     def train_dataloader(self):
-        self.log.info(f"Starting training with data from: {self.train_data_dir}")
+        logging.info(f"Starting training with data from: {self.train_data_dir}")
         train_sampler = self.sampler(self.train_dataset) if self.sampler is not None else None
         return DataLoader(
             self.train_dataset,
@@ -147,5 +144,5 @@ class YuccaDataModule(pl.LightningDataModule):
         return None
 
     def predict_dataloader(self):
-        self.log.info("Starting inference")
+        logging.info("Starting inference")
         return DataLoader(self.pred_dataset, num_workers=self.num_workers, batch_size=1)

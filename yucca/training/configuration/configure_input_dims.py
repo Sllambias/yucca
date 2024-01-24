@@ -3,8 +3,6 @@ from typing import Tuple, Union, Optional, Literal
 from yucca.network_architectures.utils.model_memory_estimation import find_optimal_tensor_dims
 import logging
 
-log = logging.getLogger(__name__)
-
 
 @dataclass
 class InputDimensionsConfig:
@@ -91,7 +89,7 @@ def get_input_dims_config(
     if plan.get("batch_size") and plan.get("batch_size") != batch_size:
         raise UserWarning(f"Overwriting batch size from plan ({plan.get('batch_size')}) with {batch_size}")
 
-    log.info(f"Using batch size: {batch_size} and patch size: {patch_size}")
+    logging.info(f"Using batch size: {batch_size} and patch size: {patch_size}")
 
     return InputDimensionsConfig(
         batch_size=batch_size,

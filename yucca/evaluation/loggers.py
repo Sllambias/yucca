@@ -37,7 +37,7 @@ class YuccaLogger(Logger):
         self.previous_epoch = 0
         self.hparams: Dict[str, Any] = {}
         self.NAME_HPARAMS_FILE = "hparams.yaml"
-        
+
         if self.log_file is None and self.disable_logging is False:
             self.create_logfile()
 
@@ -86,7 +86,7 @@ class YuccaLogger(Logger):
         # Add the log_file as a duplicate handler of lightning outputs
         logging.getLogger("lightning.pytorch").addHandler(logging.FileHandler(log_file))
         # Add the log_file as a duplicate handler of lightning outputs
-        logging.getLogger(__name__).addHandler(logging.FileHandler(log_file))
+        logging.getLogger().addHandler(logging.FileHandler(log_file))
 
     @rank_zero_only
     def log_hyperparams(self, params: Union[Dict[str, Any], Namespace]) -> None:  # type: ignore[override]
