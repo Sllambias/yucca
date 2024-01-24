@@ -10,6 +10,7 @@ from yucca.training.configuration.configure_task import SplitMethods
 
 log = logging.getLogger(__name__)
 
+
 @dataclass
 class SplitConfig:
     splits: Union[dict[dict[list[dict]]], None]  # Contains `{ method: { parameter_value: [splits] }}`

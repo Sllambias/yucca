@@ -110,10 +110,9 @@ class YuccaManager:
         if "bf" in self.precision and torch.cuda.is_available():
             if not torch.cuda.is_bf16_supported():
                 self.precision = self.precision.replace("bf", "")
-        
+
         # Statics
         self.trainer = L.Trainer
-
 
     def initialize(
         self,
