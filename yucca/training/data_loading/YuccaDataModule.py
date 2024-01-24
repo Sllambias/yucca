@@ -1,5 +1,6 @@
 import lightning as pl
 import torchvision
+import logging
 from typing import Literal
 from torch.utils.data import DataLoader, Sampler
 from batchgenerators.utilities.file_and_folder_operations import join
@@ -83,7 +84,7 @@ class YuccaDataModule(pl.LightningDataModule):
         self.sampler = sampler
 
     def setup(self, stage: Literal["fit", "test", "predict"]):
-        print(f"Setting up data for stage: {stage}")
+        logging.info(f"Setting up data for stage: {stage}")
         expected_stages = ["fit", "test", "predict"]
         assert stage in expected_stages, "unexpected stage. " f"Expected: {expected_stages} and found: {stage}"
 
@@ -93,6 +94,9 @@ class YuccaDataModule(pl.LightningDataModule):
 
             self.train_samples = [join(self.train_data_dir, i) for i in self.splits_config.train(self.split_idx)]
             self.val_samples = [join(self.train_data_dir, i) for i in self.splits_config.val(self.split_idx)]
+
+            logging.info(f"Training on samples: {self.train_samples}")
+            logging.info(f"Validating on samples: {self.train_samples}")
 
             self.train_dataset = YuccaTrainDataset(
                 self.train_samples,
