@@ -38,10 +38,10 @@ class YuccaLogger(Logger):
         self.hparams: Dict[str, Any] = {}
         self.NAME_HPARAMS_FILE = "hparams.yaml"
 
-        if self.log_file is None and self.disable_logging is False:
-            self.create_logfile()
-
-        self.duplicate_console_out_to_log_file(self.log_file)
+        if self.disable_logging is False:
+            if self.log_file is None:
+                self.create_logfile()
+            self.duplicate_console_out_to_log_file(self.log_file)
 
     @property
     def name(self):
