@@ -7,7 +7,9 @@ from yucca.image_processing.transforms.cropping_and_padding import CropPad
 from yucca.image_processing.transforms.formatting import (
     NumpyToTorch,
 )
+import logging
 
+log = logging.getLogger(__name__)
 
 class YuccaTrainDataset(torch.utils.data.Dataset):
     def __init__(
@@ -42,7 +44,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         if len(self.all_cases) < 50:
             self._keep_in_ram = True
         else:
-            print("Large dataset detected. Will not keep cases in RAM during training.")
+            log.warn("Large dataset detected. Will not keep cases in RAM during training.")
             self._keep_in_ram = False
         return self._keep_in_ram
 
@@ -97,7 +99,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         elif self.task_type == "unsupervised":
             data_dict = {"image": data, "label": None}
         else:
-            print(f"Task Type not recognized. Found {self.task_type}")
+            log.error(f"Task Type not recognized. Found {self.task_type}")
         return self._transform(data_dict, case)
 
     def _transform(self, data_dict, case):

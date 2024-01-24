@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from yucca.training.configuration.configure_paths import PathConfig
 from yucca.training.configuration.configure_task import SplitMethods
 
+log = logging.getLogger(__name__)
 
 @dataclass
 class SplitConfig:
@@ -44,12 +45,12 @@ def get_split_config(method: SplitMethods, param: Union[float, int], path_config
             splits = {}
 
         if split_is_precomputed(splits, str(method), param):
-            logging.warning(
+            log.warning(
                 f"Reusing already computed split file which was split using the {str(method)} method and parameter {param}."
             )
             return SplitConfig(splits, method, param)
         else:
-            logging.warning("Generating new split since splits did not contain a split computed with the same parameters.")
+            log.warning("Generating new split since splits did not contain a split computed with the same parameters.")
     else:
         splits = {}
 
@@ -85,7 +86,7 @@ def simple_split(file_names: list[str], p: float):
     np.random.shuffle(file_names)  # inplace
     num_val = math.ceil(len(file_names) * p)
     if num_val < 10:
-        logging.warning("The validation split is very small. Consider using a higher `p`.")
+        log.warning("The validation split is very small. Consider using a higher `p`.")
     return [{"train": list(file_names[num_val:]), "val": list(file_names[:num_val])}]
 
 
@@ -94,7 +95,7 @@ def get_file_names(train_data_dir):
     if not file_names:
         file_names = subfiles(train_data_dir, join=False, suffix=".npz")
         if file_names:
-            logging.warning("Only found compressed (.npz) files. This might increase runtime.")
+            log.warning("Only found compressed (.npz) files. This might increase runtime.")
 
     assert file_names, f"Couldn't find any .npy or .npz files in {train_data_dir}"
     return np.array(file_names)

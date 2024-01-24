@@ -4,7 +4,9 @@ from dataclasses import dataclass
 from typing import Union
 from yucca.training.configuration.configure_paths import PathConfig
 from yucca.utils.dict import without_keys
+import logging
 
+log = logging.getLogger(__name__)
 
 @dataclass
 class CkptConfig:
@@ -88,10 +90,10 @@ def get_checkpoint_config(
 def find_checkpoint_path(ckpt_path: Union[str, None], continue_from_most_recent: bool, version: int, version_dir: str):
     if ckpt_path:
         assert isfile(ckpt_path)
-        print(f"Using ckpt file: {ckpt_path}")
+        log.info(f"Using ckpt file: {ckpt_path}")
         return ckpt_path
     elif version is not None and continue_from_most_recent and isfile(join(version_dir, "checkpoints", "last.ckpt")):
-        print("Using last checkpoint and continuing training")
+        log.info("Using last checkpoint and continuing training")
         return join(version_dir, "checkpoints", "last.ckpt")
     else:
         return None

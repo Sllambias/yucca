@@ -110,8 +110,10 @@ class YuccaManager:
         if "bf" in self.precision and torch.cuda.is_available():
             if not torch.cuda.is_bf16_supported():
                 self.precision = self.precision.replace("bf", "")
-
+        
+        # Statics
         self.trainer = L.Trainer
+
 
     def initialize(
         self,
@@ -154,6 +156,20 @@ class YuccaManager:
             stage=stage,
         )
 
+        callback_config = get_callback_config(
+            save_dir=path_config.save_dir,
+            version_dir=path_config.version_dir,
+            ckpt_version_dir=self.ckpt_config.ckpt_version_dir,
+            ckpt_wandb_id=self.ckpt_config.ckpt_wandb_id,
+            experiment=task_config.experiment,
+            version=path_config.version,
+            enable_logging=self.enable_logging,
+            log_lr=True,
+            prediction_output_dir=prediction_output_dir,
+            profile=self.profile,
+            save_softmax=save_softmax,
+        )
+
         if stage == "fit":
             splits_config = get_split_config(task_config.split_method, task_config.split_param, path_config)
         else:
@@ -175,20 +191,6 @@ class YuccaManager:
             is_2D=True if self.model_dimensions == "2D" else False,
             parameter_dict=self.augmentation_params,
             task_type_preset=plan_config.task_type,
-        )
-
-        callback_config = get_callback_config(
-            save_dir=path_config.save_dir,
-            version_dir=path_config.version_dir,
-            ckpt_version_dir=self.ckpt_config.ckpt_version_dir,
-            ckpt_wandb_id=self.ckpt_config.ckpt_wandb_id,
-            experiment=task_config.experiment,
-            version=path_config.version,
-            enable_logging=self.enable_logging,
-            log_lr=True,
-            prediction_output_dir=prediction_output_dir,
-            profile=self.profile,
-            save_softmax=save_softmax,
         )
 
         self.model_module = YuccaLightningModule(
