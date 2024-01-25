@@ -43,7 +43,7 @@ def estimate_memory_training(model, model_input, optimizer_type=torch.optim.Adam
         use_amp (bool): whether to estimate based on using mixed precision
         device (torch.device): the device to use
     """
-    device = torch.device(get_available_device)
+    device = torch.device(get_available_device())
     # Reset model and optimizer
     model.cpu()
     optimizer = optimizer_type(model.parameters(), lr=0.001)
