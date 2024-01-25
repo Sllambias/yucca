@@ -1,6 +1,5 @@
 import shutil
 import gzip
-from sklearn.model_selection import train_test_split
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfolders
 from yucca.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data
@@ -9,7 +8,6 @@ from yucca.paths import yucca_raw_data
 def convert(path: str, subdir: str = "WMH"):
     """INPUT DATA - Define input path and suffixes"""
     path = join(path, subdir)
-    file_suffix = ".nii.gz"
 
     """ OUTPUT DATA - Define the task name and prefix """
     task_name = "Task006_WMH_Flair"
