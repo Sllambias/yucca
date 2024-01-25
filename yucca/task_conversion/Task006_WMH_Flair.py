@@ -99,7 +99,7 @@ def convert(path: str, subdir: str = "WMH"):
         join(target_base, "dataset.json"),
         target_imagesTr,
         target_imagesTs,
-        ("Flair"),
+        ["Flair"],
         labels={0: "background", 1: "WMH", 2: "Other Pathology"},
         dataset_name=task_name,
         license="CC BY-NC 4.0 DEED",
