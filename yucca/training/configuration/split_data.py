@@ -27,7 +27,7 @@ class SplitConfig:
         return {"split_method": self.method, "split_param": self.param}
 
 
-def get_split_config(method: str, param: Union[float, int], path_config: PathConfig):
+def get_split_config(method: str, param: Union[str, float, int], path_config: PathConfig):
     """
     Params:
         method: SplitMethods
