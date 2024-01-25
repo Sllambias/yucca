@@ -14,7 +14,7 @@ class TaskConfig:
     task: str
     experiment: str
     split_method: str
-    split_param: Union[float, int]
+    split_param: Union[str, float, int]
 
     def lm_hparams(self):
         return {
