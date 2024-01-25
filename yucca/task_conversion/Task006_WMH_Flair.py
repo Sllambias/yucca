@@ -1,5 +1,4 @@
 import shutil
-import gzip
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfolders
 from yucca.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data
@@ -47,26 +46,54 @@ def convert(path: str, subdir: str = "WMH"):
         # First we sort the training data
         for sTr in training_samples:
             # Loading relevant modalities and the ground truth
-            image_file = open(join(train_folder, sTr, "pre", "FLAIR.nii.gz"), "rb")
-            label = open(join(train_folder, sTr, "pre", "wmh.nii.gz"), "rb")
-            shutil.copyfileobj(image_file, gzip.open(f"{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz", "wb"))
-            shutil.copyfileobj(label, gzip.open(f"{target_labelsTr}/{task_prefix}_{sTr}.nii.gz", "wb"))
+            src_image_file_path = join(train_folder, sTr, "pre", "FLAIR.nii.gz")
+            src_label_path = join(train_folder, sTr, "pre", "wmh.nii.gz")
+            dst_image_file_path = f"{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz"
+            dst_label_path = f"{target_labelsTr}/{task_prefix}_{sTr}.nii.gz"
+            shutil.copy2(src_image_file_path, dst_image_file_path)
+            shutil.copy2(src_label_path, dst_label_path)
+            # image_file = open(image_file_path, "rb")
+            # label = open(label_path, "rb")
+            # shutil.copyfileobj(image_file, gzip.open(f"{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz", "wb"))
+            # shutil.copyfileobj(label, gzip.open(f"{target_labelsTr}/{task_prefix}_{sTr}.nii.gz", "wb"))
+            # print("------------------------------------------------------------------------------------")
+            # print("Reading image at;", src_image_file_path)
+            # print("Reading label at;", src_label_path)
+            # print()
+            # print("Writing image at;", dst_image_file_path)
+            # print("Writing label at;", dst_label_path)
+            # print("------------------------------------------------------------------------------------")
+            # print()
 
         # Now we sort the test data
         if dataset == "Amsterdam":
             for site in test_samples:
                 samples = subfolders(join(test_folder, site), join=False)
                 for sTs in samples:
-                    image_file = open(join(test_folder, site, sTs, "pre", "FLAIR.nii.gz"), "rb")
-                    label = open(join(test_folder, site, sTs, "pre", "wmh.nii.gz"), "rb")
-                    shutil.copyfileobj(image_file, gzip.open(f"{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz", "wb"))
-                    shutil.copyfileobj(label, gzip.open(f"{target_labelsTs}/{task_prefix}_{sTs}.nii.gz", "wb"))
+                    src_image_file_path = join(test_folder, site, sTs, "pre", "FLAIR.nii.gz")
+                    src_label_path = join(test_folder, site, sTs, "pre", "wmh.nii.gz")
+                    dst_image_file_path = f"{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz"
+                    dst_label_path = f"{target_labelsTs}/{task_prefix}_{sTs}.nii.gz"
+                    shutil.copy2(src_image_file_path, dst_image_file_path)
+                    shutil.copy2(src_label_path, dst_label_path)
+
+                    # image_file = open(join(test_folder, site, sTs, "pre", "FLAIR.nii.gz"), "rb")
+                    # label = open(join(test_folder, site, sTs, "pre", "wmh.nii.gz"), "rb")
+                    # shutil.copyfileobj(image_file, gzip.open(f"{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz", "wb"))
+                    # shutil.copyfileobj(label, gzip.open(f"{target_labelsTs}/{task_prefix}_{sTs}.nii.gz", "wb"))
         else:
             for sTs in test_samples:
-                image_file = open(join(test_folder, sTs, "pre", "FLAIR.nii.gz"), "rb")
-                label = open(join(test_folder, sTs, "pre", "wmh.nii.gz"), "rb")
-                shutil.copyfileobj(image_file, gzip.open(f"{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz", "wb"))
-                shutil.copyfileobj(label, gzip.open(f"{target_labelsTs}/{task_prefix}_{sTs}.nii.gz", "wb"))
+                src_image_file_path = join(test_folder, sTs, "pre", "FLAIR.nii.gz")
+                src_label_path = join(test_folder, sTs, "pre", "wmh.nii.gz")
+                dst_image_file_path = f"{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz"
+                dst_label_path = f"{target_labelsTs}/{task_prefix}_{sTs}.nii.gz"
+                shutil.copy2(src_image_file_path, dst_image_file_path)
+                shutil.copy2(src_label_path, dst_label_path)
+
+                # image_file = open(join(test_folder, sTs, "pre", "FLAIR.nii.gz"), "rb")
+                # label = open(join(test_folder, sTs, "pre", "wmh.nii.gz"), "rb")
+                # shutil.copyfileobj(image_file, gzip.open(f"{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz", "wb"))
+                # shutil.copyfileobj(label, gzip.open(f"{target_labelsTs}/{task_prefix}_{sTs}.nii.gz", "wb"))
 
     generate_dataset_json(
         join(target_base, "dataset.json"),
