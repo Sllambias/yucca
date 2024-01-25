@@ -23,7 +23,6 @@ Max memory consumption = m + f*batch_size*b + d*g + o*m
 import torch
 import numpy as np
 import yucca
-import warnings
 import math
 from yucca.utils.torch_utils import get_available_device
 from yucca.utils.files_and_folders import recursive_find_python_class
