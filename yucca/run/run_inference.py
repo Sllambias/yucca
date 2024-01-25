@@ -69,7 +69,7 @@ def main():
     # Optionals (occasionally changed)
     parser.add_argument(
         "--experiment",
-        help="A name for the experiment being performed, wiht no spaces.",
+        help="A name for the experiment being performed, with no spaces.",
         default="default",
     )
 
