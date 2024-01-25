@@ -32,8 +32,9 @@ We call this new trainer "YuccaManager_1e5" and save it as "YuccaManager_1e5.py"
 from yucca.training.managers.YuccaManager import YuccaManager
 
 class YuccaManager_1e5(YuccaManager):
-    def __init__(self, learning_rate=1e-5, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(learning_rate=learning_rate, *args, **kwargs)
+    self.learning_rate = 1e-5
 
 ```
 
