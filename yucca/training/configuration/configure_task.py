@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Union
+from typing import Optional, Union
 from enum import StrEnum
 
 
@@ -46,8 +46,8 @@ def get_task_config(
     patch_based_training: bool = True,
     experiment: str = "default",
     split_idx: int = 0,
-    split_data_kfold: int = 5,
-    split_data_ratio: Union[float, None] = None,
+    split_data_kfold: Optional[int] = 5,
+    split_data_ratio: Optional[float] = None,
 ):
     assert model_dimensions is not None
 
