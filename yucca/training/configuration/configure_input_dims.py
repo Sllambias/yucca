@@ -21,13 +21,20 @@ class InputDimensionsConfig:
 def get_input_dims_config(
     plan: dict,
     model_dimensions: Literal["2D", "3D"],
-    num_classes: int,
     model_name: str,
+    num_classes: int,
     max_vram: Optional[int] = None,
     batch_size: Union[int, Literal["tiny"]] = None,
+    patch_based_training: bool = True,
     patch_size: Union[Literal["max", "min", "mean", "tiny"], Tuple[int, int], Tuple[int, int, int], None] = None,
 ):
     num_modalities = max(1, plan.get("num_modalities") or len(plan["dataset_properties"]["modalities"]))
+
+    if patch_based_training is False:
+        assert plan.get("new_max_size") == plan.get(
+            "new_min_size"
+        ), "sizes in dataset are not uniform. Non-patch based training only works for datasets with uniform data shapes."
+        patch_size = plan.get("new_max_size")
 
     # If batch_size or patch_size is not provided, try to infer it from the plan
     if batch_size is None and plan.get("batch_size"):

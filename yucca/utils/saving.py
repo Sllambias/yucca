@@ -7,7 +7,6 @@ from PIL import Image
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     subfiles,
-    subdirs,
     maybe_mkdir_p,
 )
 
@@ -15,11 +14,13 @@ from batchgenerators.utilities.file_and_folder_operations import (
 def save_nifti_from_numpy(pred, outpath, properties, compression=9):
     # slight hacky, but it is what it is
     nib.openers.Opener.default_compresslevel = compression
-    pred = nib.Nifti1Image(pred, properties["affine"], dtype=np.uint8)
-    if properties["reoriented"]:
-        pred = reorient_nib_image(pred, properties["new_orientation"], properties["original_orientation"])
-    pred.set_qform(properties["qform"])
-    pred.set_sform(properties["sform"])
+    pred = nib.Nifti1Image(pred, properties["nifti_metadata"]["affine"], dtype=np.uint8)
+    if properties["nifti_metadata"]["reoriented"]:
+        pred = reorient_nib_image(
+            pred, properties["nifti_metadata"]["final_direction"], properties["nifti_metadata"]["original_orientation"]
+        )
+    pred.set_qform(properties["nifti_metadata"]["qform"])
+    pred.set_sform(properties["nifti_metadata"]["sform"])
     nib.save(
         pred,
         outpath + ".nii.gz",
@@ -27,13 +28,13 @@ def save_nifti_from_numpy(pred, outpath, properties, compression=9):
     del pred
 
 
-def save_png_from_numpy(pred, outpath, properties, compression=9):
+def save_png_from_numpy(pred, outpath):
     pred = Image.fromarray(pred)
     pred.save(outpath)
     del pred
 
 
-def save_txt_from_numpy(pred, outpath, properties):
+def save_txt_from_numpy(pred, outpath):
     np.savetxt(outpath, np.atleast_1d(pred), fmt="%i", delimiter=",")
     del pred
 
@@ -46,9 +47,9 @@ def save_prediction_from_logits(logits, outpath, properties, save_softmax=False,
         logits = np.argmax(logits, 1)
     pred = np.squeeze(logits)
     if properties.get("save_format") == "png":
-        save_png_from_numpy(pred, outpath, properties)
+        save_png_from_numpy(pred, outpath)
     if properties.get("save_format") == "txt":
-        save_txt_from_numpy(pred, outpath, properties)
+        save_txt_from_numpy(pred, outpath)
     else:
         save_nifti_from_numpy(pred, outpath, properties, compression=compression)
 
@@ -88,7 +89,7 @@ class WritePredictionFromLogits(BasePredictionWriter):
         self.output_dir = output_dir
         self.save_softmax = save_softmax
 
-    def write_on_batch_end(self, trainer, pl_module, data_dict, batch_indices, *args):
+    def write_on_batch_end(self, _trainer, _pl_module, data_dict, _batch_indices):
         # this will create N (num processes) files in `output_dir` each containing
         # the predictions of it's respective rank
         logits, properties, case_id = (

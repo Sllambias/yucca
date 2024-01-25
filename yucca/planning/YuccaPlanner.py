@@ -30,7 +30,15 @@ class YuccaPlanner(object):
     this means 2D models will be trained on sagittal slices with this planner.
     """
 
-    def __init__(self, task, preprocessor="YuccaPreprocessor", threads=2, disable_sanity_checks=False, view=None):
+    def __init__(
+        self,
+        task,
+        preprocessor="YuccaPreprocessor",
+        threads=2,
+        disable_cc_analysis=True,
+        disable_sanity_checks=False,
+        view=None,
+    ):
         # Required arguments
         self.task = task
 
@@ -40,11 +48,15 @@ class YuccaPlanner(object):
         self.crop_to_nonzero = True
         self.norm_op = "standardize"
 
+        # This is only relevant for planners with fixed sizes.
+        self.keep_aspect_ratio_when_using_target_size = True
+
         # Don't change the remaining variables unless you know what you're doing
         # Threading speeds up the process. Unittests should by default be enabled.
         self.preprocessor = preprocessor
         self.threads = threads
         self.disable_sanity_checks = disable_sanity_checks
+        self.disable_cc_analysis = disable_cc_analysis
 
         self.plans = {}
         self.suggested_dimensionality = "3D"
@@ -59,7 +71,8 @@ class YuccaPlanner(object):
         self.dataset_properties = load_pickle(join(self.target_dir, "dataset_properties.pkl"))
 
         self.determine_transpose()
-        self.determine_spacing()
+        self.determine_target_size_from_fixed_size_or_spacing()
+        self.validate_target_size()
         self.drop_keys_from_dict(dict=self.dataset_properties, keys=["original_sizes", "original_spacings"])
 
         self.populate_plans_file()
@@ -105,8 +118,15 @@ class YuccaPlanner(object):
 
         assert self.transpose_fw is not None, "no transposition, something is wrong."
 
-    def determine_spacing(self):
-        self.target_spacing = np.median(self.dataset_properties["original_spacings"], 0).tolist()
+    def validate_target_size(self):
+        assert self.fixed_target_size is None or self.fixed_target_spacing is None, (
+            "only one of target size or target spacing should be specified"
+            f" but both are specified here as {self.fixed_target_size} and {self.fixed_target_spacing} respectively"
+        )
+
+    def determine_target_size_from_fixed_size_or_spacing(self):
+        self.fixed_target_size = None
+        self.fixed_target_spacing = self.dataset_properties["original_median_spacing"]
 
     def drop_keys_from_dict(self, dict, keys):
         for key in keys:
@@ -136,7 +156,9 @@ class YuccaPlanner(object):
 
         # Defaults to the median spacing of the training data.
         # Change the determine_spacing() function to use different spacings
-        self.plans["target_spacing"] = self.target_spacing
+        self.plans["keep_aspect_ratio_when_using_target_size"] = self.keep_aspect_ratio_when_using_target_size
+        self.plans["target_size"] = self.fixed_target_size
+        self.plans["target_spacing"] = self.fixed_target_spacing
         self.plans["preprocessor"] = self.preprocessor
         self.plans["dataset_properties"] = self.dataset_properties
         self.plans["plans_name"] = self.name
@@ -153,9 +175,9 @@ class YuccaPlanner(object):
             pkl_file = load_pickle(pkl_file)
             new_spacings.append(pkl_file["new_spacing"])
             new_sizes.append(pkl_file["new_size"])
-            n_cc.append(pkl_file["n_cc"])
-            if np.mean(pkl_file["size_cc"]) > 0:
-                size_cc.append(np.mean(pkl_file["size_cc"], dtype=int))
+            n_cc.append(pkl_file["label_cc_n"])
+            if np.mean(pkl_file["label_cc_sizes"]) > 0:
+                size_cc.append(np.mean(pkl_file["label_cc_sizes"], dtype=int))
 
         mean_size = np.mean(new_sizes, 0, dtype=int).tolist()
         min_size = np.min(new_sizes, 0).tolist()
@@ -229,7 +251,9 @@ class YuccaPlannerZ(YuccaPlanner):
 
 class UnsupervisedPlanner(YuccaPlanner):
     def __init__(self, task, preprocessor=None, threads=2, disable_sanity_checks=False, view=None):
-        super().__init__(task, preprocessor=None, threads=threads, disable_sanity_checks=disable_sanity_checks, view=view)
+        super().__init__(
+            task, preprocessor=preprocessor, threads=threads, disable_sanity_checks=disable_sanity_checks, view=view
+        )
         self.name = str(self.__class__.__name__)
         self.norm_op = "volume_wise_znorm"
         self.preprocessor = "UnsupervisedPreprocessor"  # hard coded

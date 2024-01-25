@@ -1,7 +1,7 @@
 import numpy as np
 import cc3d
 from yucca.utils.nib_utils import get_nib_spacing
-from yucca.evaluation.metrics import sensitivity, precision, specificity, f1
+from yucca.evaluation.metrics import sensitivity, precision, f1
 
 
 def get_obj_stats_for_label(gt, pred, label, as_binary=False):
@@ -68,9 +68,9 @@ def obj_get_tp_fp_fn_gtvols_predvols(cc_gt, cc_pred, n_cc_gt, n_cc_pred):
     return tp, fp, fn, gtvols, predvols
 
 
-def n_cc_gt(cc_gt, cc_pred, n_cc_gt, n_cc_pred):
+def n_cc_gt(cc_gt, cc_pred, n_cc_gt, n_cc_pred):  # noqa: U100
     return n_cc_gt
 
 
-def n_cc_pred(cc_gt, cc_pred, n_cc_gt, n_cc_pred):
+def n_cc_pred(cc_gt, cc_pred, n_cc_gt, n_cc_pred):  # noqa: U100
     return n_cc_pred

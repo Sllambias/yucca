@@ -3,11 +3,8 @@ import torch
 import os
 from typing import Union, Literal, Optional
 from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle
-from torchvision import transforms
 from yucca.image_processing.transforms.cropping_and_padding import CropPad
 from yucca.image_processing.transforms.formatting import (
-    AddBatchDimension,
-    RemoveBatchDimension,
     NumpyToTorch,
 )
 
@@ -42,7 +39,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
     def keep_in_ram(self):
         if self._keep_in_ram is not None:
             return self._keep_in_ram
-        if len(self.all_cases) < 1000:
+        if len(self.all_cases) < 50:
             self._keep_in_ram = True
         else:
             print("Large dataset detected. Will not keep cases in RAM during training.")
@@ -112,14 +109,13 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
 
 
 class YuccaTestDataset(torch.utils.data.Dataset):
-    def __init__(self, raw_data_dir, patch_size, suffix="nii.gz"):
+    def __init__(self, raw_data_dir, suffix="nii.gz"):
         self.data_path = raw_data_dir
         self.suffix = suffix
         self.unique_cases = np.unique(
             [i[: -len("_000." + suffix)] for i in subfiles(self.data_path, suffix=self.suffix, join=False)]
         )
         assert len(self.unique_cases) > 0, f"No cases found in {self.data_path}. Looking for files with suffix: {self.suffix}"
-        self.patch_size = patch_size
 
     def __len__(self):
         return len(self.unique_cases)

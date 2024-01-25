@@ -30,14 +30,17 @@ class YuccaNet(nn.Module):
         }
         super().load_state_dict(target_state_dict, *args, **kwargs)
 
-    def predict(self, mode, data, patch_size, overlap, mirror=False):
+    def predict(self, mode, data, patch_size, overlap, sliding_window_prediction=True, mirror=False):
         if torch.cuda.is_available():
             data = data.to("cuda")
 
+        if not sliding_window_prediction:
+            return self._full_image_predict(data)
+
         if mode == "3D":
-            predict = self._predict3D
-        if mode == "2D":
-            predict = self._predict2D
+            predict = self._sliding_window_predict3D
+        elif mode == "2D":
+            predict = self._sliding_window_predict2D
 
         pred = predict(data, patch_size, overlap)
         if mirror:
@@ -57,7 +60,15 @@ class YuccaNet(nn.Module):
             pred /= div
         return pred
 
-    def _predict3D(self, data, patch_size, overlap):
+    def _full_image_predict(self, data):
+        """
+        Standard prediction used in cases where models predict on full-size images.
+        This is opposed to patch-based predictions where we use a sliding window approach to generate
+        full size predictions.
+        """
+        return self.forward(data)
+
+    def _sliding_window_predict3D(self, data, patch_size, overlap):
         """
         Sliding window prediction implementation
         """
@@ -77,7 +88,7 @@ class YuccaNet(nn.Module):
                     canvas[:, :, xs : xs + px, ys : ys + py, zs : zs + pz] += out
         return canvas
 
-    def _predict2D(self, data, patch_size, overlap):
+    def _sliding_window_predict2D(self, data, patch_size, overlap):
         """
         Sliding window prediction implementation
         """

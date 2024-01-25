@@ -2,11 +2,8 @@
 UNETR based on: "Hatamizadeh et al.,
 UNETR: Transformers for 3D Medical Image Segmentation <https://arxiv.org/abs/2103.10504>"
 """
-from typing import Tuple, Union
-
+from typing import Tuple
 import torch
-import torch.nn as nn
-
 from monai.networks.blocks import UnetrBasicBlock, UnetrPrUpBlock, UnetrUpBlock
 from monai.networks.blocks.dynunet_block import UnetOutBlock
 from monai.networks.nets import ViT
@@ -22,7 +19,6 @@ class UNetR(YuccaNet):
         num_classes: int = 1,
         starting_filters: int = 16,
         weightInitializer=None,
-        basic_block=None,
     ) -> None:
         """
         Args:
@@ -203,7 +199,6 @@ class UNetR(YuccaNet):
 
     def load_from(self, weights):
         with torch.no_grad():
-            res_weight = weights
             # copy weights from patch embedding
             for i in weights["state_dict"]:
                 print(i)
