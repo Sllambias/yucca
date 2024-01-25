@@ -3,11 +3,8 @@ import torch
 import os
 from typing import Union, Literal, Optional
 from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle
-from torchvision import transforms
 from yucca.image_processing.transforms.cropping_and_padding import CropPad
 from yucca.image_processing.transforms.formatting import (
-    AddBatchDimension,
-    RemoveBatchDimension,
     NumpyToTorch,
 )
 
@@ -42,7 +39,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
     def keep_in_ram(self):
         if self._keep_in_ram is not None:
             return self._keep_in_ram
-        if len(self.all_cases) < 1000:
+        if len(self.all_cases) < 50:
             self._keep_in_ram = True
         else:
             # print("Large dataset detected. Will not keep cases in RAM during training.")  # Do we really need to log this every time?

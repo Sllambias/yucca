@@ -1,21 +1,15 @@
 import pkgutil
 import importlib
-import numpy as np
-import nibabel as nib
 import fileinput
 import re
 import shutil
 import os
 import warnings
-from PIL import Image
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     subfiles,
     subdirs,
-    maybe_mkdir_p,
 )
-from yucca.utils.softmax import softmax
-from yucca.utils.nib_utils import reorient_nib_image
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 

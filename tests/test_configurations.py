@@ -29,13 +29,12 @@ def test_configurations():
 
     plan_config = get_plan_config(
         ckpt_plans=ckpt_config.ckpt_plans,
-        continue_from_most_recent=task_config.continue_from_most_recent,
         plans_path=path_config.plans_path,
         stage="fit",
     )
     assert plan_config is not None and plan_config.task_type in ["classification", "segmentation", "unsupervised"]
 
-    splits_config = get_split_config(train_data_dir=path_config.train_data_dir, task=task_config.task)
+    splits_config = get_split_config(task_config.split_method, task_config.split_param, path_config)
     assert splits_config is not None and len(splits_config.train(0)) > 0
 
     input_dims = get_input_dims_config(
@@ -49,9 +48,7 @@ def test_configurations():
     assert input_dims is not None and len(input_dims.patch_size) in [2, 3]
 
     callback_config = get_callback_config(
-        model_name="test",
         enable_logging=False,
-        task=task_config.task,
         save_dir=path_config.save_dir,
         version_dir=path_config.version_dir,
         version=path_config.version,

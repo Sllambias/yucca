@@ -4,7 +4,7 @@ from typing import Literal
 from sklearn.metrics import roc_auc_score
 
 
-def dice(tp, fp, tn, fn):
+def dice(tp, fp, tn, fn):  # noqa: U100
     try:
         return (2 * tp) / (2 * tp + fp + fn)
     except (ZeroDivisionError, RuntimeWarning):
@@ -18,7 +18,7 @@ def dice_per_label(tp_list, fp_list, tn_list, fn_list):
     return [dice(tp_list[i], fp_list[i], tn_list[i], fn_list[i]) for i in range(len(tp_list))]
 
 
-def sensitivity(tp, fp, tn, fn):
+def sensitivity(tp, fp, tn, fn):  # noqa: U100
     # recall, hit rate, tpr
     # How many cases of X are correctly recognized as X?
     try:
@@ -30,7 +30,7 @@ def sensitivity(tp, fp, tn, fn):
             return np.nan
 
 
-def specificity(tp, fp, tn, fn):
+def specificity(tp, fp, tn, fn):  # noqa: U100
     # beware with using TN-metrics.
     try:
         return tn / (tn + fp)
@@ -41,7 +41,7 @@ def specificity(tp, fp, tn, fn):
             return np.nan
 
 
-def precision(tp, fp, tn, fn):
+def precision(tp, fp, tn, fn):  # noqa: U100
     # When X is predicted, how often is it truly X?
     try:
         return tp / (tp + fp)
@@ -52,7 +52,7 @@ def precision(tp, fp, tn, fn):
             return np.nan
 
 
-def volume_similarity(tp, fp, tn, fn):
+def volume_similarity(tp, fp, tn, fn):  # noqa: U100
     try:
         return 1 - abs(fn - fp) / (2 * tp + fn + fp)
     except (ZeroDivisionError, RuntimeWarning):
@@ -62,7 +62,7 @@ def volume_similarity(tp, fp, tn, fn):
             return np.nan
 
 
-def f1(tp, fp, tn, fn):
+def f1(tp, fp, tn, fn):  # noqa: U100
     try:
         prec = precision(tp, fp, tn, fn)
         sens = sensitivity(tp, fp, tn, fn)
@@ -98,21 +98,21 @@ def auroc(y_true: npt.ArrayLike, y_score: npt.ArrayLike, multi_class_mode: Liter
     return roc_auc_score(y_true, y_score, average=None, multi_class=multi_class_mode)
 
 
-def TP(tp, fp, tn, fn):
+def TP(tp, fp, tn, fn):  # noqa: U100
     return tp
 
 
-def FP(tp, fp, tn, fn):
+def FP(tp, fp, tn, fn):  # noqa: U100
     return fp
 
 
-def FN(tp, fp, tn, fn):
+def FN(tp, fp, tn, fn):  # noqa: U100
     return fn
 
 
-def total_pos_gt(tp, fp, tn, fn):
+def total_pos_gt(tp, fp, tn, fn):  # noqa: U100
     return tp + fn
 
 
-def total_pos_pred(tp, fp, tn, fn):
+def total_pos_pred(tp, fp, tn, fn):  # noqa: U100
     return tp + fp

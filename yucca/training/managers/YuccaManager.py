@@ -1,6 +1,6 @@
 import lightning as L
 import torch
-from typing import Literal, Union, Optional
+from typing import Literal, Union
 from yucca.training.augmentation.YuccaAugmentationComposer import YuccaAugmentationComposer
 from yucca.training.configuration.split_data import get_split_config, SplitConfig
 from yucca.training.configuration.configure_task import get_task_config
@@ -11,6 +11,7 @@ from yucca.training.configuration.configure_paths import get_path_config
 from yucca.training.configuration.configure_plans import get_plan_config
 from yucca.training.configuration.configure_input_dims import get_input_dims_config
 from yucca.training.data_loading.YuccaDataModule import YuccaDataModule
+from yucca.training.data_loading.samplers import InfiniteRandomSampler
 from yucca.training.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from yucca.paths import yucca_results
 
@@ -54,6 +55,7 @@ class YuccaManager:
         max_vram: int = 12,
         model_dimensions: str = "3D",
         model_name: str = "TinyUNet",
+        momentum: float = 0.9,
         num_workers: int = 8,
         batch_size: Union[int, Literal["tiny"]] = None,
         patch_based_training: bool = True,
@@ -63,6 +65,8 @@ class YuccaManager:
         precision: str = "bf16-mixed",
         profile: bool = False,
         split_idx: int = 0,
+        split_data_ratio: float = None,
+        split_data_kfold: int = 5,
         step_logging: bool = False,
         task: str = None,
         experiment: str = "default",
@@ -75,11 +79,13 @@ class YuccaManager:
         self.deep_supervision = deep_supervision
         self.enable_logging = enable_logging
         self.experiment = experiment
+        self.learning_rate = learning_rate
         self.loss = loss
         self.max_epochs = max_epochs
         self.max_vram = max_vram
         self.model_dimensions = model_dimensions
         self.model_name = model_name
+        self.momentum = momentum
         self.name = self.__class__.__name__
         self.num_workers = num_workers
         self.augmentation_params = augmentation_params
@@ -90,6 +96,8 @@ class YuccaManager:
         self.precision = precision
         self.profile = profile
         self.split_idx = split_idx
+        self.split_data_ratio = split_data_ratio
+        self.split_data_kfold = split_data_kfold
         self.step_logging = step_logging
         self.task = task
         self.train_batches_per_step = train_batches_per_step
@@ -119,15 +127,17 @@ class YuccaManager:
         # Here we configure the outpath we will use to store model files and metadata
         # along with the path to plans file which will also be loaded.
         task_config = get_task_config(
+            task=self.task,
             continue_from_most_recent=self.continue_from_most_recent,
             manager_name=self.name,
             model_dimensions=self.model_dimensions,
             model_name=self.model_name,
             patch_based_training=self.patch_based_training,
             planner_name=self.planner,
-            split_idx=self.split_idx,
-            task=self.task,
             experiment=self.experiment,
+            split_idx=self.split_idx,
+            split_data_ratio=self.split_data_ratio,
+            split_data_kfold=self.split_data_kfold,
         )
 
         path_config = get_path_config(task_config=task_config)
@@ -143,13 +153,12 @@ class YuccaManager:
 
         plan_config = get_plan_config(
             ckpt_plans=self.ckpt_config.ckpt_plans,
-            continue_from_most_recent=task_config.continue_from_most_recent,
             plans_path=path_config.plans_path,
             stage=stage,
         )
 
         if stage == "fit":
-            splits_config = get_split_config(train_data_dir=path_config.train_data_dir, task=task_config.task)
+            splits_config = get_split_config(task_config.split_method, task_config.split_param, path_config)
         else:
             splits_config = SplitConfig()
 
@@ -173,8 +182,6 @@ class YuccaManager:
         )
 
         callback_config = get_callback_config(
-            task=task_config.task,
-            model_name=task_config.model_name,
             save_dir=path_config.save_dir,
             version_dir=path_config.version_dir,
             ckpt_version_dir=self.ckpt_config.ckpt_version_dir,
@@ -198,8 +205,9 @@ class YuccaManager:
             | input_dims_config.lm_hparams()
             | callback_config.lm_hparams(),
             deep_supervision=self.deep_supervision,
+            learning_rate=self.learning_rate,
             loss_fn=self.loss,
-            stage=stage,
+            momentum=self.momentum,
             step_logging=self.step_logging,
             test_time_augmentation=not disable_tta if disable_tta is True else bool(augmenter.mirror_p_per_sample),
         )
@@ -216,6 +224,11 @@ class YuccaManager:
             split_idx=task_config.split_idx,
             train_data_dir=path_config.train_data_dir,
         )
+
+        if (
+            not isinstance(self.data_module.train_sampler, InfiniteRandomSampler) and self.train_batches_per_step is not None
+        ) or (not isinstance(self.data_module.val_sampler, InfiniteRandomSampler) and self.val_batches_per_step is not None):
+            print("Warning: you are limiting the amount of batches pr. step, but not sampling using InfiniteRandomSampler.")
 
         self.trainer = L.Trainer(
             callbacks=callback_config.callbacks,

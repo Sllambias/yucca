@@ -19,9 +19,6 @@ from yucca.image_processing.transforms.Ringing import GibbsRinging
 from yucca.image_processing.transforms.sampling import DownsampleSegForDS
 from yucca.image_processing.transforms.SimulateLowres import SimulateLowres
 from yucca.image_processing.transforms.Spatial import Spatial
-from yucca.network_architectures.utils.model_memory_estimation import (
-    find_optimal_tensor_dims,
-)
 
 
 class YuccaAugmentationComposer:

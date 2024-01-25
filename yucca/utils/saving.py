@@ -7,7 +7,6 @@ from PIL import Image
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     subfiles,
-    subdirs,
     maybe_mkdir_p,
 )
 
@@ -29,15 +28,14 @@ def save_nifti_from_numpy(pred, outpath, properties, compression=9):
     del pred
 
 
-def save_png_from_numpy(pred, outpath, properties, compression=9):
+def save_png_from_numpy(pred, outpath):
     pred = Image.fromarray(pred)
     pred.save(outpath)
     del pred
 
 
-def save_txt_from_numpy(pred, outpath, properties):
-    outpath = outpath + ".txt"
-    np.savetxt(outpath, np.atleast_1d(pred), fmt="%i", delimiter=",")
+def save_txt_from_numpy(pred, outpath):
+    np.savetxt(outpath + ".txt", np.atleast_1d(pred), fmt="%i", delimiter=",")
     del pred
 
 
@@ -49,9 +47,9 @@ def save_prediction_from_logits(logits, outpath, properties, save_softmax=False,
         logits = np.argmax(logits, 1)
     pred = np.squeeze(logits)
     if properties.get("save_format") == "png":
-        save_png_from_numpy(pred, outpath, properties)
+        save_png_from_numpy(pred, outpath)
     if properties.get("save_format") == "txt":
-        save_txt_from_numpy(pred, outpath, properties)
+        save_txt_from_numpy(pred, outpath)
     else:
         save_nifti_from_numpy(pred, outpath, properties, compression=compression)
 
@@ -91,7 +89,7 @@ class WritePredictionFromLogits(BasePredictionWriter):
         self.output_dir = output_dir
         self.save_softmax = save_softmax
 
-    def write_on_batch_end(self, trainer, pl_module, data_dict, batch_indices, *args):
+    def write_on_batch_end(self, _trainer, _pl_module, data_dict, _batch_indices):
         # this will create N (num processes) files in `output_dir` each containing
         # the predictions of it's respective rank
         logits, properties, case_id = (
