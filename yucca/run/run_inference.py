@@ -87,6 +87,13 @@ def main():
         required=False,
     )
     parser.add_argument(
+        "--no_wandb",
+        help="Disable logging of evaluation results to wandb",
+        default=False,
+        action="store_true",
+        required=False,
+    )
+    parser.add_argument(
         "--no_sliding_window",
         help="Disable sliding window prediction and instead use fixed patch/input size",
         default=False,
@@ -161,6 +168,7 @@ def main():
     overwrite = args.overwrite
     predict_train = args.predict_train
     save_softmax = args.save_softmax
+    use_wandb = not args.no_wandb
 
     path_to_versions = join(
         yucca_models, source_task, model + "__" + dimensions, manager_name + "__" + planner, experiment, f"fold_{split_idx}"
@@ -242,7 +250,8 @@ def main():
             manager.model_module.num_classes,
             folder_with_predictions=outpath,
             folder_with_ground_truth=ground_truth,
-            task_type=task_type
+            task_type=task_type,
+            use_wandb=use_wandb
         )
         evaluator.run()
 

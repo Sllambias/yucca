@@ -31,6 +31,7 @@ class YuccaEvaluator(object):
         self,
         labels: list | int,
         folder_with_predictions,
+        use_wandb: bool,
         folder_with_ground_truth,
         do_object_eval=False,
         as_binary=False,
@@ -40,6 +41,7 @@ class YuccaEvaluator(object):
 
         self.obj_metrics = []
 
+        self.use_wandb = use_wandb
         self.task_type = task_type
 
         if self.task_type == "segmentation":
@@ -83,17 +85,17 @@ class YuccaEvaluator(object):
             self.metrics = {
                 "Accuracy": accuracy,
                 "F1": dice,
-                # "AUROC": auroc, # TODO: Implement this. Will only work if we pass probabilities along labels
                 "Sensitivity": sensitivity,
                 "Precision": precision,
+                # "AUROC": auroc, # only when probabilities are available
             }
 
             self.metrics_included_in_streamtable = [
                 "Accuracy",
+                "F1",
                 "Sensitivity",
                 "Precision",
-                # "AUROC",
-                "F1",
+                # "AUROC", # only when probabilities are available
             ]
         elif self.task_type == "regression":
             raise NotImplementedError
@@ -156,9 +158,10 @@ class YuccaEvaluator(object):
             print(f"Evaluation file already present in {self.outpath}. Skipping.")
         else:
             self.sanity_checks()
-            dict = self.evaluate_folder()
-            self.save_as_json(dict)
-            self.update_streamtable(dict["mean"])
+            results_dict = self.evaluate_folder()
+            self.save_as_json(results_dict)
+            if self.use_wandb:
+                self.update_streamtable(results_dict)
 
     def evaluate_folder(self):
         if self.task_type == "classification":
@@ -176,14 +179,29 @@ class YuccaEvaluator(object):
         resultdict = {}
 
         predictions = []
+        prediction_probs = []
         ground_truths = []
 
+        # Flag to check if we have prediction probabilities to calculate AUROC
+        use_probs = False
+
+        # load predictions and ground truths
         for case in tqdm(self.pred_subjects, desc="Evaluating"):
             predpath = join(self.folder_with_predictions, case)
             gtpath = join(self.folder_with_ground_truth, case)
 
-            pred = np.loadtxt(predpath)  # contains output probabilities OR output label
-            gt = np.loadtxt(gtpath)  # contains single integer label
+            pred: int = np.loadtxt(predpath)
+            gt: int = np.loadtxt(gtpath)
+
+            try:
+                if len(prediction_probs) == 0:
+                    print("Prediction probabilities found. Will use them for evaluation.")
+                    use_probs = True
+
+                pred_probs = np.load(predpath.replace(".txt", ".npz"))["data"]  # contains output probabilities
+                prediction_probs.append(pred_probs)
+            except FileNotFoundError:
+                pred_probs = None
 
             predictions.append(pred)
             ground_truths.append(gt)
@@ -191,6 +209,17 @@ class YuccaEvaluator(object):
         predictions = np.array(predictions)
         ground_truths = np.array(ground_truths)
 
+        if use_probs:
+            prediction_probs = np.array(prediction_probs)
+            assert len(predictions) == len(prediction_probs), (
+                "Number of predicted labels and prediction probabilities do not match."
+                "This likely means that the prediction probability file is missing for some of the predictions."
+            )
+
+            # add AUROC to streamtable metrics
+            self.metrics_included_in_streamtable.append("AUROC")
+
+        # calculate per-class metrics
         cmat = confusion_matrix(ground_truths, predictions, labels=self.labelarr)
 
         resultdict["per_class"] = {}
@@ -208,11 +237,15 @@ class YuccaEvaluator(object):
 
             resultdict["per_class"][str(label)] = labeldict
 
-        resultdict["mean"] = {}
+        # calculate AUROC
+        if use_probs:
+            auroc_per_class: list[float] = auroc(ground_truths, prediction_probs)
+            for label, score in zip(self.labelarr, auroc_per_class):
+                resultdict["per_class"][str(label)]["AUROC"] = round(score, 4)
 
-        # global metrics
-        for k, _ in self.metrics.items():
-            # calculate mean of the per-class metrics
+        # caclulate global (mean) metrics
+        resultdict["mean"] = {}
+        for k, _ in resultdict["per_class"][str(self.labelarr[0])].items():
             resultdict["mean"][k] = sum([resultdict["per_class"][str(label)][k] for label in self.labelarr])
             resultdict["mean"][k] = round(resultdict["mean"][k] / len(self.labelarr), 4)
 
@@ -283,7 +316,12 @@ class YuccaEvaluator(object):
         with open(self.outpath, "w") as f:
             json.dump(dict, f, default=float, indent=4)
 
-    def update_streamtable(self, dict):
+    def update_streamtable(self, results_dict):
+        """
+        Save evaluation results to a wandb StreamTable
+
+        :param results_dict: dictionary with evaluation results
+        """
         task = self.outpath.split(os.path.sep)[-5]
         target = self.outpath.split(os.path.sep)[-6]
         model_name = "/".join(self.outpath.split(os.path.sep)[-4:])
@@ -292,12 +330,20 @@ class YuccaEvaluator(object):
 
         stream_dict = {"0. Experiment": model_name, "0. Target Task": target}
 
-        for key, _ in dict.items():
-            if key == "0":
-                continue
-            else:
-                stream_dict.update(
-                    {f"{key}. " + k: v for k, v in dict[key].items() if k in self.metrics_included_in_streamtable}
-                )
+        if self.task_type == "classification":
+            stream_dict = {**stream_dict, **results_dict}
+
+        elif self.task_type == "segmentation":
+            for key, _ in results_dict.items():
+                if key == "0":
+                    continue
+                else:
+                    stream_dict.update(
+                        {f"{key}. " + k: v for k, v in results_dict[key].items() if k in self.metrics_included_in_streamtable}
+                    )
+
+        else:
+            raise NotImplementedError("Task type not supported")
+
         st.log(stream_dict)
         st.finish()

@@ -86,7 +86,7 @@ def accuracy(tp, fp, tn, fn):
 
 def auroc(y_true: npt.ArrayLike, y_score: npt.ArrayLike, multi_class_mode: Literal["ovr", "ovo"] = "ovr"):
     """
-    Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC/AUROC) from prediction scores.
+    Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC/AUROC) from prediction scores for each class.
 
     :param y_true: ground truth labels, shape (n_samples,n_classes) for multiclass or (n_samples,) for binary.
                     Both probabilities and labels are accepted.
@@ -95,7 +95,7 @@ def auroc(y_true: npt.ArrayLike, y_score: npt.ArrayLike, multi_class_mode: Liter
 
     """
     assert len(y_true.shape) == 1 or y_true.shape == y_score.shape, "y_true must be 1D or 2D"
-    roc_auc_score(y_true, y_score, multi_class=multi_class_mode)
+    return roc_auc_score(y_true, y_score, average=None, multi_class=multi_class_mode)
 
 
 def TP(tp, fp, tn, fn):

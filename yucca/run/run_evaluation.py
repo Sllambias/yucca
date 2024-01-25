@@ -67,6 +67,13 @@ def main():
         help="A name for the experiment being performed, with no spaces.",
         default="default",
     )
+    parser.add_argument(
+        "--no_wandb",
+        help="Disable logging of evaluation results to wandb",
+        default=False,
+        action="store_true",
+        required=False,
+    )
 
     args = parser.parse_args()
 
@@ -85,6 +92,7 @@ def main():
     gtpath = args.gt
     num_version = args.version
     task_type = args.task_type
+    use_wandb = not args.no_wandb
 
     assert (predpath and gtpath) or source_task, "Either supply BOTH paths or the source task"
 
@@ -112,6 +120,7 @@ def main():
         do_object_eval=obj,
         as_binary=as_binary,
         task_type=task_type,
+        use_wandb=use_wandb,
     )
     evaluator.run()
 
