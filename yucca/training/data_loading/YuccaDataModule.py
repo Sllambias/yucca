@@ -1,6 +1,6 @@
 import lightning as pl
 import torchvision
-from typing import Literal
+from typing import Literal, Optional
 from torch.utils.data import DataLoader, Sampler
 from batchgenerators.utilities.file_and_folder_operations import join
 from yucca.training.configuration.configure_input_dims import InputDimensionsConfig
@@ -55,8 +55,8 @@ class YuccaDataModule(pl.LightningDataModule):
         num_workers: int = 8,
         pred_data_dir: str = None,
         pre_aug_patch_size: list | tuple = None,
-        train_sampler: Sampler = InfiniteRandomSampler,
-        val_sampler: Sampler = InfiniteRandomSampler,
+        train_sampler: Optional[Sampler] = InfiniteRandomSampler,
+        val_sampler: Optional[Sampler] = InfiniteRandomSampler,
         train_data_dir: str = None,
     ):
         super().__init__()
