@@ -66,8 +66,8 @@ def convert(path: str, subdir: str = "WMH"):
                     shutil.copyfileobj(label, gzip.open(f"{target_labelsTs}/{task_prefix}_{sTs}.nii.gz", "wb"))
         else:
             for sTs in test_samples:
-                image_file = open(join(test_folder, site, sTs, 'pre', 'FLAIR.nii.gz'), "rb")
-                label = open(join(test_folder, site, sTs, 'pre', 'wmh.nii.gz'), "rb")
+                image_file = open(join(test_folder, sTs, 'pre', 'FLAIR.nii.gz'), "rb")
+                label = open(join(test_folder, sTs, 'pre', 'wmh.nii.gz'), "rb")
                 shutil.copyfileobj(image_file, gzip.open(f"{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz", "wb"))
                 shutil.copyfileobj(label, gzip.open(f"{target_labelsTs}/{task_prefix}_{sTs}.nii.gz", "wb"))
 
