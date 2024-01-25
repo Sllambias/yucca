@@ -1,11 +1,5 @@
 from dataclasses import dataclass
 from typing import Optional, Union
-from enum import StrEnum
-
-
-class SplitMethods(StrEnum):
-    kfold = "kfold"
-    simple_train_val_split = "simple_train_val_split"
 
 
 @dataclass
@@ -19,7 +13,7 @@ class TaskConfig:
     split_idx: int
     task: str
     experiment: str
-    split_method: SplitMethods
+    split_method: str
     split_param: Union[float, int]
 
     def lm_hparams(self):
@@ -88,6 +82,6 @@ def split_method_and_param(split_data_kfold, split_data_ratio):
         assert isinstance(split_data_kfold, int), "`split_data_kfold  should be an integer"
 
     if split_data_kfold is not None:
-        return str(SplitMethods.kfold), split_data_kfold
+        return "kfold", split_data_kfold
     else:  # split_data_ratio is not None
-        return str(SplitMethods.simple_train_val_split), split_data_ratio
+        return "simple_train_val_split", split_data_ratio
