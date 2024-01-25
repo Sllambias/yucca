@@ -3,7 +3,7 @@ from yucca.training.managers.YuccaManager import YuccaManager
 
 class YuccaManager_PatchSizeMax(YuccaManager):
     """
-    Instantiate a YuccaLightningManager object with the patch size set to the maximum patch size 
+    Instantiate a YuccaLightningManager object with the patch size set to the maximum patch size
     (no sliding window prediction).
     """
 

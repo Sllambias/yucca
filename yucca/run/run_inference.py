@@ -126,7 +126,8 @@ def main():
         help="Save softmax outputs. Required for softmax fusion.",
     )
     parser.add_argument(
-        "--batch_size", "-bs",
+        "--batch_size",
+        "-bs",
         default=16,
         type=int,
         required=False,
@@ -248,7 +249,7 @@ def main():
             folder_with_predictions=outpath,
             folder_with_ground_truth=ground_truth,
             task_type=task_type,
-            use_wandb=use_wandb
+            use_wandb=use_wandb,
         )
         evaluator.run()
 

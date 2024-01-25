@@ -87,10 +87,11 @@ def main():
     )
 
     parser.add_argument(
-        "--batch_size", "-bs",
+        "--batch_size",
+        "-bs",
         type=int,
         default=None,
-        help="Batch size to be used for training. Overrides the batch size specified in the plan."
+        help="Batch size to be used for training. Overrides the batch size specified in the plan.",
     )
     # Split configs
     parser.add_argument(
