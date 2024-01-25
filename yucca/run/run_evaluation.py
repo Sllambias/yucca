@@ -8,10 +8,10 @@ if "-t" for target task is left blank, we assume you are predicting and evaluati
 from the same task as the one the model is trained on.
 """
 import argparse
+from batchgenerators.utilities.file_and_folder_operations import load_json, join
 from yucca.evaluation.YuccaEvaluator import YuccaEvaluator
 from yucca.utils.task_ids import maybe_get_task_from_task_id
 from yucca.paths import yucca_raw_data, yucca_results
-from batchgenerators.utilities.file_and_folder_operations import load_json, join
 
 
 def main():
@@ -44,21 +44,28 @@ def main():
     parser.add_argument("-chk", help="Checkpoint to use for inference. Defaults to best.", default="best")
 
     parser.add_argument("-c", nargs="*", help="Classes to include for evaluation", type=str)
-    parser.add_argument("--pred", help="path to predicted segmentations", default=None, required=False)
-    parser.add_argument("--gt", help="path to ground truth", default=None, required=False)
-    parser.add_argument("--obj_eval", help="enable object evaluation", action="store_true", default=None, required=False)
-    parser.add_argument(
-        "--as_binary", help="run evaluation as if data was binary", action="store_true", default=None, required=False
-    )
-    parser.add_argument(
-        "--version", "-v", help="version number of the model. Defaults to 0.", default=0, type=int, required=False
-    )
     parser.add_argument(
         "--task_type",
         default="segmentation",
         type=str,
         required=False,
         help="Defaults to segmentation. Set to 'classification' for classification tasks.",
+    )
+    parser.add_argument("--pred", help="path to predicted segmentations", default=None, required=False)
+    parser.add_argument("--gt", help="path to ground truth", default=None, required=False)
+    parser.add_argument("--obj_eval", help="enable object evaluation", action="store_true", default=None, required=False)
+    parser.add_argument(
+        "--as_binary", help="run evaluation as if data was binary", action="store_true", default=None, required=False
+    )
+
+    # Optionals (infrequently changed)
+    parser.add_argument(
+        "--version", "-v", help="version number of the model. Defaults to 0.", default=0, type=int, required=False
+    )
+    parser.add_argument(
+        "--experiment",
+        help="A name for the experiment being performed, with no spaces.",
+        default="default",
     )
 
     args = parser.parse_args()
