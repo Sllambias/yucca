@@ -55,7 +55,8 @@ class YuccaDataModule(pl.LightningDataModule):
         num_workers: int = 8,
         pred_data_dir: str = None,
         pre_aug_patch_size: list | tuple = None,
-        sampler: Sampler = InfiniteRandomSampler,
+        train_sampler: Sampler = InfiniteRandomSampler,
+        val_sampler: Sampler = InfiniteRandomSampler,
         train_data_dir: str = None,
     ):
         super().__init__()
@@ -80,7 +81,8 @@ class YuccaDataModule(pl.LightningDataModule):
         # Set default values
         self.num_workers = num_workers
         self.val_num_workers = num_workers // 2 if num_workers > 0 else num_workers
-        self.sampler = sampler
+        self.train_sampler = train_sampler
+        self.val_sampler = val_sampler
 
     def setup(self, stage: Literal["fit", "test", "predict"]):
         print(f"Setting up data for stage: {stage}")
@@ -116,24 +118,24 @@ class YuccaDataModule(pl.LightningDataModule):
 
     def train_dataloader(self):
         print(f"Starting training with data from: {self.train_data_dir}")
-        train_sampler = self.sampler(self.train_dataset) if self.sampler is not None else None
+        sampler = self.train_sampler(self.train_dataset) if self.train_sampler is not None else None
         return DataLoader(
             self.train_dataset,
             num_workers=self.num_workers,
             batch_size=self.batch_size,
             persistent_workers=bool(self.num_workers),
-            sampler=train_sampler,
-            shuffle=train_sampler is None,
+            sampler=sampler,
+            shuffle=sampler is None,
         )
 
     def val_dataloader(self):
-        val_sampler = self.sampler(self.val_dataset) if self.sampler is not None else None
+        sampler = self.val_sampler(self.val_dataset) if self.val_sampler is not None else None
         return DataLoader(
             self.val_dataset,
             num_workers=self.val_num_workers,
             batch_size=self.batch_size,
             persistent_workers=bool(self.val_num_workers),
-            sampler=val_sampler,
+            sampler=sampler,
         )
 
     def test_dataloader(self):
