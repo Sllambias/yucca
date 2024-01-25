@@ -11,6 +11,7 @@ from yucca.training.configuration.configure_paths import get_path_config
 from yucca.training.configuration.configure_plans import get_plan_config
 from yucca.training.configuration.configure_input_dims import get_input_dims_config
 from yucca.training.data_loading.YuccaDataModule import YuccaDataModule
+from yucca.training.data_loading.samplers import InfiniteRandomSampler
 from yucca.training.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from yucca.paths import yucca_results
 
@@ -220,6 +221,11 @@ class YuccaManager:
             split_idx=task_config.split_idx,
             train_data_dir=path_config.train_data_dir,
         )
+
+        if (
+            not isinstance(self.data_module.train_sampler, InfiniteRandomSampler) and self.train_batches_per_step is not None
+        ) or (not isinstance(self.data_module.val_sampler, InfiniteRandomSampler) and self.val_batches_per_step is not None):
+            print("Warning: you are limiting the amount of batches pr. step, but not sampling using InfiniteRandomSampler.")
 
         self.trainer = L.Trainer(
             callbacks=callback_config.callbacks,
