@@ -90,7 +90,7 @@ def simple_split(file_names: list[str], p: float):
     np.random.shuffle(file_names)  # inplace
     num_val = math.ceil(len(file_names) * p)
     if num_val < 10:
-        log.warning("The validation split is very small. Consider using a higher `p`.")
+        logging.warning("The validation split is very small. Consider using a higher `p`.")
     return [{"train": list(file_names[num_val:]), "val": list(file_names[:num_val])}]
 
 
@@ -99,7 +99,7 @@ def get_file_names(train_data_dir):
     if not file_names:
         file_names = subfiles(train_data_dir, join=False, suffix=".npz")
         if file_names:
-            log.warning("Only found compressed (.npz) files. This might increase runtime.")
+            logging.warning("Only found compressed (.npz) files. This might increase runtime.")
 
     assert file_names, f"Couldn't find any .npy or .npz files in {train_data_dir}"
     return np.array(file_names)
