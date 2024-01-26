@@ -20,6 +20,7 @@ Then for training,
 
 Max memory consumption = m + f*batch_size*b + d*g + o*m
 """
+
 import torch
 import numpy as np
 import yucca

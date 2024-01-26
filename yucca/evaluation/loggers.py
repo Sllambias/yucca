@@ -120,7 +120,7 @@ class YuccaLogger(Logger):
         save_hparams_to_yaml(hparams_file, self.hparams)
 
     @rank_zero_only
-    def finalize(self) -> None:
+    def finalize(self, _status) -> None:
         # When using multiprocessing, finalize() should be a no-op on the main process, as no experiment has been
         # initialized there
         self.save()
