@@ -5,20 +5,21 @@ from typing import Optional, Union
 @dataclass
 class TaskConfig:
     continue_from_most_recent: bool
+    experiment: str
     manager_name: str
     model_dimensions: str
     model_name: str
     patch_based_training: bool
     planner_name: str
     split_idx: int
-    task: str
-    experiment: str
     split_method: str
     split_param: Union[str, float, int]
+    task: str
 
     def lm_hparams(self):
         return {
             "continue_from_most_recent": self.continue_from_most_recent,
+            "experiment": self.experiment,
             "manager_name": self.manager_name,
             "model_dimensions": self.model_dimensions,
             "model_name": self.model_name,
@@ -26,6 +27,8 @@ class TaskConfig:
             "planner_name": self.planner_name,
             "task": self.task,
             "split_idx": self.split_idx,
+            "split_method": self.split_method,
+            "split_param": self.split_param,
             "experiment": self.experiment,
         }
 
@@ -40,12 +43,10 @@ def get_task_config(
     patch_based_training: bool = True,
     experiment: str = "default",
     split_idx: int = 0,
-    split_data_kfold: Optional[int] = 5,
-    split_data_ratio: Optional[float] = None,
+    split_data_method: Optional[int] = 5,
+    split_data_param: Optional[float] = None,
 ):
     assert model_dimensions is not None
-
-    split_method, split_param = split_method_and_param(split_data_kfold, split_data_ratio)
 
     return TaskConfig(
         task=task,
@@ -57,31 +58,6 @@ def get_task_config(
         planner_name=planner_name,
         experiment=experiment,
         split_idx=split_idx,
-        split_method=split_method,
-        split_param=split_param,
+        split_method=split_data_method,
+        split_param=split_data_param,
     )
-
-
-def split_method_and_param(split_data_kfold, split_data_ratio):
-    """
-    Note:
-        You can only provide one of `k` or `split_data_ratio`.
-        - If `k` is provided we will split with `k-fold`.
-        - If `split_data_ratio` is provided it determines the fraction of items used for the val split.
-    """
-
-    assert (split_data_kfold is not None and split_data_ratio is None) or (
-        split_data_kfold is None and split_data_ratio is not None
-    ), "You must provide excatly one of either `split_data_kfold  or `split_data_ratio`."
-    if split_data_ratio is not None:
-        assert (
-            0 < split_data_ratio < 1
-        ), "`split_data_ratio` must be a number between 0 and 1 and determines the fraction of items used for the val split"
-    if split_data_kfold is not None:
-        assert split_data_kfold > 0
-        assert isinstance(split_data_kfold, int), "`split_data_kfold  should be an integer"
-
-    if split_data_kfold is not None:
-        return "kfold", split_data_kfold
-    else:  # split_data_ratio is not None
-        return "simple_train_val_split", split_data_ratio

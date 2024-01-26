@@ -64,8 +64,8 @@ class YuccaManager:
         precision: str = "bf16-mixed",
         profile: bool = False,
         split_idx: int = 0,
-        split_data_ratio: float = None,
-        split_data_kfold: int = 5,
+        split_data_method: str = "kfold",
+        split_data_param: int = 5,
         step_logging: bool = False,
         task: str = None,
         experiment: str = "default",
@@ -94,8 +94,8 @@ class YuccaManager:
         self.precision = precision
         self.profile = profile
         self.split_idx = split_idx
-        self.split_data_ratio = split_data_ratio
-        self.split_data_kfold = split_data_kfold
+        self.split_data_method = split_data_method
+        self.split_data_param = split_data_param
         self.step_logging = step_logging
         self.task = task
         self.train_batches_per_step = train_batches_per_step
@@ -135,8 +135,8 @@ class YuccaManager:
             planner_name=self.planner,
             experiment=self.experiment,
             split_idx=self.split_idx,
-            split_data_ratio=self.split_data_ratio,
-            split_data_kfold=self.split_data_kfold,
+            split_data_method=self.split_data_method,
+            split_data_param=self.split_data_param,
         )
 
         path_config = get_path_config(task_config=task_config)

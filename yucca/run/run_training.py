@@ -87,16 +87,15 @@ def main():
     )
 
     # Split configs
-    parser.add_argument(
-        "--split_data_ratio",
-        type=float,
-        help="Use a simple train/val split where `split_data_ratio` is the fraction of items used for the val split.",
-        default=None,
-    )
-    parser.add_argument(
-        "--split_data_kfold", type=int, help="Use kfold split where `split_data_kfold` is amount of folds.", default=None
-    )
     parser.add_argument("-f", "--split_idx", type=int, help="idx of splits to use for training.", default=0)
+    parser.add_argument(
+        "--split_data_method", help="Specify splitting method. Either kfold, simple_train_val_split", default="kfold"
+    )
+    parser.add_argument(
+        "--split_data_param",
+        help="Specify the parameter for the selected split method. For KFold use an int, for simple_split use a float between 0.0-1.0.",
+        default=5,
+    )
 
     parser.add_argument("--precision", type=str, default="bf16-mixed")
 
@@ -122,15 +121,8 @@ def main():
     experiment = args.experiment
 
     split_idx = args.split_idx
-    split_data_ratio = args.split_data_ratio
-    split_data_kfold = args.split_data_kfold
-
-    if split_data_kfold is None and split_data_ratio is None:
-        split_data_kfold = 5
-
-    assert (split_data_kfold is not None and split_data_ratio is None) or (
-        split_data_kfold is None and split_data_ratio is not None
-    ), "It is not allowed to provide both `split_data_ratio` and `split_data_kfold`."
+    split_data_method = args.split_data_method
+    split_data_param = args.split_data_param
 
     if patch_size is not None:
         if patch_size not in ["mean", "max", "min"]:
@@ -165,9 +157,6 @@ def main():
         continue_from_most_recent=not new_version,
         deep_supervision=deep_supervision,
         enable_logging=log,
-        split_idx=split_idx,
-        split_data_ratio=split_data_ratio,
-        split_data_kfold=split_data_kfold,
         loss=loss,
         learning_rate=lr,
         model_dimensions=dimensions,
@@ -177,6 +166,9 @@ def main():
         planner=planner,
         precision=args.precision,
         profile=profile,
+        split_idx=split_idx,
+        split_data_method=split_data_method,
+        split_data_param=split_data_param,
         step_logging=False,
         task=task,
         experiment=experiment,

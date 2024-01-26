@@ -48,7 +48,7 @@ def get_split_config(method: str, param: Union[str, float, int], path_config: Pa
             )
             return SplitConfig(splits, method, param)
         else:
-            log.warning("Generating new split since splits did not contain a split computed with the same parameters.")
+            logging.warning("Generating new split since splits did not contain a split computed with the same parameters.")
     else:
         splits = {}
 
