@@ -58,9 +58,9 @@ def get_split_config(method: str, param: Union[str, float, int], path_config: Pa
     file_names = get_file_names(path_config.train_data_dir)
 
     if method == "kfold":
-        splits[method][param] = kfold_split(file_names, param)
+        splits[method][param] = kfold_split(file_names, int(param))
     elif method == "simple_train_val_split":
-        splits[method][param] = simple_split(file_names, param)
+        splits[method][param] = simple_split(file_names, float(param))
     else:
         assert split_is_precomputed(
             splits, method, param

@@ -128,15 +128,15 @@ class YuccaManager_NewUserSetup(YuccaManager):
 ## Data Splits
 CLI: `yucca_train`, `yucca_finetune` and `yucca_inference`
 
-Variables: *--split_idx*, *--split_data_ratio* and *--split_data_kfold*
+Variables: *--split_idx*, *--split_data_method* and *--split_data_param*
 
 NOTE: Do not confuse this with the train-test splits. These must be handled in [Task Conversion](/yucca/yucca/documentation/tutorials/task_conversion.md).
 
-Training/Validation data splits can be generated using either a simple dataset split or with the K-Fold method. To generate a simple train/val split use `--split_data_ratio` with a value between 0.0-1.0 to specify a fraction of the dataset to be used for validation. To generate K folds use `--split_data_kfold` with a value > 1. Use `--split_idx` to select which fold to use for training if the K-Fold method was used. By default Yucca will generate 5-Folds and train on Fold 0. 
+Training/Validation data splits can be automatically generated using simple dataset splits or the K-Fold method. First select the method with `--split_data_method` and then supply the desired parameter with `--split_data_param`. If the method is `simple_train_val_split` valid parameter values are between 0.0-1.0, so a valid configuration could be `--split_data_method simple_train_val_split --split_data_param 0.33`. For `kfold` valid parameters are integers > 1. When using K-Fold the `--split_idx` can be used to select which fold to use for training. When using `split_data_method simple_train_val_split` you do not need to specify the `--split_idx` as there will only be one split of the specified configuration.  By default Yucca will generate 5-Folds and train on Fold 0. 
 
-Newly generated splits are saved in the `splits.pkl` file next to the preprocessed dataset. If this file already exists Yucca will reuse splits generated with the same configuration. To reuse a split previously generated using `--split_data_ratio 0.33` simply specify `--split_data_ratio 0.33` again. To reuse the 5 folds generated with `--split_data_kfold 5` but train on a new fold 1 instead of 0 simply specify `--split_data_kfold 5` again with `--split_idx 1`.
+Newly generated splits are saved in the `splits.pkl` file next to the preprocessed dataset. If this file already exists Yucca will reuse splits generated with the same configuration. To reuse a split previously generated using `--split_data_method simple_train_val_split --split_data_param 0.33` simply specify `--split_data_method simple_train_val_split --split_data_param 0.33` again. To reuse the 5 folds generated with `--split_data_kfold 5` but train on a fold 1 instead of 0 simply specify `--split_data_kfold 5` again, but this time with `--split_idx 1`.
 
-If you wish to use predefined splits, you have to manufacture a splits file and save it in the folder of the task's preprocessed data (e.g. "/path/to/YuccaData/yucca_preprocessed/TaskXXX_MyTask/splits.pkl"). The Manager will only create the random splits if no "splits.pkl" file is already present in the preprocessed folder. Therefore, manually placing one there will effectively block the Manager from creating a new splits file.
+If you wish to use predefined splits, you have to manufacture a splits file and save it (or append to an existing file) in the folder of the task's preprocessed data (e.g. "/path/to/YuccaData/yucca_preprocessed/TaskXXX_MyTask/splits.pkl").
 
 By default Training-Validation data splits are created by the [get_split_config](/yucca/yucca/training/configuration/split_data.py) function the first time a model is trained on a given task. The method randomly partitions the data into 5 equal parts. Subsequently, 5 train-val splits are created by withholding each of the parts as validation data and combining the remaning four parts into training data, equating to a 80%/20% split. Although these splits are randomly generated, each Manager uses a fixed random seed for reproducibility. 
 
