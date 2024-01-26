@@ -282,6 +282,8 @@ class YuccaManager_NoPatches(YuccaManager):
         self.patch_based_training = False
 ```
 
+This is used to train models on full-size images. Requires datasets are preprocessed using a Planner using fixed_target_size to ensure that all samples have identical dimensions.
+
 # Inference
 Changing inference parameters not implemented currently.
 
