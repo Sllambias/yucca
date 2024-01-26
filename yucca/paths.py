@@ -1,6 +1,7 @@
 """
 PLEASE READ YUCCA/DOCUMENTATION/TUTORIALS/ENVIRONMENT_VARIABLES.MD FOR INFORMATION ON HOW TO SET THIS UP
 """
+
 import os
 import warnings
 from dotenv import load_dotenv
