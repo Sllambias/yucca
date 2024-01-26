@@ -114,7 +114,7 @@ Basic Yucca training relies on five CLI flags.
   2. **-d**: The model dimensions. This can be either 2D or 3D (default).
   3. **-m**: The model architecture. This includes any model implemented in the [Model directory](yucca/network_architectures/networks). Including, but not limited to, `U-Net`, `UNetR`, `MultiResUNet` and `ResNet50`.
   4. **-man**: The Manager to use. This defaults to the `YuccaManager`.
-  5. **-pl**: The planner used to determine preprocessing. This defaults to the `YuccaPlanner` but can be any planner found or created in the [Planner directory](yucca/planning).
+  5. **-pl**: The Planner used to preprocess the training data. This defaults to the `YuccaPlanner`.
 
 An example of training a `MultiResUNet` with the default Manager on a task called `Task001_Brains` that has been preprocessed using the default `YuccaPlanner`:
  using a 2D `MultiResUnet`:
@@ -127,14 +127,13 @@ An example of training a `MultiResUNet` with the default Manager on a task calle
 
 Inference is carried out using the `yucca_inference` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#inference). Prior to inference the model must be trained using the `yucca_train` command and the target dataset must be task-converted.
 
-Basic Yucca inference relies on four CLI flags.
+Basic Yucca inference relies on six CLI flags.
   1. **-t**: The target task-converted raw data on which to run inference.
   2. **-s**: The source task on which the model was trained.
-  3. **-m**: The architecture of the trained model. 
-  4. **-d**: The dimensions of the trained model.
-
-
-To run inference using the default Trainer Class, plan file and folds supply (1) the source task (what the model is trained on) with `-s` (2) the target task (what we want to predict) with `-t` (3) the model architecture with `-m` and (4) the dimensions with `-d`.
+  3. **-d**: The dimensions of the trained model.
+  4. **-m**: The architecture of the trained model.
+  5. **-man**: The Manager to use. This defaults to the `YuccaManager`.
+  6. **-pl**: The Planner used to preprocess the training data.
 
 An example of running inference on the test set of a task called `Task001_Brains`, using a 3D `MultiResUnet` trained on the train set of the same task:
 ```

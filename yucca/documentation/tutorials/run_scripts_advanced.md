@@ -112,26 +112,51 @@ An example of training on a task called `Task002_NotBrains`, using a 2D `MultiRe
 
 # Inference
 
-For help and all the available arguments see the output of the `-h` flag below. 
+
+The `yucca_inference` CLI invokes the [`run_inference.py`](yucca/run/run_inference.py) script.
+For help and all the available arguments see the output of the `-h` flag below.
 
 ```console
 > yucca_inference -h
-usage: yucca_inference [-h] -s S -t T [-f F] [-m M] [-d D] [-tr TR] [-pl PL] [-chk CHK] [--ensemble] [--not_strict] [--save_softmax] [--overwrite] [--no_eval] [--predict_train]
+usage: yucca_inference [-h] -s S -t T [-d D] [-m M] [-man MAN] [-pl PL] [-chk CHECKPOINT] [--disable_tta] [--experiment EXPERIMENT] [--no_eval] [--predict_train] [--profile] [--save_softmax] [--split_idx SPLIT_IDX]
+                       [--split_data_method SPLIT_DATA_METHOD] [--split_data_param SPLIT_DATA_PARAM] [--version VERSION]
 
 options:
-  -h, --help       show this help message and exit
-  -s S             Name of the source task i.e. what the model is trained on. Should be of format: TaskXXX_MYTASK
-  -t T             Name of the target task i.e. the data to be predicted. Should be of format: TaskXXX_MYTASK
-  -f F             Select the fold that was used to train the model desired for inference. Defaults to looking for a model trained on fold 0.
-  -m M             Model Architecture. Defaults to UNet.
-  -d D             2D, 25D or 3D model. Defaults to 3D.
-  -tr TR           Full name of Trainer Class. e.g. 'YuccaTrainer_DCE' or 'YuccaManager'. Defaults to YuccaManager.
-  -pl PL           Plan ID. Defaults to YuccaPlannerV2
-  -chk CHK         Checkpoint to use for inference. Defaults to checkpoint_best.
-  --ensemble       Used to initialize data preprocessing for ensemble/2.5D training
-  --not_strict     Strict determines if all expected modalities must be present, with the appropriate suffixes (e.g. '_000.nii.gz'). Only touch if you know what you're doing.
-  --save_softmax   Save softmax outputs. Required for softmax fusion.
-  --overwrite      Overwrite existing predictions
-  --no_eval        Disable evaluation and creation of metrics file (result.json)
-  --predict_train  Predict on the training set. Useful for debugging.
-```
+  -h, --help            show this help message and exit
+  -s S                  Name of the source task i.e. what the model is trained on. Should be of format: TaskXXX_MYTASK
+  -t T                  Name of the target task i.e. the data to be predicted. Should be of format: TaskXXX_MYTASK
+  -d D                  2D or 3D model. Defaults to 3D.
+  -m M                  Model Architecture. Defaults to UNet.
+  -man MAN              Full name of Trainer Class. e.g. 'YuccaTrainer_DCE' or 'YuccaTrainer'. Defaults to YuccaTrainer.
+  -pl PL                Planner. Defaults to YuccaPlanner
+  -chk CHECKPOINT, --checkpoint CHECKPOINT
+                        Checkpoint to use for inference. Defaults to model_best.
+  --disable_tta         Used to disable test-time augmentations (mirroring)
+  --experiment EXPERIMENT
+                        A name for the experiment being performed, wiht no spaces.
+  --no_eval             Disable evaluation and creation of metrics file (result.json)
+  --predict_train       Predict on the training set. Useful for debugging.
+  --profile             Used to enable inference profiling
+  --save_softmax        Save softmax outputs. Required for softmax fusion.
+  --split_idx SPLIT_IDX
+                        idx of splits to use for training.
+  --split_data_method SPLIT_DATA_METHOD
+                        Specify splitting method. Either kfold, simple_train_val_split
+  --split_data_param SPLIT_DATA_PARAM
+                        Specify the parameter for the selected split method. For KFold use an int, for simple_split use a float between 0.0-1.0.
+  --version VERSION     Version to use for inference. Defaults to the newest version.
+
+
+**-s**, **-t**, **-d**, **-m**, **-man** and **-pl** are covered in the front page [ReadMe](/yucca/README.md#inference).
+
+**--checkpoint**: Used to specify which checkpoint should be used to generate the predictions. Defaults to the "best.ckpt".
+**--disable_tta**: Disables Test-Time augmentations. This only has an impact for models eligible for Test-Time augmentations. So far this is limited to models trained with the Mirroring augmentations enabled.
+**--experiment**: Used to specify if non-default experiment name was used in training.
+**--no_eval**: Disables evaluation. Useful to avoid running into errors when predicting test sets without labels.
+**--predict_train**: Used to predict the train-set of the target task. Useful for debugging, to test if a model trained on the train set X performs as well as we would expect on the train set of X 
+**--profile**: Enables inference profiling for in-depth debugging
+**--save_softmax**: Enables saving softmax outputs rather than argmaxed predictions
+**--split_idx**: Used to specify if non-default split idx was used to train the model.
+**--split_data_method**: Used to specify if non-default split method was used to train the model.
+**--split_data_param**: Used to specify if non-default split param was used to train the model.
+**--version**:

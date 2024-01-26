@@ -33,7 +33,14 @@ def main():
         help="Name of the target task i.e. the data to be predicted. " "Should be of format: TaskXXX_MYTASK",
         required=True,
     )
-
+    parser.add_argument("-d", help="2D or 3D model. Defaults to 3D.", default="3D")
+    parser.add_argument("-m", help="Model Architecture. Defaults to UNet.", default="UNet")
+    parser.add_argument(
+        "-man",
+        help="Full name of Trainer Class. \n" "e.g. 'YuccaTrainer_DCE' or 'YuccaTrainer'. Defaults to YuccaTrainer.",
+        default="YuccaManager",
+    )
+    parser.add_argument("-pl", help="Planner. Defaults to YuccaPlanner", default="YuccaPlanner")
     # Optionals (frequently changed)
     parser.add_argument(
         "-chk",
@@ -41,45 +48,16 @@ def main():
         help="Checkpoint to use for inference. Defaults to model_best.",
         default="best",
     )
-    parser.add_argument("-d", "--dimensions", help="2D or 3D model. Defaults to 3D.", default="3D")
-
-    parser.add_argument("-m", "--model", help="Model Architecture. Defaults to UNet.", default="UNet")
-    parser.add_argument(
-        "-man",
-        "--manager",
-        help="Full name of Trainer Class. \n" "e.g. 'YuccaTrainer_DCE' or 'YuccaTrainer'. Defaults to YuccaTrainer.",
-        default="YuccaManager",
-    )
-    parser.add_argument("-pl", "--planner", help="Planner. Defaults to YuccaPlanner", default="YuccaPlanner")
-    parser.add_argument(
-        "-v",
-        "--version",
-        help="Version to use for inference. Defaults to the newest version.",
-        default=None,
-    )
-    # Split configs
-    parser.add_argument("-f", "--split_idx", type=int, help="idx of splits to use for training.", default=0)
-    parser.add_argument(
-        "--split_data_method", help="Specify splitting method. Either kfold, simple_train_val_split", default="kfold"
-    )
-    parser.add_argument(
-        "--split_data_param",
-        help="Specify the parameter for the selected split method. For KFold use an int, for simple_split use a float between 0.0-1.0.",
-        default=5,
-    )
-
-    # Optionals (occasionally changed)
-    parser.add_argument(
-        "--experiment",
-        help="A name for the experiment being performed, wiht no spaces.",
-        default="default",
-    )
-
     parser.add_argument(
         "--disable_tta",
         help="Used to disable test-time augmentations (mirroring)",
         default=False,
         action="store_true",
+    )
+    parser.add_argument(
+        "--experiment",
+        help="A name for the experiment being performed, wiht no spaces.",
+        default="default",
     )
     parser.add_argument(
         "--no_eval",
@@ -88,13 +66,6 @@ def main():
         action="store_true",
         required=False,
     )
-    # parser.add_argument(
-    #    "--overwrite",
-    #    default=False,
-    #    action="store_true",
-    #    required=False,
-    #    help="Overwrite existing predictions",
-    # )
     parser.add_argument(
         "--predict_train",
         default=False,
@@ -115,6 +86,29 @@ def main():
         required=False,
         help="Save softmax outputs. Required for softmax fusion.",
     )
+    parser.add_argument("--split_idx", type=int, help="idx of splits to use for training.", default=0)
+    parser.add_argument(
+        "--split_data_method", help="Specify splitting method. Either kfold, simple_train_val_split", default="kfold"
+    )
+    parser.add_argument(
+        "--split_data_param",
+        help="Specify the parameter for the selected split method. For KFold use an int, for simple_split use a float between 0.0-1.0.",
+        default=5,
+    )
+    parser.add_argument(
+        "--version",
+        help="Version to use for inference. Defaults to the newest version.",
+        default=None,
+    )
+
+    # parser.add_argument(
+    #    "--overwrite",
+    #    default=False,
+    #    action="store_true",
+    #    required=False,
+    #    help="Overwrite existing predictions",
+    # )
+
 
     args = parser.parse_args()
 
