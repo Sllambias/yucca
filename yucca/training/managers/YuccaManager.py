@@ -224,8 +224,8 @@ class YuccaManager:
         )
 
         if (
-            not isinstance(self.data_module.train_sampler, InfiniteRandomSampler) and self.train_batches_per_step is not None
-        ) or (not isinstance(self.data_module.val_sampler, InfiniteRandomSampler) and self.val_batches_per_step is not None):
+            not issubclass(self.data_module.train_sampler, InfiniteRandomSampler) and self.train_batches_per_step is not None
+        ) or (not issubclass(self.data_module.val_sampler, InfiniteRandomSampler) and self.val_batches_per_step is not None):
             print("Warning: you are limiting the amount of batches pr. step, but not sampling using InfiniteRandomSampler.")
 
         self.trainer = L.Trainer(
