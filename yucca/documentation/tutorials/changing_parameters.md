@@ -120,9 +120,8 @@ from yucca.training.managers.YuccaManager import YuccaManager
 class YuccaManager_NewUserSetup(YuccaManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-    self.augmentation_parameters = {"blurring_p_per_sample": 0.0,
-                                    "scale_factor": (0.7, 1.3)}
+        self.augmentation_parameters = {"blurring_p_per_sample": 0.0,
+                                        "scale_factor": (0.7, 1.3)}
 ```
 
 ## Data Splits
@@ -248,7 +247,7 @@ from yucca.training.managers.YuccaManager import YuccaManager
 class YuccaManager_mom95(YuccaManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._DEFAULT_MOMENTUM= 0.95
+        self.momentum= 0.95
 ```
 
 CLI: Can also be changed using *yucca_train* --mom flag.

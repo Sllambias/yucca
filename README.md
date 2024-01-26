@@ -95,10 +95,10 @@ Prior to preprocessing and training all datasets must be converted to Yucca-comp
 
 Preprocessing is carried out using the `yucca_preprocess` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#preprocessing)
 
-Basic Yucca preprocessing relies on three components. 
-  1. The target task-converted raw data to be preprocessed specified with the required **-t** flag.
-  2. The Planner class. The Planner is responsible for determining *what* we do in preprocessing and *how* it is done. This includes setting the normalization, resizing, resampling and transposition operations and any values associated with them. The planner class defaults to the `YuccaPlanner` but it can also be any custom planner found or created in the [Planner directory](yucca/planning) and its subdirectories.  The planner can be changed using the **-pl** flag.  
-  3. The Preprocessor class. The Preprocessor is a work horse, that receives an instruction manual from the Planner which it carries out. The Preprocessor can be one of `YuccaPreprocessor` (default), `ClassificationPreprocessor` and `UnsupervisedPreprocessor`. The only aspect in which they differ is how they expect the ground truth to look. The `YuccaPreprocessor` expects to find images, the `ClassificationPreprocessor` expects to find .txt files with image-level classes and the `UnsupervisedPreprocessor` expects to not find any ground truth. This can be changed using the **-pr** flag. 
+Basic Yucca preprocessing relies on three CLI flags. 
+  1. **-t**: The target task-converted raw data to be preprocessed.
+  2. **-pl**: The Planner class. The Planner is responsible for determining *what* we do in preprocessing and *how* it is done. This includes setting the normalization, resizing, resampling and transposition operations and any values associated with them. The planner class defaults to the `YuccaPlanner` but it can also be any custom planner found or created in the [Planner directory](yucca/planning) and its subdirectories.
+  3. **-pr**: The Preprocessor class. The Preprocessor is a work horse, that receives an instruction manual from the Planner which it carries out. The Preprocessor can be one of `YuccaPreprocessor` (default), `ClassificationPreprocessor` and `UnsupervisedPreprocessor`. The only aspect in which they differ is how they expect the ground truth to look. The `YuccaPreprocessor` expects to find images, the `ClassificationPreprocessor` expects to find .txt files with image-level classes and the `UnsupervisedPreprocessor` expects to not find any ground truth. 
 
 An example of preprocessing a task called `Task001_Brains` with the default planner and the `ClassificationPreprocessor`:
 ```
@@ -109,13 +109,14 @@ An example of preprocessing a task called `Task001_Brains` with the default plan
 
 Training is carried out using the `yucca_train` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#training). Prior to training any models a preprocessed dataset must be prepared using the `yucca_preprocessing` command.
 
-Basic Yucca training relies on four components.
-  1. The target preprocessed data on which the model will be trained. This is specified using the **-t** flag.
-  2. The model architecture. This includes any model implemented in the [Model directory](yucca/network_architectures/networks). Including, but not limited to, `U-Net`, `UNetR`, `MultiResUNet` and `ResNet50`. Specified by the **-m** flag.
-  3. The model dimensions. This can be either 2D or 3D (default) and is specified with the **-d** flag.
-  4. The planner used to determine preprocessing. This defaults to the `YuccaPlanner` but can be any planner found or created in the [Planner directory](yucca/planning).
+Basic Yucca training relies on five CLI flags.
+  1. **-t**: The target preprocessed data on which the model will be trained.
+  2. **-d**: The model dimensions. This can be either 2D or 3D (default).
+  3. **-m**: The model architecture. This includes any model implemented in the [Model directory](yucca/network_architectures/networks). Including, but not limited to, `U-Net`, `UNetR`, `MultiResUNet` and `ResNet50`.
+  4. **-man**: The Manager to use. This defaults to the `YuccaManager`.
+  5. **-pl**: The planner used to determine preprocessing. This defaults to the `YuccaPlanner` but can be any planner found or created in the [Planner directory](yucca/planning).
 
-An example of training a `MultiResUNet` on a task called `Task001_Brains` that has been preprocessed using the default `YuccaPlanner`:
+An example of training a `MultiResUNet` with the default Manager on a task called `Task001_Brains` that has been preprocessed using the default `YuccaPlanner`:
  using a 2D `MultiResUnet`:
 ```
 > yucca_train -t Task001_Brains -m MultiResUNet -d 2D
@@ -126,11 +127,11 @@ An example of training a `MultiResUNet` on a task called `Task001_Brains` that h
 
 Inference is carried out using the `yucca_inference` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#inference). Prior to inference the model must be trained using the `yucca_train` command and the target dataset must be task-converted.
 
-Basic Yucca inference relies on four components.
-  1. The target task-converted raw data on which to run inference. This is specified using the **-t** flag.
-  2. The source task on which the model was trained. This is specified using the **-s** flag.
-  3. The architecture of the trained model. Specified by the **-m** flag.
-  4. The dimensions of the trained model. Specified by the **-d** flag.
+Basic Yucca inference relies on four CLI flags.
+  1. **-t**: The target task-converted raw data on which to run inference.
+  2. **-s**: The source task on which the model was trained.
+  3. **-m**: The architecture of the trained model. 
+  4. **-d**: The dimensions of the trained model.
 
 
 To run inference using the default Trainer Class, plan file and folds supply (1) the source task (what the model is trained on) with `-s` (2) the target task (what we want to predict) with `-t` (3) the model architecture with `-m` and (4) the dimensions with `-d`.

@@ -20,17 +20,17 @@ def main():
 
     # Optional arguments with default values #
     parser.add_argument(
+        "-d",
+        help="Dimensionality of the Model. Can be 3D or 2D. "
+        "Defaults to 3D. Note that this will always be 2D if ensemble is enabled.",
+        default="3D",
+    )
+    parser.add_argument(
         "-m",
         help="Model Architecture. Should be one of MultiResUNet or UNet"
         " Note that this is case sensitive. "
         "Defaults to the standard UNet.",
         default="UNet",
-    )
-    parser.add_argument(
-        "-d",
-        help="Dimensionality of the Model. Can be 3D or 2D. "
-        "Defaults to 3D. Note that this will always be 2D if ensemble is enabled.",
-        default="3D",
     )
     parser.add_argument(
         "-man",
@@ -45,43 +45,34 @@ def main():
         default="YuccaPlanner",
     )
 
-    parser.add_argument(
-        "--epochs", help="Used to specify the number of epochs for training. Default is 1000", type=int, default=1000
-    )
-    parser.add_argument(
-        "--experiment",
-        help="A name for the experiment being performed, wiht no spaces.",
-        default="finetune",
-    )
-    # The following can be changed to run training with alternative LR, Loss and/or Momentum ###
+    # Optionals that can be changed experimentally. For long term solutions these should be specified by a unique Manager.
+    parser.add_argument("--disable_logging", help="disable logging.", action="store_true", default=False)
+    parser.add_argument("--ds", help="Used to enable deep supervision", default=False, action="store_true")
+    parser.add_argument("--epochs", help="Used to specify the number of epochs for training. Default is 1000", type=int, default=1000)
+    parser.add_argument("--experiment", help="A name for the experiment being performed, with no spaces.", default="finetune")
+    parser.add_argument("--loss", help="Should only be used to employ alternative Loss Function", default=None)
     parser.add_argument(
         "--lr",
         help="Should only be used to employ alternative Learning Rate. Format should be scientific notation e.g. 1e-4.",
         default=1e-3,
     )
-    parser.add_argument("--loss", help="Should only be used to employ alternative Loss Function", default=None)
+    parser.add_argument("--max_vram", type=int, default=12)
     parser.add_argument("--mom", help="Should only be used to employ alternative Momentum.", default=0.9)
-
-    parser.add_argument("--disable_logging", help="disable logging. ", action="store_true", default=False)
     parser.add_argument(
         "--new_version",
         help="Start a new version, instead of continuing from the most recent. ",
         action="store_true",
         default=False,
     )
-    parser.add_argument("--profile", help="Enable profiling.", action="store_true", default=False)
     parser.add_argument(
         "--patch_size",
         type=str,
         help="Use your own patch_size. Example: if 32 is provided and the model is 3D we will use patch size (32, 32, 32). Can also be min, max or mean.",
+        default=None,
     )
     parser.add_argument("--precision", type=str, default="bf16-mixed")
-    parser.add_argument("--train_batches_per_step", type=int, default=250)
-    parser.add_argument("--val_batches_per_step", type=int, default=50)
-    parser.add_argument("--max_vram", type=int, default=12)
-
-    # Split configs
-    parser.add_argument("-f", "--split_idx", type=int, help="idx of splits to use for training.", default=0)
+    parser.add_argument("--profile", help="Enable profiling.", action="store_true", default=False)
+    parser.add_argument("--split_idx", type=int, help="idx of splits to use for training.", default=0)
     parser.add_argument(
         "--split_data_method", help="Specify splitting method. Either kfold, simple_train_val_split", default="kfold"
     )
@@ -90,27 +81,35 @@ def main():
         help="Specify the parameter for the selected split method. For KFold use an int, for simple_split use a float between 0.0-1.0.",
         default=5,
     )
+    parser.add_argument("--train_batches_per_step", type=int, default=250)
+    parser.add_argument("--val_batches_per_step", type=int, default=50)
 
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
     checkpoint = args.checkpoint
-    model_name = args.m
     dimensions = args.d
-    experiment = args.experiment
+    model_name = args.m
     manager_name = args.man
-    momentum = args.mom
-    lr = args.lr
+    planner = args.pl
+
     log = not args.disable_logging
+    deep_supervision = args.ds
+    epochs = args.epochs
+    experiment = args.experiment
     loss = args.loss
+    lr = args.lr
+    max_vram = args.max_vram
+    momentum = args.mom
     new_version = args.new_version
     patch_size = args.patch_size
-    planner = args.pl
+    precision = args.precision
     profile = args.profile
-
     split_idx = args.split_idx
     split_data_method = args.split_data_method
     split_data_param = args.split_data_param
+    train_batches_per_step=args.train_batches_per_step
+    val_batches_per_step=args.val_batches_per_step
 
     if patch_size is not None:
         if patch_size not in ["mean", "max", "min"]:
@@ -123,42 +122,32 @@ def main():
         class_name=manager_name,
         current_module="yucca.training.managers",
     )
-    # checkpoint = join(
-    #    yucca_models,
-    #    source_task,
-    #    model + "__" + dimensions,
-    #    manager_name + "__" + planner,
-    #    f"fold_{str(folds)}",
-    #    f"version_{str(version)}",
-    #    "checkpoints",
-    #    f"{checkpoint}.ckpt",
-    # )
 
     manager = manager(
         ckpt_path=checkpoint,
         continue_from_most_recent=not new_version,
-        deep_supervision=False,
+        deep_supervision=deep_supervision,
         enable_logging=log,
         experiment=experiment,
         loss=loss,
         learning_rate=lr,
-        max_epochs=args.epochs,
-        max_vram=args.max_vram,
+        max_epochs=epochs,
+        max_vram=max_vram,
         model_dimensions=dimensions,
         model_name=model_name,
         momentum=momentum,
         num_workers=8,
         patch_size=patch_size,
         planner=planner,
-        precision=args.precision,
+        precision=precision,
         profile=profile,
         split_idx=split_idx,
         split_data_method=split_data_method,
         split_data_param=split_data_param,
         step_logging=False,
         task=task,
-        train_batches_per_step=args.train_batches_per_step,
-        val_batches_per_step=args.val_batches_per_step,
+        train_batches_per_step=train_batches_per_step,
+        val_batches_per_step=val_batches_per_step,
         **kwargs,
     )
     manager.run_finetuning()
