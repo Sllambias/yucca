@@ -1,6 +1,7 @@
 """
 FROM: https://github.com/j-sripad/mulitresunet-pytorch/blob/main/multiresunet.py
 """
+
 import torch
 import torch.nn as nn
 from yucca.network_architectures.networks.YuccaNet import YuccaNet

@@ -6,13 +6,12 @@ from batchgenerators.utilities.file_and_folder_operations import join, subfiles,
 from sklearn.model_selection import KFold
 from dataclasses import dataclass
 from yucca.training.configuration.configure_paths import PathConfig
-from yucca.training.configuration.configure_task import SplitMethods
 
 
 @dataclass
 class SplitConfig:
     splits: Union[dict[dict[list[dict]]], None]  # Contains `{ method: { parameter_value: [splits] }}`
-    method: SplitMethods = None
+    method: str = None
     param: Union[int, float] = None
 
     def split(self):
@@ -28,7 +27,7 @@ class SplitConfig:
         return {"split_method": self.method, "split_param": self.param}
 
 
-def get_split_config(method: SplitMethods, param: Union[float, int], path_config: PathConfig):
+def get_split_config(method: str, param: Union[str, float, int], path_config: PathConfig):
     """
     Params:
         method: SplitMethods
@@ -43,9 +42,9 @@ def get_split_config(method: SplitMethods, param: Union[float, int], path_config
         if not isinstance(splits, dict):
             splits = {}
 
-        if split_is_precomputed(splits, str(method), param):
+        if split_is_precomputed(splits, method, param):
             logging.warning(
-                f"Reusing already computed split file which was split using the {str(method)} method and parameter {param}."
+                f"Reusing already computed split file which was split using the {method} method and parameter {param}."
             )
             return SplitConfig(splits, method, param)
         else:
@@ -54,20 +53,26 @@ def get_split_config(method: SplitMethods, param: Union[float, int], path_config
         splits = {}
 
     if method not in splits.keys():
-        splits[str(method)] = {}
+        splits[method] = {}
 
     file_names = get_file_names(path_config.train_data_dir)
-    splits[str(method)][param] = (
-        kfold_split(file_names, param) if method == SplitMethods.kfold else simple_split(file_names, param)
-    )
+
+    if method == "kfold":
+        splits[method][param] = kfold_split(file_names, param)
+    elif method == "simple_train_val_split":
+        splits[method][param] = simple_split(file_names, param)
+    else:
+        assert split_is_precomputed(
+            splits, method, param
+        ), "you are using a custom split method, but the split.pkl does not contain such a split"
 
     split_cfg = SplitConfig(splits, method, param)
     save_pickle(splits, splits_path)
     return split_cfg
 
 
-def split_is_precomputed(splits, method_str, param):
-    return method_str in splits.keys() and param in splits[method_str].keys()
+def split_is_precomputed(splits, method, param):
+    return method in splits.keys() and param in splits[method].keys()
 
 
 def kfold_split(file_names: list[str], k: int):

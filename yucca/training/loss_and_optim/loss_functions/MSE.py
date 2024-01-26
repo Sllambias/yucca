@@ -2,6 +2,7 @@
 Mean Squared Error loss wrapper
 Makes loss function robust to target tensors with a channel dimension
 """
+
 from torch import nn, Tensor
 
 

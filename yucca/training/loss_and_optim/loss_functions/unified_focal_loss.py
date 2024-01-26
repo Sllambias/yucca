@@ -12,6 +12,7 @@ Code implementation from:
 https://github.com/oikosohn/compound-loss-pytorch
 
 """
+
 import torch
 import torch.nn as nn
 
