@@ -2,7 +2,7 @@
 - [Guide to Changing Yucca Parameters](#guide-to-changing-yucca-parameters)
 - [Subclassing](#subclassing)
 - [Preprocessing](#preprocessing)
-  * [Spacing](#spacing)
+  * [Spacing](#size-or-spacing)
   * [Orientation](#orientation)
   * [Normalization](#normalization)
 - [Training](#training)
@@ -26,7 +26,7 @@ Changing parameters in Yucca is generally achieved using subclasses. This means,
 
 E.g. to lower the starting Learning Rate we subclass YuccaManager - the default class responsible for handling model training, and change the variable self.learning_rate variable from 1e-3 to 1e-5.
 
-We call this new trainer "YuccaManager_1e5" and save it as "YuccaManager_1e5.py" in the /yucca/training/managers directory as this is where the Parent Class is located. Alternatively it can be saved in a subdirectory of the directory of the parent class e.g. /yucca/training/managers/lr. 
+We call this new Manager "YuccaManager_1e5" and save it as "YuccaManager_1e5.py" in the /yucca/training/managers directory as this is where the Parent Class is located. Alternatively it can be saved in a subdirectory of the directory of the parent class e.g. /yucca/training/managers/lr. 
 
 ```
 from yucca.training.managers.YuccaManager import YuccaManager
@@ -102,14 +102,15 @@ self.norm_op = 'minmax'
 # Training
 Unless otherwise mentioned, training variables and functions are handled by the YuccaManagers. For optimal results, it is advisable to subclass the default class when applying changes.
 
-**Default Trainer Class: [YuccaManager](/yucca/training/managers/YuccaManager.py)**
+**Default Manager Class: [YuccaManager](/yucca/training/managers/YuccaManager.py)**
 
 ## Data Augmentation
-Parent: default trainer class
+Parent: default Manager class
 
 Variable: *self.augmentation_params*
 
-Changing the data augmentation parameters is achieved by defining a dictionary of augmentation parameters in the Manager, which will then automatically apply these settings to the composed augmentations. The default augmentation parameters can be seed in the `setup_default_params` method of the [`YuccaAugmentationComposer`](/yucca/yucca/training/augmentation/YuccaAugmentationComposer.py).
+Changing the data augmentation parameters is achieved by defining a dictionary of augmentation parameters in the Manager, which will then automatically apply these settings to the composed augmentations. The default augmentation parameters can be found in the `setup_default_params` method of the [`YuccaAugmentationComposer`](/yucca/yucca/training/augmentation/YuccaAugmentationComposer.py). Most augmentations have a variable called "X_p_per_sample" with a floating point value between 0.0-1.0 which controls the probability they are applied to each sample. To disable an augmentation set this probability to 0.0. Some augmentations also have variables that control the possible intensity ranges of the augmentation, such as the `"rotation_x": (-30.0, 30.0)` specifying the minimum and maximum degree of rotation around the X-axis.
+
 
 To disable blurring entirely and modify the scaling range do:
 ```
@@ -124,13 +125,19 @@ class YuccaManager_NewUserSetup(YuccaManager):
 ```
 
 ## Data Splits
-Parent: default trainer class
+CLI: `yucca_train`, `yucca_finetune` and `yucca_inference`
 
-Method: *split_data*
+Variables: *--split_idx*, *--split_data_ratio* and *--split_data_kfold*
 
-NOTE: Do not confuse this with the train-test splits. These must be handled in [Task Conversion](/yucca/documentation/tutorials/task_conversion.md).
+NOTE: Do not confuse this with the train-test splits. These must be handled in [Task Conversion](/yucca/yucca/documentation/tutorials/task_conversion.md).
 
-By default Training-Validation data splits are created by the *split_data* method the first time a model is trained on a given task. The method randomly partitions the data into 5 equal parts. Subsequently, 5 train-val splits are created by withholding each of the parts as validation data and combining the remaning four parts into training data, equating to a 80%/20% split. Although these splits are randomly generated, each trainer uses a fixed random seed for reproducibility. 
+Training/Validation data splits can be generated using either a simple dataset split or with the K-Fold method. To generate a simple train/val split use `--split_data_ratio` with a value between 0.0-1.0 to specify a fraction of the dataset to be used for validation. To generate K folds use `--split_data_kfold` with a value > 1. Use `--split_idx` to select which fold to use for training if the K-Fold method was used. By default Yucca will generate 5-Folds and train on Fold 0. 
+
+Newly generated splits are saved in the `splits.pkl` file next to the preprocessed dataset. If this file already exists Yucca will reuse splits generated with the same configuration. To reuse a split previously generated using `--split_data_ratio 0.33` simply specify `--split_data_ratio 0.33` again. To reuse the 5 folds generated with `--split_data_kfold 5` but train on a new fold 1 instead of 0 simply specify `--split_data_kfold 5` again with `--split_idx 1`.
+
+If you wish to use predefined splits, you have to manufacture a splits file and save it in the folder of the task's preprocessed data (e.g. "/path/to/YuccaData/yucca_preprocessed/TaskXXX_MyTask/splits.pkl"). The Manager will only create the random splits if no "splits.pkl" file is already present in the preprocessed folder. Therefore, manually placing one there will effectively block the Manager from creating a new splits file.
+
+By default Training-Validation data splits are created by the [get_split_config](/yucca/yucca/training/configuration/split_data.py) function the first time a model is trained on a given task. The method randomly partitions the data into 5 equal parts. Subsequently, 5 train-val splits are created by withholding each of the parts as validation data and combining the remaning four parts into training data, equating to a 80%/20% split. Although these splits are randomly generated, each Manager uses a fixed random seed for reproducibility. 
 
 This means, for any dataset it's partitioned into five parts [0, 1, 2, 3, 4], which we use to create 5 splits:
 ```
@@ -144,7 +151,7 @@ This means, for any dataset it's partitioned into five parts [0, 1, 2, 3, 4], wh
 ```
 To specify which split to train on, use the "-f" flag followed by an integer in [0, 4]. By default split 0 ({train: [1, 2, 3, 4], val: [0]}) is used. 
 
-If you wish to use predefined splits, you have to manufacture a splits file and save it in the folder of the task's preprocessed data (e.g. "/path/to/YuccaData/yucca_preprocessed/TaskXXX_MyTask/splits.pkl"). The Trainer will only create the random splits if no "splits.pkl" file is already present in the preprocessed folder. Therefore, manually placing one there will effectively block the Trainer from creating a new splits file.
+If you wish to use predefined splits, you have to manufacture a splits file and save it in the folder of the task's preprocessed data (e.g. "/path/to/YuccaData/yucca_preprocessed/TaskXXX_MyTask/splits.pkl"). The Manager will only create the random splits if no "splits.pkl" file is already present in the preprocessed folder. Therefore, manually placing one there will effectively block the Manager from creating a new splits file.
 
 When doing this, the contents of the manufactured splits file should be a list containing a dictionary:
 ```
@@ -157,7 +164,7 @@ Which is then selected with the "-f 0" flag in *yucca_train* and *yucca_inferenc
 If you wish to change the method you should subclass the parent class and redefine the *split_data* method to use the desired functions or split ratios.
 
 ## Learning Rate
-Parent: default trainer class
+Parent: default Manager class
 
 Variable: self.\_DEFAULT\_STARTING\_LR 
 
@@ -181,7 +188,7 @@ Can also be changed using *yucca_train* --lr flag.
 For an illustration of how a wide selection of Torch.Optim LR Schedulers work see the [LR Scheduler Illustration Notebook](/yucca/documentation/illustrations/learning_rate_schedulers.ipynb).
 The notebook illustrates the effect of the scheduling algorithms with different parameters. 
 
-Parent: default trainer class
+Parent: default Manager class
 
 Variable 1: self.lr\_scheduler
 - Used to determine the LR Scheduler CLASS
@@ -204,7 +211,7 @@ class YuccaManager_StepLRS(YuccaManager):
 ```
 
 ## Loss Function
-Parent: default trainer class
+Parent: default Manager class
 
 Variable: self.\_DEFAULT\_LOSS
 
@@ -233,7 +240,7 @@ Changing model dimensionality is entirely handled in the command line. In both p
 
 ## Momentum
 
-Parent: default trainer class
+Parent: default Manager class
 
 Variable: self.\_DEFAULT\_MOMENTUM
 
@@ -255,7 +262,7 @@ Can also be changed using *yucca_train* --mom flag.
 
 ## Optimizer
 
-Parent: default trainer class
+Parent: default Manager class
 
 Variable: self.optim
 

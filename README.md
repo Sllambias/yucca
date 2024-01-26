@@ -33,7 +33,7 @@ End-to-end modular machine learning framework for classification, segmentation a
 
 ## Install an editable version of the project with Cuda support using Conda
 
-Create a python=3.10 environment exclusively for Yucca to avoid conflicts with other projects. 
+Create a python=3.11 environment exclusively for Yucca to avoid conflicts with other projects. 
 
 IMPORTANT: First install Pytorch for GPU following appropriate instructions from e.g. https://pytorch.org/get-started/locally/.
 Then navigate to Yucca and install the package from there.
