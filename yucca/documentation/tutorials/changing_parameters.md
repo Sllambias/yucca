@@ -136,150 +136,150 @@ Training/Validation data splits can be automatically generated using simple data
 
 Newly generated splits are saved in the `splits.pkl` file next to the preprocessed dataset. If this file already exists Yucca will reuse splits generated with the same configuration. To reuse a split previously generated using `--split_data_method simple_train_val_split --split_data_param 0.33` simply specify `--split_data_method simple_train_val_split --split_data_param 0.33` again. To reuse the 5 folds generated with `--split_data_kfold 5` but train on a fold 1 instead of 0 simply specify `--split_data_kfold 5` again, but this time with `--split_idx 1`.
 
-If you wish to use predefined splits, you have to manufacture a splits file and save it (or append to an existing file) in the folder of the task's preprocessed data (e.g. "/path/to/YuccaData/yucca_preprocessed/TaskXXX_MyTask/splits.pkl").
-
-By default Training-Validation data splits are created by the [get_split_config](/yucca/yucca/training/configuration/split_data.py) function the first time a model is trained on a given task. The method randomly partitions the data into 5 equal parts. Subsequently, 5 train-val splits are created by withholding each of the parts as validation data and combining the remaning four parts into training data, equating to a 80%/20% split. Although these splits are randomly generated, each Manager uses a fixed random seed for reproducibility. 
 
 This means, for any dataset it's partitioned into five parts [0, 1, 2, 3, 4], which we use to create 5 splits:
 ```
-[
-    {train: [1, 2, 3, 4], val: [0]}, 
-    {train: [0, 2, 3, 4], val: [1]}, 
-    {train: [0, 1, 3, 4], val: [2]}, 
-    {train: [0, 1, 2, 4], val: [3]}, 
-    {train: [0, 1, 2, 3], val: [4]}, 
-]
+{
+'kfold': 
+    {'5': 
+        [
+        {'train': [1, 2, 3, 4], 'val': [0]}, 
+        {'train': [0, 2, 3, 4], 'val': [1]}, 
+        {'train': [0, 1, 3, 4], 'val': [2]}, 
+        {'train': [0, 1, 2, 4], 'val': [3]}, 
+        {'train': [0, 1, 2, 3], 'val': [4]}, 
+        ]
+    }
+'simple_train_val_split:
+    {'0.40': 
+        [
+        {'train': [0, 2, 4], 'val': [1, 3]}
+        ]
+    }
+}
 ```
-To specify which split to train on, use the "-f" flag followed by an integer in [0, 4]. By default split 0 ({train: [1, 2, 3, 4], val: [0]}) is used. 
 
-If you wish to use predefined splits, you have to manufacture a splits file and save it in the folder of the task's preprocessed data (e.g. "/path/to/YuccaData/yucca_preprocessed/TaskXXX_MyTask/splits.pkl"). The Manager will only create the random splits if no "splits.pkl" file is already present in the preprocessed folder. Therefore, manually placing one there will effectively block the Manager from creating a new splits file.
+If you wish to use predefined splits, you have to manufacture a splits file and save it (or append to an existing file) in the folder of the task's preprocessed data (e.g. "/path/to/YuccaData/yucca_preprocessed/TaskXXX_MyTask/splits.pkl").
 
-When doing this, the contents of the manufactured splits file should be a list containing a dictionary:
+When doing this, the contents of the manufactured split file should be a list containing a dictionary:
 ```
-[
-    {train: [case1, case2, case3], val: [case4, case5]},
-]
+{
+'mycustomsplit':
+    {'version0':
+        [
+        {'train': [0], 'val': [1, 2, 3, 4]}
+        ]
+    }
+}
 ```
-Which is then selected with the "-f 0" flag in *yucca_train* and *yucca_inference*.
+Which is then selected using `--split_data_method custom --split_data_param version0`
 
-If you wish to change the method you should subclass the parent class and redefine the *split_data* method to use the desired functions or split ratios.
+## Deep Supervision
+CLI: In training and finetuning deep supervision is enabled using the --ds flag. 
 
 ## Learning Rate
 Parent: default Manager class
 
-Variable: self.\_DEFAULT\_STARTING\_LR 
-
-Subclass the parent and change the variable to the desired value using scientific notation.
+Variable: self.learning\_rate
 
 ```
 from yucca.training.managers.YuccaManager import YuccaManager
 
 class YuccaManager_LowerLR(YuccaManager):
-    def __init__(self, model, model_dimensions: str, task: str, folds: str | int, plan_id: str,
-                 starting_lr: float = None, loss_fn: str = None, momentum: float = None,
-                 continue_training: bool = False):
-        super().__init__(model, model_dimensions, task, folds, plan_id, starting_lr, 
-                         loss_fn, momentum, continue_training)
-        self._DEFAULT_STARTING_LR = 1e-5
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.learning_rate = 1e-5
 ```
 
-Can also be changed using *yucca_train* --lr flag.
+CLI: Can also be changed using --lr flag.
 
 ## Learning Rate Scheduler
-For an illustration of how a wide selection of Torch.Optim LR Schedulers work see the [LR Scheduler Illustration Notebook](/yucca/documentation/illustrations/learning_rate_schedulers.ipynb).
-The notebook illustrates the effect of the scheduling algorithms with different parameters. 
+Parent: [YuccaLightningModule](/yucca/yucca/training/lightning_modules/YuccaLightningModule.py)
 
-Parent: default Manager class
-
-Variable 1: self.lr\_scheduler
+Variable: self.lr\_scheduler
 - Used to determine the LR Scheduler CLASS
-Variable 2: self.lr\_scheduler\_kwargs
-- Used to supply arguments to the chosen scheduler. key,value pairs irrelevant to the scheduler class will be filtered out automatically.
-Subclass the parent and change the variables to the desired values.
 
 ```
-from yucca.training.managers.YuccaManager import YuccaManager
+from yucca.training.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from torch import optim
 
-class YuccaManager_StepLRS(YuccaManager):
-    def __init__(self, model, model_dimensions: str, task: str, folds: str | int, plan_id: str,
-                 starting_lr: float = None, loss_fn: str = None, momentum: float = None,
-                 continue_training: bool = False):
-        super().__init__(model, model_dimensions, task, folds, plan_id, starting_lr, 
-                         loss_fn, momentum, continue_training)
+class YuccaLightningModule_StepLRS(YuccaLightningModule):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.lr_scheduler = optim.lr_scheduler.StepLR
-        self.lr_scheduler_kwargs = {'step_size':50, 'gamma':0.9}
 ```
+
+For an illustration of how a wide selection of Torch.Optim LR Schedulers work see the [LR Scheduler Illustration Notebook](/yucca/documentation/illustrations/learning_rate_schedulers.ipynb).
+The notebook illustrates the effect of the scheduling algorithms with different parameters. 
 
 ## Loss Function
 Parent: default Manager class
 
-Variable: self.\_DEFAULT\_LOSS
+Variable: self.loss
 
-Subclass the parent and change the variable to the desired loss class. The loss class must be saved in /yucca/training/loss_functions and be a subclass of nn.Module.
+The loss class must be saved in /yucca/training/loss_and_optim/loss_functions and be a subclass of nn.Module.
 
 ```
 from yucca.training.managers.YuccaManager import YuccaManager
-from yucca.training.loss_functions import NLL
+from yucca.training.loss_and_optim.loss_functions import NLL
 
 class YuccaManager_NLL(YuccaManager):
-    def __init__(self, model, model_dimensions: str, task: str, folds: str | int, plan_id: str,
-                 starting_lr: float = None, loss_fn: str = None, momentum: float = None,
-                 continue_training: bool = False):
-        super().__init__(model, model_dimensions, task, folds, plan_id, starting_lr, 
-                         loss_fn, momentum, continue_training)
-        self._DEFAULT_LOSS = NLL
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.loss = NLL
 ```
 
 Can also be changed using *yucca_train* --loss flag.
 
 ## Model Architecture
-Changing architecture is entirely handled in the command line. In both training and inference model architecture is specified using the -m flag. Currently supported is: "UNet", "MultiResUnet", "UNetR" and "UXNet".
+CLI: In both training and inference model architecture is specified using the -m flag. Currently supported architectures can be found in [networks](yucca/yucca/network_architectures/networks).
 
 ## Model Dimensionality
-Changing model dimensionality is entirely handled in the command line. In both preprocessing, training and inference dimension is specified using the -d flag. Currently supported is: "2D" and "3D".
+CLI: In both preprocessing, training and inference dimension is specified using the -d flag. Currently supported is: "2D" and "3D".
 
 ## Momentum
-
 Parent: default Manager class
 
-Variable: self.\_DEFAULT\_MOMENTUM
-
-Subclass the parent and change the variable to the desired value.
+Variable: self.momentum 
 
 ```
 from yucca.training.managers.YuccaManager import YuccaManager
 
 class YuccaManager_mom95(YuccaManager):
-    def __init__(self, model, model_dimensions: str, task: str, folds: str | int, plan_id: str,
-                 starting_lr: float = None, loss_fn: str = None, momentum: float = None,
-                 continue_training: bool = False):
-        super().__init__(model, model_dimensions, task, folds, plan_id, starting_lr, 
-                         loss_fn, momentum, continue_training)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._DEFAULT_MOMENTUM= 0.95
 ```
 
-Can also be changed using *yucca_train* --mom flag.
+CLI: Can also be changed using *yucca_train* --mom flag.
 
 ## Optimizer
-
-Parent: default Manager class
+Parent: [YuccaLightningModule](/yucca/yucca/training/lightning_modules/YuccaLightningModule.py)
 
 Variable: self.optim
 
-Subclass the parent and change the variable to the desired torch optimizer class.
+```
+from yucca.training.lightning_modules.YuccaLightningModule import YuccaLightningModule
+from torch import optim
+
+class YuccaLightningModule_Adam(YuccaLightningModule):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.optim = optim.Adam
+```
+
+## Patch Based Training
+Parent: default Manager class
+
+Variable: self.patch_based_training 
 
 ```
 from yucca.training.managers.YuccaManager import YuccaManager
-from torch import optim
 
-class YuccaManager_Adam(YuccaManager):
-    def __init__(self, model, model_dimensions: str, task: str, folds: str | int, plan_id: str,
-                 starting_lr: float = None, loss_fn: str = None, momentum: float = None,
-                 continue_training: bool = False):
-        super().__init__(model, model_dimensions, task, folds, plan_id, starting_lr, 
-                         loss_fn, momentum, continue_training)
-        self.optim = optim.Adam
+class YuccaManager_NoPatches(YuccaManager):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.patch_based_training = False
 ```
 
 # Inference
