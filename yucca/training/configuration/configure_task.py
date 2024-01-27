@@ -43,7 +43,7 @@ def get_task_config(
     patch_based_training: bool = True,
     experiment: str = "default",
     split_idx: int = 0,
-    split_data_method: Optional[int] = 'kfold',
+    split_data_method: Optional[int] = "kfold",
     split_data_param: Optional[float] = 5,
 ):
     assert model_dimensions is not None

@@ -47,7 +47,9 @@ def main():
     # Optionals that can be changed experimentally. For long term solutions these should be specified by a unique Manager.
     parser.add_argument("--disable_logging", help="disable logging.", action="store_true", default=False)
     parser.add_argument("--ds", help="Used to enable deep supervision", default=False, action="store_true")
-    parser.add_argument("--epochs", help="Used to specify the number of epochs for training. Default is 1000", type=int, default=1000)
+    parser.add_argument(
+        "--epochs", help="Used to specify the number of epochs for training. Default is 1000", type=int, default=1000
+    )
     parser.add_argument("--experiment", help="A name for the experiment being performed, with no spaces.", default="default")
     parser.add_argument("--loss", help="Should only be used to employ alternative Loss Function", default=None)
     parser.add_argument(
@@ -106,8 +108,8 @@ def main():
     split_idx = args.split_idx
     split_data_method = args.split_data_method
     split_data_param = args.split_data_param
-    train_batches_per_step=args.train_batches_per_step
-    val_batches_per_step=args.val_batches_per_step
+    train_batches_per_step = args.train_batches_per_step
+    val_batches_per_step = args.val_batches_per_step
 
     if patch_size is not None:
         if patch_size not in ["mean", "max", "min"]:
@@ -141,7 +143,7 @@ def main():
         loss=loss,
         learning_rate=lr,
         max_epochs=epochs,
-        max_vram = max_vram,
+        max_vram=max_vram,
         model_dimensions=dimensions,
         model_name=model_name,
         momentum=momentum,
