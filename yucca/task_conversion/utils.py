@@ -2,20 +2,30 @@ import numpy as np
 import os
 import shutil
 from yucca.paths import yucca_raw_data
-from typing import Union
+from typing import Literal, Union
 from batchgenerators.utilities.file_and_folder_operations import save_json, subfiles, join
 from tqdm import tqdm
 import nibabel as nib
 from pathlib import Path
 
 
-def combine_imagesTr_from_tasks(tasks: Union[list, tuple], target_dir):
+def combine_images_from_tasks(tasks: list, target_base: str, run_type: Literal["supervised", "unsupervised"]):
     assert len(tasks) > 0, "list of tasks empty"
     for task in tqdm(tasks):
-        source_dir = os.path.join(yucca_raw_data, task, "imagesTr")
-        assert os.path.isdir(source_dir)
-        for sTr in tqdm(os.listdir(source_dir), task):
-            shutil.copy2(os.path.join(source_dir, sTr), f"{target_dir}/{sTr}")
+        folders = ["imagesTr", "imagesTs", "labelsTr", "labelsTs"] if run_type == "supervised" else ["imagesTr"]
+        for folder in folders:
+            source = os.path.join(yucca_raw_data, task, folder)
+            target = os.path.join(target_base, folder)
+            print("Copying ", source, target)
+            copy_files_from_to(source, target)
+
+
+def copy_files_from_to(source_dir, target_dir):
+    assert os.path.isdir(source_dir)
+    os.makedirs(target_dir, exist_ok=True)
+
+    for file in tqdm(os.listdir(source_dir)):
+        shutil.copy2(os.path.join(source_dir, file), f"{target_dir}/{file}")
 
 
 def get_identifiers_from_splitted_files(folder: str, ext, tasks: list):
