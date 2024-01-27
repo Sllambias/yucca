@@ -2,7 +2,7 @@ import numpy as np
 import os
 import shutil
 from yucca.paths import yucca_raw_data
-from typing import Literal, Union
+from typing import Literal
 from batchgenerators.utilities.file_and_folder_operations import save_json, subfiles, join
 from tqdm import tqdm
 import nibabel as nib
