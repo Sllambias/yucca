@@ -1,5 +1,6 @@
 import lightning as pl
 import torchvision
+import torch
 from typing import Literal, Optional
 from torch.utils.data import DataLoader, Sampler
 from batchgenerators.utilities.file_and_folder_operations import join
@@ -123,7 +124,7 @@ class YuccaDataModule(pl.LightningDataModule):
             self.train_dataset,
             num_workers=self.num_workers,
             batch_size=self.batch_size,
-            persistent_workers=bool(self.num_workers),
+            pin_memory=torch.cuda.is_available(),
             sampler=sampler,
             shuffle=sampler is None,
         )
@@ -134,7 +135,7 @@ class YuccaDataModule(pl.LightningDataModule):
             self.val_dataset,
             num_workers=self.val_num_workers,
             batch_size=self.batch_size,
-            persistent_workers=bool(self.val_num_workers),
+            pin_memory=torch.cuda.is_available(),
             sampler=sampler,
         )
 

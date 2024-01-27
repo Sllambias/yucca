@@ -1,5 +1,6 @@
 import argparse
 import yucca
+import torch
 from yucca.utils.task_ids import maybe_get_task_from_task_id
 from yucca.utils.files_and_folders import recursive_find_python_class
 from batchgenerators.utilities.file_and_folder_operations import join
@@ -173,7 +174,7 @@ def main():
         model_dimensions=dimensions,
         model_name=model_name,
         momentum=momentum,
-        num_workers=8,
+        num_workers=max(0, int(torch.get_num_threads())),
         planner=planner,
         precision=args.precision,
         profile=profile,
