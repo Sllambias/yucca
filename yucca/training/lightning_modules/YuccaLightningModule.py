@@ -58,7 +58,13 @@ class YuccaLightningModule(L.LightningModule):
         self.lr_scheduler = lr_scheduler
 
         # Evaluation and logging
-        self.step_logging = step_logging
+        if step_logging is True:  # Blame PyTorch lightning for this war crime
+            self.step_logging = None
+            self.epoch_logging = None
+        else:
+            self.step_logging = False
+            self.epoch_logging = True
+
         self.progress_bar = progress_bar
         if self.task_type in ["classification", "segmentation"]:
             self.train_metrics = MetricCollection(
@@ -138,7 +144,7 @@ class YuccaLightningModule(L.LightningModule):
         self.log_dict(
             {"train/loss": loss} | metrics,
             on_step=self.step_logging,
-            on_epoch=not self.step_logging,
+            on_epoch=self.epoch_logging,
             prog_bar=self.progress_bar,
             logger=True,
         )
@@ -152,7 +158,7 @@ class YuccaLightningModule(L.LightningModule):
         self.log_dict(
             {"val/loss": loss} | metrics,
             on_step=self.step_logging,
-            on_epoch=not self.step_logging,
+            on_epoch=self.epoch_logging,
             prog_bar=self.progress_bar,
             logger=True,
         )
