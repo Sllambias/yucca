@@ -33,6 +33,7 @@ class YuccaLightningModule(L.LightningModule):
         sliding_window_overlap: float = 0.5,
         step_logging: bool = False,
         test_time_augmentation: bool = False,
+        progress_bar: bool = False,
     ):
         super().__init__()
         # Extract parameters from the configurator
@@ -58,6 +59,7 @@ class YuccaLightningModule(L.LightningModule):
 
         # Evaluation and logging
         self.step_logging = step_logging
+        self.progress_bar = progress_bar
         if self.task_type in ["classification", "segmentation"]:
             self.train_metrics = MetricCollection(
                 {"train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
