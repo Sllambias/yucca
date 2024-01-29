@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import os
 from typing import Union, Literal, Optional
+import logging
 from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle
 from yucca.image_processing.transforms.cropping_and_padding import CropPad
 from yucca.image_processing.transforms.formatting import (
@@ -42,7 +43,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         if len(self.all_cases) < 50:
             self._keep_in_ram = True
         else:
-            print("Large dataset detected. Will not keep cases in RAM during training.")
+            logging.debug("Large dataset detected. Will not keep cases in RAM during training.")
             self._keep_in_ram = False
         return self._keep_in_ram
 

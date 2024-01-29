@@ -86,6 +86,13 @@ def main():
         default=None,
     )
 
+    parser.add_argument(
+        "--batch_size",
+        "-bs",
+        type=int,
+        default=None,
+        help="Batch size to be used for training. Overrides the batch size specified in the plan.",
+    )
     # Split configs
     parser.add_argument(
         "--split_data_ratio",
@@ -115,6 +122,7 @@ def main():
     task = maybe_get_task_from_task_id(args.task)
     model_name = args.m
     dimensions = args.d
+    batch_size = args.batch_size
     deep_supervision = args.ds
     epochs = args.epochs
     manager_name = args.man
@@ -188,6 +196,7 @@ def main():
         profile=profile,
         step_logging=False,
         task=task,
+        batch_size=batch_size,
         experiment=experiment,
         train_batches_per_step=args.train_batches_per_step,
         val_batches_per_step=args.val_batches_per_step,

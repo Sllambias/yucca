@@ -1,4 +1,7 @@
 import numpy as np
+import numpy.typing as npt
+from typing import Literal
+from sklearn.metrics import roc_auc_score
 
 
 def dice(tp, fp, tn, fn):  # noqa: U100
@@ -69,6 +72,30 @@ def f1(tp, fp, tn, fn):  # noqa: U100
             return 0
         else:
             return np.nan
+
+
+def accuracy(tp, fp, tn, fn):
+    try:
+        return (tp + tn) / (tp + fp + tn + fn)
+    except (ZeroDivisionError, RuntimeWarning):
+        if tp + fn > 0:
+            return 0
+        else:
+            return np.nan
+
+
+def auroc(y_true: npt.ArrayLike, y_score: npt.ArrayLike, multi_class_mode: Literal["ovr", "ovo"] = "ovr"):
+    """
+    Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC/AUROC) from prediction scores for each class.
+
+    :param y_true: ground truth labels, shape (n_samples,n_classes) for multiclass or (n_samples,) for binary.
+                    Both probabilities and labels are accepted.
+    :param y_score: predicted scores, shape (n_samples,n_classes)
+    :param multi_class_mode: In multiclass setting, calculate ROC AUC one-vs-one (ovo), or one-vs-rest (ovr). One of {'ovr', 'ovo'}, default='ovr'
+
+    """
+    assert len(y_true.shape) == 1 or y_true.shape == y_score.shape, "y_true must be 1D or 2D"
+    return roc_auc_score(y_true, y_score, average=None, multi_class=multi_class_mode)
 
 
 def TP(tp, fp, tn, fn):  # noqa: U100

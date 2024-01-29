@@ -140,7 +140,7 @@ def get_callbacks(
 
     if store_best_ckpt:
         best_ckpt = ModelCheckpoint(
-            monitor="val_loss", mode="min", save_top_k=1, filename="best", enable_version_counter=False
+            monitor="val/loss", mode="min", save_top_k=1, filename="best", enable_version_counter=False
         )
         callbacks.append(best_ckpt)
 
