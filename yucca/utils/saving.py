@@ -35,7 +35,7 @@ def save_png_from_numpy(pred, outpath):
 
 
 def save_txt_from_numpy(pred, outpath):
-    np.savetxt(outpath, np.atleast_1d(pred), fmt="%i", delimiter=",")
+    np.savetxt(outpath + ".txt", np.atleast_1d(pred), fmt="%i", delimiter=",")
     del pred
 
 

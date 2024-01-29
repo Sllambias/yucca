@@ -5,7 +5,7 @@ import wandb
 import copy
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
-from torchmetrics.classification import Dice
+from torchmetrics.classification import Dice, Accuracy, AUROC
 from torchmetrics.regression import MeanAbsoluteError
 from yucca.training.loss_and_optim.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.utils.files_and_folders import recursive_find_python_class
@@ -66,7 +66,24 @@ class YuccaLightningModule(L.LightningModule):
             self.epoch_logging = True
 
         self.progress_bar = progress_bar
-        if self.task_type in ["classification", "segmentation"]:
+
+        if self.task_type == "classification":
+            tmetrics_task = "multiclass" if self.num_classes > 2 else "binary"
+            # can we get per-class?
+            self.train_metrics = MetricCollection(
+                {
+                    "train_acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
+                    "train_roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
+                }
+            )
+            self.val_metrics = MetricCollection(
+                {
+                    "val_acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
+                    "val_roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
+                }
+            )
+
+        if self.task_type == "segmentation":
             self.train_metrics = MetricCollection(
                 {"train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
             )
