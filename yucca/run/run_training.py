@@ -104,6 +104,13 @@ def main():
     parser.add_argument("--train_batches_per_step", type=int, default=250)
     parser.add_argument("--val_batches_per_step", type=int, default=50)
 
+    parser.add_argument(
+        "--num_workers",
+        type=int,
+        help="Num workers used in the DataLoaders. By default this will be inferred from the number of available CPUs-1",
+        default=None,
+    )
+
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
@@ -125,6 +132,8 @@ def main():
     split_idx = args.split_idx
     split_data_ratio = args.split_data_ratio
     split_data_kfold = args.split_data_kfold
+
+    num_workers = args.num_workers
 
     if split_data_kfold is None and split_data_ratio is None:
         split_data_kfold = 5
@@ -174,7 +183,7 @@ def main():
         model_dimensions=dimensions,
         model_name=model_name,
         momentum=momentum,
-        num_workers=max(0, int(torch.get_num_threads())),
+        num_workers=num_workers,
         planner=planner,
         precision=args.precision,
         profile=profile,

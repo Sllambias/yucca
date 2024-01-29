@@ -1,6 +1,6 @@
 import lightning as L
 import torch
-from typing import Literal, Union
+from typing import Literal, Union, Optional
 from yucca.training.augmentation.YuccaAugmentationComposer import YuccaAugmentationComposer
 from yucca.training.configuration.split_data import get_split_config, SplitConfig
 from yucca.training.configuration.configure_task import get_task_config
@@ -56,7 +56,7 @@ class YuccaManager:
         model_dimensions: str = "3D",
         model_name: str = "TinyUNet",
         momentum: float = 0.9,
-        num_workers: int = 8,
+        num_workers: Optional[int] = None,
         patch_based_training: bool = True,
         patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
         augmentation_params: dict = {},

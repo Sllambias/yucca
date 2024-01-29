@@ -92,6 +92,13 @@ def main():
     )
     parser.add_argument("-f", "--split_idx", type=int, help="idx of splits to use for training.", default=0)
 
+    parser.add_argument(
+        "--num_workers",
+        type=int,
+        help="Num workers used in the DataLoaders. By default this will be inferred from the number of available CPUs-1",
+        default=None,
+    )
+
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
@@ -109,6 +116,7 @@ def main():
     planner = args.pl
     profile = args.profile
 
+    num_workers = args.num_workers
     split_idx = args.split_idx
     split_data_ratio = args.split_data_ratio
     split_data_kfold = args.split_data_kfold
@@ -155,7 +163,7 @@ def main():
         model_dimensions=dimensions,
         model_name=model_name,
         momentum=momentum,
-        num_workers=8,
+        num_workers=num_workers,
         patch_size=patch_size,
         planner=planner,
         precision=args.precision,
