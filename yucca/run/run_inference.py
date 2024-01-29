@@ -126,14 +126,6 @@ def main():
         help="Save softmax outputs. Required for softmax fusion.",
     )
     parser.add_argument(
-        "--batch_size",
-        "-bs",
-        default=16,
-        type=int,
-        required=False,
-        help="Batch size for inference. Defaults to 16.",
-    )
-    parser.add_argument(
         "--task_type",
         default="segmentation",
         type=str,
@@ -156,7 +148,6 @@ def main():
     profile = args.profile
     split_idx = int(args.fold)
     version = args.version
-    batch_size = args.batch_size
     task_type = args.task_type
 
     # Optionals (occasionally changed)
@@ -168,6 +159,8 @@ def main():
     save_softmax = args.save_softmax
     use_wandb = not args.no_wandb
 
+    batch_size = 1  # batch size is fixed to 1 for inference, as write_predictions is implemented on_batch_end
+    
     path_to_versions = join(
         yucca_models, source_task, model + "__" + dimensions, manager_name + "__" + planner, experiment, f"fold_{split_idx}"
     )
