@@ -160,7 +160,7 @@ def main():
     use_wandb = not args.no_wandb
 
     batch_size = 1  # batch size is fixed to 1 for inference, as write_predictions is implemented on_batch_end
-    
+
     path_to_versions = join(
         yucca_models, source_task, model + "__" + dimensions, manager_name + "__" + planner, experiment, f"fold_{split_idx}"
     )
