@@ -33,6 +33,7 @@ class YuccaLightningModule(L.LightningModule):
         sliding_window_overlap: float = 0.5,
         step_logging: bool = False,
         test_time_augmentation: bool = False,
+        progress_bar: bool = False,
     ):
         super().__init__()
         # Extract parameters from the configurator
@@ -58,18 +59,19 @@ class YuccaLightningModule(L.LightningModule):
 
         # Evaluation and logging
         self.step_logging = step_logging
+        self.progress_bar = progress_bar
         if self.task_type in ["classification", "segmentation"]:
             self.train_metrics = MetricCollection(
-                {"train_dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
+                {"train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
             )
             self.val_metrics = MetricCollection(
-                {"val_dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
+                {"val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
             )
             _default_loss = "DiceCE"
 
         if self.task_type == "unsupervised":
-            self.train_metrics = MetricCollection({"train_MAE": MeanAbsoluteError()})
-            self.val_metrics = MetricCollection({"train_MAE": MeanAbsoluteError()})
+            self.train_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
+            self.val_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
             _default_loss = "MSE"
 
         if self.loss_fn is None:
@@ -133,7 +135,13 @@ class YuccaLightningModule(L.LightningModule):
             target = target[0]
 
         metrics = self.train_metrics(output, target)
-        self.log_dict({"train_loss": loss} | metrics, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
+        self.log_dict(
+            {"train/loss": loss} | metrics,
+            on_step=self.step_logging,
+            on_epoch=not self.step_logging,
+            prog_bar=self.progress_bar,
+            logger=True,
+        )
         return loss
 
     def validation_step(self, batch, _batch_idx):
@@ -141,7 +149,13 @@ class YuccaLightningModule(L.LightningModule):
         output = self(inputs)
         loss = self.loss_fn_val(output, target)
         metrics = self.val_metrics(output, target)
-        self.log_dict({"val_loss": loss} | metrics, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
+        self.log_dict(
+            {"val/loss": loss} | metrics,
+            on_step=self.step_logging,
+            on_epoch=not self.step_logging,
+            prog_bar=self.progress_bar,
+            logger=True,
+        )
 
     def on_predict_start(self):
         preprocessor_class = recursive_find_python_class(
