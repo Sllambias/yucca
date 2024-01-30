@@ -77,28 +77,28 @@ wandb: Paste an API key from your profile and hit enter, or press ctrl+c to quit
 
 # Usage
 
-The Yucca pipeline is comprised of the 4 processes illustrated in the [diagram](#yucca). In the first step the user is expected to prepare the data for Yucca. In the remaining three steps Yucca will take over with regards to file management.
-  1. The Task Conversion step requires that the user _converts_ their arbitrarly structured data to the file and folder structure required by Yucca. Hereafter, Yucca handles the data. Task Conversion involves moving and renaming the data along with creating a metadata file.
-  2. The Preprocessing step takes the Task Converted data and preprocesses it and then subsequently saves it in its preprocessed state in the format expected by the Yucca training process.
-  3. The Training step takes the preprocessed data and trains a model and then subsequently saves it along with its checkpoints and metadata.
-  4. The Inference step takes the trained model and applies it to a task converted (but not preprocessed) test set. During inference the unseen samples are preprocessed with the same preprocessor used in the preprocessing step. Predictions are then saved. When inference is concluded the predictions are evaluated against the ground truth and a .json file containing the results are saved next to the predictions.
+The Yucca pipeline comprises the 4 processes illustrated in the [diagram](#yucca). In the first step, the user is expected to prepare the data for Yucca. In the remaining three steps, Yucca will take over regarding file management.
+  1. **The Task Conversion** step requires that the user _converts_ their arbitrarily structured data to the file and folder structure Yucca requires. From now on, Yucca will handle the data. Task Conversion involves moving and renaming the data along with creating a metadata file.
+  2. **The Preprocessing step** takes the Task Converted data and preprocesses it and then subsequently saves it in its preprocessed state in the format expected by the Yucca training process.
+  3. **The Training step** takes the preprocessed data and trains a model, and then subsequently saves it along with its checkpoints and metadata.
+  4. **The Inference step** takes the trained model and applies it to a task-converted (but not preprocessed) test set. During inference, the unseen samples are preprocessed with the same preprocessor used in the preprocessing step. Predictions are then saved. When inference is concluded, the predictions are evaluated against the ground truth, and a .json file containing the results is saved next to the predictions.
 
 # Environment Variables
 
-Initially, the environment variables used in Yucca must be defined. To set these see: [Environment Variables](yucca/documentation/tutorials/environment_variables.md). 
+Initially, the environment variables used in Yucca must be defined to avoid hardcoded paths. To set these, see [Environment Variables](yucca/documentation/tutorials/environment_variables.md). 
 
 # Task Conversion
 
-Prior to preprocessing and training all datasets must be converted to Yucca-compliant tasks. This is done to ensure reproducibility and eliminate data leakage. For a tutorial see the [Task Conversion Guide](yucca/documentation/tutorials/task_conversion.md).
+Before preprocessing and training, all datasets must be converted to Yucca-compliant tasks. This is done to ensure reproducibility and eliminate data leakage. For a tutorial see the [Task Conversion Guide](yucca/documentation/tutorials/task_conversion.md).
 
 # Preprocessing
 
 Preprocessing is carried out using the `yucca_preprocess` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#preprocessing)
 
-Basic Yucca preprocessing relies on three CLI flags. 
+Basic Yucca preprocessing relies on three CLI flags: 
   1. **-t**: The target task-converted raw data to be preprocessed.
-  2. **-pl**: The Planner class. The Planner is responsible for determining *what* we do in preprocessing and *how* it is done. This includes setting the normalization, resizing, resampling and transposition operations and any values associated with them. The planner class defaults to the `YuccaPlanner` but it can also be any custom planner found or created in the [Planner directory](yucca/planning) and its subdirectories.
-  3. **-pr**: The Preprocessor class. The Preprocessor is a work horse, that receives an instruction manual from the Planner which it carries out. The Preprocessor can be one of `YuccaPreprocessor` (default), `ClassificationPreprocessor` and `UnsupervisedPreprocessor`. The only aspect in which they differ is how they expect the ground truth to look. The `YuccaPreprocessor` expects to find images, the `ClassificationPreprocessor` expects to find .txt files with image-level classes and the `UnsupervisedPreprocessor` expects to not find any ground truth. 
+  2. **-pl**: The Planner class, which is responsible for determining *what* we do in preprocessing and *how* it is done. This includes setting the normalization, resizing, resampling and transposition operations and any values associated with them. The planner class defaults to the `YuccaPlanner`, but it can also be any custom planner found or created in the [Planner directory](yucca/planning) and its subdirectories.
+  3. **-pr**: The Preprocessor class. The Preprocessor is a workhorse that receives an instruction manual from the Planner, which it carries out. The Preprocessor can be one of `YuccaPreprocessor` (default), `ClassificationPreprocessor` and `UnsupervisedPreprocessor`. The only aspect in which they differ is how they expect the ground truth to look. The `YuccaPreprocessor` expects to find images, the `ClassificationPreprocessor` expects to find .txt files with image-level classes and the `UnsupervisedPreprocessor` expects not to find any ground truth. 
 
 An example of preprocessing a task called `Task001_Brains` with the default planner and the `ClassificationPreprocessor`:
 ```
@@ -107,14 +107,14 @@ An example of preprocessing a task called `Task001_Brains` with the default plan
 
 # Training
 
-Training is carried out using the `yucca_train` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#training). Prior to training any models a preprocessed dataset must be prepared using the `yucca_preprocessing` command.
+Training is carried out using the `yucca_train` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#training). Before training any models, a preprocessed dataset must be prepared using the `yucca_preprocessing` command.
 
-Basic Yucca training relies on five CLI flags.
+Basic Yucca training relies on five CLI flags:
   1. **-t**: The target preprocessed data on which the model will be trained.
   2. **-d**: The model dimensions. This can be either 2D or 3D (default).
   3. **-m**: The model architecture. This includes any model implemented in the [Model directory](yucca/network_architectures/networks). Including, but not limited to, `U-Net`, `UNetR`, `MultiResUNet` and `ResNet50`.
   4. **-man**: The Manager to use. This defaults to the `YuccaManager`.
-  5. **-pl**: The Planner used to preprocess the training data. This defaults to the `YuccaPlanner`.
+  5. **-pl**: The Planner is used to preprocess the training data. This defaults to the `YuccaPlanner`.
 
 An example of training a `MultiResUNet` with the default Manager on a task called `Task001_Brains` that has been preprocessed using the default `YuccaPlanner`:
  using a 2D `MultiResUnet`:
@@ -125,7 +125,7 @@ An example of training a `MultiResUNet` with the default Manager on a task calle
 
 # Inference
 
-Inference is carried out using the `yucca_inference` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#inference). Prior to inference the model must be trained using the `yucca_train` command and the target dataset must be task-converted.
+Inference is carried out using the `yucca_inference` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#inference). Prior to inference, the model must be trained using the `yucca_train` command, and the target dataset must be task-converted.
 
 Basic Yucca inference relies on six CLI flags.
   1. **-t**: The target task-converted raw data on which to run inference.
@@ -133,7 +133,7 @@ Basic Yucca inference relies on six CLI flags.
   3. **-d**: The dimensions of the trained model.
   4. **-m**: The architecture of the trained model.
   5. **-man**: The Manager to use. This defaults to the `YuccaManager`.
-  6. **-pl**: The Planner used to preprocess the training data.
+  6. **-pl**: The Planner is used to preprocess the training data.
 
 An example of running inference on the test set of a task called `Task001_Brains`, using a 3D `MultiResUnet` trained on the train set of the same task:
 ```
@@ -146,7 +146,7 @@ An example of running inference on the test set of a task called `Task002_Lungs`
 
 # Ensembles
 
-Ensembling models is carried out using the `yucca_preprocess`, `yucca_train` and `yucca_inference` commands. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#ensembles). A common application of model ensembles is to train 2D models on each of the three axes of 3D data (either denoted as the X-, Y- and Z-axis or, in medical imaging, the axial, sagittal and coronal views) and then fuse their predictions in inference. 
+Ensembling models uses the `yucca_preprocess`, `yucca_train` and `yucca_inference` commands. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#ensembles). A common application of model ensembles is to train 2D models on each of the three axes of 3D data (either denoted as the X-, Y- and Z-axis or, in medical imaging, the axial, sagittal and coronal views) and then fuse their predictions in inference. 
 
 To train 3 models on the three axes of a 3D dataset called `Task001_Brains` prepare three preprocessed versions of the dataset using the three Planners `YuccaPlannerX`, `YuccaPlannerY` and `YuccaPlannerZ`:
 ```console
