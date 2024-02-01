@@ -73,6 +73,13 @@ def main():
     )
     parser.add_argument("--precision", type=str, default="bf16-mixed")
     parser.add_argument("--profile", help="Enable profiling.", action="store_true", default=False)
+    parser.add_argument(
+        "--batch_size",
+        "-bs",
+        type=int,
+        default=None,
+        help="Batch size to be used for training. Overrides the batch size specified in the plan.",
+    )
     parser.add_argument("--split_idx", type=int, help="idx of splits to use for training.", default=0)
     parser.add_argument(
         "--split_data_method", help="Specify splitting method. Either kfold, simple_train_val_split", default="kfold"
@@ -85,6 +92,13 @@ def main():
     parser.add_argument("--train_batches_per_step", type=int, default=250)
     parser.add_argument("--val_batches_per_step", type=int, default=50)
 
+    parser.add_argument(
+        "--num_workers",
+        type=int,
+        help="Num workers used in the DataLoaders. By default this will be inferred from the number of available CPUs-1",
+        default=None,
+    )
+
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
@@ -94,6 +108,7 @@ def main():
     planner = args.pl
 
     log = not args.disable_logging
+    batch_size = args.batch_size
     deep_supervision = args.ds
     epochs = args.epochs
     experiment = args.experiment
@@ -110,6 +125,17 @@ def main():
     split_data_param = args.split_data_param
     train_batches_per_step = args.train_batches_per_step
     val_batches_per_step = args.val_batches_per_step
+    split_data_ratio = args.split_data_ratio
+    split_data_kfold = args.split_data_kfold
+
+    num_workers = args.num_workers
+
+    if split_data_kfold is None and split_data_ratio is None:
+        split_data_kfold = 5
+
+    assert (split_data_kfold is not None and split_data_ratio is None) or (
+        split_data_kfold is None and split_data_ratio is not None
+    ), "It is not allowed to provide both `split_data_ratio` and `split_data_kfold`."
 
     if patch_size is not None:
         if patch_size not in ["mean", "max", "min"]:
@@ -147,7 +173,7 @@ def main():
         model_dimensions=dimensions,
         model_name=model_name,
         momentum=momentum,
-        num_workers=8,
+        num_workers=num_workers,
         planner=planner,
         precision=precision,
         profile=profile,
@@ -156,6 +182,7 @@ def main():
         split_data_param=split_data_param,
         step_logging=False,
         task=task,
+        batch_size=batch_size,
         experiment=experiment,
         train_batches_per_step=train_batches_per_step,
         val_batches_per_step=val_batches_per_step,

@@ -86,6 +86,13 @@ def main():
     parser.add_argument("--train_batches_per_step", type=int, default=250)
     parser.add_argument("--val_batches_per_step", type=int, default=50)
 
+    parser.add_argument(
+        "--num_workers",
+        type=int,
+        help="Num workers used in the DataLoaders. By default this will be inferred from the number of available CPUs-1",
+        default=None,
+    )
+
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
@@ -107,6 +114,8 @@ def main():
     patch_size = args.patch_size
     precision = args.precision
     profile = args.profile
+
+    num_workers = args.num_workers
     split_idx = args.split_idx
     split_data_method = args.split_data_method
     split_data_param = args.split_data_param
@@ -138,7 +147,7 @@ def main():
         model_dimensions=dimensions,
         model_name=model_name,
         momentum=momentum,
-        num_workers=8,
+        num_workers=num_workers,
         patch_size=patch_size,
         planner=planner,
         precision=precision,

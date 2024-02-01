@@ -1,6 +1,7 @@
 import lightning as pl
 import torchvision
 import logging
+import torch
 from typing import Literal, Optional
 from torch.utils.data import DataLoader, Sampler
 from batchgenerators.utilities.file_and_folder_operations import join
@@ -9,6 +10,7 @@ from yucca.training.configuration.split_data import SplitConfig
 from yucca.training.configuration.configure_plans import PlanConfig
 from yucca.training.data_loading.YuccaDataset import YuccaTestDataset, YuccaTrainDataset
 from yucca.training.data_loading.samplers import InfiniteRandomSampler
+import logging
 
 
 class YuccaDataModule(pl.LightningDataModule):
@@ -53,7 +55,7 @@ class YuccaDataModule(pl.LightningDataModule):
         split_idx: int,
         composed_train_transforms: torchvision.transforms.Compose = None,
         composed_val_transforms: torchvision.transforms.Compose = None,
-        num_workers: int = 8,
+        num_workers: Optional[int] = None,
         pred_data_dir: str = None,
         pre_aug_patch_size: list | tuple = None,
         train_sampler: Optional[Sampler] = InfiniteRandomSampler,
@@ -80,10 +82,12 @@ class YuccaDataModule(pl.LightningDataModule):
         self.pred_data_dir = pred_data_dir
 
         # Set default values
-        self.num_workers = num_workers
-        self.val_num_workers = num_workers // 2 if num_workers > 0 else num_workers
+
+        self.num_workers = max(0, int(torch.get_num_threads() - 1)) if num_workers is None else num_workers
+        self.val_num_workers = self.num_workers // 2 if self.num_workers > 0 else self.num_workers
         self.train_sampler = train_sampler
         self.val_sampler = val_sampler
+        logging.info(f"Using {self.num_workers} workers")
 
     def setup(self, stage: Literal["fit", "test", "predict"]):
         logging.info(f"Setting up data for stage: {stage}")
@@ -127,7 +131,7 @@ class YuccaDataModule(pl.LightningDataModule):
             self.train_dataset,
             num_workers=self.num_workers,
             batch_size=self.batch_size,
-            persistent_workers=bool(self.num_workers),
+            pin_memory=torch.cuda.is_available(),
             sampler=sampler,
             shuffle=sampler is None,
         )
@@ -138,7 +142,7 @@ class YuccaDataModule(pl.LightningDataModule):
             self.val_dataset,
             num_workers=self.val_num_workers,
             batch_size=self.batch_size,
-            persistent_workers=bool(self.val_num_workers),
+            pin_memory=torch.cuda.is_available(),
             sampler=sampler,
         )
 
