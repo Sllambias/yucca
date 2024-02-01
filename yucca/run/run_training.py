@@ -45,6 +45,12 @@ def main():
     )
 
     # Optionals that can be changed experimentally. For long term solutions these should be specified by a unique Manager.
+    parser.add_argument(
+        "--batch_size",
+        type=int,
+        default=None,
+        help="Batch size to be used for training. Overrides the batch size specified in the plan.",
+    )
     parser.add_argument("--disable_logging", help="disable logging.", action="store_true", default=False)
     parser.add_argument("--ds", help="Used to enable deep supervision", default=False, action="store_true")
     parser.add_argument(
@@ -66,6 +72,12 @@ def main():
         default=False,
     )
     parser.add_argument(
+        "--num_workers",
+        type=int,
+        help="Num workers used in the DataLoaders. By default this will be inferred from the number of available CPUs-1",
+        default=None,
+    )
+    parser.add_argument(
         "--patch_size",
         type=str,
         help="Use your own patch_size. Example: if 32 is provided and the model is 3D we will use patch size (32, 32, 32). Can also be min, max or mean.",
@@ -73,13 +85,6 @@ def main():
     )
     parser.add_argument("--precision", type=str, default="bf16-mixed")
     parser.add_argument("--profile", help="Enable profiling.", action="store_true", default=False)
-    parser.add_argument(
-        "--batch_size",
-        "-bs",
-        type=int,
-        default=None,
-        help="Batch size to be used for training. Overrides the batch size specified in the plan.",
-    )
     parser.add_argument("--split_idx", type=int, help="idx of splits to use for training.", default=0)
     parser.add_argument(
         "--split_data_method", help="Specify splitting method. Either kfold, simple_train_val_split", default="kfold"
@@ -92,21 +97,18 @@ def main():
     parser.add_argument("--train_batches_per_step", type=int, default=250)
     parser.add_argument("--val_batches_per_step", type=int, default=50)
 
-    parser.add_argument(
-        "--num_workers",
-        type=int,
-        help="Num workers used in the DataLoaders. By default this will be inferred from the number of available CPUs-1",
-        default=None,
-    )
-
     args = parser.parse_args()
 
+    # Required
     task = maybe_get_task_from_task_id(args.task)
+
+    # Optionals (frequently changed)
     dimensions = args.d
     model_name = args.m
     manager_name = args.man
     planner = args.pl
 
+    # Optionals (occasionally changed)
     log = not args.disable_logging
     batch_size = args.batch_size
     deep_supervision = args.ds
@@ -117,6 +119,7 @@ def main():
     max_vram = args.max_vram
     momentum = args.mom
     new_version = args.new_version
+    num_workers = args.num_workers
     patch_size = args.patch_size
     precision = args.precision
     profile = args.profile
@@ -127,8 +130,6 @@ def main():
     val_batches_per_step = args.val_batches_per_step
     split_data_ratio = args.split_data_ratio
     split_data_kfold = args.split_data_kfold
-
-    num_workers = args.num_workers
 
     if split_data_kfold is None and split_data_ratio is None:
         split_data_kfold = 5

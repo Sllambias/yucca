@@ -67,6 +67,12 @@ def main():
         default=False,
     )
     parser.add_argument(
+        "--num_workers",
+        type=int,
+        help="Num workers used in the DataLoaders. By default this will be inferred from the number of available CPUs-1",
+        default=None,
+    )
+    parser.add_argument(
         "--patch_size",
         type=str,
         help="Use your own patch_size. Example: if 32 is provided and the model is 3D we will use patch size (32, 32, 32). Can also be min, max or mean.",
@@ -86,13 +92,6 @@ def main():
     parser.add_argument("--train_batches_per_step", type=int, default=250)
     parser.add_argument("--val_batches_per_step", type=int, default=50)
 
-    parser.add_argument(
-        "--num_workers",
-        type=int,
-        help="Num workers used in the DataLoaders. By default this will be inferred from the number of available CPUs-1",
-        default=None,
-    )
-
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
@@ -111,11 +110,10 @@ def main():
     max_vram = args.max_vram
     momentum = args.mom
     new_version = args.new_version
+    num_workers = args.num_workers
     patch_size = args.patch_size
     precision = args.precision
     profile = args.profile
-
-    num_workers = args.num_workers
     split_idx = args.split_idx
     split_data_method = args.split_data_method
     split_data_param = args.split_data_param
