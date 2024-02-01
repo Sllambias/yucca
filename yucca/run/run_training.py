@@ -128,15 +128,6 @@ def main():
     split_data_param = args.split_data_param
     train_batches_per_step = args.train_batches_per_step
     val_batches_per_step = args.val_batches_per_step
-    split_data_ratio = args.split_data_ratio
-    split_data_kfold = args.split_data_kfold
-
-    if split_data_kfold is None and split_data_ratio is None:
-        split_data_kfold = 5
-
-    assert (split_data_kfold is not None and split_data_ratio is None) or (
-        split_data_kfold is None and split_data_ratio is not None
-    ), "It is not allowed to provide both `split_data_ratio` and `split_data_kfold`."
 
     if patch_size is not None:
         if patch_size not in ["mean", "max", "min"]:
