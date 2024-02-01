@@ -156,7 +156,12 @@ def main():
     use_wandb = not args.no_wandb
 
     path_to_versions = join(
-        yucca_models, source_task, model + "__" + dimensions, manager_name + "__" + planner, experiment, f"fold_{split_idx}"
+        yucca_models,
+        source_task,
+        model + "__" + dimensions,
+        manager_name + "__" + planner,
+        experiment,
+        f"{split_data_method}_{split_data_param}_fold_{split_idx}",
     )
     if version is None:
         versions = [int(i.split("_")[-1]) for i in subdirs(path_to_versions, join=False)]
@@ -168,7 +173,7 @@ def main():
         model + "__" + dimensions,
         manager_name + "__" + planner,
         experiment,
-        f"fold_{split_idx}",
+        f"{split_data_method}_{split_data_param}_fold_{split_idx}",
         f"version_{version}",
         "checkpoints",
         checkpoint + ".ckpt",
@@ -211,7 +216,7 @@ def main():
         source_task,
         model + "__" + dimensions,
         manager_name + "__" + planner,
-        f"fold_{split_idx}",
+        f"{split_data_method}_{split_data_param}_fold_{split_idx}",
         f"version_{version}",
         checkpoint,
     )
