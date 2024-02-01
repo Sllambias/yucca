@@ -25,9 +25,9 @@ End-to-end modular machine learning framework for classification, segmentation a
 
 # Guides
 
-- [Task Conversion](yucca/documentation/tutorials/task_conversion.md)
-- [Changing Parameters](yucca/documentation/tutorials/changing_parameters.md#model--training)
-- [Environment Variables](yucca/documentation/tutorials/environment_variables.md)
+- [Task Conversion](yucca/documentation/guides/task_conversion.md)
+- [Changing Parameters](yucca/documentation/guides/changing_parameters.md#model--training)
+- [Environment Variables](yucca/documentation/guides/environment_variables.md)
 
 # Installation
 
@@ -85,15 +85,15 @@ The Yucca pipeline comprises the 4 processes illustrated in the [diagram](#yucca
 
 # Environment Variables
 
-Initially, the environment variables used in Yucca must be defined. To set these, see the [Environment Variables](yucca/documentation/tutorials/environment_variables.md) guide. 
+Initially, the environment variables used in Yucca must be defined. To set these, see the [Environment Variables](yucca/documentation/guides/environment_variables.md) guide. 
 
 # Task Conversion
 
-Before preprocessing and training, all datasets must be converted to Yucca-compliant tasks. This is done to ensure reproducibility and eliminate data leakage. For a tutorial see the [Task Conversion Guide](yucca/documentation/tutorials/task_conversion.md).
+Before preprocessing and training, all datasets must be converted to Yucca-compliant tasks. This is done to ensure reproducibility and eliminate data leakage. For a tutorial see the [Task Conversion Guide](yucca/documentation/guides/task_conversion.md).
 
 # Preprocessing
 
-Preprocessing is carried out using the `yucca_preprocess` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#preprocessing)
+Preprocessing is carried out using the `yucca_preprocess` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/guides/run_scripts_advanced.md#preprocessing)
 
 Basic Yucca preprocessing relies on three CLI flags:
   1. **-t**: The target task-converted raw data to be preprocessed.
@@ -107,7 +107,7 @@ An example of preprocessing a task called `Task001_Brains` with the default plan
 
 # Training
 
-Training is carried out using the `yucca_train` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#training). Before training any models, a preprocessed dataset must be prepared using the `yucca_preprocessing` command.
+Training is carried out using the `yucca_train` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/guides/run_scripts_advanced.md#training). Before training any models, a preprocessed dataset must be prepared using the `yucca_preprocessing` command.
 
 Basic Yucca training relies on five CLI flags:
   1. **-t**: The target preprocessed data on which the model will be trained.
@@ -125,7 +125,7 @@ An example of training a `MultiResUNet` with the default Manager on a task calle
 
 # Inference
 
-Inference is carried out using the `yucca_inference` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#inference). Prior to inference, the model must be trained using the `yucca_train` command, and the target dataset must be task-converted.
+Inference is carried out using the `yucca_inference` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/guides/run_scripts_advanced.md#inference). Prior to inference, the model must be trained using the `yucca_train` command, and the target dataset must be task-converted.
 
 Basic Yucca inference relies on six CLI flags.
   1. **-t**: The target task-converted raw data on which to run inference.
@@ -146,7 +146,7 @@ An example of running inference on the test set of a task called `Task002_Lungs`
 
 # Ensembles
 
-To train an ensemble of models we use the `yucca_preprocess`, `yucca_train` and `yucca_inference` commands. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/tutorials/run_scripts_advanced.md#ensembles). A common application of model ensembles is to train 2D models on each of the three axes of 3D data (either denoted as the X-, Y- and Z-axis or, in medical imaging, the axial, sagittal and coronal views) and then fuse their predictions in inference. 
+To train an ensemble of models we use the `yucca_preprocess`, `yucca_train` and `yucca_inference` commands. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/guides/run_scripts_advanced.md#ensembles). A common application of model ensembles is to train 2D models on each of the three axes of 3D data (either denoted as the X-, Y- and Z-axis or, in medical imaging, the axial, sagittal and coronal views) and then fuse their predictions in inference. 
 
 To train 3 models on the three axes of a 3D dataset called `Task001_Brains` prepare three preprocessed versions of the dataset using the three Planners `YuccaPlannerX`, `YuccaPlannerY` and `YuccaPlannerZ`:
 ```console

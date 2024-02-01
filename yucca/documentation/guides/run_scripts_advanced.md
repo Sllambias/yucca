@@ -145,7 +145,7 @@ options:
   --split_data_param SPLIT_DATA_PARAM
                         Specify the parameter for the selected split method. For KFold use an int, for simple_split use a float between 0.0-1.0.
   --version VERSION     Version to use for inference. Defaults to the newest version.
-
+```
 
 **-s**, **-t**, **-d**, **-m**, **-man** and **-pl** are covered in the front page [ReadMe](/yucca/README.md#inference).
 

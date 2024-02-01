@@ -10,7 +10,6 @@ from yucca.training.configuration.split_data import SplitConfig
 from yucca.training.configuration.configure_plans import PlanConfig
 from yucca.training.data_loading.YuccaDataset import YuccaTestDataset, YuccaTrainDataset
 from yucca.training.data_loading.samplers import InfiniteRandomSampler
-import logging
 
 
 class YuccaDataModule(pl.LightningDataModule):
