@@ -23,24 +23,30 @@ End-to-end modular machine learning framework for classification, segmentation a
 - [Training](#training)
 - [Inference](#inference)
 - [Ensembles](#ensembles)
+- [Classification](#classification-models)
+- [Segmentation](#segmentation-models)
+- [Unsupervised](#unsupervised-models)
 
 # Guides
 
-- [Task Conversion](yucca/documentation/guides/task_conversion.md)
 - [Changing Parameters](yucca/documentation/guides/changing_parameters.md#model--training)
 - [Environment Variables](yucca/documentation/guides/environment_variables.md)
-
+- [FAQ](yucca/documentation/guides/FAQ.md)
+- [Run Scripts Advanced](yucca/documentation/guides/run_scripts_advanced.md)
+- [Task Conversion](yucca/documentation/guides/task_conversion.md)
+ 
 # Installation
 
 ## Install an editable version of the project with Cuda support using Conda
 
-Create a python=3.11 environment exclusively for Yucca to avoid conflicts with other projects. 
+Create a python=3.10 or python=3.11 environment exclusively for Yucca to avoid conflicts with other projects. 
 
 IMPORTANT: First install Pytorch for GPU following appropriate instructions from e.g. https://pytorch.org/get-started/locally/.
 Then navigate to Yucca and install the package from there.
 
-For an Ubuntu system with Cuda=>12.1:
+For an Ubuntu system with Cuda=>12.1 and python=3.11:
 ```
+> git clone https://github.com/Sllambias/yucca.git
 > conda create -n yuccaenv python=3.11
 > conda activate yuccaenv
 > conda install -c anaconda setuptools
@@ -65,6 +71,8 @@ this will install the code from github, not an eventual local clone.
 
 
 # Weights & Biases
+Weights & Biases is the main tool for experiment tracking in Yucca. It is extremely useful to understand how your models are behaving and often also why. Although it can be disabled, it is heavily encouraged to install and use it with Yucca.
+
 Navigate to https://wandb.ai/home and log in or sign up for Weights and Biases.
 Activate the appropriate environment, install Weights and Biases and log in by following the instructions (i.e. paste the key from https://wandb.ai/authorize into the terminal).
 ```console
