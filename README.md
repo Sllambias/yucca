@@ -17,6 +17,7 @@ End-to-end modular machine learning framework for classification, segmentation a
 # Table of Contents
 - [Guides](#guides)
 - [Installation](#installation)
+- [Introduction to Yucca](#introduction-to-yucca)
 - [Task Conversion](#task-conversion)
 - [Preprocessing](#preprocessing)
 - [Training](#training)
@@ -75,7 +76,7 @@ wandb: You can find your API key in your browser here: https://wandb.ai/authoriz
 wandb: Paste an API key from your profile and hit enter, or press ctrl+c to quit:
 ```
 
-# Usage
+# Introduction to Yucca
 
 The Yucca pipeline comprises the 4 processes illustrated in the [diagram](#yucca). In the first step, the user is expected to prepare the data for Yucca. In the remaining three steps, Yucca will take over regarding file management.
   1. **The Task Conversion** step requires that the user _converts_ their arbitrarily structured data to the file and folder structure Yucca requires. From now on, Yucca will handle the data. Task Conversion involves moving and renaming the data along with creating a metadata file.
@@ -83,15 +84,15 @@ The Yucca pipeline comprises the 4 processes illustrated in the [diagram](#yucca
   3. **The Training step** takes the preprocessed data and trains a model, and then subsequently saves it along with its checkpoints and metadata.
   4. **The Inference step** takes the trained model and applies it to a task-converted (but not preprocessed) test set. During inference, the unseen samples are preprocessed with the same preprocessor used in the preprocessing step. Predictions are then saved. When inference is concluded, the predictions are evaluated against the ground truth, and a .json file containing the results is saved next to the predictions.
 
-# Environment Variables
+## Environment Variables
 
 Initially, the environment variables used in Yucca must be defined. To set these, see the [Environment Variables](yucca/documentation/guides/environment_variables.md) guide. 
 
-# Task Conversion
+## Task Conversion
 
 Before preprocessing and training, all datasets must be converted to Yucca-compliant tasks. This is done to ensure reproducibility and eliminate data leakage. For a tutorial see the [Task Conversion Guide](yucca/documentation/guides/task_conversion.md).
 
-# Preprocessing
+## Preprocessing
 
 Preprocessing is carried out using the `yucca_preprocess` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/guides/run_scripts_advanced.md#preprocessing)
 
@@ -105,7 +106,7 @@ An example of preprocessing a task called `Task001_Brains` with the default plan
 > yucca_preprocess -t Task001_Brains -pr ClassificationPreprocessor
 ```
 
-# Training
+## Training
 
 Training is carried out using the `yucca_train` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/guides/run_scripts_advanced.md#training). Before training any models, a preprocessed dataset must be prepared using the `yucca_preprocessing` command.
 
@@ -122,8 +123,7 @@ An example of training a `MultiResUNet` with the default Manager on a task calle
 > yucca_train -t Task001_Brains -m MultiResUNet -d 2D
 ```
 
-
-# Inference
+## Inference
 
 Inference is carried out using the `yucca_inference` command. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/guides/run_scripts_advanced.md#inference). Prior to inference, the model must be trained using the `yucca_train` command, and the target dataset must be task-converted.
 
@@ -144,7 +144,7 @@ An example of running inference on the test set of a task called `Task002_Lungs`
 > yucca_inference -t Task002_NotBrains -s Task001_Brains -d 2D -m UNet
 ```
 
-# Ensembles
+## Ensembles
 
 To train an ensemble of models we use the `yucca_preprocess`, `yucca_train` and `yucca_inference` commands. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/guides/run_scripts_advanced.md#ensembles). A common application of model ensembles is to train 2D models on each of the three axes of 3D data (either denoted as the X-, Y- and Z-axis or, in medical imaging, the axial, sagittal and coronal views) and then fuse their predictions in inference. 
 
@@ -154,27 +154,45 @@ To train 3 models on the three axes of a 3D dataset called `Task001_Brains` prep
 > yucca_preprocess -t Task001_Brains -pl YuccaPlannerY
 > yucca_preprocess -t Task001_Brains -pl YuccaPlannerZ
 ```
+
 Then, train three 2D models one on each version of the preprocessed dataset:
 ```console
 > yucca_train -t Task001_Brains -pl YuccaPlannerX -d 2D
 > yucca_train -t Task001_Brains -pl YuccaPlannerY -d 2D
 > yucca_train -t Task001_Brains -pl YuccaPlannerZ -d 2D
 ```
+
 Then, run inference on the target dataset with each trained model.
 ```console
 > yucca_inference -t Task001_Brains -pl YuccaPlannerX -d 2D
 > yucca_inference -t Task001_Brains -pl YuccaPlannerY -d 2D
 > yucca_inference -t Task001_Brains -pl YuccaPlannerZ -d 2D
 ```
+
 Finally, fuse their results and evaluate the predictions.
 ```console
 > yucca_ensemble --in_dirs /path/to/predictionsX /path/to/predictionsY /path/to/predictionsZ --out_dir /path/to/ensemble_predictionsXYZ
 ```
 
-# Classification
+## Classification models
 
-Loading...
+Training classification models is carried out by:
+  1. Converting your raw dataset to a Yucca compliant format with class labels in individual `.txt` files. See the [Task Conversion guide](yucca/documentation/guides/task_conversion.md) for instructions on how to convert your datasets.
+  2. Selecting a Planner that:
+    1. Always preprocesses the task converted dataset using the `ClassificationPreprocessor`, such as the [`ClassificationPlanner`](yucca/planning/ClassificationPlanner.py). This preprocessor expects to find `.txt` files rather than image files in the label folders and it does not perform any preprocessing on the labels. Alternatively, the `ClassificationPreprocessor` can be selected using the `-pr ClassificationPreprocessor` flag in `yucca_preprocess` 
+    2. Resamples images to a fixed target size, such as the [`YuccaPlanner_224x224`](yucca/planning/resampling/YuccaPlanner_224x224.py). Having a fixed image size enables training models on full images, rather than patches of images. This is often necessary in classification where we want 1 (or very few) image-level prediction.
+  3. Selecting a manager that trains models on full-size images. This is any manager with the ```patch_based_training=False```, such as the [`YuccaManager_NoPatches`](yucca/training/managers/alternative_managers/YuccaManager_NoPatches.py).
+  4. Selecting a model architecture that supports classification. Currently that is limited to the [`ResNet50`](yucca/network_architectures/networks/resnet.py) but most networks can be adapted to support this with limited changes (in essence, this can be achieved by adding a Linear layer with input channels equal to the flattened output of the penultimate layer and output channels equals to the number of classes in the dataset).
+  5. Running `yucca_inference` with the `--task_type classification` flag. 
 
-# Unsupervised Training
+## Segmentation models
 
-Loading...
+Training segmentation models is carried out by following the standard procedure introduced in the [Introduction to Yucca](yucca)
+
+## Unsupervised models
+
+Training Unsupervised models is carried out by:
+  1. Converting your raw dataset to a Yucca compliant format with no label files. See the [Task Conversion guide](yucca/documentation/guides/task_conversion.md) for instructions on how to convert your datasets.
+  2. Selecting a Planner that always preprocesses the task converted dataset using the `UnsupervisedPreprocessor`, such as the [`UnsupervisedPlanner`](yucca/planning/YuccaPlanner.py). This preprocessor expects to find no label files. Alternatively, the `UnsupervisedPreprocessor` can be selected using the `-pr UnsupervisedPreprocessor` flag in `yucca_preprocess`.
+
+When models are trained on a dataset preprocessed with the UnsupervisedPreprocessor, Yucca will use the `unsupervised` preset in the [`YuccaAugmentationComposer`](yucca/training/augmentation/YuccaAugmentationComposer.py). This sets (1) `skip_label` to True (which means we don't expect a label in the array), (2) `copy_image_to_label` to True, which means the image data is copied to also be the label data (the image is copied after applying normal augmentations) and finally, (3) `mask_image_for_reconstruction` to True, which means we randomly mask the image data (this is applied AFTER the image is copied to the label). 
