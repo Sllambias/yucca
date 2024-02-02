@@ -89,7 +89,7 @@ class WritePredictionFromLogits(BasePredictionWriter):
         self.output_dir = output_dir
         self.save_softmax = save_softmax
 
-    def write_on_batch_end(self, _trainer, _pl_module, data_dict, _batch_indices):
+    def write_on_batch_end(self, _trainer, _pl_module, data_dict, _batch_indices, _batch, _batch_idx, _dataloader_idx):
         # this will create N (num processes) files in `output_dir` each containing
         # the predictions of it's respective rank
         logits, properties, case_id = (
