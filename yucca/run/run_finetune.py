@@ -46,6 +46,12 @@ def main():
     )
 
     # Optionals that can be changed experimentally. For long term solutions these should be specified by a unique Manager.
+    parser.add_argument(
+        "--batch_size",
+        type=int,
+        default=None,
+        help="Batch size to be used for training. Overrides the batch size specified in the plan.",
+    )
     parser.add_argument("--disable_logging", help="disable logging.", action="store_true", default=False)
     parser.add_argument("--ds", help="Used to enable deep supervision", default=False, action="store_true")
     parser.add_argument(
@@ -101,6 +107,7 @@ def main():
     manager_name = args.man
     planner = args.pl
 
+    batch_size = args.batch_size
     log = not args.disable_logging
     deep_supervision = args.ds
     epochs = args.epochs
@@ -133,6 +140,7 @@ def main():
     )
 
     manager = manager(
+        batch_size=batch_size,
         ckpt_path=checkpoint,
         continue_from_most_recent=not new_version,
         deep_supervision=deep_supervision,

@@ -76,7 +76,7 @@ class YuccaNet(nn.Module):
         """
         canvas = torch.zeros(
             (1, self.num_classes, *data.shape[2:]),
-            device=torch.device(get_available_device),
+            device=torch.device(get_available_device()),
         )
 
         x_steps, y_steps, z_steps = get_steps_for_sliding_window(data.shape[2:], patch_size, overlap)
@@ -96,7 +96,7 @@ class YuccaNet(nn.Module):
         """
         canvas = torch.zeros(
             (1, self.num_classes, *data.shape[2:]),
-            device=torch.device(get_available_device),
+            device=torch.device(get_available_device()),
         )
 
         px, py = patch_size

@@ -79,13 +79,13 @@ class YuccaManager:
         self.deep_supervision = deep_supervision
         self.enable_logging = enable_logging
         self.experiment = experiment
-        self.learning_rate = learning_rate
+        self.learning_rate = float(learning_rate)
         self.loss = loss
         self.max_epochs = max_epochs
         self.max_vram = max_vram
         self.model_dimensions = model_dimensions
         self.model_name = model_name
-        self.momentum = momentum
+        self.momentum = float(momentum)
         self.name = self.__class__.__name__
         self.num_workers = num_workers
         self.augmentation_params = augmentation_params
@@ -236,6 +236,7 @@ class YuccaManager:
             default_root_dir=path_config.save_dir,
             limit_train_batches=self.train_batches_per_step,
             limit_val_batches=self.val_batches_per_step,
+            log_every_n_steps=min(self.train_batches_per_step, 50),
             logger=callback_config.loggers,
             precision=self.precision,
             profiler=callback_config.profiler,

@@ -10,7 +10,7 @@ from yucca.training.configuration.configure_paths import PathConfig
 
 @dataclass
 class SplitConfig:
-    splits: Union[dict[dict[list[dict]]], None]  # Contains `{ method: { parameter_value: [splits] }}`
+    splits: Union[dict[dict[list[dict]]], None] = None  # Contains `{ method: { parameter_value: [splits] }}`
     method: str = None
     param: Union[int, float] = None
 

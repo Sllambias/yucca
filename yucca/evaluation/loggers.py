@@ -96,7 +96,7 @@ class YuccaLogger(Logger):
     @rank_zero_only
     def log_metrics(self, metrics, step):
         if self.disable_logging:
-            pass
+            return
         # metrics is a dictionary of metric names and values
         # your code to record metrics goes here
         t = strftime("%Y_%m_%d_%H_%M_%S", localtime())

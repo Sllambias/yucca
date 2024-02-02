@@ -11,6 +11,7 @@ for i in range(7):
     labs.append(nib.Nifti1Image(lab, affine=np.eye(4)))
 
 """
+
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.task_conversion.utils import generate_dataset_json
 import shutil
@@ -32,8 +33,8 @@ def convert(path: str, subdir: str = "dataset_test0"):
 
     # OUTPUT DATA
     # Target names
-    task_name = "Task000_TEST"
-    task_prefix = "TEST"
+    task_name = "Task000_TEST_SEGMENTATION"
+    task_prefix = "TEST_SEGMENTATION"
 
     # Target paths
     target_base = join(yucca_raw_data, task_name)
