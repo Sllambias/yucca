@@ -53,7 +53,14 @@ def test_finetune():
 
     chk = os.path.join(
         yucca_models,
-        r"Task000_TEST_SEGMENTATION\TinyUNet__3D\YuccaManager__YuccaPlanner\default\kfold_5_fold_0\version_0\checkpoints\best.ckpt",
+        "Task000_TEST_SEGMENTATION",
+        "TinyUNet__3D",
+        "YuccaManager__YuccaPlanner",
+        "default",
+        "kfold_5_fold_0",
+        "version_0",
+        "checkpoints",
+        "best.ckpt",
     )
     # Second: a training with a lot of changed parameters
     subprocess.run(
