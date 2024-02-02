@@ -5,9 +5,7 @@ from typing import Union, Literal, Optional
 import logging
 from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle
 from yucca.image_processing.transforms.cropping_and_padding import CropPad
-from yucca.image_processing.transforms.formatting import (
-    NumpyToTorch,
-)
+from yucca.image_processing.transforms.formatting import NumpyToTorch
 
 
 class YuccaTrainDataset(torch.utils.data.Dataset):
@@ -98,7 +96,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         elif self.task_type == "unsupervised":
             data_dict = {"image": data, "label": None}
         else:
-            print(f"Task Type not recognized. Found {self.task_type}")
+            logging.error(f"Task Type not recognized. Found {self.task_type}")
         return self._transform(data_dict, case)
 
     def _transform(self, data_dict, case):

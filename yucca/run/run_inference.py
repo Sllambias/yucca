@@ -42,14 +42,6 @@ def main():
         default="best",
     )
     parser.add_argument("-d", "--dimensions", help="2D or 3D model. Defaults to 3D.", default="3D")
-
-    parser.add_argument(
-        "-f",
-        "--fold",
-        help="Select the fold that was used to train the model desired for inference. "
-        "Defaults to looking for a model trained on fold 0.",
-        default="0",
-    )
     parser.add_argument("-m", "--model", help="Model Architecture. Defaults to UNet.", default="UNet")
     parser.add_argument(
         "-man",
@@ -58,19 +50,35 @@ def main():
         default="YuccaManager",
     )
     parser.add_argument("-pl", "--planner", help="Planner. Defaults to YuccaPlanner", default="YuccaPlanner")
+    parser.add_argument("--split_idx", type=int, help="idx of splits to use for training.", default=0)
+    parser.add_argument(
+        "--split_data_method", help="Specify splitting method. Either kfold, simple_train_val_split", default="kfold"
+    )
+    parser.add_argument(
+        "--split_data_param",
+        help="Specify the parameter for the selected split method. For KFold use an int, for simple_split use a float between 0.0-1.0.",
+        default=5,
+    )
+    parser.add_argument(
+        "--task_type",
+        default="segmentation",
+        type=str,
+        required=False,
+        help="Defaults to segmentation. Set to 'classification' for classification tasks.",
+    )
     parser.add_argument(
         "-v",
         "--version",
         help="Version to use for inference. Defaults to the newest version.",
         default=None,
     )
+
     # Optionals (occasionally changed)
     parser.add_argument(
         "--experiment",
         help="A name for the experiment being performed, with no spaces.",
         default="default",
     )
-
     parser.add_argument(
         "--disable_tta",
         help="Used to disable test-time augmentations (mirroring)",
@@ -87,13 +95,6 @@ def main():
     parser.add_argument(
         "--no_wandb",
         help="Disable logging of evaluation results to wandb",
-        default=False,
-        action="store_true",
-        required=False,
-    )
-    parser.add_argument(
-        "--no_sliding_window",
-        help="Disable sliding window prediction and instead use fixed patch/input size",
         default=False,
         action="store_true",
         required=False,
@@ -125,13 +126,6 @@ def main():
         required=False,
         help="Save softmax outputs. Required for softmax fusion.",
     )
-    parser.add_argument(
-        "--task_type",
-        default="segmentation",
-        type=str,
-        required=False,
-        help="Defaults to segmentation. Set to 'classification' for classification tasks.",
-    )
 
     args = parser.parse_args()
 
@@ -145,10 +139,11 @@ def main():
     manager_name = args.manager
     model = args.model
     planner = args.planner
-    profile = args.profile
-    split_idx = int(args.fold)
-    version = args.version
+    split_idx = args.split_idx
+    split_data_method = args.split_data_method
+    split_data_param = args.split_data_param
     task_type = args.task_type
+    version = args.version
 
     # Optionals (occasionally changed)
     experiment = args.experiment
@@ -156,11 +151,17 @@ def main():
     no_eval = args.no_eval
     # overwrite = args.overwrite
     predict_train = args.predict_train
+    profile = args.profile
     save_softmax = args.save_softmax
     use_wandb = not args.no_wandb
 
     path_to_versions = join(
-        yucca_models, source_task, model + "__" + dimensions, manager_name + "__" + planner, experiment, f"fold_{split_idx}"
+        yucca_models,
+        source_task,
+        model + "__" + dimensions,
+        manager_name + "__" + planner,
+        experiment,
+        f"{split_data_method}_{split_data_param}_fold_{split_idx}",
     )
     if version is None:
         versions = [int(i.split("_")[-1]) for i in subdirs(path_to_versions, join=False)]
@@ -172,7 +173,7 @@ def main():
         model + "__" + dimensions,
         manager_name + "__" + planner,
         experiment,
-        f"fold_{split_idx}",
+        f"{split_data_method}_{split_data_param}_fold_{split_idx}",
         f"version_{version}",
         "checkpoints",
         checkpoint + ".ckpt",
@@ -199,6 +200,8 @@ def main():
         model_dimensions=dimensions,
         task=source_task,
         split_idx=split_idx,
+        split_data_method=split_data_method,
+        split_data_param=split_data_param,
         planner=planner,
         profile=profile,
     )
@@ -213,7 +216,7 @@ def main():
         source_task,
         model + "__" + dimensions,
         manager_name + "__" + planner,
-        f"fold_{split_idx}",
+        f"{split_data_method}_{split_data_param}_fold_{split_idx}",
         f"version_{version}",
         checkpoint,
     )

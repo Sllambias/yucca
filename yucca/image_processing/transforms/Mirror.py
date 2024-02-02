@@ -3,14 +3,6 @@ import numpy as np
 
 
 class Mirror(YuccaTransform):
-    """
-    variables in DIKU_3D_augmentation_params:
-        do_multiplicativeNoise
-        multiplicativeNoise_p_per_sample
-        multiplicativeNoise_mean
-        multiplicativeNoise_sigma
-    """
-
     def __init__(
         self,
         data_key="image",

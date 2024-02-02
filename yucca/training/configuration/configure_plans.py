@@ -6,6 +6,7 @@ from yucca.preprocessing.UnsupervisedPreprocessor import UnsupervisedPreprocesso
 from yucca.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
 from yucca.utils.dict import without_keys
 from yucca.utils.files_and_folders import recursive_find_python_class
+import logging
 
 
 @dataclass
@@ -57,7 +58,7 @@ def get_plan_config(
 def load_plans(plans_path):
     # If plans is still none the ckpt files were either empty/invalid or didn't exist and we load the plans
     # from the preprocessed folder.
-    print("Exhausted other options: loading plans.json")
+    logging.info("Loading plans.json")
     return load_json(plans_path)
 
 

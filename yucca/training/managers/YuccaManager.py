@@ -65,8 +65,8 @@ class YuccaManager:
         precision: str = "bf16-mixed",
         profile: bool = False,
         split_idx: int = 0,
-        split_data_ratio: float = None,
-        split_data_kfold: int = 5,
+        split_data_method: str = "kfold",
+        split_data_param: int = 5,
         step_logging: bool = False,
         task: str = None,
         experiment: str = "default",
@@ -79,13 +79,13 @@ class YuccaManager:
         self.deep_supervision = deep_supervision
         self.enable_logging = enable_logging
         self.experiment = experiment
-        self.learning_rate = learning_rate
+        self.learning_rate = float(learning_rate)
         self.loss = loss
         self.max_epochs = max_epochs
         self.max_vram = max_vram
         self.model_dimensions = model_dimensions
         self.model_name = model_name
-        self.momentum = momentum
+        self.momentum = float(momentum)
         self.name = self.__class__.__name__
         self.num_workers = num_workers
         self.augmentation_params = augmentation_params
@@ -96,8 +96,8 @@ class YuccaManager:
         self.precision = precision
         self.profile = profile
         self.split_idx = split_idx
-        self.split_data_ratio = split_data_ratio
-        self.split_data_kfold = split_data_kfold
+        self.split_data_method = split_data_method
+        self.split_data_param = split_data_param
         self.step_logging = step_logging
         self.task = task
         self.train_batches_per_step = train_batches_per_step
@@ -114,6 +114,7 @@ class YuccaManager:
             if not torch.cuda.is_bf16_supported():
                 self.precision = self.precision.replace("bf", "")
 
+        # Statics
         self.trainer = L.Trainer
 
     def initialize(
@@ -136,8 +137,8 @@ class YuccaManager:
             planner_name=self.planner,
             experiment=self.experiment,
             split_idx=self.split_idx,
-            split_data_ratio=self.split_data_ratio,
-            split_data_kfold=self.split_data_kfold,
+            split_data_method=self.split_data_method,
+            split_data_param=self.split_data_param,
         )
 
         path_config = get_path_config(task_config=task_config)
@@ -155,6 +156,20 @@ class YuccaManager:
             ckpt_plans=self.ckpt_config.ckpt_plans,
             plans_path=path_config.plans_path,
             stage=stage,
+        )
+
+        callback_config = get_callback_config(
+            save_dir=path_config.save_dir,
+            version_dir=path_config.version_dir,
+            ckpt_version_dir=self.ckpt_config.ckpt_version_dir,
+            ckpt_wandb_id=self.ckpt_config.ckpt_wandb_id,
+            experiment=task_config.experiment,
+            version=path_config.version,
+            enable_logging=self.enable_logging,
+            log_lr=True,
+            prediction_output_dir=prediction_output_dir,
+            profile=self.profile,
+            save_softmax=save_softmax,
         )
 
         if stage == "fit":
@@ -179,20 +194,6 @@ class YuccaManager:
             is_2D=True if self.model_dimensions == "2D" else False,
             parameter_dict=self.augmentation_params,
             task_type_preset=plan_config.task_type,
-        )
-
-        callback_config = get_callback_config(
-            save_dir=path_config.save_dir,
-            version_dir=path_config.version_dir,
-            ckpt_version_dir=self.ckpt_config.ckpt_version_dir,
-            ckpt_wandb_id=self.ckpt_config.ckpt_wandb_id,
-            experiment=task_config.experiment,
-            version=path_config.version,
-            enable_logging=self.enable_logging,
-            log_lr=True,
-            prediction_output_dir=prediction_output_dir,
-            profile=self.profile,
-            save_softmax=save_softmax,
         )
 
         self.model_module = YuccaLightningModule(
@@ -226,8 +227,8 @@ class YuccaManager:
         )
 
         if (
-            not isinstance(self.data_module.train_sampler, InfiniteRandomSampler) and self.train_batches_per_step is not None
-        ) or (not isinstance(self.data_module.val_sampler, InfiniteRandomSampler) and self.val_batches_per_step is not None):
+            not issubclass(self.data_module.train_sampler, InfiniteRandomSampler) and self.train_batches_per_step is not None
+        ) or (not issubclass(self.data_module.val_sampler, InfiniteRandomSampler) and self.val_batches_per_step is not None):
             print("Warning: you are limiting the amount of batches pr. step, but not sampling using InfiniteRandomSampler.")
 
         self.trainer = L.Trainer(
@@ -235,6 +236,7 @@ class YuccaManager:
             default_root_dir=path_config.save_dir,
             limit_train_batches=self.train_batches_per_step,
             limit_val_batches=self.val_batches_per_step,
+            log_every_n_steps=min(self.train_batches_per_step, 50),
             logger=callback_config.loggers,
             precision=self.precision,
             profiler=callback_config.profiler,

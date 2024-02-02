@@ -1,5 +1,6 @@
 import sys
 import os
+import logging
 from argparse import Namespace
 from lightning.pytorch.loggers.logger import Logger
 from pytorch_lightning.utilities.rank_zero import rank_zero_only
@@ -37,6 +38,11 @@ class YuccaLogger(Logger):
         self.hparams: Dict[str, Any] = {}
         self.NAME_HPARAMS_FILE = "hparams.yaml"
 
+        if self.disable_logging is False:
+            if self.log_file is None:
+                self.create_logfile()
+            self.duplicate_console_out_to_log_file(self.log_file)
+
     @property
     def name(self):
         return self._name
@@ -70,10 +76,17 @@ class YuccaLogger(Logger):
         )
         with open(self.log_file, "w") as f:
             f.write("Starting model training")
-            print("Starting model training \n" f'{"log file:":20} {self.log_file} \n')
+            logging.info("Starting model training \n" f'{"log file:":20} {self.log_file} \n')
             f.write("\n")
             f.write(f'{"log file:":20} {self.log_file}')
             f.write("\n")
+
+    @rank_zero_only
+    def duplicate_console_out_to_log_file(self, log_file):
+        # Add the log_file as a duplicate handler of lightning outputs
+        logging.getLogger("lightning.pytorch").addHandler(logging.FileHandler(log_file))
+        # Add the log_file as a duplicate handler of lightning outputs
+        logging.getLogger().addHandler(logging.FileHandler(log_file))
 
     @rank_zero_only
     def log_hyperparams(self, params: Union[Dict[str, Any], Namespace]) -> None:  # type: ignore[override]
@@ -83,9 +96,7 @@ class YuccaLogger(Logger):
     @rank_zero_only
     def log_metrics(self, metrics, step):
         if self.disable_logging:
-            pass
-        if self.log_file is None:
-            self.create_logfile()
+            return
         # metrics is a dictionary of metric names and values
         # your code to record metrics goes here
         t = strftime("%Y_%m_%d_%H_%M_%S", localtime())

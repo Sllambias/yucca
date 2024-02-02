@@ -115,7 +115,7 @@ class YuccaAugmentationComposer:
             self.skip_label = True
             self.copy_image_to_label = True
             # This should be uncommented when masking is properly implemented
-            # augmentation_parameter_dict["mask_image_for_reconstruction"] = True
+            # self.mask_image_for_reconstruction = True
 
     def overwrite_params(self, parameter_dict):
         for key, value in parameter_dict.items():

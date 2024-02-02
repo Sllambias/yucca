@@ -1,5 +1,6 @@
 import lightning as pl
 import torchvision
+import logging
 import torch
 from typing import Literal, Optional
 from torch.utils.data import DataLoader, Sampler
@@ -9,7 +10,6 @@ from yucca.training.configuration.split_data import SplitConfig
 from yucca.training.configuration.configure_plans import PlanConfig
 from yucca.training.data_loading.YuccaDataset import YuccaTestDataset, YuccaTrainDataset
 from yucca.training.data_loading.samplers import InfiniteRandomSampler
-import logging
 
 
 class YuccaDataModule(pl.LightningDataModule):
@@ -89,7 +89,7 @@ class YuccaDataModule(pl.LightningDataModule):
         logging.info(f"Using {self.num_workers} workers")
 
     def setup(self, stage: Literal["fit", "test", "predict"]):
-        print(f"Setting up data for stage: {stage}")
+        logging.info(f"Setting up data for stage: {stage}")
         expected_stages = ["fit", "test", "predict"]
         assert stage in expected_stages, "unexpected stage. " f"Expected: {expected_stages} and found: {stage}"
 
@@ -99,6 +99,9 @@ class YuccaDataModule(pl.LightningDataModule):
 
             self.train_samples = [join(self.train_data_dir, i) for i in self.splits_config.train(self.split_idx)]
             self.val_samples = [join(self.train_data_dir, i) for i in self.splits_config.val(self.split_idx)]
+
+            logging.info(f"Training on samples: {self.train_samples}")
+            logging.info(f"Validating on samples: {self.val_samples}")
 
             self.train_dataset = YuccaTrainDataset(
                 self.train_samples,
@@ -121,7 +124,7 @@ class YuccaDataModule(pl.LightningDataModule):
             self.pred_dataset = YuccaTestDataset(self.pred_data_dir, suffix=self.image_extension)
 
     def train_dataloader(self):
-        print(f"Starting training with data from: {self.train_data_dir}")
+        logging.info(f"Starting training with data from: {self.train_data_dir}")
         sampler = self.train_sampler(self.train_dataset) if self.train_sampler is not None else None
         return DataLoader(
             self.train_dataset,
@@ -146,5 +149,5 @@ class YuccaDataModule(pl.LightningDataModule):
         return None
 
     def predict_dataloader(self):
-        print("Starting inference")
+        logging.info("Starting inference")
         return DataLoader(self.pred_dataset, num_workers=self.num_workers, batch_size=1)

@@ -3,12 +3,6 @@ import numpy as np
 
 
 class BiasField(YuccaTransform):
-    """
-    variables in DIKU_3D_augmentation_params:
-        do_biasField
-        biasField_p_per_sample
-    """
-
     def __init__(self, data_key="image", p_per_sample=1):
         self.data_key = data_key
         self.p_per_sample = p_per_sample
