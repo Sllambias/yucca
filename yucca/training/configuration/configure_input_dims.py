@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Tuple, Union, Optional, Literal
-
 from yucca.network_architectures.utils.model_memory_estimation import find_optimal_tensor_dims
+import logging
 
 
 @dataclass
@@ -34,13 +34,13 @@ def get_input_dims_config(
         assert plan.get("new_max_size") == plan.get(
             "new_min_size"
         ), "sizes in dataset are not uniform. Non-patch based training only works for datasets with uniform data shapes."
-        patch_size = plan.get("new_max_size")
+        patch_size = tuple(plan.get("new_max_size"))
 
     # If batch_size or patch_size is not provided, try to infer it from the plan
     if batch_size is None and plan.get("batch_size"):
         batch_size = plan.get("batch_size")
     if patch_size is None and plan.get("patch_size"):
-        patch_size = plan.get("patch_size")
+        patch_size = tuple(plan.get("patch_size"))
 
     # onvert batch_size provided as string to int
     if isinstance(batch_size, str):
@@ -53,7 +53,7 @@ def get_input_dims_config(
     if isinstance(patch_size, str):
         if patch_size in ["max", "min", "mean"]:
             # Get patch size from dataset
-            patch_size = plan[f"new_{patch_size}_size"]
+            patch_size = tuple(plan[f"new_{patch_size}_size"])
         elif patch_size == "tiny":
             patch_size = (32, 32, 32)
         else:
@@ -89,7 +89,7 @@ def get_input_dims_config(
     if plan.get("batch_size") and plan.get("batch_size") != batch_size:
         raise UserWarning(f"Overwriting batch size from plan ({plan.get('batch_size')}) with {batch_size}")
 
-    print(f"Using batch size: {batch_size} and patch size: {patch_size}")
+    logging.info(f"Using batch size: {batch_size} and patch size: {patch_size}")
 
     return InputDimensionsConfig(
         batch_size=batch_size,

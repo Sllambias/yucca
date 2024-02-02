@@ -30,6 +30,7 @@ class ClassificationPreprocessor(YuccaPreprocessor):
         images[0] = images[0].T
 
         logging.info(
+            f"Preprocessed case: {subject_id} \n"
             f"size before: {image_props['original_size']} size after: {image_props['new_size']} \n"
             f"spacing before: {image_props['original_spacing']} spacing after: {image_props['new_spacing']} \n"
             f"Saving {subject_id} in {arraypath} \n"

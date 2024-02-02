@@ -1,5 +1,7 @@
 import lightning as pl
 import torchvision
+import logging
+import torch
 from typing import Literal, Optional
 from torch.utils.data import DataLoader, Sampler
 from batchgenerators.utilities.file_and_folder_operations import join
@@ -52,7 +54,7 @@ class YuccaDataModule(pl.LightningDataModule):
         split_idx: int,
         composed_train_transforms: torchvision.transforms.Compose = None,
         composed_val_transforms: torchvision.transforms.Compose = None,
-        num_workers: int = 8,
+        num_workers: Optional[int] = None,
         pred_data_dir: str = None,
         pre_aug_patch_size: list | tuple = None,
         train_sampler: Optional[Sampler] = InfiniteRandomSampler,
@@ -79,13 +81,15 @@ class YuccaDataModule(pl.LightningDataModule):
         self.pred_data_dir = pred_data_dir
 
         # Set default values
-        self.num_workers = num_workers
-        self.val_num_workers = num_workers // 2 if num_workers > 0 else num_workers
+
+        self.num_workers = max(0, int(torch.get_num_threads() - 1)) if num_workers is None else num_workers
+        self.val_num_workers = self.num_workers // 2 if self.num_workers > 0 else self.num_workers
         self.train_sampler = train_sampler
         self.val_sampler = val_sampler
+        logging.info(f"Using {self.num_workers} workers")
 
     def setup(self, stage: Literal["fit", "test", "predict"]):
-        print(f"Setting up data for stage: {stage}")
+        logging.info(f"Setting up data for stage: {stage}")
         expected_stages = ["fit", "test", "predict"]
         assert stage in expected_stages, "unexpected stage. " f"Expected: {expected_stages} and found: {stage}"
 
@@ -95,6 +99,9 @@ class YuccaDataModule(pl.LightningDataModule):
 
             self.train_samples = [join(self.train_data_dir, i) for i in self.splits_config.train(self.split_idx)]
             self.val_samples = [join(self.train_data_dir, i) for i in self.splits_config.val(self.split_idx)]
+
+            logging.info(f"Training on samples: {self.train_samples}")
+            logging.info(f"Validating on samples: {self.val_samples}")
 
             self.train_dataset = YuccaTrainDataset(
                 self.train_samples,
@@ -117,13 +124,13 @@ class YuccaDataModule(pl.LightningDataModule):
             self.pred_dataset = YuccaTestDataset(self.pred_data_dir, suffix=self.image_extension)
 
     def train_dataloader(self):
-        print(f"Starting training with data from: {self.train_data_dir}")
+        logging.info(f"Starting training with data from: {self.train_data_dir}")
         sampler = self.train_sampler(self.train_dataset) if self.train_sampler is not None else None
         return DataLoader(
             self.train_dataset,
             num_workers=self.num_workers,
             batch_size=self.batch_size,
-            persistent_workers=bool(self.num_workers),
+            pin_memory=torch.cuda.is_available(),
             sampler=sampler,
             shuffle=sampler is None,
         )
@@ -134,7 +141,7 @@ class YuccaDataModule(pl.LightningDataModule):
             self.val_dataset,
             num_workers=self.val_num_workers,
             batch_size=self.batch_size,
-            persistent_workers=bool(self.val_num_workers),
+            pin_memory=torch.cuda.is_available(),
             sampler=sampler,
         )
 
@@ -142,5 +149,5 @@ class YuccaDataModule(pl.LightningDataModule):
         return None
 
     def predict_dataloader(self):
-        print("Starting inference")
+        logging.info("Starting inference")
         return DataLoader(self.pred_dataset, num_workers=self.num_workers, batch_size=1)

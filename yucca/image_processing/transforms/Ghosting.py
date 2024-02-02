@@ -4,15 +4,6 @@ from typing import Tuple
 
 
 class MotionGhosting(YuccaTransform):
-    """
-    variables in DIKU_3D_augmentation_params:
-        do_motionGhosting
-        motionGhosting_p_per_sample
-        motionGhosting_alpha
-        motionGhosting_numReps
-        motionGhosting_axes
-    """
-
     def __init__(
         self,
         data_key="image",

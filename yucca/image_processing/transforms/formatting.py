@@ -4,10 +4,6 @@ from yucca.image_processing.transforms.YuccaTransform import YuccaTransform
 
 
 class RemoveSegChannelAxis(YuccaTransform):
-    """
-    Basically a wrapper for np.squeeze
-    """
-
     def __init__(self, label_key="label", channel_to_remove=1):
         self.label_key = label_key
         self.channel = channel_to_remove

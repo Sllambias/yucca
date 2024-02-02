@@ -1,3 +1,3 @@
-import os
+import logging
 
-os.environ["OMP_NUM_THREADS"] = "1"
+logging.getLogger().setLevel(logging.INFO)

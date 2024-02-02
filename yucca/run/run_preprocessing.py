@@ -16,7 +16,7 @@ def main():
     parser.add_argument(
         "-pr",
         help="Preprocessor Class to employ. "
-        "Defaults to the YuccaPreprocessor, but can be YuccaPreprocessor_CLS for classification tasks",
+        "Defaults to the YuccaPreprocessor, but can be ClassificationPreprocessor for classification tasks",
         default="YuccaPreprocessor",
     )
     parser.add_argument(
@@ -33,9 +33,6 @@ def main():
     )
     parser.add_argument("--disable_sanity_checks", help="Enable or disable sanity checks", default=False)
 
-    # parser.add_argument("--threads", help="Number of threads/processes. \n"
-    #                    "Don't touch this unless you know what you're doing.", default=2)
-
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
@@ -44,7 +41,6 @@ def main():
     view = args.v
     disable_sanity_checks = args.disable_sanity_checks
     ensemble = args.ensemble
-    # threads = args.threads
 
     if not ensemble:
         planner = recursive_find_python_class(

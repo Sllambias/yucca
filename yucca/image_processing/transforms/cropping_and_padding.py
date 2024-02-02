@@ -4,17 +4,6 @@ from typing import Literal, Union
 
 
 class CropPad(YuccaTransform):
-    """
-    The possible input for CropPad can be either 2D or 3D data and the output can be either 2D
-    or 3D data. Each dimension is either padded or cropped to the desired patch size.
-    For 3D input to 3D output and 2D input to 2D output each dimension is simply
-    either padded or cropped to the desired patch size.
-    For 3D input to 2D output we extract a slice from the first dimension to attain a 2D image.
-    Afterwards the the last 2 dimensions are padded or cropped to the patch size.
-
-    For available modes see: https://numpy.org/doc/stable/reference/generated/numpy.pad.html
-    """
-
     def __init__(
         self,
         data_key="image",

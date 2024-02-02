@@ -3,14 +3,6 @@ import numpy as np
 
 
 class GibbsRinging(YuccaTransform):
-    """
-    variables in DIKU_3D_augmentation_params:
-        do_gibbsRinging
-        gibbsRinging_p_per_sample
-        gibbsRinging_cutFreq
-        gibbsRinging_axes
-    """
-
     def __init__(self, data_key="image", p_per_sample=1, cutFreq=(96, 129), axes=(0, 3)):
         self.data_key = data_key
         self.p_per_sample = p_per_sample

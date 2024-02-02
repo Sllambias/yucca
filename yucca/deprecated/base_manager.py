@@ -31,7 +31,7 @@ from yucca.network_architectures.utils.model_memory_estimation import (
 )
 from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.utils.saving import save_prediction_from_logits
-from yucca.utils.torch_utils import maybe_to_cuda
+from yucca.utils.torch_utils import maybe_to_gpu
 from yucca.image_processing.transforms.BiasField import BiasField
 from yucca.image_processing.transforms.Blur import Blur
 from yucca.image_processing.transforms.CopyImageToSeg import CopyImageToSeg
@@ -709,8 +709,8 @@ class base_manager(object):
         image = batch["image"]
         seg = batch["seg"]
 
-        image = maybe_to_cuda(image)
-        seg = maybe_to_cuda(seg)
+        image = maybe_to_gpu(image)
+        seg = maybe_to_gpu(seg)
 
         with autocast(device_type="cuda", dtype=torch.float16, enabled=True):
             pred = self.network(image)
