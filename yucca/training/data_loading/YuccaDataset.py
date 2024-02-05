@@ -95,6 +95,10 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
             data_dict = {"image": data[:-1], "label": data[-1:]}
         elif self.task_type == "unsupervised":
             data_dict = {"image": data, "label": None}
+        elif self.task_type == "contrastive":
+            aug1 = self._transform({"image": data, "label": None})
+            aug2 = self._transform({"image": data, "label": None})
+            return {"image": (aug1, aug2), "label": None}
         else:
             logging.error(f"Task Type not recognized. Found {self.task_type}")
         return self._transform(data_dict, case)
