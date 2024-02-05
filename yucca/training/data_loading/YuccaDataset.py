@@ -1,3 +1,4 @@
+from cProfile import label
 import numpy as np
 import torch
 import os
@@ -22,11 +23,10 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         self.composed_transforms = composed_transforms
         self.patch_size = patch_size
         self.task_type = task_type
-        if label_dtype is None:
-            if self.task_type in ["segmentation", "classification"]:
-                self.label_dtype = torch.int32
-            if self.task_type in ["unsupervised", "contrastive"]:
-                self.label_dtype = torch.float32
+        if label_dtype is None and self.task_type in ["segmentation", "classification"]:
+            self.label_dtype = torch.int32
+        else:
+            self.label_dtype = label_dtype
 
         self.already_loaded_cases = {}
         self.croppad = CropPad(patch_size=self.patch_size, p_oversample_foreground=0.33)
