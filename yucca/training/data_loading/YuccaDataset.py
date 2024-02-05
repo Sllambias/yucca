@@ -11,21 +11,21 @@ from yucca.image_processing.transforms.formatting import NumpyToTorch
 class YuccaTrainDataset(torch.utils.data.Dataset):
     def __init__(
         self,
-        preprocessed_data_dir: list,
+        samples: list,
         patch_size: list | tuple,
         keep_in_ram: Union[bool, None] = None,
         label_dtype: Optional[Union[int, float]] = None,
         composed_transforms=None,
-        task_type: Literal["classification", "segmentation", "unsupervised"] = "segmentation",
+        task_type: Literal["classification", "segmentation", "unsupervised", "contrastive"] = "segmentation",
     ):
-        self.all_cases = preprocessed_data_dir
+        self.all_cases = samples
         self.composed_transforms = composed_transforms
         self.patch_size = patch_size
         self.task_type = task_type
         if label_dtype is None:
             if self.task_type in ["segmentation", "classification"]:
                 self.label_dtype = torch.int32
-            if self.task_type == "unsupervised":
+            if self.task_type in ["unsupervised", "contrastive"]:
                 self.label_dtype = torch.float32
 
         self.already_loaded_cases = {}
@@ -96,9 +96,9 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         elif self.task_type == "unsupervised":
             data_dict = {"image": data, "label": None}
         elif self.task_type == "contrastive":
-            aug1 = self._transform({"image": data, "label": None})
-            aug2 = self._transform({"image": data, "label": None})
-            return {"image": (aug1, aug2), "label": None}
+            aug1 = self._transform({"image": data, "label": None}, case)["image"]
+            aug2 = self._transform({"image": data, "label": None}, case)["image"]
+            return {"image": (aug1, aug2)}
         else:
             logging.error(f"Task Type not recognized. Found {self.task_type}")
         return self._transform(data_dict, case)
