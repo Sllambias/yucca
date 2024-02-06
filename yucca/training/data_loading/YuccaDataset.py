@@ -4,6 +4,7 @@ import os
 from typing import Union, Literal, Optional
 import logging
 from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle
+from yucca.image_processing.transforms import Masking
 from yucca.image_processing.transforms.cropping_and_padding import CropPad
 from yucca.image_processing.transforms.formatting import NumpyToTorch
 
@@ -16,16 +17,20 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         keep_in_ram: Union[bool, None] = None,
         label_dtype: Optional[Union[int, float]] = None,
         composed_transforms=None,
-        task_type: Literal["classification", "segmentation", "unsupervised", "contrastive"] = "segmentation",
+        task_type: Literal["classification", "segmentation", "self-supervised", "contrastive"] = "segmentation",
     ):
         self.all_cases = samples
         self.composed_transforms = composed_transforms
         self.patch_size = patch_size
         self.task_type = task_type
-        if label_dtype is None and self.task_type in ["segmentation", "classification"]:
-            self.label_dtype = torch.int32
-        else:
-            self.label_dtype = label_dtype
+        assert task_type in ["classification", "segmentation", "self-supervised", "contrastive"]
+
+        self.label_dtype = label_dtype
+        if self.label_dtype is None:
+            if self.task_type in ["segmentation", "classification"]:
+                self.label_dtype = torch.int32
+            elif self.task_type in ["contrastive", "self-supervised"] and Masking in composed_transforms:
+                self.label_dtype = torch.float32
 
         self.already_loaded_cases = {}
         self.croppad = CropPad(patch_size=self.patch_size, p_oversample_foreground=0.33)
@@ -92,7 +97,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
             data_dict = {"image": data[:-1][0], "label": data[-1:][0]}
         elif self.task_type == "segmentation":
             data_dict = {"image": data[:-1], "label": data[-1:]}
-        elif self.task_type == "unsupervised":
+        elif self.task_type == "self-supervised":
             data_dict = {"image": data, "label": None}
         elif self.task_type == "contrastive":
             aug1 = self._transform({"image": data, "label": None}, case)["image"]
