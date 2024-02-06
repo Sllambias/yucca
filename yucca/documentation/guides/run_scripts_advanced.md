@@ -11,7 +11,7 @@ options:
   -d SUBDIR, --subdir SUBDIR
                         Directory of data inside source data
 
-The -t flag must point to the name of a previously created task conversion script, such as the [OASIS script](/yucca/task_conversion/Task001_OASIS.py). The -p flag points to the parent directory of the dataset folder. If left empty this defaults to [`yucca_source`](/yucca/documentation/tutorials/environment_variables.md). The -d flag points to the specific dataset directory inside the parent directory. 
+The -t flag must point to the name of a previously created task conversion script, such as the [OASIS script](/yucca/task_conversion/Task001_OASIS.py). The -p flag points to the parent directory of the dataset folder. If left empty this defaults to [`yucca_source`](/yucca/documentation/guides/environment_variables.md). The -d flag points to the specific dataset directory inside the parent directory. 
 
 If the OASIS dataset was located in /path/to/all/my/datasets/specific_dataset123 the command should be:
 `yucca_convert_task -t Task001_OASIS -p /path/to/all/my/datasets -d specific_dataset123`
