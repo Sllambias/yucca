@@ -1,9 +1,9 @@
 # Task Conversion
 
-Yucca uses the data structure presented in the Medical Segmentation Challenge [see @https://arxiv.org/pdf/1902.09063.pdf]. This includes naming conventions, directory structures and descriptor files (dataset.json).
+Yucca uses the data structure presented in the [Medical Segmentation Challenge](https://arxiv.org/pdf/1902.09063.pdf). This includes naming conventions, directory structures and descriptor files (dataset.json).
 
 # File and Folder Structure
-Yucca reads/writes data from/to four directories specified by the user where the directories contain respectively `raw_data`, `preprocessed_data`, `models` and `results`. The paths to these directories should be specified in your environment variables as seen [here](/yucca/documentation/tutorials/environment_variables.md).
+Yucca reads/writes data from/to four directories specified by the user where the directories contain respectively `raw_data`, `preprocessed_data`, `models` and `results`. The paths to these directories should be specified in your environment variables as seen [here](/yucca/documentation/guides/environment_variables.md).
 
 The raw data used by Yucca is expected to have a specific format. To convert a dataset (e.g. some dataset you have downloaded) to Yucca-compliant raw data adhere to the guidelines below:
 
@@ -55,7 +55,7 @@ raw_data/
 ```
 
 ### Task Conversion Scripts
-Task conversion can be performed by running the [`run_task_conversion.py`](/yucca/yucca/run/run_task_conversion.py) which executes a task conversion according to one of the files in `yucca/yucca/task_conversion`. For some tasks a task conversion file already exists (e.g. [`Task001_OASIS`](/yucca/yucca/task_conversion/Task001_OASIS.py)) but otherwise a task conversion file must be created. A template for task conversion files can be found [here](/yucca/yucca/task_conversion/template.py).
+Task conversion can be performed by running the [`run_task_conversion.py`](/yucca/run/run_task_conversion.py) which executes a task conversion according to one of the files in `yucca/yucca/task_conversion`. For some tasks a task conversion file already exists (e.g. [`Task001_OASIS`](/yucca/task_conversion/Task001_OASIS.py)) but otherwise a task conversion file must be created. A template for task conversion files can be found [here](/yucca/task_conversion/template.py).
 
 # Preprocessing
 
