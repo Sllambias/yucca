@@ -33,7 +33,7 @@ class NumpyToTorch(YuccaTransform):
         self.label_dtype = label_dtype
 
     def get_params(self, label):
-        if self.label_dtype is not None or if label is None: # Nothing to infer here.
+        if self.label_dtype is not None or label is None: # Nothing to infer here.
             return 
         if isinstance(label, list): # We just want to look at the first array
             label = label[0]
@@ -41,8 +41,6 @@ class NumpyToTorch(YuccaTransform):
             self.label_dtype = torch.float32
         else:
             self.label_dtype = torch.int32
-        
-        
 
     def __convert__(self, datadict):
         data = torch.tensor(datadict[self.data_key], dtype=torch.float32)
