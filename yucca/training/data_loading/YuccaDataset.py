@@ -4,7 +4,6 @@ import os
 from typing import Union, Literal, Optional
 import logging
 from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle
-from yucca.image_processing.transforms import Masking
 from yucca.image_processing.transforms.cropping_and_padding import CropPad
 from yucca.image_processing.transforms.formatting import NumpyToTorch
 
