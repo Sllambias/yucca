@@ -129,7 +129,7 @@ CLI: `yucca_train`, `yucca_finetune` and `yucca_inference`
 
 Variables: *--split_idx*, *--split_data_method* and *--split_data_param*
 
-NOTE: Do not confuse this with the train-test splits. These must be handled in [Task Conversion](/yucca/documentation/tutorials/task_conversion.md).
+NOTE: Do not confuse this with the train-test splits. These must be handled in [Task Conversion](/yucca/documentation/guides/task_conversion.md).
 
 Training/Validation data splits can be automatically generated using simple dataset splits or the K-Fold method. First select the method with `--split_data_method` and then supply the desired parameter with `--split_data_param`. If the method is `simple_train_val_split` valid parameter values are between 0.0-1.0, so a valid configuration could be `--split_data_method simple_train_val_split --split_data_param 0.33`. For `kfold` valid parameters are integers > 1. When using K-Fold the `--split_idx` can be used to select which fold to use for training. When using `split_data_method simple_train_val_split` you do not need to specify the `--split_idx` as there will only be one split of the specified configuration.  By default Yucca will generate 5-Folds and train on Fold 0. 
 
