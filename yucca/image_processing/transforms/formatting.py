@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from yucca.image_processing.transforms.YuccaTransform import YuccaTransform
-
+from typing import Optional
 
 class RemoveSegChannelAxis(YuccaTransform):
     def __init__(self, label_key="label", channel_to_remove=1):
@@ -27,18 +27,22 @@ class RemoveSegChannelAxis(YuccaTransform):
 
 
 class NumpyToTorch(YuccaTransform):
-    def __init__(self, data_key="image", label_key="label", label_dtype="int"):
+    def __init__(self, data_key="image", label_key="label", label_dtype: Optional[torch.dtype]=None):
         self.data_key = data_key
         self.label_key = label_key
         self.label_dtype = label_dtype
 
-        if self.label_dtype == "int":
+    def get_params(self, label):
+        if self.label_dtype is not None or if label is None: # Nothing to infer here.
+            return 
+        if isinstance(label, list): # We just want to look at the first array
+            label = label[0]
+        if isinstance(label, np.floating):
+            self.label_dtype = torch.float32
+        else:
             self.label_dtype = torch.int32
-        elif self.label_dtype == "float":
-            self.label_dtype = torch.float32  # TODO: Change this...
-
-    def get_params(self):
-        pass
+        
+        
 
     def __convert__(self, datadict):
         data = torch.tensor(datadict[self.data_key], dtype=torch.float32)
@@ -60,6 +64,7 @@ class NumpyToTorch(YuccaTransform):
             data_len == 5 or data_len == 4 or data_len == 3  # (B, C, H, W, D)  # (C, H, W, D) or (B, C, H, W)  # (C, H, W)
         ), f"Incorrect data size or shape.\
             \nShould be (B, C, X, Y, Z) or (B, C, X, Y) or (C, X, Y, Z) or (C, X, Y) and is: {data_len}"
+        self.get_params(data_dict.get(self.label_key))
         data_dict = self.__convert__(data_dict)
         return data_dict
 
