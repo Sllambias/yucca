@@ -24,13 +24,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         self.patch_size = patch_size
         self.task_type = task_type
         assert task_type in ["classification", "segmentation", "self-supervised", "contrastive"]
-
         self.label_dtype = label_dtype
-        if self.label_dtype is None:
-            if self.task_type in ["segmentation", "classification"]:
-                self.label_dtype = torch.int32
-            elif self.task_type in ["contrastive", "self-supervised"] and Masking in composed_transforms:
-                self.label_dtype = torch.float32
 
         self.already_loaded_cases = {}
         self.croppad = CropPad(patch_size=self.patch_size, p_oversample_foreground=0.33)
@@ -100,9 +94,9 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         elif self.task_type == "self-supervised":
             data_dict = {"image": data, "label": None}
         elif self.task_type == "contrastive":
-            aug1 = self._transform({"image": data, "label": None}, case)["image"]
-            aug2 = self._transform({"image": data, "label": None}, case)["image"]
-            return {"image": (aug1, aug2)}
+            view1 = self._transform({"image": data, "label": None}, case)["image"]
+            view2 = self._transform({"image": data, "label": None}, case)["image"]
+            return {"image": (view1, view2)}
         else:
             logging.error(f"Task Type not recognized. Found {self.task_type}")
         return self._transform(data_dict, case)
