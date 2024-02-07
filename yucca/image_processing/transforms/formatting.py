@@ -37,10 +37,12 @@ class NumpyToTorch(YuccaTransform):
             return 
         if isinstance(label, list): # We just want to look at the first array
             label = label[0]
-        if isinstance(label, np.floating):
+        if np.issubdtype(label.dtype, (np.floating, float)):
             self.label_dtype = torch.float32
-        else:
+        elif np.issubdtype(label.dtype, int):
             self.label_dtype = torch.int32
+        else:
+            self.label_dtype = None # Then we let Torch infer.
 
     def __convert__(self, datadict):
         data = torch.tensor(datadict[self.data_key], dtype=torch.float32)
