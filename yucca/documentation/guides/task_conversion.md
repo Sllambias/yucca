@@ -10,8 +10,8 @@ The raw data used by Yucca is expected to have a specific format. To convert a d
 ### The `raw_data` Directory
 Yucca expects raw data to be located in subdirectories of the `raw_data` directory. The name of the subdirectory for a given dataset should be its Task Name (see below).
 
-### Task Names 
-Datasets must be assigned a Task Name of the format `TaskXXX_MYTASK` where `XXX` is a unique 3-digit identifier and `MYTASK` is a freely chosen dataset name. 
+### Task Names
+Datasets must be assigned a Task Name of the format `TaskXXX_MYTASK` where `XXX` is a unique 3-digit identifier and `MYTASK` is a freely chosen dataset name.
 For instance, the OASIS hippocampus segmentation dataset is called `Task001_OASIS`. Which means that Yucca will assume raw data can be found at; `raw_data/Task001_OASIS`
 
 ### Train/Test Split
