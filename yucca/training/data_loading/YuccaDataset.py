@@ -27,6 +27,8 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
 
         self.already_loaded_cases = {}
 
+        # for segmentation and classification we override the default None
+        # because arrays are saved as floats and we want them to be ints.
         if self.label_dtype is None:
             if self.task_type in ["segmentation", "classification"]:
                 self.label_dtype = torch.int32
