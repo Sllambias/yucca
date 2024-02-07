@@ -43,7 +43,7 @@ class NumpyToTorch(YuccaTransform):
         elif np.issubdtype(label.dtype, int):
             self.label_dtype = torch.int32
         else:
-            self.label_dtype = None # Then we let Torch infer.
+            self.label_dtype = None  # Then we let Torch infer.
 
     def __convert__(self, datadict):
         data = torch.tensor(datadict[self.data_key], dtype=torch.float32)
