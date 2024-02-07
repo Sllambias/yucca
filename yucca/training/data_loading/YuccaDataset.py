@@ -26,6 +26,11 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         self.label_dtype = label_dtype
 
         self.already_loaded_cases = {}
+
+        if self.label_dtype is None:
+            if self.task_type in ["segmentation", "classification"]:
+                self.label_dtype = torch.int32
+
         self.croppad = CropPad(patch_size=self.patch_size, p_oversample_foreground=0.33)
         self.to_torch = NumpyToTorch(label_dtype=self.label_dtype)
 
