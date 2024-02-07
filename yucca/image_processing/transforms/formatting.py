@@ -3,6 +3,7 @@ import torch
 from yucca.image_processing.transforms.YuccaTransform import YuccaTransform
 from typing import Optional
 
+
 class RemoveSegChannelAxis(YuccaTransform):
     def __init__(self, label_key="label", channel_to_remove=1):
         self.label_key = label_key
@@ -27,15 +28,15 @@ class RemoveSegChannelAxis(YuccaTransform):
 
 
 class NumpyToTorch(YuccaTransform):
-    def __init__(self, data_key="image", label_key="label", label_dtype: Optional[torch.dtype]=None):
+    def __init__(self, data_key="image", label_key="label", label_dtype: Optional[torch.dtype] = None):
         self.data_key = data_key
         self.label_key = label_key
         self.label_dtype = label_dtype
 
     def get_params(self, label):
-        if self.label_dtype is not None or label is None: # Nothing to infer here.
-            return 
-        if isinstance(label, list): # We just want to look at the first array
+        if self.label_dtype is not None or label is None:  # Nothing to infer here.
+            return
+        if isinstance(label, list):  # We just want to look at the first array
             label = label[0]
         if np.issubdtype(label.dtype, (np.floating, float)):
             self.label_dtype = torch.float32
