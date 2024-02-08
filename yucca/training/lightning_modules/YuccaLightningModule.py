@@ -92,7 +92,7 @@ class YuccaLightningModule(L.LightningModule):
             )
             _default_loss = "DiceCE"
 
-        if self.task_type == "unsupervised":
+        if self.task_type == "self-supervised":
             self.train_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
             self.val_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
             _default_loss = "MSE"
