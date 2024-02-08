@@ -20,8 +20,7 @@ env:
   YUCCA_SOURCE: "/home/runner/work/yucca/tests/data"
 
 jobs:
-  build:
-
+  code-formatting:
     runs-on: ubuntu-latest
 
     steps:
