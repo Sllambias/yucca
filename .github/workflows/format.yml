@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  formatting:
+  format:
     runs-on: ubuntu-latest
 
     steps:
