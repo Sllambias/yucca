@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  linting:
+  lint:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
