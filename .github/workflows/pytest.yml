@@ -12,13 +12,6 @@ on:
 permissions:
   contents: read
 
-env:
-  YUCCA_RAW_DATA: "./yucca_raw_data"
-  YUCCA_PREPROCESSED_DATA: "/home/runner/work/yucca/tests/data"
-  YUCCA_MODELS: "/home/runner/work/yucca/tests/data"
-  YUCCA_RESULTS: "/home/runner/work/yucca/tests/data/"
-  YUCCA_SOURCE: "/home/runner/work/yucca/tests/data"
-
 jobs:
   pytest:
 
