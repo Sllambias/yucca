@@ -25,7 +25,7 @@ jobs:
         cache: 'pip' # caching pip dependencies
     - name: Install dependencies
       run: |
-        pip install .
+        pip install .[test]
     - name: Test with pytest
       run: |
         pytest
