@@ -1,0 +1,38 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Python application
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+env:
+  YUCCA_RAW_DATA: "./yucca_raw_data"
+  YUCCA_PREPROCESSED_DATA: "/home/runner/work/yucca/tests/data"
+  YUCCA_MODELS: "/home/runner/work/yucca/tests/data"
+  YUCCA_RESULTS: "/home/runner/work/yucca/tests/data/"
+  YUCCA_SOURCE: "/home/runner/work/yucca/tests/data"
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip' # caching pip dependencies
+    - name: Install dependencies
+      run: |
+        pip install black
+    - name: Run black
+      run: |
+        black --check --verbose yucca
