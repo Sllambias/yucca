@@ -93,16 +93,18 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         case = self.all_cases[idx]
         data = self.load_and_maybe_keep_volume(case)
+        data_dict = {"case_name"; case}
         if self.task_type == "classification":
-            data_dict = {"image": data[:-1][0], "label": data[-1:][0]}
+            data_dict.update({"image": data[:-1][0], "label": data[-1:][0]})
         elif self.task_type == "segmentation":
-            data_dict = {"image": data[:-1], "label": data[-1:]}
+            data_dict.update({"image": data[:-1], "label": data[-1:]})
         elif self.task_type == "self-supervised":
-            data_dict = {"image": data, "label": None}
+            data_dict.update({"image": data, "label": None})
         elif self.task_type == "contrastive":
             view1 = self._transform({"image": data, "label": None}, case)["image"]
             view2 = self._transform({"image": data, "label": None}, case)["image"]
-            return {"image": (view1, view2)}
+            data_dict.update({"image": (view1, view2)})
+            return data_dict
         else:
             logging.error(f"Task Type not recognized. Found {self.task_type}")
         return self._transform(data_dict, case)
