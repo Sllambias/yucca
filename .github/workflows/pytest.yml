@@ -12,15 +12,8 @@ on:
 permissions:
   contents: read
 
-env:
-  YUCCA_RAW_DATA: "./yucca_raw_data"
-  YUCCA_PREPROCESSED_DATA: "/home/runner/work/yucca/tests/data"
-  YUCCA_MODELS: "/home/runner/work/yucca/tests/data"
-  YUCCA_RESULTS: "/home/runner/work/yucca/tests/data/"
-  YUCCA_SOURCE: "/home/runner/work/yucca/tests/data"
-
 jobs:
-  build:
+  pytest:
 
     runs-on: ubuntu-latest
 
@@ -32,15 +25,7 @@ jobs:
         cache: 'pip' # caching pip dependencies
     - name: Install dependencies
       run: |
-        pip install .
         pip install .[test]
-    - name: Lint with flake8
-      run: |
-        # Check syntax errors
-        flake8 yucca --count --select=E9,F63,F7,F82,U100,E711,E712,E713,E714,E721,F401,F402,F405,F811,F821,F822,F823,F831,F841,F901, --show-source --statistics
-    - name: Run black
-      run: |
-        black --check --verbose yucca
     - name: Test with pytest
       run: |
         pytest
