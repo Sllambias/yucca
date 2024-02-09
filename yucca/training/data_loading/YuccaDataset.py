@@ -93,7 +93,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         case = self.all_cases[idx]
         data = self.load_and_maybe_keep_volume(case)
-        data_dict = {"case_name": case}
+        data_dict = {"case_name": case}  # metadata that can be very useful for debugging.
         if self.task_type == "classification":
             data_dict.update({"image": data[:-1][0], "label": data[-1:][0]})
         elif self.task_type == "segmentation":
