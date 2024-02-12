@@ -23,7 +23,7 @@ class MedNeXt(YuccaNet):
         input_channels: int,
         num_classes: int = 1,
         conv_op=None,
-        n_channels: int = 32,
+        starting_filters: int = 32,
         exp_r=[3, 4, 8, 8, 8, 8, 8, 4, 3],  # Expansion ratio as in Swin Transformers
         kernel_size: int = 5,  # Ofcourse can test kernel_size
         enc_kernel_size: int = None,
@@ -64,15 +64,15 @@ class MedNeXt(YuccaNet):
         else:
             dim = "3d"
 
-        self.stem = conv_op(input_channels, n_channels, kernel_size=1)
+        self.stem = conv_op(input_channels, starting_filters, kernel_size=1)
         if isinstance(exp_r, int):
             exp_r = [exp_r for i in range(len(block_counts))]
 
         self.enc_block_0 = nn.Sequential(
             *[
                 MedNeXtBlock(
-                    in_channels=n_channels,
-                    out_channels=n_channels,
+                    in_channels=starting_filters,
+                    out_channels=starting_filters,
                     exp_r=exp_r[0],
                     kernel_size=enc_kernel_size,
                     do_res=do_res,
@@ -85,8 +85,8 @@ class MedNeXt(YuccaNet):
         )
 
         self.down_0 = MedNeXtDownBlock(
-            in_channels=n_channels,
-            out_channels=2 * n_channels,
+            in_channels=starting_filters,
+            out_channels=2 * starting_filters,
             exp_r=exp_r[1],
             kernel_size=enc_kernel_size,
             do_res=do_res_up_down,
@@ -97,8 +97,8 @@ class MedNeXt(YuccaNet):
         self.enc_block_1 = nn.Sequential(
             *[
                 MedNeXtBlock(
-                    in_channels=n_channels * 2,
-                    out_channels=n_channels * 2,
+                    in_channels=starting_filters * 2,
+                    out_channels=starting_filters * 2,
                     exp_r=exp_r[1],
                     kernel_size=enc_kernel_size,
                     do_res=do_res,
@@ -111,8 +111,8 @@ class MedNeXt(YuccaNet):
         )
 
         self.down_1 = MedNeXtDownBlock(
-            in_channels=2 * n_channels,
-            out_channels=4 * n_channels,
+            in_channels=2 * starting_filters,
+            out_channels=4 * starting_filters,
             exp_r=exp_r[2],
             kernel_size=enc_kernel_size,
             do_res=do_res_up_down,
@@ -124,8 +124,8 @@ class MedNeXt(YuccaNet):
         self.enc_block_2 = nn.Sequential(
             *[
                 MedNeXtBlock(
-                    in_channels=n_channels * 4,
-                    out_channels=n_channels * 4,
+                    in_channels=starting_filters * 4,
+                    out_channels=starting_filters * 4,
                     exp_r=exp_r[2],
                     kernel_size=enc_kernel_size,
                     do_res=do_res,
@@ -138,8 +138,8 @@ class MedNeXt(YuccaNet):
         )
 
         self.down_2 = MedNeXtDownBlock(
-            in_channels=4 * n_channels,
-            out_channels=8 * n_channels,
+            in_channels=4 * starting_filters,
+            out_channels=8 * starting_filters,
             exp_r=exp_r[3],
             kernel_size=enc_kernel_size,
             do_res=do_res_up_down,
@@ -151,8 +151,8 @@ class MedNeXt(YuccaNet):
         self.enc_block_3 = nn.Sequential(
             *[
                 MedNeXtBlock(
-                    in_channels=n_channels * 8,
-                    out_channels=n_channels * 8,
+                    in_channels=starting_filters * 8,
+                    out_channels=starting_filters * 8,
                     exp_r=exp_r[3],
                     kernel_size=enc_kernel_size,
                     do_res=do_res,
@@ -165,8 +165,8 @@ class MedNeXt(YuccaNet):
         )
 
         self.down_3 = MedNeXtDownBlock(
-            in_channels=8 * n_channels,
-            out_channels=16 * n_channels,
+            in_channels=8 * starting_filters,
+            out_channels=16 * starting_filters,
             exp_r=exp_r[4],
             kernel_size=enc_kernel_size,
             do_res=do_res_up_down,
@@ -178,8 +178,8 @@ class MedNeXt(YuccaNet):
         self.bottleneck = nn.Sequential(
             *[
                 MedNeXtBlock(
-                    in_channels=n_channels * 16,
-                    out_channels=n_channels * 16,
+                    in_channels=starting_filters * 16,
+                    out_channels=starting_filters * 16,
                     exp_r=exp_r[4],
                     kernel_size=dec_kernel_size,
                     do_res=do_res,
@@ -192,8 +192,8 @@ class MedNeXt(YuccaNet):
         )
 
         self.up_3 = MedNeXtUpBlock(
-            in_channels=16 * n_channels,
-            out_channels=8 * n_channels,
+            in_channels=16 * starting_filters,
+            out_channels=8 * starting_filters,
             exp_r=exp_r[5],
             kernel_size=dec_kernel_size,
             do_res=do_res_up_down,
@@ -205,8 +205,8 @@ class MedNeXt(YuccaNet):
         self.dec_block_3 = nn.Sequential(
             *[
                 MedNeXtBlock(
-                    in_channels=n_channels * 8,
-                    out_channels=n_channels * 8,
+                    in_channels=starting_filters * 8,
+                    out_channels=starting_filters * 8,
                     exp_r=exp_r[5],
                     kernel_size=dec_kernel_size,
                     do_res=do_res,
@@ -219,8 +219,8 @@ class MedNeXt(YuccaNet):
         )
 
         self.up_2 = MedNeXtUpBlock(
-            in_channels=8 * n_channels,
-            out_channels=4 * n_channels,
+            in_channels=8 * starting_filters,
+            out_channels=4 * starting_filters,
             exp_r=exp_r[6],
             kernel_size=dec_kernel_size,
             do_res=do_res_up_down,
@@ -232,8 +232,8 @@ class MedNeXt(YuccaNet):
         self.dec_block_2 = nn.Sequential(
             *[
                 MedNeXtBlock(
-                    in_channels=n_channels * 4,
-                    out_channels=n_channels * 4,
+                    in_channels=starting_filters * 4,
+                    out_channels=starting_filters * 4,
                     exp_r=exp_r[6],
                     kernel_size=dec_kernel_size,
                     do_res=do_res,
@@ -246,8 +246,8 @@ class MedNeXt(YuccaNet):
         )
 
         self.up_1 = MedNeXtUpBlock(
-            in_channels=4 * n_channels,
-            out_channels=2 * n_channels,
+            in_channels=4 * starting_filters,
+            out_channels=2 * starting_filters,
             exp_r=exp_r[7],
             kernel_size=dec_kernel_size,
             do_res=do_res_up_down,
@@ -259,8 +259,8 @@ class MedNeXt(YuccaNet):
         self.dec_block_1 = nn.Sequential(
             *[
                 MedNeXtBlock(
-                    in_channels=n_channels * 2,
-                    out_channels=n_channels * 2,
+                    in_channels=starting_filters * 2,
+                    out_channels=starting_filters * 2,
                     exp_r=exp_r[7],
                     kernel_size=dec_kernel_size,
                     do_res=do_res,
@@ -273,8 +273,8 @@ class MedNeXt(YuccaNet):
         )
 
         self.up_0 = MedNeXtUpBlock(
-            in_channels=2 * n_channels,
-            out_channels=n_channels,
+            in_channels=2 * starting_filters,
+            out_channels=starting_filters,
             exp_r=exp_r[8],
             kernel_size=dec_kernel_size,
             do_res=do_res_up_down,
@@ -286,8 +286,8 @@ class MedNeXt(YuccaNet):
         self.dec_block_0 = nn.Sequential(
             *[
                 MedNeXtBlock(
-                    in_channels=n_channels,
-                    out_channels=n_channels,
+                    in_channels=starting_filters,
+                    out_channels=starting_filters,
                     exp_r=exp_r[8],
                     kernel_size=dec_kernel_size,
                     do_res=do_res,
@@ -299,16 +299,16 @@ class MedNeXt(YuccaNet):
             ]
         )
 
-        self.out_0 = OutBlock(in_channels=n_channels, n_classes=self.num_classes, dim=dim)
+        self.out_0 = OutBlock(in_channels=starting_filters, n_classes=self.num_classes, dim=dim)
 
         # Used to fix PyTorch checkpointing bug
         self.dummy_tensor = nn.Parameter(torch.tensor([1.0]), requires_grad=True)
 
         if self.deep_supervision:
-            self.out_1 = OutBlock(in_channels=n_channels * 2, n_classes=self.num_classes, dim=dim)
-            self.out_2 = OutBlock(in_channels=n_channels * 4, n_classes=self.num_classes, dim=dim)
-            self.out_3 = OutBlock(in_channels=n_channels * 8, n_classes=self.num_classes, dim=dim)
-            self.out_4 = OutBlock(in_channels=n_channels * 16, n_classes=self.num_classes, dim=dim)
+            self.out_1 = OutBlock(in_channels=starting_filters * 2, n_classes=self.num_classes, dim=dim)
+            self.out_2 = OutBlock(in_channels=starting_filters * 4, n_classes=self.num_classes, dim=dim)
+            self.out_3 = OutBlock(in_channels=starting_filters * 8, n_classes=self.num_classes, dim=dim)
+            self.out_4 = OutBlock(in_channels=starting_filters * 16, n_classes=self.num_classes, dim=dim)
 
         self.block_counts = block_counts
 
@@ -428,7 +428,7 @@ class MedNeXt_Modular(YuccaNet):
         input_channels: int,
         num_classes: int = 1,
         conv_op=None,
-        n_channels: int = 32,
+        starting_filters: int = 32,
         exp_r=[3, 4, 8, 8, 8, 8, 8, 4, 3],  # Expansion ratio as in Swin Transformers
         kernel_size: int = 5,  # Ofcourse can test kernel_size
         enc_kernel_size: int = None,
@@ -457,7 +457,7 @@ class MedNeXt_Modular(YuccaNet):
             input_channels=input_channels,
             num_classes=num_classes,
             conv_op=conv_op,
-            n_channels=n_channels,
+            starting_filters=starting_filters,
             kernel_size=kernel_size,
             enc_kernel_size=enc_kernel_size,
             dec_kernel_size=dec_kernel_size,
@@ -473,7 +473,7 @@ class MedNeXt_Modular(YuccaNet):
             input_channels=input_channels,
             num_classes=num_classes,
             conv_op=conv_op,
-            n_channels=n_channels,
+            starting_filters=starting_filters,
             kernel_size=kernel_size,
             enc_kernel_size=enc_kernel_size,
             dec_kernel_size=dec_kernel_size,
@@ -498,7 +498,7 @@ class MedNeXt_encoder(nn.Module):
         input_channels: int,
         num_classes: int = 1,
         conv_op=None,
-        n_channels: int = 32,
+        starting_filters: int = 32,
         exp_r=[3, 4, 8, 8, 8, 8, 8, 4, 3],  # Expansion ratio as in Swin Transformers
         kernel_size: int = 5,  # Ofcourse can test kernel_size
         enc_kernel_size: int = None,
@@ -539,15 +539,15 @@ class MedNeXt_encoder(nn.Module):
         else:
             dim = "3d"
 
-        self.stem = conv_op(input_channels, n_channels, kernel_size=1)
+        self.stem = conv_op(input_channels, starting_filters, kernel_size=1)
         if isinstance(exp_r, int):
             exp_r = [exp_r for i in range(len(block_counts))]
 
         self.enc_block_0 = nn.Sequential(
             *[
                 MedNeXtBlock(
-                    in_channels=n_channels,
-                    out_channels=n_channels,
+                    in_channels=starting_filters,
+                    out_channels=starting_filters,
                     exp_r=exp_r[0],
                     kernel_size=enc_kernel_size,
                     do_res=do_res,
@@ -560,8 +560,8 @@ class MedNeXt_encoder(nn.Module):
         )
 
         self.down_0 = MedNeXtDownBlock(
-            in_channels=n_channels,
-            out_channels=2 * n_channels,
+            in_channels=starting_filters,
+            out_channels=2 * starting_filters,
             exp_r=exp_r[1],
             kernel_size=enc_kernel_size,
             do_res=do_res_up_down,
@@ -572,8 +572,8 @@ class MedNeXt_encoder(nn.Module):
         self.enc_block_1 = nn.Sequential(
             *[
                 MedNeXtBlock(
-                    in_channels=n_channels * 2,
-                    out_channels=n_channels * 2,
+                    in_channels=starting_filters * 2,
+                    out_channels=starting_filters * 2,
                     exp_r=exp_r[1],
                     kernel_size=enc_kernel_size,
                     do_res=do_res,
@@ -586,8 +586,8 @@ class MedNeXt_encoder(nn.Module):
         )
 
         self.down_1 = MedNeXtDownBlock(
-            in_channels=2 * n_channels,
-            out_channels=4 * n_channels,
+            in_channels=2 * starting_filters,
+            out_channels=4 * starting_filters,
             exp_r=exp_r[2],
             kernel_size=enc_kernel_size,
             do_res=do_res_up_down,
@@ -599,8 +599,8 @@ class MedNeXt_encoder(nn.Module):
         self.enc_block_2 = nn.Sequential(
             *[
                 MedNeXtBlock(
-                    in_channels=n_channels * 4,
-                    out_channels=n_channels * 4,
+                    in_channels=starting_filters * 4,
+                    out_channels=starting_filters * 4,
                     exp_r=exp_r[2],
                     kernel_size=enc_kernel_size,
                     do_res=do_res,
@@ -613,8 +613,8 @@ class MedNeXt_encoder(nn.Module):
         )
 
         self.down_2 = MedNeXtDownBlock(
-            in_channels=4 * n_channels,
-            out_channels=8 * n_channels,
+            in_channels=4 * starting_filters,
+            out_channels=8 * starting_filters,
             exp_r=exp_r[3],
             kernel_size=enc_kernel_size,
             do_res=do_res_up_down,
@@ -626,8 +626,8 @@ class MedNeXt_encoder(nn.Module):
         self.enc_block_3 = nn.Sequential(
             *[
                 MedNeXtBlock(
-                    in_channels=n_channels * 8,
-                    out_channels=n_channels * 8,
+                    in_channels=starting_filters * 8,
+                    out_channels=starting_filters * 8,
                     exp_r=exp_r[3],
                     kernel_size=enc_kernel_size,
                     do_res=do_res,
@@ -640,8 +640,8 @@ class MedNeXt_encoder(nn.Module):
         )
 
         self.down_3 = MedNeXtDownBlock(
-            in_channels=8 * n_channels,
-            out_channels=16 * n_channels,
+            in_channels=8 * starting_filters,
+            out_channels=16 * starting_filters,
             exp_r=exp_r[4],
             kernel_size=enc_kernel_size,
             do_res=do_res_up_down,
@@ -653,8 +653,8 @@ class MedNeXt_encoder(nn.Module):
         self.bottleneck = nn.Sequential(
             *[
                 MedNeXtBlock(
-                    in_channels=n_channels * 16,
-                    out_channels=n_channels * 16,
+                    in_channels=starting_filters * 16,
+                    out_channels=starting_filters * 16,
                     exp_r=exp_r[4],
                     kernel_size=dec_kernel_size,
                     do_res=do_res,
@@ -706,7 +706,7 @@ class MedNeXt_decoder(nn.Module):
         input_channels: int,
         num_classes: int = 1,
         conv_op=None,
-        n_channels: int = 32,
+        starting_filters: int = 32,
         exp_r=[3, 4, 8, 8, 8, 8, 8, 4, 3],  # Expansion ratio as in Swin Transformers
         kernel_size: int = 5,  # Ofcourse can test kernel_size
         enc_kernel_size: int = None,
@@ -747,13 +747,13 @@ class MedNeXt_decoder(nn.Module):
         else:
             dim = "3d"
 
-        self.stem = conv_op(input_channels, n_channels, kernel_size=1)
+        self.stem = conv_op(input_channels, starting_filters, kernel_size=1)
         if isinstance(exp_r, int):
             exp_r = [exp_r for i in range(len(block_counts))]
 
         self.up_3 = MedNeXtUpBlock(
-            in_channels=16 * n_channels,
-            out_channels=8 * n_channels,
+            in_channels=16 * starting_filters,
+            out_channels=8 * starting_filters,
             exp_r=exp_r[5],
             kernel_size=dec_kernel_size,
             do_res=do_res_up_down,
@@ -765,8 +765,8 @@ class MedNeXt_decoder(nn.Module):
         self.dec_block_3 = nn.Sequential(
             *[
                 MedNeXtBlock(
-                    in_channels=n_channels * 8,
-                    out_channels=n_channels * 8,
+                    in_channels=starting_filters * 8,
+                    out_channels=starting_filters * 8,
                     exp_r=exp_r[5],
                     kernel_size=dec_kernel_size,
                     do_res=do_res,
@@ -779,8 +779,8 @@ class MedNeXt_decoder(nn.Module):
         )
 
         self.up_2 = MedNeXtUpBlock(
-            in_channels=8 * n_channels,
-            out_channels=4 * n_channels,
+            in_channels=8 * starting_filters,
+            out_channels=4 * starting_filters,
             exp_r=exp_r[6],
             kernel_size=dec_kernel_size,
             do_res=do_res_up_down,
@@ -792,8 +792,8 @@ class MedNeXt_decoder(nn.Module):
         self.dec_block_2 = nn.Sequential(
             *[
                 MedNeXtBlock(
-                    in_channels=n_channels * 4,
-                    out_channels=n_channels * 4,
+                    in_channels=starting_filters * 4,
+                    out_channels=starting_filters * 4,
                     exp_r=exp_r[6],
                     kernel_size=dec_kernel_size,
                     do_res=do_res,
@@ -806,8 +806,8 @@ class MedNeXt_decoder(nn.Module):
         )
 
         self.up_1 = MedNeXtUpBlock(
-            in_channels=4 * n_channels,
-            out_channels=2 * n_channels,
+            in_channels=4 * starting_filters,
+            out_channels=2 * starting_filters,
             exp_r=exp_r[7],
             kernel_size=dec_kernel_size,
             do_res=do_res_up_down,
@@ -819,8 +819,8 @@ class MedNeXt_decoder(nn.Module):
         self.dec_block_1 = nn.Sequential(
             *[
                 MedNeXtBlock(
-                    in_channels=n_channels * 2,
-                    out_channels=n_channels * 2,
+                    in_channels=starting_filters * 2,
+                    out_channels=starting_filters * 2,
                     exp_r=exp_r[7],
                     kernel_size=dec_kernel_size,
                     do_res=do_res,
@@ -833,8 +833,8 @@ class MedNeXt_decoder(nn.Module):
         )
 
         self.up_0 = MedNeXtUpBlock(
-            in_channels=2 * n_channels,
-            out_channels=n_channels,
+            in_channels=2 * starting_filters,
+            out_channels=starting_filters,
             exp_r=exp_r[8],
             kernel_size=dec_kernel_size,
             do_res=do_res_up_down,
@@ -846,8 +846,8 @@ class MedNeXt_decoder(nn.Module):
         self.dec_block_0 = nn.Sequential(
             *[
                 MedNeXtBlock(
-                    in_channels=n_channels,
-                    out_channels=n_channels,
+                    in_channels=starting_filters,
+                    out_channels=starting_filters,
                     exp_r=exp_r[8],
                     kernel_size=dec_kernel_size,
                     do_res=do_res,
@@ -859,7 +859,7 @@ class MedNeXt_decoder(nn.Module):
             ]
         )
 
-        self.out_0 = OutBlock(in_channels=n_channels, n_classes=self.num_classes, dim=dim)
+        self.out_0 = OutBlock(in_channels=starting_filters, n_classes=self.num_classes, dim=dim)
 
         # Used to fix PyTorch checkpointing bug
         self.dummy_tensor = nn.Parameter(torch.tensor([1.0]), requires_grad=True)
@@ -932,16 +932,13 @@ class MedNeXt_decoder(nn.Module):
         return x
 
 
-import torch.nn as nn
-import torch
+if __name__ == "__main__":
+    import torch.nn as nn
+    import torch
 
-inp = torch.zeros((1, 1, 32, 32))
-# enc = MedNeXt_encoder(input_channels=1, conv_op=nn.Conv2d, n_channels=3)
-# dec = MedNeXt_decoder(input_channels=1, conv_op=nn.Conv2d, n_channels=3)
-full = MedNeXt_Modular(input_channels=1, conv_op=nn.Conv2d, n_channels=3)
-# encout = enc(inp)
-# decout = dec(encout)
+    inp = torch.zeros((1, 1, 32, 32))
+    full = MedNeXt_Modular(input_channels=1, conv_op=nn.Conv2d, starting_filters=3)
 
-fullout = full(inp)
+    fullout = full(inp)
 
 # %%
