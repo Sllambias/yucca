@@ -21,7 +21,7 @@ from yucca.network_architectures.blocks_and_layers.complex_layers import (
     GTReLU,
     ConjugateLayer,
 )
-
+from yucca.network_architectures.networks.YuccaNet import YuccaNet
 
 class ConvNormNonlin(nn.Module):
     def __init__(self, input_channels, output_channels, stride, mode, conv_type, depth):
@@ -117,11 +117,13 @@ class StackedConvLayers(nn.Module):
         return self.blocks(x)
 
 
-class ComplexUNet(nn.Module):
+class ComplexUNet(YuccaNet):
     def __init__(
         self, input_channels, base_num_features=32, num_layers=3, do_ds=False, mode='complex', conv_type='fast'
     ):
         super(ComplexUNet, self).__init__()
+
+        self.num_classes=3
 
         self.conv_blocks_context = (
             []
