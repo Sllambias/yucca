@@ -6,7 +6,7 @@ import gzip
 from yucca.paths import yucca_raw_data
 
 
-def convert(path: str, subdir: str = "OASIS"):
+def convert(path: str, subdir: str = "HarP"):
     # INPUT DATA
     path = f"{path}/{subdir}"
     file_suffix = ".nii"
@@ -69,3 +69,6 @@ def convert(path: str, subdir: str = "OASIS"):
         dataset_description="HarP Dataset",
         dataset_reference="",
     )
+
+if __name__=="__main__":
+    convert()

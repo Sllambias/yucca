@@ -8,6 +8,7 @@ from batchgenerators.utilities.file_and_folder_operations import subfiles, join,
 from sklearn.metrics import confusion_matrix
 from yucca.evaluation.metrics import (
     dice,
+    jaccard, 
     sensitivity,
     precision,
     TP,
@@ -30,6 +31,7 @@ class YuccaEvaluator(object):
         self.name = "results"
         self.metrics = {
             "Dice": dice,
+            "Jaccard": jaccard,
             "Sensitivity": sensitivity,
             "Precision": precision,
             "Volume Similarity": volume_similarity,
@@ -57,6 +59,7 @@ class YuccaEvaluator(object):
 
         self.metrics_included_in_streamtable = [
             "Dice",
+            "Jaccard",
             "Sensitivity",
             "Precision",
             "Volume Similarity",
