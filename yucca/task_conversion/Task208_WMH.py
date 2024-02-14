@@ -9,7 +9,7 @@ def convert(path: str, subdir: str = "WMH"):
     path = join(path, subdir)
 
     """ OUTPUT DATA - Define the task name and prefix """
-    task_name = "Task208_WMH_NoLabel"
+    task_name = "Task208_WMH"
     task_prefix = "WMH"
 
     datasets = ["Amsterdam", "Singapore", "Utrecht"]
