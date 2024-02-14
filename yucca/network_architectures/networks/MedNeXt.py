@@ -1,4 +1,3 @@
-# %%
 import torch
 import torch.nn as nn
 import torch.utils.checkpoint as checkpoint
@@ -458,6 +457,7 @@ class MedNeXt_Modular(YuccaNet):
             num_classes=num_classes,
             conv_op=conv_op,
             starting_filters=starting_filters,
+            exp_r=exp_r,
             kernel_size=kernel_size,
             enc_kernel_size=enc_kernel_size,
             dec_kernel_size=dec_kernel_size,
@@ -709,7 +709,6 @@ class MedNeXt_decoder(nn.Module):
         starting_filters: int = 32,
         exp_r=[3, 4, 8, 8, 8, 8, 8, 4, 3],  # Expansion ratio as in Swin Transformers
         kernel_size: int = 5,  # Ofcourse can test kernel_size
-        enc_kernel_size: int = None,
         dec_kernel_size: int = None,
         deep_supervision: bool = False,  # Can be used to test deep supervision
         do_res: bool = True,  # Can be used to individually test residual connection
@@ -739,7 +738,6 @@ class MedNeXt_decoder(nn.Module):
         else:
             self.outside_block_checkpointing = False
         if kernel_size is not None:
-            enc_kernel_size = kernel_size
             dec_kernel_size = kernel_size
 
         if conv_op == nn.Conv2d:
@@ -930,15 +928,3 @@ class MedNeXt_decoder(nn.Module):
             x = self.out_0(x)
 
         return x
-
-
-if __name__ == "__main__":
-    import torch.nn as nn
-    import torch
-
-    inp = torch.zeros((1, 1, 32, 32))
-    full = MedNeXt_Modular(input_channels=1, conv_op=nn.Conv2d, starting_filters=3)
-
-    fullout = full(inp)
-
-# %%

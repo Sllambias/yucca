@@ -19,15 +19,8 @@ def convert(path: str, subdir: str = "WMH"):
     target_base = join(yucca_raw_data, task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
-    target_labelsTr = join(target_base, "labelsTr")
-
-    target_imagesTs = join(target_base, "imagesTs")
-    target_labelsTs = join(target_base, "labelsTs")
 
     maybe_mkdir_p(target_imagesTr)
-    maybe_mkdir_p(target_labelsTs)
-    maybe_mkdir_p(target_imagesTs)
-    maybe_mkdir_p(target_labelsTr)
 
     ###Populate Target Directory###
     for dataset in datasets:
@@ -43,48 +36,47 @@ def convert(path: str, subdir: str = "WMH"):
         training_samples = subfolders(train_folder, join=False)
         test_samples = subfolders(test_folder, join=False)
 
-        # First we sort the training data
+        # First we add the data from the training folders
         for sTr in training_samples:
             # Loading relevant modalities and the ground truth
             src_flair_file_path = join(train_folder, sTr, "pre", "FLAIR.nii.gz")
             src_t1_file_path = join(train_folder, sTr, "pre", "T1.nii.gz")
-
             dst_flair_file_path = f"{target_imagesTr}/{task_prefix}_flair_{sTr}_000.nii.gz"
             dst_t1_file_path = f"{target_imagesTr}/{task_prefix}_t1_{sTr}_000.nii.gz"
             shutil.copy2(src_flair_file_path, dst_flair_file_path)
             shutil.copy2(src_t1_file_path, dst_t1_file_path)
 
-        # Now we sort the test data
+        # Then we add the data from the original testing folders
         if dataset == "Amsterdam":
             for site in test_samples:
                 samples = subfolders(join(test_folder, site), join=False)
-                for sTs in samples:
+                for sTr in samples:
                     # Loading relevant modalities and the ground truth
-                    src_flair_file_path = join(train_folder, sTr, "pre", "FLAIR.nii.gz")
-                    src_t1_file_path = join(train_folder, sTr, "pre", "T1.nii.gz")
-
+                    src_flair_file_path = join(test_folder, site, sTr, "pre", "FLAIR.nii.gz")
+                    src_t1_file_path = join(test_folder, site, sTr, "pre", "T1.nii.gz")
                     dst_flair_file_path = f"{target_imagesTr}/{task_prefix}_flair_{sTr}_000.nii.gz"
                     dst_t1_file_path = f"{target_imagesTr}/{task_prefix}_t1_{sTr}_000.nii.gz"
                     shutil.copy2(src_flair_file_path, dst_flair_file_path)
                     shutil.copy2(src_t1_file_path, dst_t1_file_path)
 
         else:
-            for sTs in test_samples:
-                src_image_file_path = join(test_folder, sTs, "pre", "FLAIR.nii.gz")
-                src_label_path = join(test_folder, sTs, "pre", "wmh.nii.gz")
-                dst_image_file_path = f"{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz"
-                dst_label_path = f"{target_labelsTs}/{task_prefix}_{sTs}.nii.gz"
-                shutil.copy2(src_image_file_path, dst_image_file_path)
-                shutil.copy2(src_label_path, dst_label_path)
+            for sTr in test_samples:
+                # Loading relevant modalities and the ground truth
+                src_flair_file_path = join(test_folder, sTr, "pre", "FLAIR.nii.gz")
+                src_t1_file_path = join(test_folder, sTr, "pre", "T1.nii.gz")
+                dst_flair_file_path = f"{target_imagesTr}/{task_prefix}_flair_{sTr}_000.nii.gz"
+                dst_t1_file_path = f"{target_imagesTr}/{task_prefix}_t1_{sTr}_000.nii.gz"
+                shutil.copy2(src_flair_file_path, dst_flair_file_path)
+                shutil.copy2(src_t1_file_path, dst_t1_file_path)
 
     generate_dataset_json(
         join(target_base, "dataset.json"),
         target_imagesTr,
-        target_imagesTs,
-        ("Flair/T1",),
+        imagesTs_dir=None,
+        modalities=("Flair/T1",),
         labels={},
         dataset_name=task_name,
         license="CC BY-NC 4.0 DEED",
-        dataset_description="White Matter Hyperintensity Segmentation Challenge. Flair images only!",
+        dataset_description="White Matter Hyperintensity Segmentation Challenge. Preprocessed Flair and T1 images and NO labels!",
         dataset_reference="https://dataverse.nl/dataset.xhtml?persistentId=doi:10.34894/AECRSD",
     )
