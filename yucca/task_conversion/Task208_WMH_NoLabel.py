@@ -13,7 +13,7 @@ def convert(path: str, subdir: str = "WMH"):
     task_prefix = "WMH"
 
     datasets = ["Amsterdam", "Singapore", "Utrecht"]
-    site = ""
+    # site = ""
 
     # Target paths
     target_base = join(yucca_raw_data, task_name)
@@ -31,7 +31,7 @@ def convert(path: str, subdir: str = "WMH"):
             tr_folder = "Train"
 
         train_folder = join(dataset_path, tr_folder)
-        test_folder = join(dataset_path, "Test")
+        # test_folder = join(dataset_path, "Test")
 
         training_samples = subfolders(train_folder, join=False)
         # test_samples = subfolders(test_folder, join=False)
