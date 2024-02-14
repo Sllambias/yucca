@@ -1,6 +1,6 @@
 [project]
 name = "yucca"
-version = "0.2.19"
+version = "0.3.1"
 authors = [
   { name="Sebastian Llambias", email="llambias@live.dk" },
   { name="Asbjørn Munk", email="9844416+asbjrnmunk@users.noreply.github.com" },
@@ -36,7 +36,8 @@ dependencies = [
     "wandb",
     "weave",
     "python-dotenv==1.0.0",
-    "monai"
+    "monai",
+    "flake8-unused-arguments"
 ]
 
 [project.optional-dependencies]

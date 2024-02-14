@@ -1,14 +1,12 @@
 import yucca
-import torch
-from batchgenerators.utilities.file_and_folder_operations import join, isdir, subdirs, maybe_mkdir_p, isfile, load_json
+from batchgenerators.utilities.file_and_folder_operations import join, load_json
 from dataclasses import dataclass
 from typing import Union, Literal
-from yucca.paths import yucca_models, yucca_preprocessed_data
 from yucca.preprocessing.UnsupervisedPreprocessor import UnsupervisedPreprocessor
 from yucca.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
-from yucca.training.configuration.configure_paths import PathConfig
 from yucca.utils.dict import without_keys
 from yucca.utils.files_and_folders import recursive_find_python_class
+import logging
 
 
 @dataclass
@@ -30,7 +28,6 @@ class PlanConfig:
 
 def get_plan_config(
     plans_path: str,
-    continue_from_most_recent: bool,
     stage: Literal["fit", "test", "predict"],
     ckpt_plans: Union[dict, None] = None,
 ):
@@ -61,7 +58,7 @@ def get_plan_config(
 def load_plans(plans_path):
     # If plans is still none the ckpt files were either empty/invalid or didn't exist and we load the plans
     # from the preprocessed folder.
-    print("Exhausted other options: loading plans.json")
+    logging.info("Loading plans.json")
     return load_json(plans_path)
 
 
@@ -77,7 +74,7 @@ def setup_task_type(plans):
     if issubclass(preprocessor_class, ClassificationPreprocessor):
         task_type = "classification"
     elif issubclass(preprocessor_class, UnsupervisedPreprocessor):
-        task_type = "unsupervised"
+        task_type = "self-supervised"
     else:
         task_type = "segmentation"
     return task_type

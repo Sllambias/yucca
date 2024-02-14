@@ -4,7 +4,6 @@ import warnings
 import cc3d
 import argparse
 from batchgenerators.utilities.file_and_folder_operations import subfiles, join, save_json
-import nibabel as nib
 
 
 def compute_dice(im1, im2, empty_value=1.0):

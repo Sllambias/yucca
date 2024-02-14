@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-import torch.nn.functional as F
 import nibabel as nib
 import os
 import cc3d
@@ -95,7 +94,9 @@ class YuccaPreprocessor(object):
         self.transpose_forward = np.array(self.plans["transpose_forward"], dtype=int)
         self.transpose_backward = np.array(self.plans["transpose_backward"], dtype=int)
         self.target_spacing = self.plans["target_spacing"]
-        self.target_size = self.plans.get("target_size") if self.plans.get("target_size") else None
+        self.target_size = (
+            np.array(self.plans.get("target_size"), dtype=int) if self.plans.get("target_size") not in ["null", None] else None
+        )
 
     def run(self):
         self.initialize_properties()
@@ -168,6 +169,7 @@ class YuccaPreprocessor(object):
         images = np.vstack((np.array(images), np.array(label)[np.newaxis]))
 
         logging.info(
+            f"Preprocessed case: {subject_id} \n"
             f"size before: {image_props['original_size']} size after: {image_props['new_size']} \n"
             f"spacing before: {image_props['original_spacing']} spacing after: {image_props['new_spacing']} \n"
             f"Saving {subject_id} in {arraypath} \n"
@@ -181,7 +183,6 @@ class YuccaPreprocessor(object):
 
     def _preprocess_train_subject(self, subject_id, label_exists: bool, preprocess_label: bool):
         image_props = {}
-        logging.info(f"Preprocessing: {subject_id}")
 
         # First find relevant images by their paths and save them in the image property pickle
         # Then load them as images
@@ -465,7 +466,6 @@ class YuccaPreprocessor(object):
                 f"len(transpose) == {len(transpose)} \n"
             )
             images[i] = images[i].transpose(transpose)
-            logging.info(f"Transposed with: {transpose} \n")
 
         if label is not None:
             label = label.transpose(transpose)
@@ -588,8 +588,6 @@ class YuccaPreprocessor(object):
             image = images[i]
             assert image is not None
             images[i] = normalizer(image, scheme=norm_op[i], intensities=self.intensities[i])
-
-        logging.info(f"Normalized with: {norm_op[0]} \n")
 
         # Resample to target shape and spacing
         for i in range(len(images)):

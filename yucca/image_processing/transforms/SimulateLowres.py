@@ -1,12 +1,9 @@
 from yucca.image_processing.transforms.YuccaTransform import YuccaTransform
 import numpy as np
-from typing import Tuple
 from skimage.transform import resize
 
 
 class SimulateLowres(YuccaTransform):
-    """ """
-
     def __init__(
         self,
         data_key="image",

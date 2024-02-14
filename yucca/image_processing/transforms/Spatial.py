@@ -2,6 +2,7 @@
 https://www.meccanismocomplesso.org/en/3d-rotations-and-euler-angles-in-python/
 From: https://stackoverflow.com/questions/59738230/apply-rotation-defined-by-euler-angles-to-3d-image-in-python
 """
+
 import numpy as np
 from scipy.ndimage import map_coordinates
 from yucca.image_processing.matrix_ops import (
@@ -17,16 +18,6 @@ from typing import Tuple
 
 
 class Spatial(YuccaTransform):
-    """
-    variables in aug_params:
-            do_Rotation
-            Rotation_p_per_sample
-            Rotation_p_per_channel
-            Rotation_x_rot
-            Rotation_y_rot
-            Rotation_z_rot
-    """
-
     def __init__(
         self,
         data_key="image",

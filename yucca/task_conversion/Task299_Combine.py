@@ -1,9 +1,9 @@
 import os
-from yucca.task_conversion.utils import combine_imagesTr_from_tasks, generate_dataset_json
+from yucca.task_conversion.utils import combine_images_from_tasks, generate_dataset_json
 from yucca.paths import yucca_raw_data
 
 
-def convert(path: str, subdir: str = None):
+def convert(_path: str, _subdir: str = None):
     # Define the name of the new task
     task_name = "Task299_Combine"
 
@@ -14,18 +14,14 @@ def convert(path: str, subdir: str = None):
     # The individual task_conversion scripts must be run prior to executing this, as the script will look for the data in the yucca_raw_data folder.
     tasks_to_combine = ["Task201_PPMI", "Task202_ISLES22", "Task203_OASIS3", "Task205_Hippocampus", "Task206_BrainTumour"]
 
-    ### In most cases the remaining can be left untouched ###
-    # Setting the paths to save the new task and making the directories
     target_base = os.path.join(yucca_raw_data, task_name)
-    target_imagesTr = os.path.join(yucca_raw_data, task_name, "imagesTr")
+    os.makedirs(target_base, exist_ok=True)
 
-    os.makedirs(target_imagesTr, exist_ok=True)
-
-    combine_imagesTr_from_tasks(tasks=tasks_to_combine, target_dir=target_imagesTr)
+    combine_images_from_tasks(tasks=tasks_to_combine, target_base=target_base, run_type="unsupervised")
 
     generate_dataset_json(
         os.path.join(target_base, "dataset.json"),
-        target_imagesTr,
+        target_imagesTr=os.path.join(target_base, "imagesTr"),
         imagesTs_dir=None,
         modalities=["MRI"],
         labels=expected_labels,

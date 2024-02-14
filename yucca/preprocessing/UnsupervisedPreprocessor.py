@@ -1,19 +1,13 @@
 """
 Takes raw data conforming with Yucca standards and preprocesses according to the generic scheme
 """
+
 import numpy as np
 import re
 import os
-import nibabel as nib
 import logging
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
-from yucca.preprocessing.normalization import normalizer
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data
-from yucca.utils.nib_utils import get_nib_spacing, get_nib_orientation, reorient_nib_image
-from yucca.utils.type_conversions import nifti_or_np_to_np
-from yucca.utils.loading import read_file_to_nifti_or_np
-from yucca.image_processing.objects.BoundingBox import get_bbox_for_foreground
-from yucca.image_processing.cropping_and_padding import crop_to_box
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     subfiles,
@@ -45,9 +39,9 @@ class UnsupervisedPreprocessor(YuccaPreprocessor):
         images, _, image_props = self._preprocess_train_subject(subject_id, label_exists=False, preprocess_label=False)
 
         images = np.array(images)
-        final_size = list(images[0].shape)
 
         logging.info(
+            f"Preprocessed case: {subject_id} \n"
             f"size before: {image_props['original_size']} size after: {image_props['new_size']} \n"
             f"spacing before: {image_props['original_spacing']} spacing after: {image_props['new_spacing']} \n"
             f"Saving {subject_id} in {arraypath} \n"

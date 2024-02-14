@@ -251,7 +251,9 @@ class YuccaPlannerZ(YuccaPlanner):
 
 class UnsupervisedPlanner(YuccaPlanner):
     def __init__(self, task, preprocessor=None, threads=2, disable_sanity_checks=False, view=None):
-        super().__init__(task, preprocessor=None, threads=threads, disable_sanity_checks=disable_sanity_checks, view=view)
+        super().__init__(
+            task, preprocessor=preprocessor, threads=threads, disable_sanity_checks=disable_sanity_checks, view=view
+        )
         self.name = str(self.__class__.__name__)
         self.norm_op = "volume_wise_znorm"
         self.preprocessor = "UnsupervisedPreprocessor"  # hard coded
@@ -268,3 +270,14 @@ class YuccaPlannerMinMax(YuccaPlanner):
         )
         self.name = str(self.__class__.__name__)
         self.norm_op = "minmax"
+
+
+class YuccaPlanner_224x224_MinMax(YuccaPlanner):
+    def __init__(self, task, preprocessor="YuccaPreprocessor", threads=2, disable_unittests=False, view=None):
+        super().__init__(task, preprocessor, threads, disable_unittests, view)
+        self.name = str(self.__class__.__name__) + str(view or "")
+        self.norm_op = "255to1"
+
+    def determine_target_size_from_fixed_size_or_spacing(self):
+        self.fixed_target_size = (224, 224)
+        self.fixed_target_spacing = None

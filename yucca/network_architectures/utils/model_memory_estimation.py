@@ -20,19 +20,17 @@ Then for training,
 
 Max memory consumption = m + f*batch_size*b + d*g + o*m
 """
+
 import torch
 import numpy as np
 import yucca
-import yucca
-import warnings
 import math
+from yucca.utils.torch_utils import get_available_device
 from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.utils.kwargs import filter_kwargs
 
 from batchgenerators.utilities.file_and_folder_operations import join
 from torch import nn
-
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 def estimate_memory_training(model, model_input, optimizer_type=torch.optim.Adam, use_amp=True, device=None):
@@ -46,7 +44,7 @@ def estimate_memory_training(model, model_input, optimizer_type=torch.optim.Adam
         use_amp (bool): whether to estimate based on using mixed precision
         device (torch.device): the device to use
     """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device(get_available_device())
     # Reset model and optimizer
     model.cpu()
     optimizer = optimizer_type(model.parameters(), lr=0.001)
@@ -54,7 +52,7 @@ def estimate_memory_training(model, model_input, optimizer_type=torch.optim.Adam
     model.to(device)
     b = torch.cuda.memory_allocated(device)
     model_memory = b - a
-    output = model(model_input.to(device)).sum()
+    _ = model(model_input.to(device)).sum()
     c = torch.cuda.memory_allocated(device)
     if use_amp:
         amp_multiplier = 0.5

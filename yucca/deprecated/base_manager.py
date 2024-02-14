@@ -6,7 +6,7 @@ import sys
 import random
 import yucca
 from time import localtime, strftime, time, mktime
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 from collections import OrderedDict
 from torch import nn, autocast
 from batchgenerators.utilities.file_and_folder_operations import (
@@ -31,7 +31,7 @@ from yucca.network_architectures.utils.model_memory_estimation import (
 )
 from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.utils.saving import save_prediction_from_logits
-from yucca.utils.torch_utils import maybe_to_cuda
+from yucca.utils.torch_utils import maybe_to_gpu
 from yucca.image_processing.transforms.BiasField import BiasField
 from yucca.image_processing.transforms.Blur import Blur
 from yucca.image_processing.transforms.CopyImageToSeg import CopyImageToSeg
@@ -53,8 +53,6 @@ from yucca.image_processing.transforms.Spatial import Spatial
 
 class base_manager(object):
     def __init__(self):
-        __metaclass__ = ABCMeta
-
         self.train_command = None
         self.is_initialized = False
         self.log_file = None
@@ -80,48 +78,24 @@ class base_manager(object):
 
         # These will always be set by the individual Trainer
         # Using arguments supplied by run_training
-        self.train_batches_per_epoch = (
-            self.val_batches_per_epoch
-        ) = (
-            self.batch_size_2D
-        ) = (
-            self.batch_size_3D
-        ) = (
-            self.folds
-        ) = (
+        self.train_batches_per_epoch = self.val_batches_per_epoch = self.batch_size_2D = self.batch_size_3D = self.folds = (
             self.model_dimensions
-        ) = (
-            self.model_name
-        ) = self.outpath = self.patch_size_2D = self.patch_size_3D = self.task = self.plan_id = self.name = None
+        ) = self.model_name = self.outpath = self.patch_size_2D = self.patch_size_3D = self.task = self.plan_id = self.name = (
+            None
+        )
 
         # These can be set by the individual Trainer
         # Using optional arguments supplied by run_training
-        self.starting_lr = (
-            self.grad_scaler
-        ) = (
-            self.loss_fn
-        ) = (
-            self.loss_fn_kwargs
-        ) = (
-            self.lr_scheduler
-        ) = (
+        self.starting_lr = self.grad_scaler = self.loss_fn = self.loss_fn_kwargs = self.lr_scheduler = (
             self.lr_scheduler_kwargs
-        ) = (
-            self.momentum
-        ) = (
-            self.optim
-        ) = (
-            self.optim_kwargs
-        ) = (
-            self.random_seed
-        ) = (
-            self.fast_training
-        ) = self.finetune = self.fast_train_batches_per_epoch = self.fast_val_batches_per_epoch = self.fast_final_epoch = None
+        ) = self.momentum = self.optim = self.optim_kwargs = self.random_seed = self.fast_training = self.finetune = (
+            self.fast_train_batches_per_epoch
+        ) = self.fast_val_batches_per_epoch = self.fast_final_epoch = None
 
         # These will always be set by the plans file
-        self.classes = (
-            self.nclasses
-        ) = self.modalities = self.nmodalities = self.folder_with_preprocessed_data = self.plans = self.plans_path = None
+        self.classes = self.nclasses = self.modalities = self.nmodalities = self.folder_with_preprocessed_data = self.plans = (
+            self.plans_path
+        ) = None
 
         # These will be used during training
         self.tr_losses = []
@@ -129,7 +103,7 @@ class base_manager(object):
         self.best_val_loss = 99999
 
     @abstractmethod
-    def comprehensive_eval(self, pred, seg):
+    def comprehensive_eval(self):
         """
         implement in trainer subclass
         """
@@ -735,8 +709,8 @@ class base_manager(object):
         image = batch["image"]
         seg = batch["seg"]
 
-        image = maybe_to_cuda(image)
-        seg = maybe_to_cuda(seg)
+        image = maybe_to_gpu(image)
+        seg = maybe_to_gpu(seg)
 
         with autocast(device_type="cuda", dtype=torch.float16, enabled=True):
             pred = self.network(image)

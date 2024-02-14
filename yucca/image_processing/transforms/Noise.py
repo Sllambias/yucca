@@ -4,14 +4,6 @@ from typing import Tuple
 
 
 class AdditiveNoise(YuccaTransform):
-    """
-    variables in DIKU_3D_augmentation_params:
-        do_additiveNoise
-        additiveNoise_p_per_sample
-        additiveNoise_mean
-        additiveNoise_sigma
-    """
-
     def __init__(self, data_key="image", p_per_sample=1, mean=(0.0, 0.0), sigma=(1e-3, 1e-4)):
         self.data_key = data_key
         self.p_per_sample = p_per_sample

@@ -5,12 +5,11 @@ import wandb
 import copy
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
-from torchmetrics.classification import Dice, Precision
+from torchmetrics.classification import Dice, Accuracy, AUROC
 from torchmetrics.regression import MeanAbsoluteError
 from yucca.training.loss_and_optim.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.utils.kwargs import filter_kwargs
-from typing import Literal
 
 
 class YuccaLightningModule(L.LightningModule):
@@ -32,9 +31,9 @@ class YuccaLightningModule(L.LightningModule):
         momentum: float = 0.9,
         optimizer: torch.optim.Optimizer = torch.optim.SGD,
         sliding_window_overlap: float = 0.5,
-        stage: Literal["fit", "test", "predict"] = "fit",
         step_logging: bool = False,
         test_time_augmentation: bool = False,
+        progress_bar: bool = False,
     ):
         super().__init__()
         # Extract parameters from the configurator
@@ -59,19 +58,43 @@ class YuccaLightningModule(L.LightningModule):
         self.lr_scheduler = lr_scheduler
 
         # Evaluation and logging
-        self.step_logging = step_logging
-        if self.task_type in ["classification", "segmentation"]:
+        if step_logging is True:  # Blame PyTorch lightning for this war crime
+            self.step_logging = None
+            self.epoch_logging = None
+        else:
+            self.step_logging = False
+            self.epoch_logging = True
+
+        self.progress_bar = progress_bar
+
+        if self.task_type == "classification":
+            tmetrics_task = "multiclass" if self.num_classes > 2 else "binary"
+            # can we get per-class?
             self.train_metrics = MetricCollection(
-                {"train_dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
+                {
+                    "train_acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
+                    "train_roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
+                }
             )
             self.val_metrics = MetricCollection(
-                {"val_dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
+                {
+                    "val_acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
+                    "val_roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
+                }
+            )
+
+        if self.task_type == "segmentation":
+            self.train_metrics = MetricCollection(
+                {"train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
+            )
+            self.val_metrics = MetricCollection(
+                {"val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
             )
             _default_loss = "DiceCE"
 
-        if self.task_type == "unsupervised":
-            self.train_metrics = MetricCollection({"train_MAE": MeanAbsoluteError()})
-            self.val_metrics = MetricCollection({"train_MAE": MeanAbsoluteError()})
+        if self.task_type == "self-supervised":
+            self.train_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
+            self.val_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
             _default_loss = "MSE"
 
         if self.loss_fn is None:
@@ -120,10 +143,10 @@ class YuccaLightningModule(L.LightningModule):
     def forward(self, inputs):
         return self.model(inputs)
 
-    def teardown(self, stage: str):
+    def teardown(self, stage: str):  # noqa: U100
         wandb.finish()
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch, _batch_idx):
         inputs, target = batch["image"], batch["label"]
         output = self(inputs)
         loss = self.loss_fn_train(output, target)
@@ -135,15 +158,27 @@ class YuccaLightningModule(L.LightningModule):
             target = target[0]
 
         metrics = self.train_metrics(output, target)
-        self.log_dict({"train_loss": loss} | metrics, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
+        self.log_dict(
+            {"train/loss": loss} | metrics,
+            on_step=self.step_logging,
+            on_epoch=self.epoch_logging,
+            prog_bar=self.progress_bar,
+            logger=True,
+        )
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch, _batch_idx):
         inputs, target = batch["image"], batch["label"]
         output = self(inputs)
         loss = self.loss_fn_val(output, target)
         metrics = self.val_metrics(output, target)
-        self.log_dict({"val_loss": loss} | metrics, on_step=self.step_logging, on_epoch=True, prog_bar=False, logger=True)
+        self.log_dict(
+            {"val/loss": loss} | metrics,
+            on_step=self.step_logging,
+            on_epoch=self.epoch_logging,
+            prog_bar=self.progress_bar,
+            logger=True,
+        )
 
     def on_predict_start(self):
         preprocessor_class = recursive_find_python_class(
@@ -153,7 +188,7 @@ class YuccaLightningModule(L.LightningModule):
         )
         self.preprocessor = preprocessor_class(join(self.version_dir, "hparams.yaml"))
 
-    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+    def predict_step(self, batch, _batch_idx, _dataloader_idx=0):
         case, case_id = batch
 
         (

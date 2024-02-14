@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from yucca.utils.torch_utils import maybe_to_gpu, get_available_device
 from yucca.network_architectures.utils.get_steps_for_sliding_window import (
     get_steps_for_sliding_window,
 )
@@ -66,6 +67,7 @@ class YuccaNet(nn.Module):
         This is opposed to patch-based predictions where we use a sliding window approach to generate
         full size predictions.
         """
+        data = maybe_to_gpu(data)
         return self.forward(data)
 
     def _sliding_window_predict3D(self, data, patch_size, overlap):
@@ -74,7 +76,7 @@ class YuccaNet(nn.Module):
         """
         canvas = torch.zeros(
             (1, self.num_classes, *data.shape[2:]),
-            device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+            device=torch.device(get_available_device()),
         )
 
         x_steps, y_steps, z_steps = get_steps_for_sliding_window(data.shape[2:], patch_size, overlap)
@@ -94,7 +96,7 @@ class YuccaNet(nn.Module):
         """
         canvas = torch.zeros(
             (1, self.num_classes, *data.shape[2:]),
-            device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+            device=torch.device(get_available_device()),
         )
 
         px, py = patch_size

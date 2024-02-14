@@ -149,7 +149,7 @@ class MedNeXtBlock(nn.Module):
                 self.grn_beta = nn.Parameter(torch.zeros(1, exp_r * in_channels, 1, 1), requires_grad=True)
                 self.grn_gamma = nn.Parameter(torch.zeros(1, exp_r * in_channels, 1, 1), requires_grad=True)
 
-    def forward(self, x, dummy_tensor=None):
+    def forward(self, x, _dummy_tensor=None):
         x1 = x
         x1 = self.conv1(x1)
         x1 = self.act(self.conv2(self.norm(x1)))
@@ -213,7 +213,7 @@ class MedNeXtDownBlock(MedNeXtBlock):
             groups=in_channels,
         )
 
-    def forward(self, x, dummy_tensor=None):
+    def forward(self, x, _dummy_tensor=None):
         x1 = super().forward(x)
 
         if self.resample_do_res:
@@ -270,7 +270,7 @@ class MedNeXtUpBlock(MedNeXtBlock):
             groups=in_channels,
         )
 
-    def forward(self, x, dummy_tensor=None):
+    def forward(self, x, _dummy_tensor=None):
         x1 = super().forward(x)
         # Asymmetry but necessary to match shape
 
@@ -300,7 +300,7 @@ class OutBlock(nn.Module):
             conv = nn.ConvTranspose3d
         self.conv_out = conv(in_channels, n_classes, kernel_size=1)
 
-    def forward(self, x, dummy_tensor=None):
+    def forward(self, x, _dummy_tensor=None):
         return self.conv_out(x)
 
 
@@ -321,7 +321,7 @@ class LayerNorm(nn.Module):
             raise NotImplementedError
         self.normalized_shape = (normalized_shape,)
 
-    def forward(self, x, dummy_tensor=False):
+    def forward(self, x, _dummy_tensor=False):
         if self.data_format == "channels_last":
             return F.layer_norm(x, self.normalized_shape, self.weight, self.bias, self.eps)
         elif self.data_format == "channels_first":
@@ -603,19 +603,9 @@ class ux_block(nn.Module):
         drop_path=0.0,
         layer_scale_init_value=1e-6,
         conv_op=nn.Conv3d,
-        conv_kwargs={
-            "kernel_size": 3,
-            "stride": 1,
-            "padding": 1,
-            "dilation": 1,
-            "bias": True,
-        },
         norm_op=LayerNorm3d,
         norm_op_kwargs={"eps": 1e-6},
-        dropout_op=nn.Dropout3d,
-        dropout_op_kwargs={"p": 0.5, "inplace": True},
         nonlin=nn.GELU,
-        nonlin_kwargs={"negative_slope": 1e-2, "inplace": True},
     ):
         super().__init__()
         if conv_op == nn.Conv2d:

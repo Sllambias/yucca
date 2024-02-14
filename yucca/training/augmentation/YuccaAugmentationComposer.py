@@ -19,9 +19,6 @@ from yucca.image_processing.transforms.Ringing import GibbsRinging
 from yucca.image_processing.transforms.sampling import DownsampleSegForDS
 from yucca.image_processing.transforms.SimulateLowres import SimulateLowres
 from yucca.image_processing.transforms.Spatial import Spatial
-from yucca.network_architectures.utils.model_memory_estimation import (
-    find_optimal_tensor_dims,
-)
 
 
 class YuccaAugmentationComposer:
@@ -114,11 +111,11 @@ class YuccaAugmentationComposer:
         if task_type_preset == "classification":
             self.skip_label = True
 
-        if task_type_preset == "unsupervised":
+        if task_type_preset == "self-supervised":
             self.skip_label = True
             self.copy_image_to_label = True
             # This should be uncommented when masking is properly implemented
-            # augmentation_parameter_dict["mask_image_for_reconstruction"] = True
+            # self.mask_image_for_reconstruction = True
 
     def overwrite_params(self, parameter_dict):
         for key, value in parameter_dict.items():

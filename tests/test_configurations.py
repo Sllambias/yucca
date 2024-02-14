@@ -1,5 +1,4 @@
-def test_configurations():
-    import os
+def test_configurations(setup_preprocessed_segmentation_data):
     from yucca.training.configuration.configure_callbacks import get_callback_config
     from yucca.training.configuration.configure_paths import get_path_config
     from yucca.training.configuration.configure_plans import get_plan_config
@@ -8,9 +7,8 @@ def test_configurations():
     from yucca.training.configuration.split_data import get_split_config
     from yucca.training.configuration.configure_checkpoint import get_checkpoint_config
     from yucca.training.configuration.configure_seed import seed_everything_and_get_seed_config
-    from yucca.paths import yucca_preprocessed_data
 
-    task_config = get_task_config(task="Task000_Test")
+    task_config = get_task_config(task="Task000_TEST_SEGMENTATION")
     assert task_config is not None and isinstance(task_config.continue_from_most_recent, bool)
 
     path_config = get_path_config(task_config=task_config)
@@ -29,7 +27,6 @@ def test_configurations():
 
     plan_config = get_plan_config(
         ckpt_plans=ckpt_config.ckpt_plans,
-        continue_from_most_recent=task_config.continue_from_most_recent,
         plans_path=path_config.plans_path,
         stage="fit",
     )
@@ -49,9 +46,7 @@ def test_configurations():
     assert input_dims is not None and len(input_dims.patch_size) in [2, 3]
 
     callback_config = get_callback_config(
-        model_name="test",
         enable_logging=False,
-        task=task_config.task,
         save_dir=path_config.save_dir,
         version_dir=path_config.version_dir,
         version=path_config.version,

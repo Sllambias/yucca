@@ -1,14 +1,10 @@
-import yucca
 import torch
-from batchgenerators.utilities.file_and_folder_operations import join, isdir, subdirs, maybe_mkdir_p, isfile, load_json
+from batchgenerators.utilities.file_and_folder_operations import join, isfile
 from dataclasses import dataclass
 from typing import Union
-from yucca.paths import yucca_models, yucca_preprocessed_data
-from yucca.preprocessing.UnsupervisedPreprocessor import UnsupervisedPreprocessor
-from yucca.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
 from yucca.training.configuration.configure_paths import PathConfig
 from yucca.utils.dict import without_keys
-from yucca.utils.files_and_folders import recursive_find_python_class
+import logging
 
 
 @dataclass
@@ -93,10 +89,10 @@ def get_checkpoint_config(
 def find_checkpoint_path(ckpt_path: Union[str, None], continue_from_most_recent: bool, version: int, version_dir: str):
     if ckpt_path:
         assert isfile(ckpt_path)
-        print(f"Using ckpt file: {ckpt_path}")
+        logging.info(f"Using ckpt file: {ckpt_path}")
         return ckpt_path
     elif version is not None and continue_from_most_recent and isfile(join(version_dir, "checkpoints", "last.ckpt")):
-        print("Using last checkpoint and continuing training")
+        logging.info("Using last checkpoint and continuing training")
         return join(version_dir, "checkpoints", "last.ckpt")
     else:
         return None

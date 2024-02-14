@@ -65,7 +65,7 @@ class MedNeXt(YuccaNet):
             dim = "3d"
 
         self.stem = conv_op(input_channels, n_channels, kernel_size=1)
-        if type(exp_r) == int:
+        if isinstance(exp_r, int):
             exp_r = [exp_r for i in range(len(block_counts))]
 
         self.enc_block_0 = nn.Sequential(

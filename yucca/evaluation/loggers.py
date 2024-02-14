@@ -1,27 +1,18 @@
 import sys
 import os
+import logging
 from argparse import Namespace
 from lightning.pytorch.loggers.logger import Logger
 from pytorch_lightning.utilities.rank_zero import rank_zero_only
 from pytorch_lightning.core.saving import save_hparams_to_yaml
-from pytorch_lightning.loggers.csv_logs import ExperimentWriter
-
-from lightning_fabric.loggers.logger import rank_zero_experiment
-
-from lightning_fabric.loggers.csv_logs import (
-    _ExperimentWriter as _FabricExperimentWriter,
-)
-from lightning_fabric.utilities.cloud_io import _is_dir, get_filesystem
-
 from lightning_fabric.utilities.logger import _convert_params
 from time import localtime, strftime, time
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     maybe_mkdir_p,
     isdir,
-    subdirs,
 )
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, Optional, Union
 
 
 class YuccaLogger(Logger):
@@ -46,6 +37,11 @@ class YuccaLogger(Logger):
         self.previous_epoch = 0
         self.hparams: Dict[str, Any] = {}
         self.NAME_HPARAMS_FILE = "hparams.yaml"
+
+        if self.disable_logging is False:
+            if self.log_file is None:
+                self.create_logfile()
+            self.duplicate_console_out_to_log_file(self.log_file)
 
     @property
     def name(self):
@@ -80,10 +76,17 @@ class YuccaLogger(Logger):
         )
         with open(self.log_file, "w") as f:
             f.write("Starting model training")
-            print("Starting model training \n" f'{"log file:":20} {self.log_file} \n')
+            logging.info("Starting model training \n" f'{"log file:":20} {self.log_file} \n')
             f.write("\n")
             f.write(f'{"log file:":20} {self.log_file}')
             f.write("\n")
+
+    @rank_zero_only
+    def duplicate_console_out_to_log_file(self, log_file):
+        # Add the log_file as a duplicate handler of lightning outputs
+        logging.getLogger("lightning.pytorch").addHandler(logging.FileHandler(log_file))
+        # Add the log_file as a duplicate handler of lightning outputs
+        logging.getLogger().addHandler(logging.FileHandler(log_file))
 
     @rank_zero_only
     def log_hyperparams(self, params: Union[Dict[str, Any], Namespace]) -> None:  # type: ignore[override]
@@ -93,9 +96,7 @@ class YuccaLogger(Logger):
     @rank_zero_only
     def log_metrics(self, metrics, step):
         if self.disable_logging:
-            pass
-        if self.log_file is None:
-            self.create_logfile()
+            return
         # metrics is a dictionary of metric names and values
         # your code to record metrics goes here
         t = strftime("%Y_%m_%d_%H_%M_%S", localtime())
@@ -130,7 +131,7 @@ class YuccaLogger(Logger):
         save_hparams_to_yaml(hparams_file, self.hparams)
 
     @rank_zero_only
-    def finalize(self, status: str) -> None:
+    def finalize(self, _status) -> None:
         # When using multiprocessing, finalize() should be a no-op on the main process, as no experiment has been
         # initialized there
         self.save()

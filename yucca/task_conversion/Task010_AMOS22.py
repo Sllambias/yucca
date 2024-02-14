@@ -42,8 +42,6 @@ def convert(path: str, subdir: str = "amos22"):
     # This is likely also the place to apply any re-orientation, resampling and/or label correction.
     for sTr in training_samples:
         serial_number = sTr[: -len(file_suffix)]
-        image_file = open(join(images_dir_tr, sTr), "rb")
-        label = open(join(labels_dir_tr, sTr), "rb")
         shutil.copy2(join(images_dir_tr, sTr), f"{target_imagesTr}/{prefix}_{serial_number}_000.nii.gz")
         shutil.copy2(join(labels_dir_tr, sTr), f"{target_labelsTr}/{prefix}_{serial_number}.nii.gz")
 

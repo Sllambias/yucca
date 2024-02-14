@@ -1,20 +1,14 @@
 """
 Takes raw data conforming with Yucca standards and preprocesses according to the generic scheme
 """
+
 import numpy as np
 import torch
-import nibabel as nib
 import os
 import logging
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
-from yucca.utils.nib_utils import get_nib_spacing, get_nib_orientation, reorient_nib_image
-from yucca.utils.type_conversions import nifti_or_np_to_np
-from yucca.utils.loading import read_file_to_nifti_or_np
-from yucca.image_processing.objects.BoundingBox import get_bbox_for_foreground
-from yucca.image_processing.cropping_and_padding import crop_to_box, pad_to_size
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
-    subfiles,
     save_pickle,
     isfile,
 )
@@ -36,6 +30,7 @@ class ClassificationPreprocessor(YuccaPreprocessor):
         images[0] = images[0].T
 
         logging.info(
+            f"Preprocessed case: {subject_id} \n"
             f"size before: {image_props['original_size']} size after: {image_props['new_size']} \n"
             f"spacing before: {image_props['original_spacing']} spacing after: {image_props['new_spacing']} \n"
             f"Saving {subject_id} in {arraypath} \n"
