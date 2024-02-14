@@ -229,10 +229,9 @@ def find_optimal_tensor_dims(
 if __name__ == "__main__":
     batch_size, patch_size = find_optimal_tensor_dims(
         dimensionality="2D",
-        max_memory_usage_in_gb=6,
+        max_memory_usage_in_gb=12,
         num_classes=3,
         modalities=1,
-        model_name="UNet",
-        max_patch_size=[187, 151],
-        fixed_patch_size=[120, 130],
+        model_name="MedNeXt",
+        max_patch_size=[191, 167],
     )

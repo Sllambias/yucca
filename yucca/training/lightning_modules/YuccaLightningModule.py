@@ -134,7 +134,7 @@ class YuccaLightningModule(L.LightningModule):
             # UNetR
             "patch_size": self.patch_size,
             # MedNeXt
-            "checkpoint_style": None,
+            "checkpoint_style": "outside_block",
         }
         model_kwargs = filter_kwargs(self.model, model_kwargs)
 
