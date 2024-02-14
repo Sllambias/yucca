@@ -9,7 +9,7 @@ def convert(path: str, subdir: str = "WMH"):
     path = join(path, subdir)
 
     """ OUTPUT DATA - Define the task name and prefix """
-    task_name = "Task207_WMH_NoLabel"
+    task_name = "Task208_WMH_NoLabel"
     task_prefix = "WMH"
 
     datasets = ["Amsterdam", "Singapore", "Utrecht"]
@@ -34,7 +34,7 @@ def convert(path: str, subdir: str = "WMH"):
         test_folder = join(dataset_path, "Test")
 
         training_samples = subfolders(train_folder, join=False)
-        test_samples = subfolders(test_folder, join=False)
+        # test_samples = subfolders(test_folder, join=False)
 
         # First we add the data from the training folders
         for sTr in training_samples:
@@ -47,27 +47,27 @@ def convert(path: str, subdir: str = "WMH"):
             shutil.copy2(src_t1_file_path, dst_t1_file_path)
 
         # Then we add the data from the original testing folders
-        if dataset == "Amsterdam":
-            for site in test_samples:
-                samples = subfolders(join(test_folder, site), join=False)
-                for sTr in samples:
-                    # Loading relevant modalities and the ground truth
-                    src_flair_file_path = join(test_folder, site, sTr, "pre", "FLAIR.nii.gz")
-                    src_t1_file_path = join(test_folder, site, sTr, "pre", "T1.nii.gz")
-                    dst_flair_file_path = f"{target_imagesTr}/{task_prefix}_flair_{sTr}_000.nii.gz"
-                    dst_t1_file_path = f"{target_imagesTr}/{task_prefix}_t1_{sTr}_000.nii.gz"
-                    shutil.copy2(src_flair_file_path, dst_flair_file_path)
-                    shutil.copy2(src_t1_file_path, dst_t1_file_path)
-
-        else:
-            for sTr in test_samples:
-                # Loading relevant modalities and the ground truth
-                src_flair_file_path = join(test_folder, sTr, "pre", "FLAIR.nii.gz")
-                src_t1_file_path = join(test_folder, sTr, "pre", "T1.nii.gz")
-                dst_flair_file_path = f"{target_imagesTr}/{task_prefix}_flair_{sTr}_000.nii.gz"
-                dst_t1_file_path = f"{target_imagesTr}/{task_prefix}_t1_{sTr}_000.nii.gz"
-                shutil.copy2(src_flair_file_path, dst_flair_file_path)
-                shutil.copy2(src_t1_file_path, dst_t1_file_path)
+        # if dataset == "Amsterdam":
+        #   for site in test_samples:
+        #       samples = subfolders(join(test_folder, site), join=False)
+        #       for sTr in samples:
+        #           # Loading relevant modalities and the ground truth
+        #           src_flair_file_path = join(test_folder, site, sTr, "pre", "FLAIR.nii.gz")
+        #           src_t1_file_path = join(test_folder, site, sTr, "pre", "T1.nii.gz")
+        #           dst_flair_file_path = f"{target_imagesTr}/{task_prefix}_flair_{sTr}_000.nii.gz"
+        #           dst_t1_file_path = f"{target_imagesTr}/{task_prefix}_t1_{sTr}_000.nii.gz"
+        #           shutil.copy2(src_flair_file_path, dst_flair_file_path)
+        #           shutil.copy2(src_t1_file_path, dst_t1_file_path)
+    #
+    # else:
+    #   for sTr in test_samples:
+    #       # Loading relevant modalities and the ground truth
+    #       src_flair_file_path = join(test_folder, sTr, "pre", "FLAIR.nii.gz")
+    #       src_t1_file_path = join(test_folder, sTr, "pre", "T1.nii.gz")
+    #       dst_flair_file_path = f"{target_imagesTr}/{task_prefix}_flair_{sTr}_000.nii.gz"
+    #       dst_t1_file_path = f"{target_imagesTr}/{task_prefix}_t1_{sTr}_000.nii.gz"
+    #       shutil.copy2(src_flair_file_path, dst_flair_file_path)
+    #       shutil.copy2(src_t1_file_path, dst_t1_file_path)
 
     generate_dataset_json(
         join(target_base, "dataset.json"),

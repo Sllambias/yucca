@@ -50,7 +50,7 @@ def convert(path: str, subdir: str = "ADNI_NIFTI"):
         modalities=["MRI"],
         labels=None,
         dataset_name=task_name,
-        license="CC-BY-SA 4.0",
-        dataset_description="Decathlon: Brain Tumour Segmentation",
-        dataset_reference="King's College London",
+        license="you should check this",
+        dataset_description="ADNI",
+        dataset_reference="ADNI",
     )
