@@ -1,9 +1,11 @@
 import gzip
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
-from yucca.task_conversion.utils import generate_dataset_json, dirs_in_dir
+from yucca.task_conversion.utils import generate_dataset_json, dirs_in_dir, should_use_volume
 from yucca.paths import yucca_raw_data
 from tqdm import tqdm
 import shutil
+
+import nibabel as nib
 
 
 def convert(path: str, subdir: str = "ADNI_NIFTI"):
@@ -27,6 +29,8 @@ def convert(path: str, subdir: str = "ADNI_NIFTI"):
     """Populate Target Directory
     This is also the place to apply any re-orientation, resampling and/or label correction."""
 
+    skipped = []
+
     for subject in tqdm(dirs_in_dir(subjects_dir), desc="Subjects"):
         subject_dir = join(subjects_dir, subject)
         for modality in dirs_in_dir(subject_dir):
@@ -38,10 +42,16 @@ def convert(path: str, subdir: str = "ADNI_NIFTI"):
                     for file in subfiles(id_dir, join=False, suffix=ext):
                         image_path = join(id_dir, file)
                         file_name = file[: -len(ext)]
-                        output_name = f"{task_prefix}_{file_name}_000.nii.gz"
-                        output_path = join(target_imagesTr, output_name)
-                        image_file = open(image_path, "rb")
-                        shutil.copyfileobj(image_file, gzip.open(output_path, "wb"))
+                        vol = nib.load(image_path)
+                        if should_use_volume(vol):
+                            output_name = f"{task_prefix}_{file_name}_000.nii.gz"
+                            output_path = join(target_imagesTr, output_name)
+                            image_file = open(image_path, "rb")
+                            shutil.copyfileobj(image_file, gzip.open(output_path, "wb"))
+                        else:
+                            skipped.append(image_path)
+
+    print("skipped volumes:", skipped)
 
     generate_dataset_json(
         join(target_base, "dataset.json"),
@@ -50,7 +60,7 @@ def convert(path: str, subdir: str = "ADNI_NIFTI"):
         modalities=["MRI"],
         labels=None,
         dataset_name=task_name,
-        license="you should check this",
+        license="you should check this if you dont know",
         dataset_description="ADNI",
         dataset_reference="ADNI",
     )
