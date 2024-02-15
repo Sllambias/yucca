@@ -16,7 +16,6 @@ def convert(path: str, subdir: str = "ADNI_NIFTI"):
     path = join(path, subdir)
     ext = ".nii"
 
-
     """ OUTPUT DATA - Define the task name and prefix """
     task_name = "Task207_ADNI"
     task_prefix = "ADNI"
