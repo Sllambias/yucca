@@ -1,5 +1,5 @@
 from batchgenerators.utilities.file_and_folder_operations import join, isdir, subdirs, maybe_mkdir_p
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Union, Tuple
 from yucca.paths import yucca_models, yucca_preprocessed_data
 from yucca.training.configuration.configure_task import TaskConfig
@@ -7,7 +7,6 @@ from yucca.training.configuration.configure_task import TaskConfig
 
 @dataclass
 class AugmenterConfig:
-    random_crop: bool
     mask_image_for_reconstruction: bool
 
     # label/segmentation transforms
@@ -27,6 +26,10 @@ class AugmenterConfig:
     blurring_p_per_sample: float
     blurring_sigma: Tuple[float, float]
     blurring_p_per_channel: float
+
+    # Spatial crop params
+    random_crop: bool
+    crop: bool
 
     # Spatial deform params
     elastic_deform_p_per_sample: float
@@ -78,7 +81,6 @@ class AugmenterConfig:
 
     def lm_hparams(self):
         return {
-            "random_crop": self.random_crop,
             "mask_image_for_reconstruction": self.mask_image_for_reconstruction,
             "skip_label": self.skip_label,
             "label_dtype": self.label_dtype,
@@ -101,6 +103,8 @@ class AugmenterConfig:
                 },
             "Spatial":
                 {
+                    "random_crop": self.random_crop,
+                    "crop": self.crop,
                     "elastic_deform_p_per_sample": self.elastic_deform_p_per_sample,
                     "elastic_deform_alpha": self.elastic_deform_alpha,
                     "elastic_deform_sigma": self.elastic_deform_sigma,
@@ -153,23 +157,74 @@ class AugmenterConfig:
         }
 
 
-def get_train_augmenter_config(overwrite_defaults: dict):
+def get_train_augmenter_config(overwrite_defaults: dict, is_2D: bool = False):
     
-    task_dir = join(yucca_preprocessed_data, task_config.task)
-    train_data_dir = join(task_dir, task_config.planner_name)
-    save_dir = join(
-        yucca_models,
-        task_config.task,
-        task_config.model_name + "__" + task_config.model_dimensions,
-        task_config.manager_name + "__" + task_config.planner_name,
-        task_config.experiment,
-        f"{task_config.split_method}_{task_config.split_param}_fold_{task_config.split_idx}",
-    )
+    # Define whether we crop before or after applying augmentations
+        # Define if cropping is random or always centered
+    default_config = AugmenterConfig(
+        mask_image_for_reconstruction = False,
 
-    version = detect_version(save_dir, task_config.continue_from_most_recent)
-    version_dir = join(save_dir, f"version_{version}")
-    maybe_mkdir_p(version_dir)
-    plans_path = join(task_dir, task_config.planner_name, task_config.planner_name + "_plans.json")
+        skip_label = False,
+        label_dtype = int,
+        copy_image_to_label = False,
+
+        additive_noise_p_per_sample = 0.2,
+        additive_noise_mean = (0.0, 0.0),
+        additive_noise_sigma = (1e-3, 1e-4),
+
+        biasfield_p_per_sample = 0.33,
+
+        blurring_p_per_sample = 0.2,
+        blurring_sigma = (0.0, 1.0),
+        blurring_p_per_channel = 0.5,
+
+        random_crop=True,
+        crop=True,
+
+        elastic_deform_p_per_sample = 0.33,
+        elastic_deform_alpha = (200, 600),
+        elastic_deform_sigma = (20, 30),
+
+        gamma_p_per_sample = 0.2,
+        gamma_p_invert_image = 0.05,
+        gamma_range = (0.5, 2.0),
+
+        gibbs_ringing_p_per_sample = 0.2,
+        gibbs_ringing_cutfreq = (96, 129),
+        gibbs_ringing_axes = (0, 2) if is_2D else (0, 3),
+
+        mirror_p_per_sample = 0.0,
+        mirror_p_per_axis = 0.33,
+        mirror_axes = (0, 1) if is_2D else (0, 1, 2),
+
+        motion_ghosting_p_per_sample = 0.2,
+        motion_ghosting_alpha = (0.85, 0.95),
+        motion_ghosting_numreps = (2, 11),
+        motion_ghosting_axes = (0, 2) if is_2D else (0, 3),
+
+        multiplicative_noise_p_per_sample = 0.2,
+        multiplicative_noise_mean = (0, 0),
+        multiplicative_noise_sigma = (1e-3, 1e-4),
+
+        rotation_p_per_sample = 0.2,
+        rotation_p_per_axis = 0.66,
+        rotation_x = (-30.0, 30.0),
+        rotation_y = (-0.0, 0.0) if is_2D else (-30.0, 30.0),
+        rotation_z = (-0.0, 0.0) if is_2D else (-30.0, 30.0),
+
+        scale_p_per_sample = 0.2,
+        scale_factor = (0.9, 1.1),
+
+        simulate_lowres_p_per_sample = 0.2,
+        simulate_lowres_p_per_channel = 0.5,
+        simulate_lowres_p_per_axis = 0.33,
+        simulate_lowres_zoom_range = (0.5, 1.0),
+        )
+    if overwrite_defaults:
+        new_config_dict = asdict(default_config)
+        new_config_dict.update(overwrite_defaults)
+        return AugmenterConfig(**new_config_dict)
+    return default_config
 
     return PathConfig(
         plans_path=plans_path,
