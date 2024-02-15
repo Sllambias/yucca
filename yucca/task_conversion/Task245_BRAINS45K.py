@@ -5,14 +5,22 @@ from yucca.paths import yucca_raw_data
 
 def convert(_path: str, _subdir: str = None):
     # Define the name of the new task
-    task_name = "Task299_Combine"
+    task_name = "Task245-BRAINS45K"
 
     # Define the expected labels (leave empty for no labels)
     expected_labels = {}
 
     # Define the tasks to combine, such as ["Task001_OASIS", "Task002_LPBA40"]
     # The individual task_conversion scripts must be run prior to executing this, as the script will look for the data in the yucca_raw_data folder.
-    tasks_to_combine = ["Task201_PPMI", "Task202_ISLES22", "Task203_OASIS3", "Task205_Hippocampus", "Task206_BrainTumour"]
+    tasks_to_combine = [
+        "Task201_PPMI",
+        "Task202_ISLES22",
+        "Task203_OASIS3",
+        "Task204_OASIS4",
+        "Task206_BrainTumour",
+        "Task207_ADNI",
+        "Task208_WMH",
+    ]
 
     target_base = os.path.join(yucca_raw_data, task_name)
     os.makedirs(target_base, exist_ok=True)
