@@ -21,7 +21,7 @@ def convert(_path: str, _subdir: str = None):
 
     generate_dataset_json(
         os.path.join(target_base, "dataset.json"),
-        target_imagesTr=os.path.join(target_base, "imagesTr"),
+        imagesTr_dir=os.path.join(target_base, "imagesTr"),
         imagesTs_dir=None,
         modalities=["MRI"],
         labels=expected_labels,
