@@ -59,6 +59,7 @@ class YuccaEvaluator(object):
         if self.task_type == "segmentation":
             self.metrics = {
                 "Dice": dice,
+                "Jaccard": jaccard,
                 "Sensitivity": sensitivity,
                 "Precision": precision,
                 "Volume Similarity": volume_similarity,
@@ -255,6 +256,7 @@ class YuccaEvaluator(object):
             auroc_per_class: list[float] = auroc(ground_truths, prediction_probs)
             for label, score in zip(self.labelarr, auroc_per_class):
                 resultdict["per_class"][str(label)]["AUROC"] = round(score, 4)
+
 
         # caclulate global (mean) metrics
         resultdict["mean"] = {}
