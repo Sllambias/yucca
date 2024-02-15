@@ -1,6 +1,5 @@
 import numpy as np
 import numpy.typing as npt
-from scipy.spatial.distance import directed_hausdorff
 from typing import Literal
 from sklearn.metrics import roc_auc_score
 
