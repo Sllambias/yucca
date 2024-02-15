@@ -291,7 +291,7 @@ class YuccaLightningModule(L.LightningModule):
                 successful += 1
             else:
                 unsuccessful += 1
-                if not param_name in rejected_keys:
+                if param_name not in rejected_keys:
                     rejected_keys.append(param_name)
 
         print(f"Succesfully transferred weights for {successful}/{successful+unsuccessful} layers")
