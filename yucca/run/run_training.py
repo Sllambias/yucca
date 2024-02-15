@@ -6,7 +6,6 @@ from batchgenerators.utilities.file_and_folder_operations import join
 
 
 def main():
-    print("!!!!!!!!!!!")
     parser = argparse.ArgumentParser()
 
     # Required Arguments #
@@ -138,7 +137,6 @@ def main():
                 patch_size = (int(patch_size),) * 3 if dimensions == "3D" else (int(patch_size),) * 2
         else:
             patch_size = tuple(int(n) for n in patch_size)
-            print(patch_size)
 
     kwargs = {}
 
@@ -173,6 +171,7 @@ def main():
         model_name=model_name,
         momentum=momentum,
         num_workers=num_workers,
+        patch_size=patch_size,
         planner=planner,
         precision=precision,
         profile=profile,
