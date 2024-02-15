@@ -17,7 +17,7 @@ class CallbackConfig:
     wandb_id: str
 
     def lm_hparams(self):
-        return {"wandb_id": self.wandb_id}
+        return {"wandb_id": str(self.wandb_id)}
 
 
 def get_callback_config(
