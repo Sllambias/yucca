@@ -475,7 +475,6 @@ class MedNeXt_Modular(YuccaNet):
             conv_op=conv_op,
             starting_filters=starting_filters,
             kernel_size=kernel_size,
-            enc_kernel_size=enc_kernel_size,
             dec_kernel_size=dec_kernel_size,
             deep_supervision=deep_supervision,
             do_res=do_res,
