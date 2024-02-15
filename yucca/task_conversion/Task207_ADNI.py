@@ -10,8 +10,12 @@ import nibabel as nib
 
 def convert(path: str, subdir: str = "ADNI_NIFTI"):
     """INPUT DATA - Define input path and suffixes"""
+
+    print("Converting task207 with try except")
+
     path = join(path, subdir)
     ext = ".nii"
+
 
     """ OUTPUT DATA - Define the task name and prefix """
     task_name = "Task207_ADNI"
@@ -30,6 +34,7 @@ def convert(path: str, subdir: str = "ADNI_NIFTI"):
     This is also the place to apply any re-orientation, resampling and/or label correction."""
 
     skipped = []
+    errors = []
 
     for subject in tqdm(dirs_in_dir(subjects_dir), desc="Subjects"):
         subject_dir = join(subjects_dir, subject)
@@ -42,16 +47,22 @@ def convert(path: str, subdir: str = "ADNI_NIFTI"):
                     for file in subfiles(id_dir, join=False, suffix=ext):
                         image_path = join(id_dir, file)
                         file_name = file[: -len(ext)]
-                        vol = nib.load(image_path)
-                        if should_use_volume(vol):
-                            output_name = f"{task_prefix}_{file_name}_000.nii.gz"
-                            output_path = join(target_imagesTr, output_name)
-                            image_file = open(image_path, "rb")
-                            shutil.copyfileobj(image_file, gzip.open(output_path, "wb"))
-                        else:
-                            skipped.append(image_path)
+                        try:
+                            vol = nib.load(image_path)
+                            if should_use_volume(vol):
+                                output_name = f"{task_prefix}_{file_name}_000.nii.gz"
+                                output_path = join(target_imagesTr, output_name)
+                                image_file = open(image_path, "rb")
+                                shutil.copyfileobj(image_file, gzip.open(output_path, "wb"))
+                            else:
+                                skipped.append(image_path)
+                        except:
+                            errors.append(image_path)
 
     print("skipped volumes:", skipped)
+    print("erroneous volumes", errors)
+
+    print("num errors", len(errors), "num skipped", len(skipped))
 
     generate_dataset_json(
         join(target_base, "dataset.json"),
