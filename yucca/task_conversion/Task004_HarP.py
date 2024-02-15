@@ -69,5 +69,6 @@ def convert(path: str, subdir: str = "HarP"):
         dataset_reference="",
     )
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     convert()
