@@ -17,7 +17,13 @@ class CallbackConfig:
     wandb_id: str
 
     def lm_hparams(self):
-        return {"wandb_id": self.wandb_id}
+        # A story of a shitty bug 🐞
+        # When using DDP `self.wandb_id` will on any RANK ≠ 0 device be set to something in the style of
+        # <bound method _DummyExperiment.nop of <lightning.fabric.loggers.logger._DummyExperiment object at 0x7fb5a17c65d0>>
+        # which will make self.save_hyperparameters() crash on that device, because (ofc) the above is not serializable.
+        # So we cast it to a str, which makes it serializable, and since checkpoints are only stored from the
+        # rank zero device, we will never see this giberish again.
+        return {"wandb_id": str(self.wandb_id)}
 
 
 def get_callback_config(

@@ -5,7 +5,7 @@ from yucca.paths import yucca_raw_data
 
 def convert(_path: str, _subdir: str = None):
     # Define the name of the new task
-    task_name = "Task245-BRAINS45K"
+    task_name = "Task241_BR41NS"
 
     # Define the expected labels (leave empty for no labels)
     expected_labels = {}
