@@ -11,14 +11,14 @@ options:
   -d SUBDIR, --subdir SUBDIR
                         Directory of data inside source data
 
-The -t flag must point to the name of a previously created task conversion script, such as the [OASIS script](/yucca/yucca/task_conversion/Task001_OASIS.py). The -p flag points to the parent directory of the dataset folder. If left empty this defaults to [`yucca_source`](/yucca/yucca/documentation/tutorials/environment_variables.md). The -d flag points to the specific dataset directory inside the parent directory. 
+The -t flag must point to the name of a previously created task conversion script, such as the [OASIS script](/yucca/task_conversion/Task001_OASIS.py). The -p flag points to the parent directory of the dataset folder. If left empty this defaults to [`yucca_source`](/yucca/documentation/guides/environment_variables.md). The -d flag points to the specific dataset directory inside the parent directory. 
 
 If the OASIS dataset was located in /path/to/all/my/datasets/specific_dataset123 the command should be:
 `yucca_convert_task -t Task001_OASIS -p /path/to/all/my/datasets -d specific_dataset123`
 
 # Preprocessing
 
-The `yucca_preprocess` CLI invokes the [`run_preprocessing.py`](yucca/run/run_preprocessing.py) script.
+The `yucca_preprocess` CLI invokes the [`run_preprocessing.py`](/yucca/run/run_preprocessing.py) script.
 For help and all the available arguments see the output of the `-h` flag below.
 
 ```console
@@ -35,20 +35,20 @@ options:
                         Enable or disable sanity checks
 ```
 
-**-t**, **-pl** and **-pr** are covered in the front page [ReadMe](/yucca/README.md#preprocessing).
+**-t**, **-pl** and **-pr** are covered in the front page [ReadMe](/README.md#preprocessing).
 
 **-v**: Used to transpose images to a different orientation. Primarily used to train 2D models on a specific orientation.
 **--ensemble**: Used to automatically preprocess 3 versions of the dataset using the X, Y and Z views. Can be manually obtained by preprocessing the dataset thrice with `-v X`, `-v Y` and `-v Z`.
 **--disable_sanity_checks**: should only be used if you are aware something will violate sanity checks, but you want to still continue.
 
 Internally, the `yucca_preprocess` command calls a planner and preprocessor class.
-Initially, the appropriate planner is called. This is by default the [`YuccaPlanner`](yucca/yucca/planning/YuccaPlanner.py). The planner first collects dataset statistics can be used during preprocessing. These are saved in a `dataset_properties.pkl` file. Then, it specifies _what_ will happen during preprocessing. This includes the normalization operation, target spacing or size/resolution and orientation.
+Initially, the appropriate planner is called. This is by default the [`YuccaPlanner`](/yucca/planning/YuccaPlanner.py). The planner first collects dataset statistics can be used during preprocessing. These are saved in a `dataset_properties.pkl` file. Then, it specifies _what_ will happen during preprocessing. This includes the normalization operation, target spacing or size/resolution and orientation.
 
-Afterwards, the preprocessor is called. This is by default the [`YuccaPreprocessor`](yucca/yucca/preprocessing/YuccaPreprocessor.py). This preprocesses training data according to the operations and values supplied by planner. As such the preprocessor should very rarely be changed, while the planner will often be changed to employ alternative preprocessing schemes.
+Afterwards, the preprocessor is called. This is by default the [`YuccaPreprocessor`](/yucca/preprocessing/YuccaPreprocessor.py). This preprocesses training data according to the operations and values supplied by planner. As such the preprocessor should very rarely be changed, while the planner will often be changed to employ alternative preprocessing schemes.
 
 # Training
 
-The `yucca_train` CLI invokes the [`run_training.py`](yucca/run/run_training.py) script.
+The `yucca_train` CLI invokes the [`run_training.py`](/yucca/run/run_training.py) script.
 For help and all the available arguments see the output of the `-h` flag below.
 
 ```console
@@ -123,7 +123,7 @@ options:
   --val_batches_per_step VAL_BATCHES_PER_STEP
 ```
 
-**-t**, **-d**, **-m**, **-man** and **-pl** are covered in the front page [ReadMe](/yucca/README.md#training).
+**-t**, **-d**, **-m**, **-man** and **-pl** are covered in the front page [ReadMe](/README.md#training).
 
 **--disable_logging**: Disables logging to WandB and a local logfile. The hparams.yaml will still be saved for experiment inspection and reproducibility.
 **--ds**: Enables deep supervision. Note that not all models support this. Currently supported is `UNet`.
@@ -149,7 +149,7 @@ An example of training on a task called `Task002_NotBrains`, using a 2D `MultiRe
 # Inference
 
 
-The `yucca_inference` CLI invokes the [`run_inference.py`](yucca/run/run_inference.py) script.
+The `yucca_inference` CLI invokes the [`run_inference.py`](/yucca/run/run_inference.py) script.
 For help and all the available arguments see the output of the `-h` flag below.
 
 ```console
@@ -183,7 +183,7 @@ options:
   --version VERSION     Version to use for inference. Defaults to the newest version.
 ```
 
-**-s**, **-t**, **-d**, **-m**, **-man** and **-pl** are covered in the front page [ReadMe](/yucca/README.md#inference).
+**-s**, **-t**, **-d**, **-m**, **-man** and **-pl** are covered in the front page [ReadMe](/README.md#inference).
 
 **--checkpoint**: Used to specify which checkpoint should be used to generate the predictions. Defaults to the "best.ckpt".
 **--disable_tta**: Disables Test-Time augmentations. This only has an impact for models eligible for Test-Time augmentations. So far this is limited to models trained with the Mirroring augmentations enabled.

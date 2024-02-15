@@ -110,7 +110,7 @@ Parent: default Manager class
 
 Variable: *self.augmentation_params*
 
-Changing the data augmentation parameters is achieved by defining a dictionary of augmentation parameters in the Manager, which will then automatically apply these settings to the composed augmentations. The default augmentation parameters can be found in the `setup_default_params` method of the [`YuccaAugmentationComposer`](/yucca/yucca/training/augmentation/YuccaAugmentationComposer.py). Most augmentations have a variable called "X_p_per_sample" with a floating point value between 0.0-1.0 which controls the probability they are applied to each sample. To disable an augmentation set this probability to 0.0. Some augmentations also have variables that control the possible intensity ranges of the augmentation, such as the `"rotation_x": (-30.0, 30.0)` specifying the minimum and maximum degree of rotation around the X-axis.
+Changing the data augmentation parameters is achieved by defining a dictionary of augmentation parameters in the Manager, which will then automatically apply these settings to the composed augmentations. The default augmentation parameters can be found in the `setup_default_params` method of the [`YuccaAugmentationComposer`](/yucca/training/augmentation/YuccaAugmentationComposer.py). Most augmentations have a variable called "X_p_per_sample" with a floating point value between 0.0-1.0 which controls the probability they are applied to each sample. To disable an augmentation set this probability to 0.0. Some augmentations also have variables that control the possible intensity ranges of the augmentation, such as the `"rotation_x": (-30.0, 30.0)` specifying the minimum and maximum degree of rotation around the X-axis.
 
 
 To disable blurring entirely and modify the scaling range do:
@@ -129,7 +129,7 @@ CLI: `yucca_train`, `yucca_finetune` and `yucca_inference`
 
 Variables: *--split_idx*, *--split_data_method* and *--split_data_param*
 
-NOTE: Do not confuse this with the train-test splits. These must be handled in [Task Conversion](/yucca/yucca/documentation/tutorials/task_conversion.md).
+NOTE: Do not confuse this with the train-test splits. These must be handled in [Task Conversion](/yucca/documentation/guides/task_conversion.md).
 
 Training/Validation data splits can be automatically generated using simple dataset splits or the K-Fold method. First select the method with `--split_data_method` and then supply the desired parameter with `--split_data_param`. If the method is `simple_train_val_split` valid parameter values are between 0.0-1.0, so a valid configuration could be `--split_data_method simple_train_val_split --split_data_param 0.33`. For `kfold` valid parameters are integers > 1. When using K-Fold the `--split_idx` can be used to select which fold to use for training. When using `split_data_method simple_train_val_split` you do not need to specify the `--split_idx` as there will only be one split of the specified configuration.  By default Yucca will generate 5-Folds and train on Fold 0. 
 
@@ -193,7 +193,7 @@ class YuccaManager_LowerLR(YuccaManager):
 CLI: Can also be changed using --lr flag.
 
 ## Learning Rate Scheduler
-Parent: [YuccaLightningModule](/yucca/yucca/training/lightning_modules/YuccaLightningModule.py)
+Parent: [YuccaLightningModule](/yucca/training/lightning_modules/YuccaLightningModule.py)
 
 Variable: self.lr\_scheduler
 - Used to determine the LR Scheduler CLASS
@@ -231,7 +231,7 @@ class YuccaManager_NLL(YuccaManager):
 Can also be changed using *yucca_train* --loss flag.
 
 ## Model Architecture
-CLI: In both training and inference model architecture is specified using the -m flag. Currently supported architectures can be found in [networks](yucca/yucca/network_architectures/networks).
+CLI: In both training and inference model architecture is specified using the -m flag. Currently supported architectures can be found in [networks](/yucca/network_architectures/networks).
 
 ## Model Dimensionality
 CLI: In both preprocessing, training and inference dimension is specified using the -d flag. Currently supported is: "2D" and "3D".
@@ -253,7 +253,7 @@ class YuccaManager_mom95(YuccaManager):
 CLI: Can also be changed using *yucca_train* --mom flag.
 
 ## Optimizer
-Parent: [YuccaLightningModule](/yucca/yucca/training/lightning_modules/YuccaLightningModule.py)
+Parent: [YuccaLightningModule](/yucca/training/lightning_modules/YuccaLightningModule.py)
 
 Variable: self.optim
 
