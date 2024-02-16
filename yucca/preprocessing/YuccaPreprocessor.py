@@ -7,6 +7,7 @@ import cc3d
 import logging
 import math
 import time
+import re
 from yucca.utils.loading import load_yaml, read_file_to_nifti_or_np
 from yucca.image_processing.objects.BoundingBox import get_bbox_for_foreground
 from yucca.image_processing.cropping_and_padding import crop_to_box, pad_to_size, get_pad_kwargs
@@ -195,7 +196,9 @@ class YuccaPreprocessor(object):
         # The '_' in the end is to avoid treating Case_4_000 AND Case_42_000 as different versions
         # of the label named Case_4 as both would start with "Case_4", however only the correct one is
         # followed by an underscore
-        imagepaths = [impath for impath in self.imagepaths if os.path.split(impath)[-1].startswith(subject_id + "_")]
+        imagepaths = [
+            impath for impath in self.imagepaths if re.search(subject_id + "_" + r"\d{3}" + ".", os.path.split(impath))
+        ]
         image_props["image files"] = imagepaths
         images = [read_file_to_nifti_or_np(image) for image in imagepaths]
 
