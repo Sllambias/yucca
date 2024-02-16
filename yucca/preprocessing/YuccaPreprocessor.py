@@ -197,7 +197,7 @@ class YuccaPreprocessor(object):
         # of the label named Case_4 as both would start with "Case_4", however only the correct one is
         # followed by an underscore
         imagepaths = [
-            impath for impath in self.imagepaths if re.search(subject_id + "_" + r"\d{3}" + ".", os.path.split(impath))
+            impath for impath in self.imagepaths if re.search(subject_id + "_" + r"\d{3}" + ".", os.path.split(impath)[-1])
         ]
         image_props["image files"] = imagepaths
         images = [read_file_to_nifti_or_np(image) for image in imagepaths]
