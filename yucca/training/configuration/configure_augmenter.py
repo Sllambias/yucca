@@ -158,9 +158,6 @@ class AugmenterConfig:
 
 
 def get_train_augmenter_config(overwrite_defaults: dict, is_2D: bool = False):
-    
-    # Define whether we crop before or after applying augmentations
-        # Define if cropping is random or always centered
     default_config = AugmenterConfig(
         mask_image_for_reconstruction = False,
 
@@ -220,20 +217,12 @@ def get_train_augmenter_config(overwrite_defaults: dict, is_2D: bool = False):
         simulate_lowres_p_per_axis = 0.33,
         simulate_lowres_zoom_range = (0.5, 1.0),
         )
+        
     if overwrite_defaults:
         new_config_dict = asdict(default_config)
         new_config_dict.update(overwrite_defaults)
         return AugmenterConfig(**new_config_dict)
     return default_config
-
-    return PathConfig(
-        plans_path=plans_path,
-        save_dir=save_dir,
-        task_dir=task_dir,
-        train_data_dir=train_data_dir,
-        version_dir=version_dir,
-        version=version,
-    )
 
 
 def detect_version(save_dir, continue_from_most_recent) -> Union[None, int]:
