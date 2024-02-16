@@ -236,7 +236,7 @@ class YuccaPlannerX(YuccaPlanner):
             threads=threads,
             disable_cc_analysis=disable_cc_analysis,
             disable_sanity_checks=disable_sanity_checks,
-            view=None,
+            view=view,
         )
         self.view = "X"
 
@@ -261,7 +261,7 @@ class YuccaPlannerY(YuccaPlanner):
             threads=threads,
             disable_cc_analysis=disable_cc_analysis,
             disable_sanity_checks=disable_sanity_checks,
-            view=None,
+            view=view,
         )
         self.view = "Y"
 
@@ -286,7 +286,7 @@ class YuccaPlannerZ(YuccaPlanner):
             threads=threads,
             disable_cc_analysis=disable_cc_analysis,
             disable_sanity_checks=disable_sanity_checks,
-            view=None,
+            view=view,
         )
         self.view = "Z"
 
