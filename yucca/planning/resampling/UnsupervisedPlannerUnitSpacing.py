@@ -1,7 +1,7 @@
 from yucca.planning.YuccaPlanner import UnsupervisedPlanner
 
 
-class YuccaPlannerUnitSpacing(UnsupervisedPlanner):
+class UnsupervisedPlannerUnitSpacing(UnsupervisedPlanner):
     def __init__(self, task, preprocessor="UnsupervisedPreprocessor", threads=12, disable_sanity_checks=False, view=None):
         super().__init__(
             task, preprocessor=preprocessor, threads=threads, disable_sanity_checks=disable_sanity_checks, view=view
