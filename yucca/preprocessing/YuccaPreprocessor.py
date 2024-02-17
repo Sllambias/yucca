@@ -196,9 +196,16 @@ class YuccaPreprocessor(object):
         # The '_' in the end is to avoid treating Case_4_000 AND Case_42_000 as different versions
         # of the label named Case_4 as both would start with "Case_4", however only the correct one is
         # followed by an underscore
+        escaped_subject_id = re.escape(subject_id)
+
+        # path to all modalities of subject_id
         imagepaths = [
-            impath for impath in self.imagepaths if re.search(subject_id + "_" + r"\d{3}" + ".", os.path.split(impath)[-1])
+            impath
+            for impath in self.imagepaths
+            # Check if impath is a modality of subject_id (subject_id + _XXX + .) where XXX are three digits
+            if re.search(escaped_subject_id + "_" + r"\d{3}" + ".", os.path.split(impath)[-1])
         ]
+
         image_props["image files"] = imagepaths
         images = [read_file_to_nifti_or_np(image) for image in imagepaths]
 
