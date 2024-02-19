@@ -10,5 +10,5 @@ class UnsupervisedPlannerUnitSpacing(UnsupervisedPlanner):
         self.view = view
 
     def determine_target_size_from_fixed_size_or_spacing(self):
-        self.fixed_target_spacing = [1, 1, 1]
+        self.fixed_target_spacing = [1.0, 1.0, 1.0]
         self.fixed_target_size = None
