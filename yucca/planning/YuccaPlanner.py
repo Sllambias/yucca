@@ -34,7 +34,7 @@ class YuccaPlanner(object):
         self,
         task,
         preprocessor="YuccaPreprocessor",
-        threads=12,
+        threads=24,
         disable_cc_analysis=True,
         disable_sanity_checks=False,
         view=None,

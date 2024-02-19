@@ -46,7 +46,7 @@ def main():
         planner = recursive_find_python_class(
             folder=[join(yucca.__path__[0], "planning")], class_name=planner_name, current_module="yucca.planning"
         )
-        planner = planner(task, preprocessor_name, 2, disable_sanity_checks, view=view)
+        planner = planner(task, preprocessor_name, disable_sanity_checks=disable_sanity_checks, view=view)
         planner.plan()
         planner.preprocess()
     if ensemble:
@@ -55,7 +55,7 @@ def main():
             planner = recursive_find_python_class(
                 folder=[join(yucca.__path__[0], "planning")], class_name=planner_name, current_module="yucca.planning"
             )
-            planner = planner(task, preprocessor_name, 2, disable_sanity_checks, view=view)
+            planner = planner(task, preprocessor_name, disable_sanity_checks=disable_sanity_checks, view=view)
             planner.plan()
             planner.preprocess()
 
