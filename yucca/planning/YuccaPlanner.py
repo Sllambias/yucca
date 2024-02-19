@@ -54,7 +54,7 @@ class YuccaPlanner(object):
         # Don't change the remaining variables unless you know what you're doing
         # Threading speeds up the process. Unittests should by default be enabled.
         self.preprocessor = preprocessor
-        self.threads = threads if threads is not None else 1
+        self.threads = int(threads) if threads is not None else 1
         self.disable_sanity_checks = disable_sanity_checks
         self.disable_cc_analysis = disable_cc_analysis
 
