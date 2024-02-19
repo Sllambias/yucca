@@ -61,7 +61,7 @@ class YuccaPreprocessor(object):
     which is used later to oversample foreground.
     """
 
-    def __init__(self, plans_path, task=None, threads=12, disable_sanity_checks=False, enable_cc_analysis=False):
+    def __init__(self, plans_path, task=None, threads=None, disable_sanity_checks=False, enable_cc_analysis=False):
         self.name = str(self.__class__.__name__)
         self.task = task
         self.plans_path = plans_path

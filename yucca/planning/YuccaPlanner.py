@@ -34,7 +34,7 @@ class YuccaPlanner(object):
         self,
         task,
         preprocessor="YuccaPreprocessor",
-        threads=12,
+        threads=None,
         disable_cc_analysis=True,
         disable_sanity_checks=False,
         view=None,
@@ -54,7 +54,7 @@ class YuccaPlanner(object):
         # Don't change the remaining variables unless you know what you're doing
         # Threading speeds up the process. Unittests should by default be enabled.
         self.preprocessor = preprocessor
-        self.threads = threads
+        self.threads = int(threads) if threads is not None else 1
         self.disable_sanity_checks = disable_sanity_checks
         self.disable_cc_analysis = disable_cc_analysis
 
@@ -250,7 +250,7 @@ class YuccaPlannerY(YuccaPlanner):
         self,
         task,
         preprocessor="YuccaPreprocessor",
-        threads=12,
+        threads=None,
         disable_cc_analysis=True,
         disable_sanity_checks=False,
         view=None,
@@ -275,7 +275,7 @@ class YuccaPlannerZ(YuccaPlanner):
         self,
         task,
         preprocessor="YuccaPreprocessor",
-        threads=12,
+        threads=None,
         disable_cc_analysis=True,
         disable_sanity_checks=False,
         view=None,
@@ -292,7 +292,7 @@ class YuccaPlannerZ(YuccaPlanner):
 
 
 class UnsupervisedPlanner(YuccaPlanner):
-    def __init__(self, task, preprocessor=None, threads=12, disable_sanity_checks=False, view=None):
+    def __init__(self, task, preprocessor=None, threads=None, disable_sanity_checks=False, view=None):
         super().__init__(
             task, preprocessor=preprocessor, threads=threads, disable_sanity_checks=disable_sanity_checks, view=view
         )
@@ -306,7 +306,7 @@ class YuccaPlannerMinMax(YuccaPlanner):
     Standardizes the images to 0-1 range.
     """
 
-    def __init__(self, task, preprocessor=None, threads=2, disable_sanity_checks=False, view=None):
+    def __init__(self, task, preprocessor=None, threads=None, disable_sanity_checks=False, view=None):
         super().__init__(
             task, preprocessor=preprocessor, threads=threads, disable_sanity_checks=disable_sanity_checks, view=view
         )
@@ -315,7 +315,7 @@ class YuccaPlannerMinMax(YuccaPlanner):
 
 
 class YuccaPlanner_224x224_MinMax(YuccaPlanner):
-    def __init__(self, task, preprocessor="YuccaPreprocessor", threads=12, disable_unittests=False, view=None):
+    def __init__(self, task, preprocessor="YuccaPreprocessor", threads=None, disable_unittests=False, view=None):
         super().__init__(task, preprocessor, threads, disable_unittests, view)
         self.name = str(self.__class__.__name__) + str(view or "")
         self.norm_op = "255to1"

@@ -6,7 +6,7 @@ class YuccaPlanner_MaxSize(YuccaPlanner):
         self,
         task,
         preprocessor="YuccaPreprocessor",
-        threads=2,
+        threads=None,
         disable_sanity_checks=False,
         disable_unittests=False,
         view=None,
