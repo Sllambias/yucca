@@ -100,8 +100,11 @@ class YuccaDataModule(pl.LightningDataModule):
             self.train_samples = [join(self.train_data_dir, i) for i in self.splits_config.train(self.split_idx)]
             self.val_samples = [join(self.train_data_dir, i) for i in self.splits_config.val(self.split_idx)]
 
-            logging.info(f"Training on samples: {self.train_samples}")
-            logging.info(f"Validating on samples: {self.val_samples}")
+            if len(self.train_samples) < 100:
+                logging.info(f"Training on samples: {self.train_samples}")
+
+            if len(self.val_samples) < 100:
+                logging.info(f"Validating on samples: {self.val_samples}")
 
             self.train_dataset = YuccaTrainDataset(
                 self.train_samples,
