@@ -170,6 +170,7 @@ class YuccaPreprocessor(object):
         start_time = time.time()
 
         images, label, image_props = self._preprocess_train_subject(subject_id, label_exists=True, preprocess_label=True)
+
         # Stack and fix dimensions
         images = np.vstack((np.array(images), np.array(label)[np.newaxis]))
 
@@ -208,7 +209,6 @@ class YuccaPreprocessor(object):
 
         image_props["image files"] = imagepaths
         images = [read_file_to_nifti_or_np(image) for image in imagepaths]
-
         if label_exists:
             # Do the same with label
             label = [
@@ -228,11 +228,11 @@ class YuccaPreprocessor(object):
             else:
                 self.run_sanity_checks(images, None, subject_id, imagepaths)
 
-        original_size = np.array(images[0].shape)
-
         images, label, image_props["nifti_metadata"] = self.apply_nifti_preprocessing_and_return_numpy(
-            images, original_size, label
+            images, np.array(images[0].shape), label
         )
+
+        original_size = images[0].shape
 
         if label_exists and preprocess_label:
             self.verify_label_validity(label, subject_id)
@@ -252,7 +252,6 @@ class YuccaPreprocessor(object):
             images, label = self.transpose_case(images, self.transpose_forward, label)
         else:
             images = self.transpose_case(images, self.transpose_forward, None)
-
         resample_target_size, final_target_size = self.determine_target_size(
             images_transposed=images,
             original_spacing=image_props["nifti_metadata"]["original_spacing"],
@@ -530,7 +529,6 @@ class YuccaPreprocessor(object):
             # If qform and sform are both missing the header is corrupt and we do not trust the
             # direction from the affine
             # Make sure you know what you're doing
-            metadata["original_spacing"] = get_nib_spacing(images[0])
             metadata["qform"] = images[0].get_qform()
             metadata["sform"] = images[0].get_sform()
             if images[0].get_qform(coded=True)[1] or images[0].get_sform(coded=True)[1]:
@@ -543,6 +541,7 @@ class YuccaPreprocessor(object):
                 ]
                 if label is not None and isinstance(label, nib.Nifti1Image):
                     label = reorient_nib_image(label, metadata["original_orientation"], metadata["final_direction"])
+            metadata["original_spacing"] = get_nib_spacing(images[0])
             metadata["affine"] = images[0].affine
 
         images = [nifti_or_np_to_np(image) for image in images]
