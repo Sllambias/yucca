@@ -32,7 +32,7 @@ def main():
         action="store_true",
     )
     parser.add_argument("--disable_sanity_checks", help="Enable or disable sanity checks", default=False)
-
+    parser.add_argument("--threads", help="Used to specify the number of processes to use for preprocessing", default=2)
     args = parser.parse_args()
 
     task = maybe_get_task_from_task_id(args.task)
@@ -41,12 +41,13 @@ def main():
     view = args.v
     disable_sanity_checks = args.disable_sanity_checks
     ensemble = args.ensemble
+    threads = args.threads
 
     if not ensemble:
         planner = recursive_find_python_class(
             folder=[join(yucca.__path__[0], "planning")], class_name=planner_name, current_module="yucca.planning"
         )
-        planner = planner(task, preprocessor_name, disable_sanity_checks=disable_sanity_checks, view=view)
+        planner = planner(task, preprocessor_name, threads=threads, disable_sanity_checks=disable_sanity_checks, view=view)
         planner.plan()
         planner.preprocess()
     if ensemble:
@@ -55,7 +56,7 @@ def main():
             planner = recursive_find_python_class(
                 folder=[join(yucca.__path__[0], "planning")], class_name=planner_name, current_module="yucca.planning"
             )
-            planner = planner(task, preprocessor_name, disable_sanity_checks=disable_sanity_checks, view=view)
+            planner = planner(task, preprocessor_name, threads=threads, disable_sanity_checks=disable_sanity_checks, view=view)
             planner.plan()
             planner.preprocess()
 
