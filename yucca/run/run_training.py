@@ -40,7 +40,7 @@ def main():
         "-pl",
         help="Plan ID to be used. "
         "This specifies which plan and preprocessed data to use for training "
-        "on the given task. Defaults to the YuccaPlanne folder",
+        "on the given task. Defaults to the YuccaPlanner folder",
         default="YuccaPlanner",
     )
 
@@ -79,8 +79,9 @@ def main():
     )
     parser.add_argument(
         "--patch_size",
+        nargs="+",
         type=str,
-        help="Use your own patch_size. Example: if 32 is provided and the model is 3D we will use patch size (32, 32, 32). Can also be min, max or mean.",
+        help="Use your own patch_size. Example: if 32 is provided and the model is 3D we will use patch size (32, 32, 32). This patch size can be set manually by passing 32 32 32 as arguments. The argument can also be min, max or mean.",
         default=None,
     )
     parser.add_argument("--precision", type=str, default="bf16-mixed")
@@ -130,8 +131,12 @@ def main():
     val_batches_per_step = args.val_batches_per_step
 
     if patch_size is not None:
-        if patch_size not in ["mean", "max", "min"]:
-            patch_size = (int(patch_size),) * 3 if dimensions == "3D" else (int(patch_size),) * 2
+        if len(patch_size) == 1:
+            patch_size = patch_size[0]
+            if patch_size not in ["mean", "max", "min"]:
+                patch_size = (int(patch_size),) * 3 if dimensions == "3D" else (int(patch_size),) * 2
+        else:
+            patch_size = tuple(int(n) for n in patch_size)
 
     kwargs = {}
 
@@ -166,6 +171,7 @@ def main():
         model_name=model_name,
         momentum=momentum,
         num_workers=num_workers,
+        patch_size=patch_size,
         planner=planner,
         precision=precision,
         profile=profile,

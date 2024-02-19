@@ -18,6 +18,20 @@ def dice_per_label(tp_list, fp_list, tn_list, fn_list):
     return [dice(tp_list[i], fp_list[i], tn_list[i], fn_list[i]) for i in range(len(tp_list))]
 
 
+def jaccard(tp, fp, tn, fn):  # noqa: U100
+    try:
+        return (tp) / (tp + fp + fn)
+    except (ZeroDivisionError, RuntimeWarning):
+        if tp + fn > 0:
+            return 0
+        else:
+            return np.nan
+
+
+def jaccard_per_label(tp_list, fp_list, tn_list, fn_list):
+    return [jaccard(tp_list[i], fp_list[i], tn_list[i], fn_list[i]) for i in range(len(tp_list))]
+
+
 def sensitivity(tp, fp, tn, fn):  # noqa: U100
     # recall, hit rate, tpr
     # How many cases of X are correctly recognized as X?

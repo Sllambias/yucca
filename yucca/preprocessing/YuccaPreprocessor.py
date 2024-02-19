@@ -6,6 +6,8 @@ import os
 import cc3d
 import logging
 import math
+import time
+import re
 from yucca.utils.loading import load_yaml, read_file_to_nifti_or_np
 from yucca.image_processing.objects.BoundingBox import get_bbox_for_foreground
 from yucca.image_processing.cropping_and_padding import crop_to_box, pad_to_size, get_pad_kwargs
@@ -110,6 +112,7 @@ class YuccaPreprocessor(object):
             f"{'Normalization scheme:':25.25} {self.plans['normalization_scheme']} \n"
             f"{'Transpose Forward:':25.25} {self.transpose_forward} \n"
             f"{'Transpose Backward:':25.25} {self.transpose_backward} \n"
+            f"{'Number of threads:':25.25} {self.threads}"
         )
         p = Pool(self.threads)
 
@@ -164,22 +167,26 @@ class YuccaPreprocessor(object):
             logging.info(f"Case: {subject_id} already exists. Skipping.")
             return
 
+        start_time = time.time()
+
         images, label, image_props = self._preprocess_train_subject(subject_id, label_exists=True, preprocess_label=True)
         # Stack and fix dimensions
         images = np.vstack((np.array(images), np.array(label)[np.newaxis]))
-
-        logging.info(
-            f"Preprocessed case: {subject_id} \n"
-            f"size before: {image_props['original_size']} size after: {image_props['new_size']} \n"
-            f"spacing before: {image_props['original_spacing']} spacing after: {image_props['new_spacing']} \n"
-            f"Saving {subject_id} in {arraypath} \n"
-        )
 
         # save the image
         np.save(arraypath, images)
 
         # save metadata as .pkl
         save_pickle(image_props, picklepath)
+
+        end_time = time.time()
+        logging.info(
+            f"Preprocessed case: {subject_id} \n"
+            f"size before: {image_props['original_size']} size after: {image_props['new_size']} \n"
+            f"spacing before: {image_props['original_spacing']} spacing after: {image_props['new_spacing']} \n"
+            f"Saving {subject_id} in {arraypath} \n"
+            f"Time elapsed: {round(end_time-start_time, 4)} \n"
+        )
 
     def _preprocess_train_subject(self, subject_id, label_exists: bool, preprocess_label: bool):
         image_props = {}
@@ -189,7 +196,16 @@ class YuccaPreprocessor(object):
         # The '_' in the end is to avoid treating Case_4_000 AND Case_42_000 as different versions
         # of the label named Case_4 as both would start with "Case_4", however only the correct one is
         # followed by an underscore
-        imagepaths = [impath for impath in self.imagepaths if os.path.split(impath)[-1].startswith(subject_id + "_")]
+        escaped_subject_id = re.escape(subject_id)
+
+        # path to all modalities of subject_id
+        imagepaths = [
+            impath
+            for impath in self.imagepaths
+            # Check if impath is a modality of subject_id (subject_id + _XXX + .) where XXX are three digits
+            if re.search(escaped_subject_id + "_" + r"\d{3}" + ".", os.path.split(impath)[-1])
+        ]
+
         image_props["image files"] = imagepaths
         images = [read_file_to_nifti_or_np(image) for image in imagepaths]
 

@@ -1,5 +1,5 @@
 from lightning.pytorch.loggers.logger import Logger
-from typing import Union
+from typing import Optional, Union
 from dataclasses import dataclass
 from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor
 from lightning.pytorch.profilers import SimpleProfiler
@@ -17,30 +17,39 @@ class CallbackConfig:
     wandb_id: str
 
     def lm_hparams(self):
-        return {"wandb_id": self.wandb_id}
+        # A story of a shitty bug 🐞
+        # When using DDP `self.wandb_id` will on any RANK ≠ 0 device be set to something in the style of
+        # <bound method _DummyExperiment.nop of <lightning.fabric.loggers.logger._DummyExperiment object at 0x7fb5a17c65d0>>
+        # which will make self.save_hyperparameters() crash on that device, because (ofc) the above is not serializable.
+        # So we cast it to a str, which makes it serializable, and since checkpoints are only stored from the
+        # rank zero device, we will never see this giberish again.
+        return {"wandb_id": str(self.wandb_id)}
 
 
 def get_callback_config(
     save_dir: str,
     version_dir: str,
     version: int,
-    ckpt_version_dir: Union[str, None] = None,
-    ckpt_wandb_id: Union[str, None] = None,
+    ckpt_version_dir: Optional[str] = None,
+    ckpt_wandb_id: Optional[str] = None,
     enable_logging: bool = True,
     interval_ckpt_epochs: int = 250,
     latest_ckpt_epochs: int = 25,
     log_lr: bool = True,
     log_model: Union[str, bool] = True,
-    prediction_output_dir: str = None,
+    prediction_output_dir: Optional[str] = None,
     profile: bool = False,
     project: str = "Yucca",
     save_softmax: bool = False,
     steps_per_epoch: int = 250,
     store_best_ckpt: bool = True,
     write_predictions: bool = True,
-    run_name: str = None,
-    run_description: str = None,
-    experiment: str = None,
+    run_name: Optional[str] = None,
+    run_description: Optional[str] = None,
+    experiment: Optional[str] = None,
+    # An entity is a username or team name where you're sending runs.
+    # If not provided will send to default entity, usually username.
+    wandb_entity: Optional[str] = None,
 ):
     callbacks = get_callbacks(
         interval_ckpt_epochs,
@@ -64,6 +73,7 @@ def get_callback_config(
         run_name=run_name,
         run_description=run_description,
         experiment=experiment,
+        wandb_entity=wandb_entity,
     )
     wandb_id = get_wandb_id(loggers, enable_logging)
     profiler = get_profiler(profile, save_dir)
@@ -84,6 +94,7 @@ def get_loggers(
     run_name: str,
     run_description: str,
     experiment: str,
+    wandb_entity: Optional[str],
 ):
     # The YuccaLogger is the barebones logger needed to save hparams.yaml
     # It should generally never be disabled.
@@ -111,6 +122,7 @@ def get_loggers(
                 log_model=log_model,
                 version=ckpt_wandb_id if use_ckpt_id else None,
                 resume="must" if use_ckpt_id else None,
+                entity=wandb_entity,
             )
         )
 

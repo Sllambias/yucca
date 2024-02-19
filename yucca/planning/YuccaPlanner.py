@@ -34,7 +34,7 @@ class YuccaPlanner(object):
         self,
         task,
         preprocessor="YuccaPreprocessor",
-        threads=2,
+        threads=12,
         disable_cc_analysis=True,
         disable_sanity_checks=False,
         view=None,
@@ -221,9 +221,23 @@ class YuccaPlannerX(YuccaPlanner):
     Used to train (mostly 2D) models on the Coronal view of 3D volumes.
     """
 
-    def __init__(self, task, threads=2, disable_sanity_checks=False):
-        super().__init__(task, threads, disable_sanity_checks=disable_sanity_checks)
-        self.name = self.name + "X"
+    def __init__(
+        self,
+        task,
+        preprocessor="YuccaPreprocessor",
+        threads=12,
+        disable_cc_analysis=True,
+        disable_sanity_checks=False,
+        view=None,
+    ):
+        super().__init__(
+            task,
+            preprocessor=preprocessor,
+            threads=threads,
+            disable_cc_analysis=disable_cc_analysis,
+            disable_sanity_checks=disable_sanity_checks,
+            view=view,
+        )
         self.view = "X"
 
 
@@ -232,9 +246,23 @@ class YuccaPlannerY(YuccaPlanner):
     Used to train (mostly 2D) models on the Coronal view of 3D volumes.
     """
 
-    def __init__(self, task, threads=2, disable_sanity_checks=False):
-        super().__init__(task, threads, disable_sanity_checks=disable_sanity_checks)
-        self.name = self.name + "Y"
+    def __init__(
+        self,
+        task,
+        preprocessor="YuccaPreprocessor",
+        threads=12,
+        disable_cc_analysis=True,
+        disable_sanity_checks=False,
+        view=None,
+    ):
+        super().__init__(
+            task,
+            preprocessor=preprocessor,
+            threads=threads,
+            disable_cc_analysis=disable_cc_analysis,
+            disable_sanity_checks=disable_sanity_checks,
+            view=view,
+        )
         self.view = "Y"
 
 
@@ -243,14 +271,28 @@ class YuccaPlannerZ(YuccaPlanner):
     Used to train (mostly 2D) models on the Axial view of 3D volumes.
     """
 
-    def __init__(self, task, threads=2, disable_sanity_checks=False):
-        super().__init__(task, threads, disable_sanity_checks=disable_sanity_checks)
-        self.name = self.name + "Z"
+    def __init__(
+        self,
+        task,
+        preprocessor="YuccaPreprocessor",
+        threads=12,
+        disable_cc_analysis=True,
+        disable_sanity_checks=False,
+        view=None,
+    ):
+        super().__init__(
+            task,
+            preprocessor=preprocessor,
+            threads=threads,
+            disable_cc_analysis=disable_cc_analysis,
+            disable_sanity_checks=disable_sanity_checks,
+            view=view,
+        )
         self.view = "Z"
 
 
 class UnsupervisedPlanner(YuccaPlanner):
-    def __init__(self, task, preprocessor=None, threads=2, disable_sanity_checks=False, view=None):
+    def __init__(self, task, preprocessor=None, threads=12, disable_sanity_checks=False, view=None):
         super().__init__(
             task, preprocessor=preprocessor, threads=threads, disable_sanity_checks=disable_sanity_checks, view=view
         )
@@ -273,7 +315,7 @@ class YuccaPlannerMinMax(YuccaPlanner):
 
 
 class YuccaPlanner_224x224_MinMax(YuccaPlanner):
-    def __init__(self, task, preprocessor="YuccaPreprocessor", threads=2, disable_unittests=False, view=None):
+    def __init__(self, task, preprocessor="YuccaPreprocessor", threads=12, disable_unittests=False, view=None):
         super().__init__(task, preprocessor, threads, disable_unittests, view)
         self.name = str(self.__class__.__name__) + str(view or "")
         self.norm_op = "255to1"

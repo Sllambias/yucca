@@ -120,6 +120,7 @@ class YuccaLogger(Logger):
                 print(f"{t} {key+':':20} {metrics[key]}")
         sys.stdout.flush()
 
+    @rank_zero_only
     def log_hparams(self, params: Dict[str, Any]) -> None:
         """Record hparams."""
         self.hparams.update(params)

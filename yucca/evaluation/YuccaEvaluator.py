@@ -9,6 +9,7 @@ from batchgenerators.utilities.file_and_folder_operations import subfiles, join,
 from sklearn.metrics import confusion_matrix
 from yucca.evaluation.metrics import (
     dice,
+    jaccard,
     sensitivity,
     precision,
     TP,
@@ -38,7 +39,18 @@ class YuccaEvaluator(object):
         task_type: Literal["segmentation", "classification", "regression"] = "segmentation",
     ):
         self.name = "results"
-
+        self.metrics = {
+            "Dice": dice,
+            "Jaccard": jaccard,
+            "Sensitivity": sensitivity,
+            "Precision": precision,
+            "Volume Similarity": volume_similarity,
+            "True Positives": TP,
+            "False Positives": FP,
+            "False Negatives": FN,
+            "Total Positives Ground Truth": total_pos_gt,
+            "Total Positives Prediction": total_pos_pred,
+        }
         self.obj_metrics = []
 
         self.use_wandb = use_wandb
@@ -47,6 +59,7 @@ class YuccaEvaluator(object):
         if self.task_type == "segmentation":
             self.metrics = {
                 "Dice": dice,
+                "Jaccard": jaccard,
                 "Sensitivity": sensitivity,
                 "Precision": precision,
                 "Volume Similarity": volume_similarity,
@@ -76,6 +89,7 @@ class YuccaEvaluator(object):
                 "Dice",
                 "Sensitivity",
                 "Precision",
+                "Jaccard",
                 "Volume Similarity",
                 "_OBJ sensitivity",
                 "_OBJ precision",
