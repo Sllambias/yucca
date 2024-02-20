@@ -9,8 +9,8 @@ def convert(path: str, subdir: str = "WMH"):
     path = join(path, subdir)
 
     """ OUTPUT DATA - Define the task name and prefix """
-    task_name = "Task006_WMH_Flair"
-    task_prefix = "WMH_F"
+    task_name = "Task007_WMH_T1"
+    task_prefix = "WMH_T1"
 
     datasets = ["Amsterdam", "Singapore", "Utrecht"]
     site = ""
@@ -99,10 +99,10 @@ def convert(path: str, subdir: str = "WMH"):
         join(target_base, "dataset.json"),
         target_imagesTr,
         target_imagesTs,
-        ("Flair",),
+        ("T1",),
         labels={0: "background", 1: "WMH", 2: "Other Pathology"},
         dataset_name=task_name,
         license="CC BY-NC 4.0 DEED",
-        dataset_description="White Matter Hyperintensity Segmentation Challenge. Flair images only!",
+        dataset_description="White Matter Hyperintensity Segmentation Challenge. T1 images only!",
         dataset_reference="https://dataverse.nl/dataset.xhtml?persistentId=doi:10.34894/AECRSD",
     )
