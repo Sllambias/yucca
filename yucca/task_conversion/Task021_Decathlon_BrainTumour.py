@@ -2,7 +2,6 @@ import nibabel as nib
 import nibabel.processing as nibpro
 import numpy as np
 from sklearn.model_selection import train_test_split
-from tqdm import tqdm
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data, yucca_source
@@ -95,21 +94,21 @@ def convert(path: str = yucca_source, subdir: str = "decathlon", subsubdir: str 
         t1gd = image.slicer[:, :, :, 2]
         t2w = image.slicer[:, :, :, 3]
 
-        orig_ornt = get_nib_orientation(image)
+        orig_ornt = get_nib_orientation(flair)
         label_ornt = get_nib_orientation(label)
 
         if orig_ornt == label_ornt:
 
             print("same orientation")
 
-            orig_spacing = get_nib_spacing(image)
+            orig_spacing = get_nib_spacing(flair)
             label_spacing = get_nib_spacing(label)
 
             if orig_spacing.all() == label_spacing.all():
 
                 print("same spacing")
 
-                orig_shape = np.shape(image)
+                orig_shape = np.shape(flair)
                 label_shape = np.shape(label)
 
                 if orig_shape == label_shape:
