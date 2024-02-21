@@ -11,5 +11,5 @@ class YuccaPlanner_1_1_1(YuccaPlanner):
         self.norm_op = "volume_wise_znorm"
 
     def determine_target_size_from_fixed_size_or_spacing(self):
-        self.fixed_target_spacing = [1, 1, 1.25]
+        self.fixed_target_spacing = [1, 1, 1]
         self.fixed_target_size = None
