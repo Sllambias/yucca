@@ -493,7 +493,7 @@ class YuccaPreprocessor(object):
         # oversampling of foreground classes
         # And we also potentially analyze the connected components of the label
         foreground_locs = np.array(np.nonzero(label)).T[::10]
-        if self.enable_cc_analysis:
+        if not self.enable_cc_analysis:
             label_cc_n = 0
             label_cc_sizes = 0
         else:
