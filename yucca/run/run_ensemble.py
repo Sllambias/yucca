@@ -9,7 +9,6 @@ from the same task as the one the model is trained on.
 """
 
 import argparse
-from yucca.evaluation.YuccaEvaluator import YuccaEvaluator
 from yucca.utils.saving import merge_softmax_from_folders
 
 
