@@ -27,7 +27,7 @@ def seed_everything_and_get_seed_config(manual_seed: Union[int, None] = None, ck
         seq = int(dt.strftime("%Y%m%d%H%M%S"))
         seed = seq
 
-    L.seed_everything(seed=seq, workers=True)
+    L.seed_everything(seed=seed, workers=True)
     seed = torch.initial_seed()
 
     return SeedConfig(
