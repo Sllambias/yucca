@@ -24,7 +24,7 @@ def seed_everything_and_get_seed_config(manual_seed: Union[int, None] = None, ck
         seed = ckpt_seed
     else:
         dt = datetime.datetime.now()
-        seq = int(dt.strftime("%Y%m%d%H%M%S"))
+        seq = int(dt.strftime("%m%d%H%M%S"))
         seed = seq
 
     L.seed_everything(seed=seed, workers=True)
