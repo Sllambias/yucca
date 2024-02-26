@@ -55,6 +55,7 @@ yucca_inference = 'yucca.run.run_inference:main'
 yucca_evaluation = 'yucca.run.run_evaluation:main'
 yucca_finetune = 'yucca.run.run_finetune:main'
 yucca_convert_task = 'yucca.run.run_task_conversion:main'
+yucca_ensemble = 'yucca.run.run_ensemble:main'
 
 [project.urls]
 "Homepage" = "https://github.com/sllambias/yucca"
