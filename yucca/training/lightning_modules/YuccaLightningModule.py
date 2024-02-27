@@ -273,9 +273,9 @@ class YuccaLightningModule(L.LightningModule):
         state_dict = {
             k: v for k, v in state_dict.items() if (k in old_params) and (old_params[k].shape == state_dict[k].shape)
         }
-        rejected_keys = [
-            k for k in state_dict.keys() if not (k in old_params) or not (old_params[k].shape == state_dict[k].shape)
-        ]
+        rejected_keys_new = [k for k in state_dict.keys() if k not in old_params]
+        rejected_keys_shape = [k for k in state_dict.keys() if old_params[k].shape != state_dict[k].shape]
+        rejected_keys_data = []
 
         # Here there's also potential to implement custom loading functions.
         # E.g. to load 2D pretrained models into 3D by repeating or something like that.
@@ -291,8 +291,13 @@ class YuccaLightningModule(L.LightningModule):
                 successful += 1
             else:
                 unsuccessful += 1
-                if param_name not in rejected_keys:
-                    rejected_keys.append(param_name)
+                if param_name not in rejected_keys_new and param_name not in rejected_keys_shape:
+                    rejected_keys_data.append(param_name)
 
         print(f"Succesfully transferred weights for {successful}/{successful+unsuccessful} layers")
-        print(f"Rejected the following keys: {rejected_keys}")
+        print(
+            f"Rejected the following keys:\n"
+            f"Not in old dict: {rejected_keys_new}.\n"
+            f"Wrong shape: {rejected_keys_shape}.\n"
+            f"Post check not succesful: {rejected_keys_data}."
+        )
