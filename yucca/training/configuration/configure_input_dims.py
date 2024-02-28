@@ -41,7 +41,6 @@ def get_input_dims_config(
         originally overruled Y and thus should do so again.
     4. Patch size is inferred in the plans.
     """
-    print(patch_size)
     num_modalities = max(1, plan.get("num_modalities") or len(plan["dataset_properties"]["modalities"]))
 
     if isinstance(batch_size, str):
@@ -60,6 +59,7 @@ def get_input_dims_config(
 
     # Check patch size priority 2
     elif patch_size is not None:
+        logging.info(f"Getting patch size based on manual input of: {patch_size}")
         # Can be three things here: 1. a list/tuple of ints, 2. a list of one int/str or 3. just an int/str
         # First check case 1.
         if isinstance(patch_size, (list, tuple)) and len(patch_size) > 1:
@@ -90,6 +90,10 @@ def get_input_dims_config(
 
     # Patch size priority 4
     if patch_size is None or batch_size is None:
+        logging.info(
+            "Either patch size or batch size is None. Inferring optimal settings."
+            f"Patch Size is None == {patch_size is None}. Batch is None == {batch_size is None}"
+        )
         batch_size, patch_size = find_optimal_tensor_dims(
             fixed_patch_size=patch_size,
             fixed_batch_size=batch_size,

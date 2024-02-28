@@ -181,6 +181,7 @@ class YuccaManager:
             plan=plan_config.plans,
             model_dimensions=task_config.model_dimensions,
             num_classes=plan_config.num_classes,
+            ckpt_patch_size=self.ckpt_config.ckpt_patch_size,
             model_name=task_config.model_name,
             max_vram=self.max_vram,
             batch_size=self.batch_size,
