@@ -2,7 +2,7 @@ import lightning as pl
 import torchvision
 import logging
 import torch
-from typing import Literal, Optional
+from typing import Literal, Optional, Union
 from torch.utils.data import DataLoader, Sampler
 from batchgenerators.utilities.file_and_folder_operations import join
 from yucca.training.configuration.configure_input_dims import InputDimensionsConfig
@@ -49,24 +49,26 @@ class YuccaDataModule(pl.LightningDataModule):
     def __init__(
         self,
         input_dims_config: InputDimensionsConfig,
-        plan_config: PlanConfig,
-        splits_config: SplitConfig,
-        split_idx: int,
-        composed_train_transforms: torchvision.transforms.Compose = None,
-        composed_val_transforms: torchvision.transforms.Compose = None,
+        image_extension: str,
+        splits_config: Optional[SplitConfig] = None,
+        split_idx: Optional[int] = None,
+        task_type: Optional[str] = None,
+        composed_train_transforms: Optional[torchvision.transforms.Compose] = None,
+        composed_val_transforms: Optional[torchvision.transforms.Compose] = None,
         num_workers: Optional[int] = None,
-        pred_data_dir: str = None,
-        pre_aug_patch_size: list | tuple = None,
+        pred_data_dir: Optional[str] = None,
+        pre_aug_patch_size: Optional[Union[list, tuple]] = None,
         train_sampler: Optional[Sampler] = InfiniteRandomSampler,
         val_sampler: Optional[Sampler] = InfiniteRandomSampler,
-        train_data_dir: str = None,
+        train_data_dir: Optional[str] = None,
     ):
         super().__init__()
+
         # extract parameters
         self.batch_size = input_dims_config.batch_size
         self.patch_size = input_dims_config.patch_size
-        self.image_extension = plan_config.image_extension
-        self.task_type = plan_config.task_type
+        self.image_extension = image_extension
+        self.task_type = task_type
 
         self.split_idx = split_idx
         self.splits_config = splits_config
@@ -96,6 +98,9 @@ class YuccaDataModule(pl.LightningDataModule):
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
             assert self.train_data_dir is not None
+            assert self.split_idx is not None
+            assert self.splits_config is not None
+            assert self.task_type is not None
 
             self.train_samples = [join(self.train_data_dir, i) for i in self.splits_config.train(self.split_idx)]
             self.val_samples = [join(self.train_data_dir, i) for i in self.splits_config.val(self.split_idx)]
