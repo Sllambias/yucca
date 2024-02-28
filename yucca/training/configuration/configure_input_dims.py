@@ -44,6 +44,12 @@ def get_input_dims_config(
 
     num_modalities = max(1, plan.get("num_modalities") or len(plan["dataset_properties"]["modalities"]))
 
+    if isinstance(batch_size, str):
+        if batch_size == "tiny":
+            batch_size = 2
+        else:
+            raise ValueError(f"Unknown batch size param: {batch_size}")
+
     # Check patch size priority 1
     if patch_based_training is False:
         assert plan.get("new_max_size") == plan.get(
@@ -52,29 +58,28 @@ def get_input_dims_config(
         patch_size = tuple(plan.get("new_max_size"))
 
     # Check patch size priority 2
-    if isinstance(patch_size, str):
-        if patch_size in ["max", "min", "mean"]:
-            # Get patch size from dataset
-            patch_size = tuple(plan[f"new_{patch_size}_size"])
-        elif patch_size == "tiny":
-            patch_size = (32, 32, 32)
+    elif patch_size is not None:
+        # Output of argparse will be a list
+        if len(patch_size) == 1:
+            patch_size = patch_size[0]
+            if patch_size in ["max", "min", "mean"]:
+                patch_size = tuple(plan[f"new_{patch_size}_size"])
+            elif patch_size == "tiny":
+                patch_size = (32, 32, 32)
+            elif patch_size.isdigit():
+                patch_size = (int(patch_size),) * 3
+            else:
+                raise ValueError(f"Unknown patch size param: {patch_size}")
         else:
-            raise ValueError(f"Unknown patch size param: {patch_size}")
-
+            patch_size = tuple(int(n) for n in patch_size)
     # Patch size priority 3
-    if ckpt_patch_size is not None and patch_size is None:
+    elif ckpt_patch_size is not None:
         patch_size = ckpt_patch_size
 
     if model_dimensions == "2D" and len(patch_size) == 3:
         # If we have now selected a 3D patch for a 2D model we skip the first dim
         # as we will be extracting patches from that dimension.
         patch_size = patch_size[1:]
-
-    if isinstance(batch_size, str):
-        if batch_size == "tiny":
-            batch_size = 2
-        else:
-            raise ValueError(f"Unknown batch size param: {batch_size}")
 
     # Patch size priority 4
     if patch_size is None or batch_size is None:
@@ -109,3 +114,8 @@ def get_input_dims_config(
         patch_size=patch_size,
         num_modalities=num_modalities,
     )
+
+
+# %%
+
+# %%

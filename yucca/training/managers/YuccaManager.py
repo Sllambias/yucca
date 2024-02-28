@@ -104,10 +104,6 @@ class YuccaManager:
         self.val_batches_per_step = val_batches_per_step
         self.kwargs = kwargs
 
-        # Configure basic parameters
-        if self.patch_size is None and self.model_name == "TinyUNet":
-            self.patch_size = "tiny"
-
         # Automatically changes bfloat training if we're running on a GPU
         # that doesn't support it (otherwise it just crashes.)
         if "bf" in self.precision and torch.cuda.is_available():
