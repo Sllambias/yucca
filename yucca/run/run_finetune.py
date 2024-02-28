@@ -127,10 +127,6 @@ def main():
     train_batches_per_step = args.train_batches_per_step
     val_batches_per_step = args.val_batches_per_step
 
-    if patch_size is not None:
-        if patch_size not in ["mean", "max", "min"]:
-            patch_size = (int(patch_size),) * 3 if dimensions == "3D" else (int(patch_size),) * 2
-
     kwargs = {}
 
     manager = recursive_find_python_class(

@@ -41,7 +41,7 @@ def get_input_dims_config(
         originally overruled Y and thus should do so again.
     4. Patch size is inferred in the plans.
     """
-
+    print(patch_size)
     num_modalities = max(1, plan.get("num_modalities") or len(plan["dataset_properties"]["modalities"]))
 
     if isinstance(batch_size, str):
@@ -56,12 +56,19 @@ def get_input_dims_config(
             "new_min_size"
         ), "sizes in dataset are not uniform. Non-patch based training only works for datasets with uniform data shapes."
         patch_size = tuple(plan.get("new_max_size"))
+        logging.info(f"Getting patch size for non-patch based training")
 
     # Check patch size priority 2
     elif patch_size is not None:
-        # Output of argparse will be a list
-        if len(patch_size) == 1:
-            patch_size = patch_size[0]
+        # Can be three things here: 1. a list/tuple of ints, 2. a list of one int/str or 3. just an int/str
+        # First check case 1.
+        if isinstance(patch_size, (list, tuple)) and len(patch_size) > 1:
+            patch_size = tuple(int(n) for n in patch_size)
+        else:
+            # Then check case 2 and convert to be identical to case 3.
+            if isinstance(patch_size, list) and len(patch_size) == 1:
+                patch_size = patch_size[0]
+            # Proceed as if case 3.
             if patch_size in ["max", "min", "mean"]:
                 patch_size = tuple(plan[f"new_{patch_size}_size"])
             elif patch_size == "tiny":
@@ -70,8 +77,7 @@ def get_input_dims_config(
                 patch_size = (int(patch_size),) * 3
             else:
                 raise ValueError(f"Unknown patch size param: {patch_size}")
-        else:
-            patch_size = tuple(int(n) for n in patch_size)
+
     # Patch size priority 3
     elif ckpt_patch_size is not None:
         patch_size = ckpt_patch_size
