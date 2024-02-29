@@ -111,7 +111,7 @@ class YuccaAugmentationComposer:
         if task_type_preset == "classification":
             self.skip_label = True
 
-        if task_type_preset == "unsupervised":
+        if task_type_preset == "self-supervised":
             self.skip_label = True
             self.copy_image_to_label = True
             # This should be uncommented when masking is properly implemented

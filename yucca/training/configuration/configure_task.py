@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Union
+from typing import Union
 
 
 @dataclass
@@ -29,7 +29,6 @@ class TaskConfig:
             "split_idx": self.split_idx,
             "split_method": self.split_method,
             "split_param": self.split_param,
-            "experiment": self.experiment,
         }
 
 
@@ -43,8 +42,8 @@ def get_task_config(
     patch_based_training: bool = True,
     experiment: str = "default",
     split_idx: int = 0,
-    split_data_method: Optional[int] = "kfold",
-    split_data_param: Optional[float] = 5,
+    split_data_method: str = "kfold",
+    split_data_param: Union[str, float, int] = 5,
 ):
     assert model_dimensions is not None
 

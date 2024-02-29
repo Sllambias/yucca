@@ -74,7 +74,7 @@ def setup_task_type(plans):
     if issubclass(preprocessor_class, ClassificationPreprocessor):
         task_type = "classification"
     elif issubclass(preprocessor_class, UnsupervisedPreprocessor):
-        task_type = "unsupervised"
+        task_type = "self-supervised"
     else:
         task_type = "segmentation"
     return task_type

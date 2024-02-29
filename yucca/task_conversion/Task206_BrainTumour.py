@@ -17,7 +17,8 @@ def convert(path: str, subdir: str = "decathlon/Task01_BrainTumour"):
     """ Access the input data. If images are not split into train/test, and you wish to randomly
     split the data, uncomment and adapt the following lines to fit your local path. """
 
-    subjects_dir = join(path, "imagesTr")
+    # NOTE: We use the test set for pre-training, as the labels are no longer available, and we thus cannot use it for evaluation!
+    subjects_dir = join(path, "imagesTs")
     target_base = join(yucca_raw_data, task_name)
     target_imagesTr = join(target_base, "imagesTr")
 

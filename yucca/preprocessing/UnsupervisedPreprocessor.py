@@ -6,6 +6,7 @@ import numpy as np
 import re
 import os
 import logging
+import time
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from batchgenerators.utilities.file_and_folder_operations import (
@@ -36,19 +37,23 @@ class UnsupervisedPreprocessor(YuccaPreprocessor):
             logging.info(f"Case: {subject_id} already exists. Skipping.")
             return
 
+        start_time = time.time()
+
         images, _, image_props = self._preprocess_train_subject(subject_id, label_exists=False, preprocess_label=False)
 
         images = np.array(images)
-
-        logging.info(
-            f"Preprocessed case: {subject_id} \n"
-            f"size before: {image_props['original_size']} size after: {image_props['new_size']} \n"
-            f"spacing before: {image_props['original_spacing']} spacing after: {image_props['new_spacing']} \n"
-            f"Saving {subject_id} in {arraypath} \n"
-        )
 
         # save the image
         np.save(arraypath, images)
 
         # save metadata as .pkl
         save_pickle(image_props, picklepath)
+
+        end_time = time.time()
+        logging.info(
+            f"Preprocessed case: {subject_id} \n"
+            f"size before: {image_props['original_size']} size after: {image_props['new_size']} \n"
+            f"spacing before: {image_props['original_spacing']} spacing after: {image_props['new_spacing']} \n"
+            f"Saving {subject_id} in {arraypath} \n"
+            f"Time elapsed: {round(end_time-start_time, 4)} \n"
+        )

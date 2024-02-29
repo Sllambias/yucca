@@ -11,14 +11,14 @@ options:
   -d SUBDIR, --subdir SUBDIR
                         Directory of data inside source data
 
-The -t flag must point to the name of a previously created task conversion script, such as the [OASIS script](/yucca/yucca/task_conversion/Task001_OASIS.py). The -p flag points to the parent directory of the dataset folder. If left empty this defaults to [`yucca_source`](/yucca/yucca/documentation/tutorials/environment_variables.md). The -d flag points to the specific dataset directory inside the parent directory. 
+The -t flag must point to the name of a previously created task conversion script, such as the [OASIS script](/yucca/task_conversion/Task001_OASIS.py). The -p flag points to the parent directory of the dataset folder. If left empty this defaults to [`yucca_source`](/yucca/documentation/guides/environment_variables.md). The -d flag points to the specific dataset directory inside the parent directory. 
 
 If the OASIS dataset was located in /path/to/all/my/datasets/specific_dataset123 the command should be:
 `yucca_convert_task -t Task001_OASIS -p /path/to/all/my/datasets -d specific_dataset123`
 
 # Preprocessing
 
-The `yucca_preprocess` CLI invokes the [`run_preprocessing.py`](yucca/run/run_preprocessing.py) script.
+The `yucca_preprocess` CLI invokes the [`run_preprocessing.py`](/yucca/run/run_preprocessing.py) script.
 For help and all the available arguments see the output of the `-h` flag below.
 
 ```console
@@ -35,59 +35,95 @@ options:
                         Enable or disable sanity checks
 ```
 
-**-t**, **-pl** and **-pr** are covered in the front page [ReadMe](/yucca/README.md#preprocessing).
+**-t**, **-pl** and **-pr** are covered in the front page [ReadMe](/README.md#preprocessing).
 
 **-v**: Used to transpose images to a different orientation. Primarily used to train 2D models on a specific orientation.
 **--ensemble**: Used to automatically preprocess 3 versions of the dataset using the X, Y and Z views. Can be manually obtained by preprocessing the dataset thrice with `-v X`, `-v Y` and `-v Z`.
 **--disable_sanity_checks**: should only be used if you are aware something will violate sanity checks, but you want to still continue.
 
 Internally, the `yucca_preprocess` command calls a planner and preprocessor class.
-Initially, the appropriate planner is called. This is by default the [`YuccaPlanner`](yucca/yucca/planning/YuccaPlanner.py). The planner first collects dataset statistics can be used during preprocessing. These are saved in a `dataset_properties.pkl` file. Then, it specifies _what_ will happen during preprocessing. This includes the normalization operation, target spacing or size/resolution and orientation.
+Initially, the appropriate planner is called. This is by default the [`YuccaPlanner`](/yucca/planning/YuccaPlanner.py). The planner first collects dataset statistics can be used during preprocessing. These are saved in a `dataset_properties.pkl` file. Then, it specifies _what_ will happen during preprocessing. This includes the normalization operation, target spacing or size/resolution and orientation.
 
-Afterwards, the preprocessor is called. This is by default the [`YuccaPreprocessor`](yucca/yucca/preprocessing/YuccaPreprocessor.py). This preprocesses training data according to the operations and values supplied by planner. As such the preprocessor should very rarely be changed, while the planner will often be changed to employ alternative preprocessing schemes.
+Afterwards, the preprocessor is called. This is by default the [`YuccaPreprocessor`](/yucca/preprocessing/YuccaPreprocessor.py). This preprocesses training data according to the operations and values supplied by planner. As such the preprocessor should very rarely be changed, while the planner will often be changed to employ alternative preprocessing schemes.
 
 # Training
 
-The `yucca_train` CLI invokes the [`run_training.py`](yucca/run/run_training.py) script.
+The `yucca_train` CLI invokes the [`run_training.py`](/yucca/run/run_training.py) script.
 For help and all the available arguments see the output of the `-h` flag below.
 
 ```console
 > yucca_train -h
-usage: yucca_train [-h] [-t TASK] [-d D] [-m M] [-man MAN] [-pl PL] [--disable_logging] [--ds] [--epochs EPOCHS] [--experiment EXPERIMENT] [--loss LOSS] [--lr LR] [--mom MOM] [--new_version]
-                   [--patch_size PATCH_SIZE] [--precision PRECISION] [--profile] [--split_idx SPLIT_IDX] [--split_data_method SPLIT_DATA_METHOD] [--split_data_param SPLIT_DATA_PARAM]
-                   [--train_batches_per_step TRAIN_BATCHES_PER_STEP] [--val_batches_per_step VAL_BATCHES_PER_STEP]
+usage: yucca_train [-h] [-t TASK] [-d D] [-m M] [-man MAN] [-pl PL]
+                   [--batch_size BATCH_SIZE] [--disable_logging] [--ds]
+                   [--epochs EPOCHS] [--experiment EXPERIMENT] [--loss LOSS]
+                   [--lr LR] [--max_vram MAX_VRAM] [--mom MOM] [--new_version]
+                   [--num_workers NUM_WORKERS]
+                   [--patch_size PATCH_SIZE [PATCH_SIZE ...]]
+                   [--precision PRECISION] [--profile] [--split_idx SPLIT_IDX]
+                   [--split_data_method SPLIT_DATA_METHOD]
+                   [--split_data_param SPLIT_DATA_PARAM]
+                   [--train_batches_per_step TRAIN_BATCHES_PER_STEP]
+                   [--val_batches_per_step VAL_BATCHES_PER_STEP]
 
 options:
   -h, --help            show this help message and exit
-  -t TASK, --task TASK  Name of the task used for training. The data should already be preprocessed using yucca_preprocessArgument should be of format: TaskXXX_MYTASK
-  -d D                  Dimensionality of the Model. Can be 3D or 2D. Defaults to 3D. Note that this will always be 2D if ensemble is enabled.
-  -m M                  Model Architecture. Should be one of MultiResUNet or UNet Note that this is case sensitive. Defaults to the standard UNet.
-  -man MAN              Manager Class to be used. Defaults to the basic YuccaManager
-  -pl PL                Plan ID to be used. This specifies which plan and preprocessed data to use for training on the given task. Defaults to the YuccaPlanne folder
+  -t TASK, --task TASK  Name of the task used for training. The data should
+                        already be preprocessed using yucca_preprocessArgument
+                        should be of format: TaskXXX_MYTASK
+  -d D                  Dimensionality of the Model. Can be 3D or 2D. Defaults
+                        to 3D. Note that this will always be 2D if ensemble is
+                        enabled.
+  -m M                  Model Architecture. Should be one of MultiResUNet or
+                        UNet Note that this is case sensitive. Defaults to the
+                        standard UNet.
+  -man MAN              Manager Class to be used. Defaults to the basic
+                        YuccaManager
+  -pl PL                Plan ID to be used. This specifies which plan and
+                        preprocessed data to use for training on the given
+                        task. Defaults to the YuccaPlanner folder
+  --batch_size BATCH_SIZE
+                        Batch size to be used for training. Overrides the
+                        batch size specified in the plan.
   --disable_logging     disable logging.
   --ds                  Used to enable deep supervision
-  --epochs EPOCHS       Used to specify the number of epochs for training. Default is 1000
+  --epochs EPOCHS       Used to specify the number of epochs for training.
+                        Default is 1000
   --experiment EXPERIMENT
-                        A name for the experiment being performed, with no spaces.
-  --loss LOSS           Should only be used to employ alternative Loss Function
-  --lr LR               Should only be used to employ alternative Learning Rate.
+                        A name for the experiment being performed, with no
+                        spaces.
+  --loss LOSS           Should only be used to employ alternative Loss
+                        Function
+  --lr LR               Should only be used to employ alternative Learning
+                        Rate. Format should be scientific notation e.g. 1e-4.
+  --max_vram MAX_VRAM
   --mom MOM             Should only be used to employ alternative Momentum.
-  --new_version         Start a new version, instead of continuing from the most recent.
-  --patch_size PATCH_SIZE
-                        Use your own patch_size. Example: if 32 is provided and the model is 3D we will use patch size (32, 32, 32). Can also be min, max or mean.
+  --new_version         Start a new version, instead of continuing from the
+                        most recent.
+  --num_workers NUM_WORKERS
+                        Num workers used in the DataLoaders. By default this
+                        will be inferred from the number of available CPUs-1
+  --patch_size PATCH_SIZE [PATCH_SIZE ...]
+                        Use your own patch_size. Example: if 32 is provided
+                        and the model is 3D we will use patch size (32, 32,
+                        32). This patch size can be set manually by passing 32
+                        32 32 as arguments. The argument can also be min, max
+                        or mean.
   --precision PRECISION
   --profile             Enable profiling.
   --split_idx SPLIT_IDX
                         idx of splits to use for training.
   --split_data_method SPLIT_DATA_METHOD
-                        Specify splitting method. Either kfold, simple_train_val_split
+                        Specify splitting method. Either kfold,
+                        simple_train_val_split
   --split_data_param SPLIT_DATA_PARAM
-                        Specify the parameter for the selected split method. For KFold use an int, for simple_split use a float between 0.0-1.0.
+                        Specify the parameter for the selected split method.
+                        For KFold use an int, for simple_split use a float
+                        between 0.0-1.0.
   --train_batches_per_step TRAIN_BATCHES_PER_STEP
   --val_batches_per_step VAL_BATCHES_PER_STEP
 ```
 
-**-t**, **-d**, **-m**, **-man** and **-pl** are covered in the front page [ReadMe](/yucca/README.md#training).
+**-t**, **-d**, **-m**, **-man** and **-pl** are covered in the front page [ReadMe](/README.md#training).
 
 **--disable_logging**: Disables logging to WandB and a local logfile. The hparams.yaml will still be saved for experiment inspection and reproducibility.
 **--ds**: Enables deep supervision. Note that not all models support this. Currently supported is `UNet`.
@@ -113,7 +149,7 @@ An example of training on a task called `Task002_NotBrains`, using a 2D `MultiRe
 # Inference
 
 
-The `yucca_inference` CLI invokes the [`run_inference.py`](yucca/run/run_inference.py) script.
+The `yucca_inference` CLI invokes the [`run_inference.py`](/yucca/run/run_inference.py) script.
 For help and all the available arguments see the output of the `-h` flag below.
 
 ```console
@@ -147,7 +183,7 @@ options:
   --version VERSION     Version to use for inference. Defaults to the newest version.
 ```
 
-**-s**, **-t**, **-d**, **-m**, **-man** and **-pl** are covered in the front page [ReadMe](/yucca/README.md#inference).
+**-s**, **-t**, **-d**, **-m**, **-man** and **-pl** are covered in the front page [ReadMe](/README.md#inference).
 
 **--checkpoint**: Used to specify which checkpoint should be used to generate the predictions. Defaults to the "best.ckpt".
 **--disable_tta**: Disables Test-Time augmentations. This only has an impact for models eligible for Test-Time augmentations. So far this is limited to models trained with the Mirroring augmentations enabled.

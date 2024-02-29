@@ -92,7 +92,7 @@ class YuccaLightningModule(L.LightningModule):
             )
             _default_loss = "DiceCE"
 
-        if self.task_type == "unsupervised":
+        if self.task_type == "self-supervised":
             self.train_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
             self.val_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
             _default_loss = "MSE"
@@ -134,7 +134,7 @@ class YuccaLightningModule(L.LightningModule):
             # UNetR
             "patch_size": self.patch_size,
             # MedNeXt
-            "checkpoint_style": None,
+            "checkpoint_style": "outside_block",
         }
         model_kwargs = filter_kwargs(self.model, model_kwargs)
 
@@ -273,6 +273,9 @@ class YuccaLightningModule(L.LightningModule):
         state_dict = {
             k: v for k, v in state_dict.items() if (k in old_params) and (old_params[k].shape == state_dict[k].shape)
         }
+        rejected_keys_new = [k for k in state_dict.keys() if k not in old_params]
+        rejected_keys_shape = [k for k in state_dict.keys() if old_params[k].shape != state_dict[k].shape]
+        rejected_keys_data = []
 
         # Here there's also potential to implement custom loading functions.
         # E.g. to load 2D pretrained models into 3D by repeating or something like that.
@@ -282,10 +285,19 @@ class YuccaLightningModule(L.LightningModule):
         unsuccessful = 0
         super().load_state_dict(state_dict, *args, **kwargs)
         new_params = self.state_dict()
-        for p1, p2 in zip(old_params.values(), new_params.values()):
+        for param_name, p1, p2 in zip(old_params.keys(), old_params.values(), new_params.values()):
             # If more than one param in layer is NE (not equal) to the original weights we've successfully loaded new weights.
             if p1.data.ne(p2.data).sum() > 0:
                 successful += 1
             else:
                 unsuccessful += 1
+                if param_name not in rejected_keys_new and param_name not in rejected_keys_shape:
+                    rejected_keys_data.append(param_name)
+
         print(f"Succesfully transferred weights for {successful}/{successful+unsuccessful} layers")
+        print(
+            f"Rejected the following keys:\n"
+            f"Not in old dict: {rejected_keys_new}.\n"
+            f"Wrong shape: {rejected_keys_shape}.\n"
+            f"Post check not succesful: {rejected_keys_data}."
+        )
