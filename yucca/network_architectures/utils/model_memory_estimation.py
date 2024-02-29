@@ -206,7 +206,7 @@ def find_optimal_tensor_dims(
                     batch_size += 8
         except torch.cuda.OutOfMemoryError:
             OOM_OR_MAXED = True
-    if final_batch_size is None or final_batch_size is None:
+    if final_batch_size is None or final_patch_size is None:
         print(
             "\n"
             "Final batch and/or patch size was not found. \n"

@@ -89,21 +89,18 @@ def get_input_dims_config(
         patch_size = patch_size[1:]
 
     # Patch size priority 4
-    if patch_size is None or batch_size is None:
-        logging.info(
-            "Either patch size or batch size is None. Inferring optimal settings."
-            f"Patch Size is None == {patch_size is None}. Batch is None == {batch_size is None}"
-        )
-        batch_size, patch_size = find_optimal_tensor_dims(
-            fixed_patch_size=patch_size,
-            fixed_batch_size=batch_size,
-            dimensionality=model_dimensions,
-            num_classes=num_classes,
-            modalities=num_modalities,
-            model_name=model_name,
-            max_patch_size=plan["new_mean_size"],
-            max_memory_usage_in_gb=max_vram,
-        )
+    # We ALWAYS run this because even in the case that we have patch_size AND batch_size
+    # this function will make sure they're valid by e.g. making the patch size divisible by 16.
+    batch_size, patch_size = find_optimal_tensor_dims(
+        fixed_patch_size=patch_size,
+        fixed_batch_size=batch_size,
+        dimensionality=model_dimensions,
+        num_classes=num_classes,
+        modalities=num_modalities,
+        model_name=model_name,
+        max_patch_size=plan["new_mean_size"],
+        max_memory_usage_in_gb=max_vram,
+    )
 
     assert isinstance(patch_size, tuple), patch_size
     assert isinstance(batch_size, int), batch_size

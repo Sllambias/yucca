@@ -146,9 +146,6 @@ class YuccaManager:
             path_config=path_config,
         )
 
-        # To inspect the ckpt plans it is printed. Note that there is no patch_size or batch_size arg but this is expected in get_input_dims_config.
-        print("!!!!! Checkpoint plans;", self.ckpt_config.ckpt_plans)
-
         seed_config = seed_everything_and_get_seed_config(ckpt_seed=self.ckpt_config.ckpt_seed)
 
         plan_config = get_plan_config(
@@ -175,7 +172,6 @@ class YuccaManager:
             splits_config = get_split_config(task_config.split_method, task_config.split_param, path_config)
         else:
             splits_config = SplitConfig()
-            print("!!!!! Manual inspection of patch_size passed to get_input_dims_config;", self.patch_size)
 
         input_dims_config = get_input_dims_config(
             plan=plan_config.plans,

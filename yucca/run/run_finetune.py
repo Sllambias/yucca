@@ -80,8 +80,9 @@ def main():
     )
     parser.add_argument(
         "--patch_size",
+        nargs="+",
         type=str,
-        help="Use your own patch_size. Example: if 32 is provided and the model is 3D we will use patch size (32, 32, 32). Can also be min, max or mean.",
+        help="Use your own patch_size. Example: if 32 is provided and the model is 3D we will use patch size (32, 32, 32). This patch size can be set manually by passing 32 32 32 as arguments. The argument can also be min, max or mean.",
         default=None,
     )
     parser.add_argument("--precision", type=str, default="bf16-mixed")
