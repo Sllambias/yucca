@@ -25,6 +25,7 @@ import torch
 import numpy as np
 import yucca
 import math
+import logging
 from yucca.utils.torch_utils import get_available_device, flush_and_get_torch_memory_allocated
 from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.utils.kwargs import filter_kwargs
@@ -122,10 +123,6 @@ def find_optimal_tensor_dims(
         max_batch_size = 2
         patch_size = [32, 32, 32]
 
-    if fixed_batch_size:
-        batch_size = fixed_batch_size
-        max_batch_size = fixed_batch_size
-
     absolute_max = 128**3
 
     model = recursive_find_python_class(
@@ -147,13 +144,18 @@ def find_optimal_tensor_dims(
     est = 0
     idx = 0
     maxed_idxs = []
+
+    if fixed_batch_size:
+        batch_size = fixed_batch_size
+        max_batch_size = fixed_batch_size
+
     if fixed_patch_size is not None:
         patch_size = fixed_patch_size
         # first fix dimensions so they are divisible by 16 (otherwise issues with standard pools and strides)
         patch_size = [math.ceil(i / 16) * 16 for i in patch_size]
         max_patch_size = patch_size
+
     while not OOM_OR_MAXED:
-        print(est, patch_size, batch_size)
         try:
             if np.prod(patch_size) >= absolute_max:
                 max_patch_size = patch_size
@@ -201,13 +203,13 @@ def find_optimal_tensor_dims(
         except torch.cuda.OutOfMemoryError:
             OOM_OR_MAXED = True
     if final_batch_size is None or final_patch_size is None:
-        print(
+        logging.warn(
             "\n"
             "Final batch and/or patch size was not found. \n"
             "This is likely caused by supplying large fixed parameters causing (or almost causing) OOM errors. \n"
             "Will attempt to run with supplied parameters, but this might cause issues."
         )
-        print(
+        logging.warn(
             f"Estimated GPU memory usage for parameters is: {est}GB and the max requested vram is: {max_memory_usage_in_gb-offset}GB. \n"
             f"This includes an offset of {offset}GB to account for vram used by PyTorch and CUDA. \n"
             "Consider increasing the max vram or working with a smaller batch and/or patch size."
@@ -218,11 +220,12 @@ def find_optimal_tensor_dims(
         if final_patch_size is None:
             final_patch_size = tuple(patch_size)
 
-    print(
-        f"Memory limit of {max_memory_usage_in_gb}GB reached with a patch size of {final_patch_size} "
-        f"and a batch size of {final_batch_size}. This is estimated to use roughly {est+offset}GB, "
-        f"including an offset of {offset}GB to allow a margin of error AND "
-        f"to account for VRAM grabbed by torch and other backend libraries"
+    logging.info(
+        f"Final batch and patch sizes set to {final_batch_size} and {final_patch_size} based on the current constraints. \n"
+        f"Max GPU memory usage: {max_memory_usage_in_gb}GB. \n"
+        f"Estimated GPU memory usage: {est+offset}. This includes an offset of {offset}GB to allow a margin of error and account for VRAM grabbed by torch and other backend libraries. \n"
+        f"Max patch size: {max_patch_size} \n"
+        f"Max batch size: {max_batch_size} \n"
     )
     return final_batch_size, final_patch_size
 
