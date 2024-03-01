@@ -519,8 +519,7 @@ class YuccaPreprocessor(object):
             "original_spacing": np.array([1.0] * len(original_size)),
             "original_orientation": None,
             "final_direction": None,
-            "qform": None,
-            "sform": None,
+            "header": None,
             "affine": None,
             "reoriented": False,
         }
@@ -529,8 +528,6 @@ class YuccaPreprocessor(object):
             # If qform and sform are both missing the header is corrupt and we do not trust the
             # direction from the affine
             # Make sure you know what you're doing
-            metadata["qform"] = images[0].get_qform()
-            metadata["sform"] = images[0].get_sform()
             if images[0].get_qform(coded=True)[1] or images[0].get_sform(coded=True)[1]:
                 metadata["reoriented"] = True
                 metadata["original_orientation"] = get_nib_orientation(images[0])
@@ -541,6 +538,7 @@ class YuccaPreprocessor(object):
                 ]
                 if label is not None and isinstance(label, nib.Nifti1Image):
                     label = reorient_nib_image(label, metadata["original_orientation"], metadata["final_direction"])
+            metadata["header"] = images[0].header
             metadata["original_spacing"] = get_nib_spacing(images[0])
             metadata["affine"] = images[0].affine
 
