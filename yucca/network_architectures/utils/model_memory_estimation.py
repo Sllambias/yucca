@@ -25,7 +25,8 @@ import torch
 import numpy as np
 import yucca
 import math
-from yucca.utils.torch_utils import get_available_device
+import logging
+from yucca.utils.torch_utils import get_available_device, flush_and_get_torch_memory_allocated
 from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.utils.kwargs import filter_kwargs
 
@@ -48,12 +49,13 @@ def estimate_memory_training(model, model_input, optimizer_type=torch.optim.Adam
     # Reset model and optimizer
     model.cpu()
     optimizer = optimizer_type(model.parameters(), lr=0.001)
-    a = torch.cuda.memory_allocated(device)
+
+    a = flush_and_get_torch_memory_allocated(device)
     model.to(device)
-    b = torch.cuda.memory_allocated(device)
+    b = flush_and_get_torch_memory_allocated(device)
     model_memory = b - a
     _ = model(model_input.to(device)).sum()
-    c = torch.cuda.memory_allocated(device)
+    c = flush_and_get_torch_memory_allocated(device)
     if use_amp:
         amp_multiplier = 0.5
     else:
@@ -112,18 +114,14 @@ def find_optimal_tensor_dims(
         norm = nn.InstanceNorm2d
         batch_size = 16
         max_batch_size = 512
-        patch_size = [32, 32] if not model_name == "UNetR" else [64, 64]
+        patch_size = [32, 32]
     if dimensionality == "3D":
         conv = nn.Conv3d
         dropout = nn.Dropout3d
         norm = nn.InstanceNorm3d
         batch_size = 2
         max_batch_size = 2
-        patch_size = [32, 32, 32] if not model_name == "UNetR" else [64, 64, 64]
-
-    if fixed_batch_size:
-        batch_size = fixed_batch_size
-        max_batch_size = fixed_batch_size
+        patch_size = [32, 32, 32]
 
     absolute_max = 128**3
 
@@ -146,11 +144,17 @@ def find_optimal_tensor_dims(
     est = 0
     idx = 0
     maxed_idxs = []
+
+    if fixed_batch_size:
+        batch_size = fixed_batch_size
+        max_batch_size = fixed_batch_size
+
     if fixed_patch_size is not None:
         patch_size = fixed_patch_size
         # first fix dimensions so they are divisible by 16 (otherwise issues with standard pools and strides)
         patch_size = [math.ceil(i / 16) * 16 for i in patch_size]
         max_patch_size = patch_size
+
     while not OOM_OR_MAXED:
         try:
             if np.prod(patch_size) >= absolute_max:
@@ -168,14 +172,6 @@ def find_optimal_tensor_dims(
 
             if patch_size[idx] + 16 < max_patch_size[idx]:
                 patch_size[idx] += 16
-                if model_name == "UNetR":  # we need to re-instantiate it because of the ViT
-                    model = recursive_find_python_class(
-                        folder=[join(yucca.__path__[0], "network_architectures")],
-                        class_name=model_name,
-                        current_module="yucca.network_architectures",
-                    )
-                    model = model(**model_kwargs)
-
                 if idx < len(patch_size) - 1:
                     idx += 1
                 else:
@@ -206,14 +202,14 @@ def find_optimal_tensor_dims(
                     batch_size += 8
         except torch.cuda.OutOfMemoryError:
             OOM_OR_MAXED = True
-    if final_batch_size is None or final_batch_size is None:
-        print(
+    if final_batch_size is None or final_patch_size is None:
+        logging.warn(
             "\n"
             "Final batch and/or patch size was not found. \n"
             "This is likely caused by supplying large fixed parameters causing (or almost causing) OOM errors. \n"
             "Will attempt to run with supplied parameters, but this might cause issues."
         )
-        print(
+        logging.warn(
             f"Estimated GPU memory usage for parameters is: {est}GB and the max requested vram is: {max_memory_usage_in_gb-offset}GB. \n"
             f"This includes an offset of {offset}GB to account for vram used by PyTorch and CUDA. \n"
             "Consider increasing the max vram or working with a smaller batch and/or patch size."
@@ -223,6 +219,14 @@ def find_optimal_tensor_dims(
             final_batch_size = batch_size
         if final_patch_size is None:
             final_patch_size = tuple(patch_size)
+
+    logging.info(
+        f"Final batch and patch sizes set to {final_batch_size} and {final_patch_size} based on the current constraints. \n"
+        f"Max GPU memory usage: {max_memory_usage_in_gb}GB. \n"
+        f"Estimated GPU memory usage: {est+offset}. This includes an offset of {offset}GB to allow a margin of error and account for VRAM grabbed by torch and other backend libraries. \n"
+        f"Max patch size: {max_patch_size} \n"
+        f"Max batch size: {max_batch_size} \n"
+    )
     return final_batch_size, final_patch_size
 
 

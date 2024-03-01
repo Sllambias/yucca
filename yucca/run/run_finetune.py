@@ -80,8 +80,9 @@ def main():
     )
     parser.add_argument(
         "--patch_size",
+        nargs="+",
         type=str,
-        help="Use your own patch_size. Example: if 32 is provided and the model is 3D we will use patch size (32, 32, 32). Can also be min, max or mean.",
+        help="Use your own patch_size. Example: if 32 is provided and the model is 3D we will use patch size (32, 32, 32). This patch size can be set manually by passing 32 32 32 as arguments. The argument can also be min, max or mean.",
         default=None,
     )
     parser.add_argument("--precision", type=str, default="bf16-mixed")
@@ -126,10 +127,6 @@ def main():
     split_data_param = args.split_data_param
     train_batches_per_step = args.train_batches_per_step
     val_batches_per_step = args.val_batches_per_step
-
-    if patch_size is not None:
-        if patch_size not in ["mean", "max", "min"]:
-            patch_size = (int(patch_size),) * 3 if dimensions == "3D" else (int(patch_size),) * 2
 
     kwargs = {}
 
