@@ -3,6 +3,7 @@ import torch
 import yucca
 import wandb
 import copy
+import logging
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Dice, Accuracy, AUROC
@@ -270,12 +271,18 @@ class YuccaLightningModule(L.LightningModule):
         # If we are finetuning on a task with a different number of classes
         # than the pretraining task, the # output channels will have changed.
         old_params = copy.deepcopy(self.state_dict())
+
+        rejected_keys_only_in_ckpt = [k for k in state_dict.keys() if k not in old_params]
+        rejected_keys_not_in_ckpt = [k for k in old_params.keys() if k not in state_dict]
+        rejected_keys_shape = [k for k in state_dict.keys() if old_params[k].shape != state_dict[k].shape]
+        rejected_keys_data = []
+        identical_keys_data = []
+
         state_dict = {
             k: v for k, v in state_dict.items() if (k in old_params) and (old_params[k].shape == state_dict[k].shape)
         }
-        rejected_keys_new = [k for k in state_dict.keys() if k not in old_params]
-        rejected_keys_shape = [k for k in state_dict.keys() if old_params[k].shape != state_dict[k].shape]
-        rejected_keys_data = []
+        #rejected_keys_not_in_ckpt = [k for k in state_dict.keys() if k not in old_params]
+        
 
         # Here there's also potential to implement custom loading functions.
         # E.g. to load 2D pretrained models into 3D by repeating or something like that.
@@ -289,15 +296,27 @@ class YuccaLightningModule(L.LightningModule):
             # If more than one param in layer is NE (not equal) to the original weights we've successfully loaded new weights.
             if p1.data.ne(p2.data).sum() > 0:
                 successful += 1
+            # If no weights are changed because the ckpt and the new model have identical weights things MIGHT be okay, but a warning will be produced
+            elif p1.data.ne(state_dict[param_name].data).sum() == 0:
+                successful += 1
+                identical_keys_data.append(param_name)
+                logging.warn("Identical weights detected during load_state_dict. This MIGHT be okay, but proceed with caution.")
             else:
                 unsuccessful += 1
-                if param_name not in rejected_keys_new and param_name not in rejected_keys_shape:
+                if param_name not in rejected_keys_only_in_ckpt and param_name not in rejected_keys_not_in_ckpt and param_name not in rejected_keys_shape:
                     rejected_keys_data.append(param_name)
 
+        #for param_name in rejected_keys_data:
+        #    print(old_params[param_name].shape, new_params[param_name].shape)
+        #    print(old_params[param_name].sum(), new_params[param_name].sum(), state_dict[param_name].sum())
+        #    print(old_params[param_name].data.ne(new_params[param_name].data).sum())
+        #    print(old_params[param_name].data, state_dict[param_name].data)
         print(f"Succesfully transferred weights for {successful}/{successful+unsuccessful} layers")
         print(
             f"Rejected the following keys:\n"
-            f"Not in old dict: {rejected_keys_new}.\n"
+            f"Not in old dict: {rejected_keys_only_in_ckpt}.\n"
+            f"Not in ckpt dict: {rejected_keys_not_in_ckpt}.\n"
             f"Wrong shape: {rejected_keys_shape}.\n"
+            f"Successful but identical (ckpt and new weights are the same): {identical_keys_data}"
             f"Post check not succesful: {rejected_keys_data}."
         )
