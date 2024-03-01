@@ -16,3 +16,16 @@ def get_available_device():
         return "mps"
     else:
         return "cpu"
+
+
+def flush_and_get_torch_memory_allocated(device):
+    if isinstance(device, torch.device):
+        device = device.type  # Get the name: str of the torch.device such as "cuda", "mps" or "cpu"
+    if device == "cuda":
+        torch.cuda.empty_cache()
+        return torch.cuda.memory_allocated(device)
+    elif device == "mps":
+        torch.mps.empty_cache()
+        return torch.mps.driver_allocated_memory()
+    else:
+        return 0

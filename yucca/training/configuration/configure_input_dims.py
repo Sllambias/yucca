@@ -83,7 +83,7 @@ def get_input_dims_config(
         patch_size = ckpt_patch_size
         logging.info(f"Using patch size found in checkpoint: {ckpt_patch_size}")
 
-    if model_dimensions == "2D" and len(patch_size) == 3:
+    if patch_size is not None and model_dimensions == "2D" and len(patch_size) == 3:
         # If we have now selected a 3D patch for a 2D model we skip the first dim
         # as we will be extracting patches from that dimension.
         patch_size = patch_size[1:]

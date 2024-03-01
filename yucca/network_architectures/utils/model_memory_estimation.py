@@ -25,7 +25,7 @@ import torch
 import numpy as np
 import yucca
 import math
-from yucca.utils.torch_utils import get_available_device
+from yucca.utils.torch_utils import get_available_device, flush_and_get_torch_memory_allocated
 from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.utils.kwargs import filter_kwargs
 
@@ -48,12 +48,13 @@ def estimate_memory_training(model, model_input, optimizer_type=torch.optim.Adam
     # Reset model and optimizer
     model.cpu()
     optimizer = optimizer_type(model.parameters(), lr=0.001)
-    a = torch.cuda.memory_allocated(device)
+
+    a = flush_and_get_torch_memory_allocated(device)
     model.to(device)
-    b = torch.cuda.memory_allocated(device)
+    b = flush_and_get_torch_memory_allocated(device)
     model_memory = b - a
     _ = model(model_input.to(device)).sum()
-    c = torch.cuda.memory_allocated(device)
+    c = flush_and_get_torch_memory_allocated(device)
     if use_amp:
         amp_multiplier = 0.5
     else:
@@ -112,14 +113,14 @@ def find_optimal_tensor_dims(
         norm = nn.InstanceNorm2d
         batch_size = 16
         max_batch_size = 512
-        patch_size = [32, 32] if not model_name == "UNetR" else [64, 64]
+        patch_size = [32, 32]
     if dimensionality == "3D":
         conv = nn.Conv3d
         dropout = nn.Dropout3d
         norm = nn.InstanceNorm3d
         batch_size = 2
         max_batch_size = 2
-        patch_size = [32, 32, 32] if not model_name == "UNetR" else [64, 64, 64]
+        patch_size = [32, 32, 32]
 
     if fixed_batch_size:
         batch_size = fixed_batch_size
@@ -152,6 +153,7 @@ def find_optimal_tensor_dims(
         patch_size = [math.ceil(i / 16) * 16 for i in patch_size]
         max_patch_size = patch_size
     while not OOM_OR_MAXED:
+        print(est, patch_size, batch_size)
         try:
             if np.prod(patch_size) >= absolute_max:
                 max_patch_size = patch_size
@@ -168,14 +170,6 @@ def find_optimal_tensor_dims(
 
             if patch_size[idx] + 16 < max_patch_size[idx]:
                 patch_size[idx] += 16
-                if model_name == "UNetR":  # we need to re-instantiate it because of the ViT
-                    model = recursive_find_python_class(
-                        folder=[join(yucca.__path__[0], "network_architectures")],
-                        class_name=model_name,
-                        current_module="yucca.network_architectures",
-                    )
-                    model = model(**model_kwargs)
-
                 if idx < len(patch_size) - 1:
                     idx += 1
                 else:
@@ -223,6 +217,13 @@ def find_optimal_tensor_dims(
             final_batch_size = batch_size
         if final_patch_size is None:
             final_patch_size = tuple(patch_size)
+
+    print(
+        f"Memory limit of {max_memory_usage_in_gb}GB reached with a patch size of {final_patch_size} "
+        f"and a batch size of {final_batch_size}. This is estimated to use roughly {est+offset}GB, "
+        f"including an offset of {offset}GB to allow a margin of error AND "
+        f"to account for VRAM grabbed by torch and other backend libraries"
+    )
     return final_batch_size, final_patch_size
 
 
