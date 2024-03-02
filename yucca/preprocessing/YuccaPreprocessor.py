@@ -229,7 +229,7 @@ class YuccaPreprocessor(object):
                 self.run_sanity_checks(images, None, subject_id, imagepaths)
 
         images, label, image_props["nifti_metadata"] = self.apply_nifti_preprocessing_and_return_numpy(
-            images, np.array(images[0].shape), label
+            images, np.array(images[0].shape), label, include_header=False
         )
 
         original_size = images[0].shape
@@ -333,7 +333,7 @@ class YuccaPreprocessor(object):
         ], "images must be either 2D or 3D for preprocessing"
 
         images, _, image_properties["nifti_metadata"] = self.apply_nifti_preprocessing_and_return_numpy(
-            images, image_properties["original_shape"], label=None
+            images, image_properties["original_shape"], label=None, include_header=True
         )
 
         image_properties["uncropped_shape"] = np.array(images[0].shape)
@@ -511,6 +511,7 @@ class YuccaPreprocessor(object):
         images,
         original_size,
         label=None,
+        include_header=False,
     ):
         # If qform and sform are both missing the header is corrupt and we do not trust the
         # direction from the affine
@@ -538,7 +539,8 @@ class YuccaPreprocessor(object):
                 ]
                 if label is not None and isinstance(label, nib.Nifti1Image):
                     label = reorient_nib_image(label, metadata["original_orientation"], metadata["final_direction"])
-            metadata["header"] = images[0].header
+            if include_header:
+                metadata["header"] = images[0].header
             metadata["original_spacing"] = get_nib_spacing(images[0])
             metadata["affine"] = images[0].affine
 
