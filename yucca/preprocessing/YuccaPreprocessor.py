@@ -116,7 +116,7 @@ class YuccaPreprocessor(object):
         )
         p = Pool(self.threads)
 
-        p.map(self.preprocess_train_subject, self.subject_ids)
+        p.map_async(self.preprocess_train_subject, self.subject_ids)
         p.close()
         p.join()
 
