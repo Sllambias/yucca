@@ -248,11 +248,13 @@ class YuccaPreprocessor(object):
         else:
             image_props["crop_to_nonzero"] = self.plans["crop_to_nonzero"]
 
+        image_props["size_before_transpose"] = list(images[0].shape)
         if label_exists and preprocess_label:
             images, label = self.transpose_case(images, self.transpose_forward, label)
         else:
             images = self.transpose_case(images, self.transpose_forward, None)
-        resample_target_size, final_target_size = self.determine_target_size(
+        image_props["size_after_transpose"] = list(images[0].shape)
+        resample_target_size, final_target_size, new_spacing = self.determine_target_size(
             images_transposed=images,
             original_spacing=image_props["nifti_metadata"]["original_spacing"],
             transpose_forward=self.transpose_forward,
@@ -293,7 +295,7 @@ class YuccaPreprocessor(object):
         image_props["original_spacing"] = image_props["nifti_metadata"]["original_spacing"]
         image_props["original_size"] = original_size
         image_props["original_orientation"] = image_props["nifti_metadata"]["original_orientation"]
-        image_props["new_spacing"] = self.target_spacing
+        image_props["new_spacing"] = new_spacing
         image_props["new_direction"] = image_props["nifti_metadata"]["final_direction"]
 
         return images, label, image_props
@@ -348,7 +350,7 @@ class YuccaPreprocessor(object):
 
         images = self.transpose_case(images, self.transpose_forward, None)
 
-        resample_target_size, _ = self.determine_target_size(
+        resample_target_size, _, _ = self.determine_target_size(
             images_transposed=images,
             original_spacing=image_properties["nifti_metadata"]["original_spacing"],
             transpose_forward=self.transpose_forward,
@@ -577,10 +579,10 @@ class YuccaPreprocessor(object):
             original_spacing_t = original_spacing[transpose_forward]
             target_spacing_t = target_spacing[transpose_forward]
             resample_target_size = np.round((original_spacing_t / target_spacing_t).astype(float) * image_shape_t).astype(int)
-            self.target_spacing = target_spacing_t.tolist()
+            new_spacing = target_spacing_t.tolist()
         else:
             resample_target_size = image_shape_t
-        return resample_target_size, final_target_size
+        return resample_target_size, final_target_size, new_spacing
 
     def resample_and_normalize_case(
         self,
