@@ -3,6 +3,8 @@ import torch
 import yucca
 import wandb
 import copy
+import gc
+import logging
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Dice, Accuracy, AUROC
@@ -110,7 +112,7 @@ class YuccaLightningModule(L.LightningModule):
         self.load_model()
 
     def load_model(self):
-        print(f"Loading Model: {self.model_dimensions} {self.model_name}")
+        logging.info(f"Loading Model: {self.model_dimensions} {self.model_name}")
         self.model = recursive_find_python_class(
             folder=[join(yucca.__path__[0], "network_architectures")],
             class_name=self.model_name,
@@ -190,12 +192,10 @@ class YuccaLightningModule(L.LightningModule):
 
     def predict_step(self, batch, _batch_idx, _dataloader_idx=0):
         case, case_id = batch
-
         (
             case_preprocessed,
             case_properties,
         ) = self.preprocessor.preprocess_case_for_inference(case, self.patch_size, self.sliding_window_prediction)
-
         logits = self.model.predict(
             data=case_preprocessed,
             mode=self.model_dimensions,
@@ -204,9 +204,12 @@ class YuccaLightningModule(L.LightningModule):
             patch_size=self.patch_size,
             sliding_window_prediction=self.sliding_window_prediction,
         )
-
         logits, case_properties = self.preprocessor.reverse_preprocessing(logits, case_properties)
         return {"logits": logits, "properties": case_properties, "case_id": case_id[0]}
+
+    def on_predict_batch_end(self, outputs, batch, batch_idx, dataloader_idx=0):
+        super().on_predict_batch_end(outputs, batch, batch_idx, dataloader_idx)
+        gc.collect()  # To avoid Lightning OOM errors
 
     def configure_optimizers(self):
         # Initialize and configure the loss(es) here.
@@ -294,8 +297,8 @@ class YuccaLightningModule(L.LightningModule):
                 if param_name not in rejected_keys_new and param_name not in rejected_keys_shape:
                     rejected_keys_data.append(param_name)
 
-        print(f"Succesfully transferred weights for {successful}/{successful+unsuccessful} layers")
-        print(
+        logging.info(f"Succesfully transferred weights for {successful}/{successful+unsuccessful} layers")
+        logging.info(
             f"Rejected the following keys:\n"
             f"Not in old dict: {rejected_keys_new}.\n"
             f"Wrong shape: {rejected_keys_shape}.\n"
