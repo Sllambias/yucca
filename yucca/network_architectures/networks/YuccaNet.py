@@ -1,7 +1,7 @@
 import torch
 import logging
 from torch import nn
-from yucca.utils.torch_utils import maybe_to_gpu, get_available_device
+from yucca.utils.torch_utils import get_available_device
 from yucca.network_architectures.utils.get_steps_for_sliding_window import (
     get_steps_for_sliding_window,
 )
