@@ -3,7 +3,6 @@ import torch
 import yucca
 import wandb
 import copy
-import gc
 import logging
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
@@ -204,12 +203,9 @@ class YuccaLightningModule(L.LightningModule):
             patch_size=self.patch_size,
             sliding_window_prediction=self.sliding_window_prediction,
         )
+
         logits, case_properties = self.preprocessor.reverse_preprocessing(logits, case_properties)
         return {"logits": logits, "properties": case_properties, "case_id": case_id[0]}
-
-    def on_predict_batch_end(self, outputs, batch, batch_idx, dataloader_idx=0):
-        super().on_predict_batch_end(outputs, batch, batch_idx, dataloader_idx)
-        gc.collect()  # To avoid Lightning OOM errors
 
     def configure_optimizers(self):
         # Initialize and configure the loss(es) here.

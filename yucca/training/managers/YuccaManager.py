@@ -284,6 +284,7 @@ class YuccaManager:
                 model=self.model_module,
                 dataloaders=self.data_module,
                 ckpt_path=self.ckpt_config.ckpt_path,
+                return_predictions=False,
             )
         self.finish()
 
