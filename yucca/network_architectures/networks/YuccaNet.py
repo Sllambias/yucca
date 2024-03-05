@@ -86,7 +86,6 @@ class YuccaNet(nn.Module):
                 for zs in z_steps:
                     # check if out of bounds
                     out = self.forward(data[:, :, xs : xs + px, ys : ys + py, zs : zs + pz])
-                    logging.warn("STEP")
                     canvas[:, :, xs : xs + px, ys : ys + py, zs : zs + pz] += out
         return canvas
 
@@ -104,9 +103,13 @@ class YuccaNet(nn.Module):
         # If we have 5 dimensions we are working with 3D data, and need to predict each slice.
         if len(data.shape) == 5:
             x_steps, y_steps = get_steps_for_sliding_window(data.shape[3:], patch_size, overlap)
+            print(x_steps, y_steps)
             for idx in range(data.shape[2]):
+                print(idx)
                 for xs in x_steps:
                     for ys in y_steps:
+                        # print("STEP")
+
                         out = self.forward(data[:, :, idx, xs : xs + px, ys : ys + py])
                         canvas[:, :, idx, xs : xs + px, ys : ys + py] += out
             return canvas
