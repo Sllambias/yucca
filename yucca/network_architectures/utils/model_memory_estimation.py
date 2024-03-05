@@ -125,6 +125,18 @@ def find_optimal_tensor_dims(
 
     absolute_max = 128**3
 
+    if fixed_batch_size:
+        batch_size = fixed_batch_size
+        max_batch_size = fixed_batch_size
+
+    if fixed_patch_size is not None:
+        patch_size = fixed_patch_size
+        # first fix dimensions so they are divisible by 16 (otherwise issues with standard pools and strides)
+        patch_size = [math.ceil(i / 16) * 16 for i in patch_size]
+        max_patch_size = patch_size
+        if fixed_batch_size:  # In this case we just instantly return after dims are fixed
+            return batch_size, tuple(patch_size)
+
     model = recursive_find_python_class(
         folder=[join(yucca.__path__[0], "network_architectures")],
         class_name=model_name,
@@ -145,17 +157,6 @@ def find_optimal_tensor_dims(
     idx = 0
     maxed_idxs = []
 
-    if fixed_batch_size:
-        batch_size = fixed_batch_size
-        max_batch_size = fixed_batch_size
-
-    if fixed_patch_size is not None:
-        patch_size = fixed_patch_size
-        # first fix dimensions so they are divisible by 16 (otherwise issues with standard pools and strides)
-        patch_size = [math.ceil(i / 16) * 16 for i in patch_size]
-        max_patch_size = patch_size
-        if fixed_batch_size:  # In this case we just instantly return after dims are fixed
-            return batch_size, tuple(patch_size)
     while not OOM_OR_MAXED:
         try:
             if np.prod(patch_size) >= absolute_max:
@@ -228,6 +229,7 @@ def find_optimal_tensor_dims(
         f"Max patch size: {max_patch_size} \n"
         f"Max batch size: {max_batch_size} \n"
     )
+    del model, inp
     return final_batch_size, final_patch_size
 
 
