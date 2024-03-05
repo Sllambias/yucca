@@ -1,5 +1,4 @@
 import torch
-import logging
 from torch import nn
 from yucca.utils.torch_utils import get_available_device
 from yucca.network_architectures.utils.get_steps_for_sliding_window import (
@@ -106,8 +105,6 @@ class YuccaNet(nn.Module):
             for idx in range(data.shape[2]):
                 for xs in x_steps:
                     for ys in y_steps:
-                        # print("STEP")
-
                         out = self.forward(data[:, :, idx, xs : xs + px, ys : ys + py])
                         canvas[:, :, idx, xs : xs + px, ys : ys + py] += out
             return canvas
