@@ -115,7 +115,6 @@ class YuccaPreprocessor(object):
             f"{'Number of threads:':25.25} {self.threads}"
         )
         p = Pool(self.threads)
-
         p.map_async(self.preprocess_train_subject, self.subject_ids)
         p.close()
         p.join()
@@ -183,7 +182,10 @@ class YuccaPreprocessor(object):
         end_time = time.time()
         logging.info(
             f"Preprocessed case: {subject_id} \n"
-            f"size before: {image_props['original_size']} size after: {image_props['new_size']} \n"
+            f"size before: {image_props['original_size']} \n"
+            f"cropping enabled: {self.plans['crop_to_nonzero']} \n"
+            f"size after crop: {image_props['size_before_transpose']} \n"
+            f"size final: {image_props['new_size']} \n"
             f"spacing before: {image_props['original_spacing']} spacing after: {image_props['new_spacing']} \n"
             f"Saving {subject_id} in {arraypath} \n"
             f"Time elapsed: {round(end_time-start_time, 4)} \n"
@@ -206,7 +208,7 @@ class YuccaPreprocessor(object):
             # Check if impath is a modality of subject_id (subject_id + _XXX + .) where XXX are three digits
             if re.search(escaped_subject_id + "_" + r"\d{3}" + ".", os.path.split(impath)[-1])
         ]
-
+        assert len(imagepaths) > 0, "found no images"
         image_props["image files"] = imagepaths
         images = [read_file_to_nifti_or_np(image) for image in imagepaths]
         if label_exists:
@@ -216,7 +218,7 @@ class YuccaPreprocessor(object):
                 for labelpath in subfiles(join(self.input_dir, "labelsTr"))
                 if os.path.split(labelpath)[-1].startswith(subject_id + ".")
             ]
-            assert len(label) < 2, f"unexpected number of labels found. Expected 1 or 0 and found {len(label)}"
+            assert len(label) == 1, f"unexpected number of labels found. Expected 1 and found {len(label)}"
             image_props["label file"] = label[0]
             label = read_file_to_nifti_or_np(label[0], dtype=np.uint8)
         else:
@@ -564,12 +566,16 @@ class YuccaPreprocessor(object):
         # Additionally we make sure each dimension is divisible by 16 to avoid issues with standard pooling/stride settings
         if self.target_size is not None:
             if self.plans["keep_aspect_ratio_when_using_target_size"] is True:
-                resample_target_size = np.array(image_shape_t * np.min(self.target_size / image_shape_t))
+                resample_target_size = np.array(image_shape_t * np.min(self.target_size / image_shape_t)).astype(int)
                 final_target_size = self.target_size
                 final_target_size = [math.ceil(i / 16) * 16 for i in final_target_size]
             else:
                 resample_target_size = self.target_size
                 resample_target_size = [math.ceil(i / 16) * 16 for i in resample_target_size]
+            original_spacing_t = original_spacing[transpose_forward]
+            new_spacing = (np.array(resample_target_size).astype(float) / image_shape_t.astype(float)) * np.array(
+                original_spacing_t
+            ).astype(float).tolist()
 
         # Otherwise we need to calculate a new target shape, and we need to factor in that
         # the images will first be transposed and THEN resampled.

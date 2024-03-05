@@ -154,7 +154,8 @@ def find_optimal_tensor_dims(
         # first fix dimensions so they are divisible by 16 (otherwise issues with standard pools and strides)
         patch_size = [math.ceil(i / 16) * 16 for i in patch_size]
         max_patch_size = patch_size
-
+        if fixed_batch_size:  # In this case we just instantly return after dims are fixed
+            return batch_size, tuple(patch_size)
     while not OOM_OR_MAXED:
         try:
             if np.prod(patch_size) >= absolute_max:
