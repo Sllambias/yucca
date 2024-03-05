@@ -103,9 +103,7 @@ class YuccaNet(nn.Module):
         # If we have 5 dimensions we are working with 3D data, and need to predict each slice.
         if len(data.shape) == 5:
             x_steps, y_steps = get_steps_for_sliding_window(data.shape[3:], patch_size, overlap)
-            print(x_steps, y_steps)
             for idx in range(data.shape[2]):
-                print(idx)
                 for xs in x_steps:
                     for ys in y_steps:
                         # print("STEP")
