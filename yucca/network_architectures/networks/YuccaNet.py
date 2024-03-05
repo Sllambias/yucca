@@ -33,8 +33,7 @@ class YuccaNet(nn.Module):
         super().load_state_dict(target_state_dict, *args, **kwargs)
 
     def predict(self, mode, data, patch_size, overlap, sliding_window_prediction=True, mirror=False):
-        if torch.cuda.is_available():
-            data = data.to("cuda")
+        data = data.to(torch.device(get_available_device()))
 
         if not sliding_window_prediction:
             return self._full_image_predict(data)
@@ -68,7 +67,6 @@ class YuccaNet(nn.Module):
         This is opposed to patch-based predictions where we use a sliding window approach to generate
         full size predictions.
         """
-        data = maybe_to_gpu(data)
         return self.forward(data)
 
     def _sliding_window_predict3D(self, data, patch_size, overlap):

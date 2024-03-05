@@ -271,6 +271,7 @@ class YuccaManager:
         output_folder: str = yucca_results,
         save_softmax=False,
     ):
+        self.batch_size = 1
         self.initialize(
             stage="predict",
             disable_tta=disable_tta,
