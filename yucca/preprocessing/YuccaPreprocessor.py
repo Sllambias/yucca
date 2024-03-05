@@ -258,7 +258,7 @@ class YuccaPreprocessor(object):
         image_props["size_after_transpose"] = list(images[0].shape)
         resample_target_size, final_target_size, new_spacing = self.determine_target_size(
             images_transposed=images,
-            original_spacing=image_props["nifti_metadata"]["original_spacing"],
+            original_spacing=np.array(image_props["nifti_metadata"]["original_spacing"]),
             transpose_forward=self.transpose_forward,
         )
 
@@ -354,7 +354,7 @@ class YuccaPreprocessor(object):
 
         resample_target_size, _, _ = self.determine_target_size(
             images_transposed=images,
-            original_spacing=image_properties["nifti_metadata"]["original_spacing"],
+            original_spacing=np.array(image_properties["nifti_metadata"]["original_spacing"]),
             transpose_forward=self.transpose_forward,
         )
 
@@ -496,7 +496,7 @@ class YuccaPreprocessor(object):
         # we get some (no need to get all) locations of foreground, that we will later use in the
         # oversampling of foreground classes
         # And we also potentially analyze the connected components of the label
-        foreground_locs = np.array(np.nonzero(label)).T[::10]
+        foreground_locs = np.array(np.nonzero(label)).T[::10].tolist()
         if not self.enable_cc_analysis:
             label_cc_n = 0
             label_cc_sizes = 0
@@ -521,7 +521,7 @@ class YuccaPreprocessor(object):
         # direction from the affine
         # Make sure you know what you're doing
         metadata = {
-            "original_spacing": np.array([1.0] * len(original_size)),
+            "original_spacing": np.array([1.0] * len(original_size)).tolist(),
             "original_orientation": None,
             "final_direction": None,
             "header": None,
@@ -545,7 +545,7 @@ class YuccaPreprocessor(object):
                     label = reorient_nib_image(label, metadata["original_orientation"], metadata["final_direction"])
             if include_header:
                 metadata["header"] = images[0].header
-            metadata["original_spacing"] = get_nib_spacing(images[0])
+            metadata["original_spacing"] = get_nib_spacing(images[0]).tolist()
             metadata["affine"] = images[0].affine
 
         images = [nifti_or_np_to_np(image) for image in images]
@@ -573,9 +573,10 @@ class YuccaPreprocessor(object):
                 resample_target_size = self.target_size
                 resample_target_size = [math.ceil(i / 16) * 16 for i in resample_target_size]
             original_spacing_t = original_spacing[transpose_forward]
-            new_spacing = (np.array(resample_target_size).astype(float) / image_shape_t.astype(float)) * np.array(
-                original_spacing_t
-            ).astype(float).tolist()
+            new_spacing = (
+                (np.array(resample_target_size).astype(float) / image_shape_t.astype(float))
+                * np.array(original_spacing_t).astype(float)
+            ).tolist()
 
         # Otherwise we need to calculate a new target shape, and we need to factor in that
         # the images will first be transposed and THEN resampled.
