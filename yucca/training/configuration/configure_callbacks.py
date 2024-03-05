@@ -1,8 +1,9 @@
+import logging
 from lightning.pytorch.loggers.logger import Logger
 from typing import Optional, Union
 from dataclasses import dataclass
 from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor
-from lightning.pytorch.profilers import SimpleProfiler
+from lightning.pytorch.profilers import SimpleProfiler, AdvancedProfiler
 from lightning.pytorch.loggers import WandbLogger
 from yucca.evaluation.loggers import YuccaLogger
 from yucca.utils.saving import WritePredictionFromLogits
@@ -76,7 +77,7 @@ def get_callback_config(
         wandb_entity=wandb_entity,
     )
     wandb_id = get_wandb_id(loggers, enable_logging)
-    profiler = get_profiler(profile, save_dir)
+    profiler = get_profiler(profile, version_dir)
 
     return CallbackConfig(callbacks=callbacks, loggers=loggers, profiler=profiler, wandb_id=wandb_id)
 
@@ -171,7 +172,11 @@ def get_callbacks(
 
 def get_profiler(profile: bool, outpath: str):
     if profile:
-        return SimpleProfiler(dirpath=outpath, filename="simple_profile")
+        logging.info(f"Profiling run. Saving results in {outpath}")
+
+        return AdvancedProfiler(dirpath=outpath, filename="simple_profile")
+
+        # return SimpleProfiler(dirpath=outpath, filename="simple_profile")
     return None
 
 

@@ -1,4 +1,5 @@
 import torch
+import logging
 from torch import nn
 from yucca.utils.torch_utils import maybe_to_gpu, get_available_device
 from yucca.network_architectures.utils.get_steps_for_sliding_window import (
@@ -87,6 +88,7 @@ class YuccaNet(nn.Module):
                 for zs in z_steps:
                     # check if out of bounds
                     out = self.forward(data[:, :, xs : xs + px, ys : ys + py, zs : zs + pz])
+                    logging.warn("STEP")
                     canvas[:, :, xs : xs + px, ys : ys + py, zs : zs + pz] += out
         return canvas
 

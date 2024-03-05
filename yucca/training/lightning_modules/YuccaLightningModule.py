@@ -3,6 +3,8 @@ import torch
 import yucca
 import wandb
 import copy
+import gc
+import logging
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Dice, Accuracy, AUROC
@@ -190,12 +192,12 @@ class YuccaLightningModule(L.LightningModule):
 
     def predict_step(self, batch, _batch_idx, _dataloader_idx=0):
         case, case_id = batch
-
+        print("RAW")
         (
             case_preprocessed,
             case_properties,
         ) = self.preprocessor.preprocess_case_for_inference(case, self.patch_size, self.sliding_window_prediction)
-
+        logging.warn("PREPROC")
         logits = self.model.predict(
             data=case_preprocessed,
             mode=self.model_dimensions,
@@ -204,9 +206,14 @@ class YuccaLightningModule(L.LightningModule):
             patch_size=self.patch_size,
             sliding_window_prediction=self.sliding_window_prediction,
         )
-
+        print("PRED")
         logits, case_properties = self.preprocessor.reverse_preprocessing(logits, case_properties)
+        print("REVER")
         return {"logits": logits, "properties": case_properties, "case_id": case_id[0]}
+
+    def on_predict_batch_end(self, outputs, batch, batch_idx, dataloader_idx=0):
+        super().on_predict_batch_end(outputs, batch, batch_idx, dataloader_idx)
+        gc.collect()  # To avoid Lightning OOM errors
 
     def configure_optimizers(self):
         # Initialize and configure the loss(es) here.
