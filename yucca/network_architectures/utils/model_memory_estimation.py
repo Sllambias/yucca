@@ -96,8 +96,11 @@ def find_optimal_tensor_dims(
             gpu_vram_in_gb = int(torch.cuda.get_device_properties(0).total_memory / 1024**2 * 0.001)
         except RuntimeError:
             gpu_vram_in_gb = 12
-        # Don't wanna utilize more than 12GB, to ensure epoch times are kept relatively low
-        max_memory_usage_in_gb = min(12, gpu_vram_in_gb)
+        # Don't wanna utilize more than 8/12GB, to ensure epoch times are kept relatively low
+        if dimensionality == "2D":
+            max_memory_usage_in_gb = min(8, gpu_vram_in_gb)
+        if dimensionality == "3D":
+            max_memory_usage_in_gb = min(12, gpu_vram_in_gb)
 
     # Use this offset to factor the overhead from CUDA and other libraries taking a substantial amount of VRAM
     offset = 2.5
@@ -112,7 +115,7 @@ def find_optimal_tensor_dims(
         conv = nn.Conv2d
         dropout = nn.Dropout2d
         norm = nn.InstanceNorm2d
-        batch_size = 16
+        batch_size = 8
         max_batch_size = 512
         patch_size = [32, 32]
     if dimensionality == "3D":
