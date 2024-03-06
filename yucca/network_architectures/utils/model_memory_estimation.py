@@ -118,6 +118,7 @@ def find_optimal_tensor_dims(
         batch_size = 8
         max_batch_size = 512
         patch_size = [32, 32]
+        absolute_max = 384**2
     if dimensionality == "3D":
         conv = nn.Conv3d
         dropout = nn.Dropout3d
@@ -125,8 +126,7 @@ def find_optimal_tensor_dims(
         batch_size = 2
         max_batch_size = 2
         patch_size = [32, 32, 32]
-
-    absolute_max = 128**3
+        absolute_max = 128**3
 
     if fixed_batch_size:
         batch_size = fixed_batch_size
@@ -204,7 +204,7 @@ def find_optimal_tensor_dims(
                 if len(patch_size) == 3:
                     batch_size += 2
                 else:
-                    batch_size += 8
+                    batch_size += 4
         except torch.cuda.OutOfMemoryError:
             OOM_OR_MAXED = True
     if final_batch_size is None or final_patch_size is None:
