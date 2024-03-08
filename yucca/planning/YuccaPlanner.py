@@ -1,7 +1,7 @@
 import yucca
 import numpy as np
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data
-from yucca.planning.dataset_properties import create_properties_pkl
+from yucca.planning.dataset_properties import create_dataset_properties
 from yucca.utils.files_and_folders import recursive_find_python_class
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, isfile, load_pickle, save_json, subfiles
 
@@ -67,7 +67,7 @@ class YuccaPlanner(object):
 
         if not isfile(join(self.target_dir, "dataset_properties.pkl")):
             print("Properties file not found. Creating one now - this might take a few minutes")
-            create_properties_pkl(data_dir=self.in_dir, save_dir=self.target_dir)
+            create_dataset_properties(data_dir=self.in_dir, save_dir=self.target_dir)
         self.dataset_properties = load_pickle(join(self.target_dir, "dataset_properties.pkl"))
 
         self.determine_transpose()
