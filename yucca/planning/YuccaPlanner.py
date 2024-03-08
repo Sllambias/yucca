@@ -67,7 +67,7 @@ class YuccaPlanner(object):
 
         if not isfile(join(self.target_dir, "dataset_properties.pkl")):
             print("Properties file not found. Creating one now - this might take a few minutes")
-            create_dataset_properties(data_dir=self.in_dir, save_dir=self.target_dir)
+            create_dataset_properties(data_dir=self.in_dir, save_dir=self.target_dir, num_workers=self.threads)
         self.dataset_properties = load_pickle(join(self.target_dir, "dataset_properties.pkl"))
 
         self.determine_transpose()
