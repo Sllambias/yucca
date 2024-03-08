@@ -65,7 +65,6 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
             # In practice it can be -1024, -1023 or in some cases -2048
             print("Using Hounsfield Units. Changing background pixel value from 0 to -1000")
             background_pixel_value = -1000
-            assert False
         else:
             background_pixel_value = 0
 
