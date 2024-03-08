@@ -7,6 +7,7 @@ from lightning.pytorch.profilers import AdvancedProfiler
 from lightning.pytorch.loggers import WandbLogger
 from yucca.evaluation.loggers import YuccaLogger
 from yucca.utils.saving import WritePredictionFromLogits
+from yucca.paths import yucca_wandb_entity
 from lightning.pytorch.profilers.profiler import Profiler
 
 
@@ -102,6 +103,9 @@ def get_loggers(
     if isinstance(version, str):
         version = int(version)
 
+    if wandb_entity is None:
+        wandb_entity = yucca_wandb_entity 
+        
     loggers = [
         YuccaLogger(
             disable_logging=not enable_logging,

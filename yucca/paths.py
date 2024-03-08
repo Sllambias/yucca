@@ -26,3 +26,9 @@ yucca_raw_data = vals["YUCCA_RAW_DATA"]
 yucca_preprocessed_data = vals["YUCCA_PREPROCESSED_DATA"]
 yucca_models = vals["YUCCA_MODELS"]
 yucca_results = vals["YUCCA_RESULTS"]
+
+if "YUCCA_WANDB_ENTITY" in os.environ.keys():
+    yucca_wandb_entity = os.environ["YUCCA_WANDB_ENTITY"]
+else:
+    yucca_wandb_entity = None
+    
