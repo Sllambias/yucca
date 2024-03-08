@@ -5,8 +5,8 @@ from yucca.utils.type_conversions import nifti_or_np_to_np
 from yucca.utils.loading import read_file_to_nifti_or_np
 import nibabel as nib
 import numpy as np
+from tqdm.contrib.concurrent import process_map
 from tqdm import tqdm
-import multiprocessing
 from functools import partial
 
 
@@ -41,9 +41,6 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
     mod_ids = list(list(zip(*modalities))[0])
     assert sorted(mod_ids) == mod_ids
 
-    # Create workers
-    pool = multiprocessing.Pool(num_workers)
-
     for mod_id, mod_name in modalities:
         mod_id = int(mod_id)
         suffix = f"_{mod_id:03}.{image_extension}"
@@ -72,9 +69,9 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
         else:
             background_pixel_value = 0
 
-        map_result = pool.map(
-            partial(process, background_pixel_value=background_pixel_value),
-            subjects,
+        # process map is a tqdm wrapper around pool.map
+        map_result = process_map(
+            partial(process, background_pixel_value=background_pixel_value), subjects, max_workers=num_workers, desc="Map"
         )  # returns list of dictionaries
         metadata = reduce(map_result)  # returns dictionary of metadata
 
@@ -117,7 +114,7 @@ def reduce(results):
     spacings = []
     sizes = []
 
-    for res in results:
+    for res in tqdm(results, desc="Reduce"):
         means.append(res["mean"])
         mins.append(res["min"])
         maxs.append(res["max"])
