@@ -14,13 +14,13 @@ from batchgenerators.utilities.file_and_folder_operations import (
 def save_nifti_from_numpy(pred, outpath, properties, compression=9):
     # slight hacky, but it is what it is
     nib.openers.Opener.default_compresslevel = compression
-    pred = nib.Nifti1Image(pred, properties["nifti_metadata"]["affine"], dtype=np.uint8)
+    pred = nib.Nifti1Image(
+        pred, properties["nifti_metadata"]["affine"], header=properties["nifti_metadata"]["header"], dtype=np.uint8
+    )
     if properties["nifti_metadata"]["reoriented"]:
         pred = reorient_nib_image(
             pred, properties["nifti_metadata"]["final_direction"], properties["nifti_metadata"]["original_orientation"]
         )
-    pred.set_qform(properties["nifti_metadata"]["qform"])
-    pred.set_sform(properties["nifti_metadata"]["sform"])
     nib.save(
         pred,
         outpath + ".nii.gz",
@@ -103,3 +103,4 @@ class WritePredictionFromLogits(BasePredictionWriter):
             properties=properties,
             save_softmax=self.save_softmax,
         )
+        del data_dict

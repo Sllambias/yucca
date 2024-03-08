@@ -7,11 +7,11 @@ class YuccaPlanner_MaxSize(YuccaPlanner):
         task,
         preprocessor="YuccaPreprocessor",
         threads=None,
+        disable_cc_analysis=True,
         disable_sanity_checks=False,
-        disable_unittests=False,
         view=None,
     ):
-        super().__init__(task, preprocessor, threads, disable_sanity_checks, disable_unittests, view)
+        super().__init__(task, preprocessor, threads, disable_cc_analysis, disable_sanity_checks, view)
         self.name = str(self.__class__.__name__) + str(view or "")
 
     def determine_target_size_from_fixed_size_or_spacing(self):
