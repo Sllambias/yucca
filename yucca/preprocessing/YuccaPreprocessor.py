@@ -426,6 +426,8 @@ class YuccaPreprocessor(object):
             [0, 1] + [i + 2 for i in self.transpose_backward]
         )
 
+        # Now move the tensor to the CPU
+        images = images.cpu()
         assert np.all(images.shape[2:] == image_properties["cropped_shape"]), (
             f"Reversing cropping: "
             f"image should be of shape: {image_properties['cropped_shape']}"
