@@ -130,7 +130,7 @@ class YuccaEvaluator(object):
             self.labels = ["0", "1"]
             self.name += "_BINARY"
 
-        self.labelarr = np.array(self.labels, dtype=np.uint8)
+        self.labelarr = np.sort(np.array(self.labels, dtype=np.uint8))
         self.folder_with_predictions = folder_with_predictions
         self.folder_with_ground_truth = folder_with_ground_truth
 
