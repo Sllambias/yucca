@@ -146,7 +146,7 @@ def process(subject: str, background_pixel_value: int = 0):
         if isinstance(image, nib.Nifti1Image):
             spacing = get_nib_spacing(image).tolist()
         else:
-            spacing = [1.0, 1.0, 1.0]
+            spacing = [1.0] * dim
 
         image = nifti_or_np_to_np(image)
         image_msk = image[image > background_pixel_value]
