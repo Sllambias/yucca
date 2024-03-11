@@ -21,8 +21,8 @@ def convert(_path: str, _subdir: str = None):
         "Task206_BrainTumour",
         "Task207_ADNI",
         "Task208_WMH",
-        "Task012_BraTS21",
-        "Task011_MSSEG1",
+        "Task209_BraTS21",
+        "Task210_MSSEG1",
     ]
 
     target_base = os.path.join(yucca_raw_data, task_name)
