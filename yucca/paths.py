@@ -31,4 +31,3 @@ if "YUCCA_WANDB_ENTITY" in os.environ.keys():
     yucca_wandb_entity = os.environ["YUCCA_WANDB_ENTITY"]
 else:
     yucca_wandb_entity = None
-    

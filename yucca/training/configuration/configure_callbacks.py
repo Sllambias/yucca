@@ -104,8 +104,8 @@ def get_loggers(
         version = int(version)
 
     if wandb_entity is None:
-        wandb_entity = yucca_wandb_entity 
-        
+        wandb_entity = yucca_wandb_entity
+
     loggers = [
         YuccaLogger(
             disable_logging=not enable_logging,
