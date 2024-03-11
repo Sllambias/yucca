@@ -1,4 +1,5 @@
 import logging
+from typing import Dict, List
 from batchgenerators.utilities.file_and_folder_operations import subfiles, join, load_json, save_pickle
 from yucca.utils.nib_utils import get_nib_spacing
 from yucca.utils.type_conversions import nifti_or_np_to_np
@@ -24,14 +25,13 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
         "image_extension": image_extension,
         "classes": list(dataset_json["labels"].keys()),
         "tasks": {task: [] for task in dataset_json["tasks"]},
+        "label_hierarchy": dataset_json["label_hierarchy"],
+        "modalities": dataset_json["modality"],
     }
 
     if len(dataset_json["tasks"]) > 0:
         assert not dataset_json["label_hierarchy"], "Multi Task implementation currently doesn't support Label Hierarchies"
         properties["classes"] = [list(dataset_json["labels"][task].keys()) for task in dataset_json["tasks"]]
-
-    properties["label_hierarchy"] = dataset_json["label_hierarchy"]
-    properties["modalities"] = dataset_json["modality"]
 
     intensities = []
     sizes = []
@@ -41,6 +41,7 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
     mod_ids = list(list(zip(*modalities))[0])
     assert sorted(mod_ids) == mod_ids
 
+    # Modalities are processed from smallest id to largest
     for mod_id, mod_name in modalities:
         mod_id = int(mod_id)
         suffix = f"_{mod_id:03}.{image_extension}"
@@ -68,9 +69,15 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
         else:
             background_pixel_value = 0
 
-        # process map is a tqdm wrapper around pool.map
+        chunksize = 50 if len(subjects) > 1000 else 1
+
+        # `process_map` is a `tqdm` wrapper around `multiprocessing.Pool.map`
         map_result = process_map(
-            partial(process, background_pixel_value=background_pixel_value), subjects, max_workers=num_workers, desc="Map"
+            partial(process, background_pixel_value=background_pixel_value),
+            subjects,
+            max_workers=num_workers,
+            chunksize=chunksize,
+            desc="Map",
         )  # returns list of dictionaries
         metadata = reduce(map_result)  # returns dictionary of metadata
 
@@ -105,7 +112,7 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
     save_pickle(properties, join(save_dir, "dataset_properties.pkl"))
 
 
-def reduce(results):
+def reduce(results: List[Dict]):
     means = []
     mins = []
     maxs = []
@@ -124,7 +131,7 @@ def reduce(results):
     return {"means": means, "mins": mins, "maxs": maxs, "stds": stds, "spacings": spacings, "sizes": sizes}
 
 
-def process(subject, background_pixel_value=0):
+def process(subject: str, background_pixel_value: int = 0):
     try:
         image = read_file_to_nifti_or_np(subject)
         dim = len(image.shape)
