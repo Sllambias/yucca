@@ -1,15 +1,12 @@
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subdirs, subfiles
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data
-from sklearn.model_selection import train_test_split
-import nibabel as nib
-import numpy as np
 import shutil
 from tqdm import tqdm
 from os.path import basename
 
 
-def convert(path: str, subdir: str = None):
+def convert(_path: str):
     # This script assumes TC has already been done on supervised version of dataset with
     # name `Task012_BratS21`
 
@@ -40,7 +37,7 @@ def convert(path: str, subdir: str = None):
         elif "_003." in file_name:
             dest_path = f"{target_imagesTr}/{img_name}_t2_000.nii.gz"
         else:
-            raise ArgumentError
+            raise ValueError
 
         shutil.copy2(src_path, dest_path)
 
