@@ -25,15 +25,8 @@ def convert(_path: str):
 
     ###Populate Target Directory###
     for src_path in tqdm(training_samples):
-        print(src_path)
-
         file_name = basename(src_path)
-
-        print(file_name)
-
         img_name = file_name[:-11]  # removing last _00x_.nii.gz
-
-        print(img_name)
 
         if "_000." in file_name:
             dest_path = f"{target_imagesTr}/{img_name}_dp_000.nii.gz"
@@ -47,8 +40,6 @@ def convert(_path: str):
             dest_path = f"{target_imagesTr}/{img_name}_t2_000.nii.gz"
         else:
             raise ValueError
-
-        print(dest_path)
 
         shutil.copy2(src_path, dest_path)
 
