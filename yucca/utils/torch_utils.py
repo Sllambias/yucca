@@ -1,4 +1,5 @@
 import torch
+from fvcore.nn import FlopCountAnalysis
 
 
 def maybe_to_gpu(data):
@@ -29,3 +30,10 @@ def flush_and_get_torch_memory_allocated(device):
         return torch.mps.driver_allocated_memory()
     else:
         return 0
+
+
+def measure_FLOPs(model: torch.nn.Module, data: torch.Tensor):
+    # Returns a FlopCountAnalysis object
+    # Use obj.total() for total # FLOPs
+    # Use obj.by_module() for # FLOPs pr. module
+    return FlopCountAnalysis(model, data)

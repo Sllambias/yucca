@@ -105,7 +105,9 @@ def recursive_find_python_class(folder: list, class_name: str, current_module: s
                 )
             if tr is not None:
                 break
-
+    assert (
+        tr is not None
+    ), f"Did not find any python class called {class_name}. Make sure there's no typos (and that the class actually exists)"
     return tr
 
 
