@@ -38,7 +38,7 @@ dependencies = [
     "python-dotenv==1.0.0",
     "monai",
     "flake8-unused-arguments",
-    "git+https://github.com/google-deepmind/surface-distance",
+    "surface-distance-based-measures@git+https://github.com/google-deepmind/surface-distance",
     "fvcore",
 ]
 

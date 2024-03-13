@@ -174,9 +174,9 @@ class YuccaLightningModule(L.LightningModule):
         if self.trainer.is_last_batch and self.current_epoch % self.log_image_every_n_epochs == 0:
             self._log_dict_of_images_to_wandb(
                 {
-                    "input": inputs.detach().cpu().numpy(),
-                    "target": target.detach().cpu().numpy(),
-                    "output": output.detach().cpu().numpy(),
+                    "input": inputs.detach().cpu().to(torch.float32).numpy(),
+                    "target": target.detach().cpu().to(torch.float32).numpy(),
+                    "output": output.detach().cpu().to(torch.float32).numpy(),
                     "file_path": file_path,
                 },
                 log_key="train",
@@ -186,7 +186,7 @@ class YuccaLightningModule(L.LightningModule):
         return loss
 
     def validation_step(self, batch, _batch_idx):
-        inputs, target = batch["image"], batch["label"]
+        inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
         output = self(inputs)
         loss = self.loss_fn_val(output, target)
         metrics = self.val_metrics(output, target)
@@ -197,6 +197,21 @@ class YuccaLightningModule(L.LightningModule):
             prog_bar=self.progress_bar,
             logger=True,
         )
+
+        if (
+            self.trainer.fit_loop.epoch_loop.val_loop.batch_progress.is_last_batch
+            and self.current_epoch % self.log_image_every_n_epochs == 0
+        ):
+            self._log_dict_of_images_to_wandb(
+                {
+                    "input": inputs.detach().cpu().to(torch.float32).numpy(),
+                    "target": target.detach().cpu().to(torch.float32).numpy(),
+                    "output": output.detach().cpu().to(torch.float32).numpy(),
+                    "file_path": file_path,
+                },
+                log_key="val",
+                task_type=self.task_type,
+            )
 
     def on_predict_start(self):
         preprocessor_class = recursive_find_python_class(
@@ -359,17 +374,14 @@ class YuccaLightningModule(L.LightningModule):
         if len(target.shape) == 1:
             raise NotImplementedError
         else:
-            wandb.log(
-                {
-                    log_key: [
-                        wandb.Image(
-                            image,
-                            masks={"target": {"mask_data": target}, "output": {"mask_data": output}},
-                            caption=f"{case}: input",
-                        ),
-                        wandb.Image(output, caption=f"{case}: output"),
-                        wandb.Image(target, caption=f"{case}: target"),
-                    ]
-                },
-                commit=False,
-            )
+            fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(15, 5), dpi=100)
+            axes[0].imshow(image, cmap="gray", vmin=np.quantile(image, 0.01), vmax=np.quantile(image, 0.99))
+            axes[0].set_title("input")
+            axes[1].imshow(target, cmap="gray")
+            axes[1].set_title("target")
+            axes[2].imshow(output, cmap="gray")
+            axes[2].set_title("output")
+            fig.text(0.5, 0.5, case, ha="center")
+
+            wandb.log({log_key: wandb.Image(fig)})
+            plt.close(fig)
