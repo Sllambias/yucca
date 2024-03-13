@@ -121,6 +121,7 @@ class YuccaManager:
         self,
         stage: Literal["fit", "test", "predict"],
         disable_tta: bool = False,
+        overwrite: bool = False,
         pred_data_dir: str = None,
         save_softmax: bool = False,
         prediction_output_dir: str = "./",
@@ -217,15 +218,16 @@ class YuccaManager:
         self.data_module = YuccaDataModule(
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
-            input_dims_config=input_dims_config,
-            num_workers=self.num_workers,
             image_extension=plan_config.image_extension,
-            task_type=plan_config.task_type,
+            input_dims_config=input_dims_config,
+            overwrite=overwrite,
+            num_workers=self.num_workers,
             pred_data_dir=pred_data_dir,
             pred_save_dir=prediction_output_dir,
             pre_aug_patch_size=augmenter.pre_aug_patch_size,
             splits_config=splits_config,
             split_idx=task_config.split_idx,
+            task_type=plan_config.task_type,
             train_data_dir=path_config.train_data_dir,
         )
 
@@ -270,6 +272,7 @@ class YuccaManager:
         self,
         input_folder,
         disable_tta: bool = False,
+        overwrite: bool = False,
         output_folder: str = yucca_results,
         save_softmax=False,
     ):
@@ -277,6 +280,7 @@ class YuccaManager:
         self.initialize(
             stage="predict",
             disable_tta=disable_tta,
+            overwrite=overwrite,
             pred_data_dir=input_folder,
             prediction_output_dir=output_folder,
             save_softmax=save_softmax,
@@ -315,7 +319,7 @@ class YuccaManager:
     def get_flops(lightning_module, batch_size, modalities, patch_size):
         data = torch.randn((batch_size, modalities, *patch_size))
         flops = measure_FLOPs(lightning_module.model, data)
-        logging.info(f"Total FLOPs: {flops.total()}")
+        logging.info(f"Total GFLOPs: {flops.total() / 1e9}")
         logging.debug(f"FLOPs by module: {flops.by_module()}")
         return flops
 
