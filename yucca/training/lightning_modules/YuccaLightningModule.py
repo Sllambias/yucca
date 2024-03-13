@@ -5,6 +5,8 @@ import wandb
 import copy
 import logging
 import numpy as np
+import os
+import matplotlib.pyplot as plt
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Dice, Accuracy, AUROC
@@ -169,14 +171,16 @@ class YuccaLightningModule(L.LightningModule):
             logger=True,
         )
 
-        if self.current_epoch % self.log_image_every_n_epochs == 0:
+        if self.trainer.is_last_batch and self.current_epoch % self.log_image_every_n_epochs == 0:
             self._log_dict_of_images_to_wandb(
                 {
-                    "input": inputs.detach().cpu(),
-                    "target": target.detach().cpu(),
-                    "output": output.detach().cpu(),
+                    "input": inputs.detach().cpu().numpy(),
+                    "target": target.detach().cpu().numpy(),
+                    "output": output.detach().cpu().numpy(),
                     "file_path": file_path,
-                }
+                },
+                log_key="train",
+                task_type=self.task_type,
             )
 
         return loss
@@ -314,19 +318,19 @@ class YuccaLightningModule(L.LightningModule):
             f"Post check not succesful: {rejected_keys_data}."
         )
 
-    def _log_dict_of_images_to_wandb(self, imagedict: {}):
+    def _log_dict_of_images_to_wandb(self, imagedict: {}, log_key: str, task_type: str = "segmentation"):
         # This needs to handle the following cases:
-        # Segmentation      : {"input": (b,c,x,y(,z)), "target": (b,1,x,y(,z)), "output": (b,1,x,y(,z)), "file_path": [pathA, pathB, ...]}
-        # Self-supervised   : {"input": (b,c,x,y(,z)), "target": (b,1,x,y(,z)), "output": (b,c,x,y(,z)), "file_path": [pathA, pathB, ...]}
-        # Classification    : {"input": (b,c,x,y(,z)), "target": (b,1,x), "output": (b,1,x), "file_path": [pathA, pathB, ...]}
+        # Segmentation      : {"input": (b,m,x,y(,z)), "target": (b,1,x,y(,z)), "output": (b,c,x,y(,z)), "file_path": [pathA, pathB, ...]}
+        # Self-supervised   : {"input": (b,m,x,y(,z)), "target": (b,m,x,y(,z)), "output": (b,m,x,y(,z)), "file_path": [pathA, pathB, ...]}
+        # Classification    : {"input": (b,m,x,y(,z)), "target": (b,1,x), "output": (b,c,x), "file_path": [pathA, pathB, ...]}
 
         batch_idx = np.random.randint(0, imagedict["input"].shape[0])
         channel_idx = np.random.randint(0, imagedict["input"].shape[1])
 
         if len(imagedict["input"].shape) == 5:  # 3D images.
             # We need to select a slice to visualize.
-            if len(imagedict["target"].shape) == 5 and len(imagedict["target"][batch_idx, 0].nonzero()) > 0:
-                # If shape == 5 it's not classification. Select a foreground slice if any exist.
+            if task_type == "segmentation" and len(imagedict["target"][batch_idx, 0].nonzero()) > 0:
+                # Select a foreground slice if any exist.
                 foreground_locations = imagedict["target"][batch_idx, 0].nonzero()
                 slice_to_visualize = foreground_locations[np.random.randint(0, len(foreground_locations))][0]
             else:
@@ -339,16 +343,33 @@ class YuccaLightningModule(L.LightningModule):
                 imagedict["output"] = imagedict["output"][:, :, slice_to_visualize]
 
         image = imagedict["input"][batch_idx, channel_idx]
-        target = imagedict["target"][batch_idx, 0]
-        output = imagedict["output"][batch_idx, 0 if imagedict["output"].shape[1] == 1 else channel_idx]
+        case = os.path.splitext(os.path.split(imagedict["file_path"][batch_idx])[-1])[0]
+
+        if task_type in ["segmentation", "classification"]:
+            target = imagedict["target"][batch_idx, 0]
+            output = imagedict["output"][batch_idx].argmax(0)
+        elif task_type == "self-supervised":
+            target = imagedict["target"][batch_idx, channel_idx]
+            output = imagedict["output"][batch_idx, channel_idx]
+        else:
+            logging.warn(
+                f"Unknown task type. Found {task_type} and expected one in ['classification', 'segmentation', 'self-supervised']"
+            )
 
         if len(target.shape) == 1:
             raise NotImplementedError
         else:
             wandb.log(
                 {
-                    "input": wandb.Image(
-                        image, masks={"target": target, "output": output}, caption=imagedict["file_path"][batch_idx]
-                    )
-                }
+                    log_key: [
+                        wandb.Image(
+                            image,
+                            masks={"target": {"mask_data": target}, "output": {"mask_data": output}},
+                            caption=f"{case}: input",
+                        ),
+                        wandb.Image(output, caption=f"{case}: output"),
+                        wandb.Image(target, caption=f"{case}: target"),
+                    ]
+                },
+                commit=False,
             )
