@@ -121,7 +121,7 @@ class YuccaManager:
         self,
         stage: Literal["fit", "test", "predict"],
         disable_tta: bool = False,
-        overwrite: bool = False,
+        overwrite_predictions: bool = False,
         pred_data_dir: str = None,
         save_softmax: bool = False,
         prediction_output_dir: str = "./",
@@ -206,7 +206,8 @@ class YuccaManager:
             | splits_config.lm_hparams()
             | plan_config.lm_hparams()
             | input_dims_config.lm_hparams()
-            | callback_config.lm_hparams(),
+            | callback_config.lm_hparams()
+            | augmenter.lm_hparams(),
             deep_supervision=self.deep_supervision,
             learning_rate=self.learning_rate,
             loss_fn=self.loss,
@@ -220,7 +221,7 @@ class YuccaManager:
             composed_val_transforms=augmenter.val_transforms,
             image_extension=plan_config.image_extension,
             input_dims_config=input_dims_config,
-            overwrite=overwrite,
+            overwrite_predictions=overwrite_predictions,
             num_workers=self.num_workers,
             pred_data_dir=pred_data_dir,
             pred_save_dir=prediction_output_dir,
@@ -272,7 +273,7 @@ class YuccaManager:
         self,
         input_folder,
         disable_tta: bool = False,
-        overwrite: bool = False,
+        overwrite_predictions: bool = False,
         output_folder: str = yucca_results,
         save_softmax=False,
     ):
@@ -280,7 +281,7 @@ class YuccaManager:
         self.initialize(
             stage="predict",
             disable_tta=disable_tta,
-            overwrite=overwrite,
+            overwrite_predictions=overwrite_predictions,
             pred_data_dir=input_folder,
             prediction_output_dir=output_folder,
             save_softmax=save_softmax,

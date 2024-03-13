@@ -4,6 +4,7 @@ import yucca
 import wandb
 import copy
 import logging
+import numpy as np
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Dice, Accuracy, AUROC
@@ -101,6 +102,7 @@ class YuccaLightningModule(L.LightningModule):
         if self.loss_fn is None:
             self.loss_fn = _default_loss
 
+        self.log_image_every_n_epochs = 1
         # Inference
         self.sliding_window_overlap = sliding_window_overlap
         self.test_time_augmentation = test_time_augmentation
@@ -148,7 +150,7 @@ class YuccaLightningModule(L.LightningModule):
         wandb.finish()
 
     def training_step(self, batch, _batch_idx):
-        inputs, target = batch["image"], batch["label"]
+        inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
         output = self(inputs)
         loss = self.loss_fn_train(output, target)
 
@@ -166,6 +168,17 @@ class YuccaLightningModule(L.LightningModule):
             prog_bar=self.progress_bar,
             logger=True,
         )
+
+        if self.current_epoch % self.log_image_every_n_epochs == 0:
+            self._log_dict_of_images_to_wandb(
+                {
+                    "input": inputs.detach().cpu(),
+                    "target": target.detach().cpu(),
+                    "output": output.detach().cpu(),
+                    "file_path": file_path,
+                }
+            )
+
         return loss
 
     def validation_step(self, batch, _batch_idx):
@@ -300,3 +313,42 @@ class YuccaLightningModule(L.LightningModule):
             f"Wrong shape: {rejected_keys_shape}.\n"
             f"Post check not succesful: {rejected_keys_data}."
         )
+
+    def _log_dict_of_images_to_wandb(self, imagedict: {}):
+        # This needs to handle the following cases:
+        # Segmentation      : {"input": (b,c,x,y(,z)), "target": (b,1,x,y(,z)), "output": (b,1,x,y(,z)), "file_path": [pathA, pathB, ...]}
+        # Self-supervised   : {"input": (b,c,x,y(,z)), "target": (b,1,x,y(,z)), "output": (b,c,x,y(,z)), "file_path": [pathA, pathB, ...]}
+        # Classification    : {"input": (b,c,x,y(,z)), "target": (b,1,x), "output": (b,1,x), "file_path": [pathA, pathB, ...]}
+
+        batch_idx = np.random.randint(0, imagedict["input"].shape[0])
+        channel_idx = np.random.randint(0, imagedict["input"].shape[1])
+
+        if len(imagedict["input"].shape) == 5:  # 3D images.
+            # We need to select a slice to visualize.
+            if len(imagedict["target"].shape) == 5 and len(imagedict["target"][batch_idx, 0].nonzero()) > 0:
+                # If shape == 5 it's not classification. Select a foreground slice if any exist.
+                foreground_locations = imagedict["target"][batch_idx, 0].nonzero()
+                slice_to_visualize = foreground_locations[np.random.randint(0, len(foreground_locations))][0]
+            else:
+                slice_to_visualize = np.random.randint(0, imagedict["input"].shape[2])
+
+            imagedict["input"] = imagedict["input"][:, :, slice_to_visualize]
+            if len(imagedict["target"].shape) == 5:
+                imagedict["target"] = imagedict["target"][:, :, slice_to_visualize]
+            if len(imagedict["output"].shape) == 5:
+                imagedict["output"] = imagedict["output"][:, :, slice_to_visualize]
+
+        image = imagedict["input"][batch_idx, channel_idx]
+        target = imagedict["target"][batch_idx, 0]
+        output = imagedict["output"][batch_idx, 0 if imagedict["output"].shape[1] == 1 else channel_idx]
+
+        if len(target.shape) == 1:
+            raise NotImplementedError
+        else:
+            wandb.log(
+                {
+                    "input": wandb.Image(
+                        image, masks={"target": target, "output": output}, caption=imagedict["file_path"][batch_idx]
+                    )
+                }
+            )

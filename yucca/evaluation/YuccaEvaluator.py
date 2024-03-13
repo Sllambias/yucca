@@ -22,7 +22,9 @@ from yucca.evaluation.metrics import (
     auroc,
 )
 from yucca.evaluation.obj_metrics import get_obj_stats_for_label
+from yucca.evaluation.surface_metrics import get_surface_metrics_for_label
 from yucca.paths import yucca_raw_data
+from yucca.utils.nib_utils import get_nib_spacing
 from weave.monitoring import StreamTable
 from tqdm import tqdm
 
@@ -32,13 +34,20 @@ class YuccaEvaluator(object):
         self,
         labels: list | int,
         folder_with_predictions,
-        use_wandb: bool,
         folder_with_ground_truth,
-        do_object_eval=False,
+        use_wandb: bool,
         as_binary=False,
+        do_object_eval=False,
+        do_surface_eval=False,
+        overwrite: bool = False,
         task_type: Literal["segmentation", "classification", "regression"] = "segmentation",
     ):
         self.name = "results"
+
+        self.overwrite = overwrite
+        self.use_wandb = use_wandb
+        self.task_type = task_type
+
         self.metrics = {
             "Dice": dice,
             "Jaccard": jaccard,
@@ -52,9 +61,6 @@ class YuccaEvaluator(object):
             "Total Positives Prediction": total_pos_pred,
         }
         self.obj_metrics = []
-
-        self.use_wandb = use_wandb
-        self.task_type = task_type
 
         if self.task_type == "segmentation":
             self.metrics = {
@@ -83,6 +89,12 @@ class YuccaEvaluator(object):
                     "_OBJ sensitivity",
                     "_OBJ precision",
                     "_OBJ F1",
+                ]
+
+            if do_surface_eval:
+                self.name += "_SURFACE"
+                self.surface_metrics = [
+                    "Average Surface Distance",
                 ]
 
             self.metrics_included_in_streamtable = [
@@ -168,7 +180,7 @@ class YuccaEvaluator(object):
                 print(f"Labels found in dataset.json: {list(dataset_json['labels'].keys())}")
 
     def run(self):
-        if isfile(self.outpath):
+        if isfile(self.outpath) and not self.overwrite:
             print(f"Evaluation file already present in {self.outpath}. Skipping.")
         else:
             self.sanity_checks()
@@ -271,7 +283,7 @@ class YuccaEvaluator(object):
         meandict = {}
 
         for label in self.labels:
-            meandict[label] = {k: [] for k in list(self.metrics.keys()) + self.obj_metrics}
+            meandict[label] = {k: [] for k in list(self.metrics.keys()) + self.obj_metrics + self.surface_metrics}
 
         for case in tqdm(self.pred_subjects, desc="Evaluating"):
             casedict = {}
@@ -312,6 +324,11 @@ class YuccaEvaluator(object):
                         labeldict[k] = round(v, 4)
                         meandict[str(label)][k].append(labeldict[k])
 
+                if self.surface_metrics:
+                    surface_labeldict = get_surface_metrics_for_label(gt, pred, label, as_binary=self.as_binary)
+                    for k, v in surface_labeldict.items():
+                        labeldict[k] = round(v, 4)
+                        meandict[str(label)][k].append(labeldict[k])
                 casedict[str(label)] = labeldict
             casedict["Prediction:"] = predpath
             casedict["Ground Truth:"] = gtpath

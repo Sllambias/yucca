@@ -11,8 +11,6 @@ from batchgenerators.utilities.file_and_folder_operations import (
     subdirs,
 )
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
 
 def replace_in_file(file_path, pattern_replacement):
     with fileinput.input(file_path, inplace=True) as file:
@@ -85,30 +83,38 @@ def recursive_find_python_class(folder: list, class_name: str, current_module: s
     Folder = starting path, e.g. join(yucca.__path__[0], 'preprocessing')
     Trainer_name = e.g. YuccaPreprocessor3D
     Current_module = starting module e.g. 'yucca.preprocessing'
-    """
-    tr = None
-    for _, modname, ispkg in pkgutil.iter_modules(folder):
-        if not ispkg:
-            m = importlib.import_module(current_module + "." + modname)
-            if hasattr(m, class_name):
-                tr = getattr(m, class_name)
-                break
 
-    if tr is None:
+    The function is nested to allow it to exit after the recursive part is done. This lets us to
+    check if we have successfully found what we looked for IN the function.
+    """
+
+    def _recursive_find_python_class(folder: list, class_name: str, current_module: str):
+        tr = None
         for _, modname, ispkg in pkgutil.iter_modules(folder):
-            if ispkg:
-                next_current_module = current_module + "." + modname
-                tr = recursive_find_python_class(
-                    [join(folder[0], modname)],
-                    class_name,
-                    current_module=next_current_module,
-                )
-            if tr is not None:
-                break
+            if not ispkg:
+                m = importlib.import_module(current_module + "." + modname)
+                if hasattr(m, class_name):
+                    tr = getattr(m, class_name)
+                    break
+
+        if tr is None:
+            for _, modname, ispkg in pkgutil.iter_modules(folder):
+                if ispkg:
+                    next_current_module = current_module + "." + modname
+                    tr = _recursive_find_python_class(
+                        [join(folder[0], modname)],
+                        class_name,
+                        current_module=next_current_module,
+                    )
+                if tr is not None:
+                    break
+        return tr
+
+    found_python_class = _recursive_find_python_class(folder, class_name, current_module)
     assert (
-        tr is not None
+        found_python_class is not None
     ), f"Did not find any python class called {class_name}. Make sure there's no typos (and that the class actually exists)"
-    return tr
+    return found_python_class
 
 
 def recursive_find_realpath(path):

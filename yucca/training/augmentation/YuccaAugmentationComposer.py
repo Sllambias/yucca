@@ -204,6 +204,56 @@ class YuccaAugmentationComposer:
         )
         return val_transforms
 
+    def lm_hparams(self):
+        hparams = {
+            "deep_supervision": self.deep_supervision,
+            "pre_aug_patch_size": self.pre_aug_patch_size,
+            "random_crop": self.random_crop,
+            "mask_image_for_reconstruction": self.mask_image_for_reconstruction,
+            "patch_size": self.patch_size,
+            "skip_label": self.skip_label,
+            "label_dtype": self.label_dtype,
+            "copy_image_to_label": self.copy_image_to_label,
+            "additive_noise_p_per_sample": self.additive_noise_p_per_sample,
+            "additive_noise_mean": self.additive_noise_mean,
+            "additive_noise_sigma": self.additive_noise_sigma,
+            "biasfield_p_per_sample": self.biasfield_p_per_sample,
+            "blurring_p_per_sample": self.blurring_p_per_sample,
+            "blurring_sigma": self.blurring_sigma,
+            "blurring_p_per_channel": self.blurring_p_per_channel,
+            "elastic_deform_p_per_sample": self.elastic_deform_p_per_sample,
+            "elastic_deform_alpha": self.elastic_deform_alpha,
+            "elastic_deform_sigma": self.elastic_deform_sigma,
+            "gamma_p_per_sample": self.gamma_p_per_sample,
+            "gamma_p_invert_image": self.gamma_p_invert_image,
+            "gamma_range": self.gamma_range,
+            "gibbs_ringing_p_per_sample": self.gibbs_ringing_p_per_sample,
+            "gibbs_ringing_cutfreq": self.gibbs_ringing_cutfreq,
+            "gibbs_ringing_axes": self.gibbs_ringing_axes,
+            "mirror_p_per_sample": self.mirror_p_per_sample,
+            "mirror_p_per_axis": self.mirror_p_per_axis,
+            "mirror_axes": self.mirror_axes,
+            "motion_ghosting_p_per_sample": self.motion_ghosting_p_per_sample,
+            "motion_ghosting_alpha": self.motion_ghosting_alpha,
+            "motion_ghosting_numreps": self.motion_ghosting_numreps,
+            "motion_ghosting_axes": self.motion_ghosting_axes,
+            "multiplicative_noise_p_per_sample": self.multiplicative_noise_p_per_sample,
+            "multiplicative_noise_mean": self.multiplicative_noise_mean,
+            "multiplicative_noise_sigma": self.multiplicative_noise_sigma,
+            "rotation_p_per_sample": self.rotation_p_per_sample,
+            "rotation_p_per_axis": self.rotation_p_per_axis,
+            "rotation_x": self.rotation_x,
+            "rotation_y": self.rotation_y,
+            "rotation_z": self.rotation_z,
+            "scale_p_per_sample": self.scale_p_per_sample,
+            "scale_factor": self.scale_factor,
+            "simulate_lowres_p_per_sample": self.simulate_lowres_p_per_sample,
+            "simulate_lowres_p_per_channel": self.simulate_lowres_p_per_channel,
+            "simulate_lowres_p_per_axis": self.simulate_lowres_p_per_axis,
+            "simulate_lowres_zoom_range": self.simulate_lowres_zoom_range,
+        }
+        return hparams
+
 
 if __name__ == "__main__":
     x = YuccaAugmentationComposer()
