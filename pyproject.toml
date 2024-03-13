@@ -39,6 +39,7 @@ dependencies = [
     "monai",
     "flake8-unused-arguments",
     "git+https://github.com/google-deepmind/surface-distance",
+    "fvcore",
 ]
 
 [project.optional-dependencies]
