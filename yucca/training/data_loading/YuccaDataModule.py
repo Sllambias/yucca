@@ -56,6 +56,7 @@ class YuccaDataModule(pl.LightningDataModule):
         composed_val_transforms: Optional[torchvision.transforms.Compose] = None,
         num_workers: Optional[int] = None,
         pred_data_dir: Optional[str] = None,
+        pred_save_dir: Optional[str] = None,
         pre_aug_patch_size: Optional[Union[list, tuple]] = None,
         train_sampler: Optional[Sampler] = InfiniteRandomSampler,
         val_sampler: Optional[Sampler] = InfiniteRandomSampler,

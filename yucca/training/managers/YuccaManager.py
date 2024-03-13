@@ -222,6 +222,7 @@ class YuccaManager:
             image_extension=plan_config.image_extension,
             task_type=plan_config.task_type,
             pred_data_dir=pred_data_dir,
+            pred_save_dir=prediction_output_dir,
             pre_aug_patch_size=augmenter.pre_aug_patch_size,
             splits_config=splits_config,
             split_idx=task_config.split_idx,
