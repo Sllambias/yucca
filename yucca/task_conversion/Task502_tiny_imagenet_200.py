@@ -4,13 +4,11 @@ Task_conversion file for the Fetal Planes DB (Barcelona) dataset (https://doi.or
 This is an example of a classification dataset with 2D PNG images and image-level labels.
 """
 
-import shutil
-
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subdirs, subfiles
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subdirs
 from yucca.paths import yucca_raw_data
 from yucca.task_conversion.utils import generate_dataset_json
 
@@ -60,22 +58,21 @@ def convert(path: str, subdir: str = "tiny-imagenet-200"):
             labeldict[category] = next_label
             next_label += 1
         label = np.array([labeldict[category]], dtype=np.uint8)
-        # for image in subfiles(join(train_images_dir, category, "images"), join=False):
-        #    serial_number = image[: -len(".JPEG")]
-        #    image_file_path = join(train_images_dir, category, "images", image)
-        #    shutil.copyfile(image_file_path, f"{target_imagesTr}/{prefix}_{serial_number}_000.png")
-        #    np.savetxt(f"{target_labelsTr}/{prefix}_{serial_number}.txt", label, fmt="%d")
+        for image in subfiles(join(train_images_dir, category, "images"), join=False):
+            serial_number = image[: -len(".JPEG")]
+            image_file_path = join(train_images_dir, category, "images", image)
+            shutil.copyfile(image_file_path, f"{target_imagesTr}/{prefix}_{serial_number}_000.png")
+            np.savetxt(f"{target_labelsTr}/{prefix}_{serial_number}.txt", label, fmt="%d")
 
-    # test_images = subfiles(test_images_dir, join=False)
-    # for image in tqdm(test_images, total=len(test_images)):
-    #    category = val_annotations[1].iloc[np.where(val_annotations[0] == image)].values[0]
-    #    assert labeldict.get(category) is not None
-    #    label = np.array([labeldict[category]], dtype=np.uint8)
-    #    serial_number = image[: -len(".JPEG")]
-    #    image_file_path = join(test_images_dir, image)
-    #    shutil.copyfile(image_file_path, f"{target_imagesTs}/{prefix}_{serial_number}_000.png")
-    #    np.savetxt(f"{target_labelsTs}/{prefix}_{serial_number}.txt", label, fmt="%d")
-    print(labeldict)
+    test_images = subfiles(test_images_dir, join=False)
+    for image in tqdm(test_images, total=len(test_images)):
+        category = val_annotations[1].iloc[np.where(val_annotations[0] == image)].values[0]
+        assert labeldict.get(category) is not None
+        label = np.array([labeldict[category]], dtype=np.uint8)
+        serial_number = image[: -len(".JPEG")]
+        image_file_path = join(test_images_dir, image)
+        shutil.copyfile(image_file_path, f"{target_imagesTs}/{prefix}_{serial_number}_000.png")
+        np.savetxt(f"{target_labelsTs}/{prefix}_{serial_number}.txt", label, fmt="%d")
 
     # Now construct the pair of label-ids and real labels
 

@@ -24,7 +24,6 @@ from yucca.evaluation.metrics import (
 from yucca.evaluation.obj_metrics import get_obj_stats_for_label
 from yucca.evaluation.surface_metrics import get_surface_metrics_for_label
 from yucca.paths import yucca_raw_data
-from yucca.utils.nib_utils import get_nib_spacing
 from weave.monitoring import StreamTable
 from tqdm import tqdm
 

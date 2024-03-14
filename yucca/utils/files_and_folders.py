@@ -4,7 +4,6 @@ import fileinput
 import re
 import shutil
 import os
-import warnings
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     subfiles,
