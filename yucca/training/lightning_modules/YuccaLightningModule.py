@@ -344,7 +344,7 @@ class YuccaLightningModule(L.LightningModule):
             if task_type == "segmentation" and len(imagedict["target"][batch_idx, 0].nonzero()) > 0:
                 # Select a foreground slice if any exist.
                 foreground_locations = imagedict["target"][batch_idx, 0].nonzero()
-                slice_to_visualize = foreground_locations[np.random.randint(0, len(foreground_locations))][0]
+                slice_to_visualize = foreground_locations[0][np.random.randint(0, len(foreground_locations[0]))]
             else:
                 slice_to_visualize = np.random.randint(0, imagedict["input"].shape[2])
 
@@ -369,16 +369,19 @@ class YuccaLightningModule(L.LightningModule):
             )
 
         if len(target.shape) == 1:
-            raise NotImplementedError
+            fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(5, 5), dpi=100, constrained_layout=True)
+            axes[0].imshow(image, cmap="gray", vmin=np.quantile(image, 0.01), vmax=np.quantile(image, 0.99))
+            axes[0].set_title("input")
+            fig.suptitle(f"{case}. Target: {target} | Output: {output}", fontsize=16)
         else:
-            fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(15, 5), dpi=100)
+            fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(15, 5), dpi=100, constrained_layout=True)
             axes[0].imshow(image, cmap="gray", vmin=np.quantile(image, 0.01), vmax=np.quantile(image, 0.99))
             axes[0].set_title("input")
             axes[1].imshow(target, cmap="gray")
             axes[1].set_title("target")
             axes[2].imshow(output, cmap="gray")
             axes[2].set_title("output")
-            fig.text(0.5, 0.5, case, ha="center")
+            fig.suptitle(case, fontsize=16)
 
             wandb.log({log_key: wandb.Image(fig)}, commit=False)
             plt.close(fig)

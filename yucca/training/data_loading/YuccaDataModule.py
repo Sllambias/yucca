@@ -87,7 +87,7 @@ class YuccaDataModule(pl.LightningDataModule):
 
         # Set default values
         self.num_workers = max(0, int(torch.get_num_threads() - 1)) if num_workers is None else num_workers
-        self.val_num_workers = self.num_workers // 2 if self.num_workers > 0 else self.num_workers
+        self.val_num_workers = self.num_workers
         self.train_sampler = train_sampler
         self.val_sampler = val_sampler
         logging.info(f"Using {self.num_workers} workers")

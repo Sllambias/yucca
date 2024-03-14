@@ -41,8 +41,10 @@ class YuccaAugmentationComposer:
     def setup_default_params(self, is_2d, patch_size):
         print("Composing Transforms")
         # Define whether we crop before or after applying augmentations
-        # Define if cropping is random or always centered
-        self.random_crop = True
+        # Define if the cropping performed during the spatial transform is random or always centered
+        #   We have ALREADY selected a random crop when we prepared the case in the dataloader
+        #   so unless you know what you're doing this should be disabled to avoid border artifacts
+        self.random_crop = False
         self.mask_image_for_reconstruction = False
         self.patch_size = patch_size
 
@@ -114,8 +116,7 @@ class YuccaAugmentationComposer:
         if task_type_preset == "self-supervised":
             self.skip_label = True
             self.copy_image_to_label = True
-            # This should be uncommented when masking is properly implemented
-            # self.mask_image_for_reconstruction = True
+            self.mask_image_for_reconstruction = True
 
     def overwrite_params(self, parameter_dict):
         for key, value in parameter_dict.items():

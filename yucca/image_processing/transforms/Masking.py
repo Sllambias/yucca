@@ -33,7 +33,7 @@ class Masking(YuccaTransform):
         data_key="image",
         ratio: Union[Iterable[float], float] = 0.25,
         token_size: Union[Iterable[Union[float, int]], float, int] = 0.05,
-        pixel_value: Union[float, int] = 0,
+        pixel_value: Union[float, int, str] = 0,
     ):
         self.mask = mask
         self.data_key = data_key
@@ -42,7 +42,15 @@ class Masking(YuccaTransform):
         self.pixel_value = pixel_value
 
     @staticmethod
-    def get_params(input_shape, ratio, token_size):
+    def get_params(input_shape, data, pixel_value, ratio, token_size):
+        if isinstance(pixel_value, str):
+            assert pixel_value in ["min", "max"]
+            if pixel_value == "min":
+                pixel_value = data.min()
+            elif pixel_value == "max":
+                pixel_value = data.max()
+            else:
+                print(f"unrecognized pixel value: got {pixel_value}")
         if isinstance(ratio, (tuple, list)):
             # If ratio is a list/tuple it's a range of ratios from which me sample uniformly per batch
             ratio = np.random.uniform(*ratio)
@@ -65,9 +73,9 @@ class Masking(YuccaTransform):
                     "token_size is set to a ratio over 0.25 of the image. " "This is not intended and should be reconsidered."
                 )
             token_size = [int(i * np.random.uniform(*token_size)) for i in input_shape]
-        return ratio, token_size
+        return pixel_value, ratio, token_size
 
-    def __mask__(self, image_volume, ratio, token_size):
+    def __mask__(self, image_volume, pixel_value, ratio, token_size):
         assert len(image_volume.shape[2:]) == len(token_size), (
             "mask token size not compatible with input data"
             f"mask token is: {token_size} and image is shape: {image_volume.shape[2:]}"
@@ -84,7 +92,7 @@ class Masking(YuccaTransform):
         for idx, size in enumerate(token_size):
             grid = np.repeat(grid, repeats=size, axis=idx)
 
-        image_volume[:, :, grid[*slices] == 0] = self.pixel_value
+        image_volume[:, :, grid[*slices] == 0] = pixel_value
         return image_volume
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
@@ -94,6 +102,12 @@ class Masking(YuccaTransform):
         ), f"Incorrect data size or shape.\
             \nShould be (b, c, x, y, z) or (b, c, x, y) and is: {data_dict[self.data_key].shape}"
         if self.mask:
-            ratio, token_size = self.get_params(data_dict[self.data_key].shape[2:], self.ratio, self.token_size)
-            data_dict[self.data_key] = self.__mask__(data_dict[self.data_key], ratio, token_size)
+            pixel_value, ratio, token_size = self.get_params(
+                data_dict[self.data_key].shape[2:],
+                data_dict[self.data_key],
+                self.pixel_value,
+                self.ratio,
+                self.token_size,
+            )
+            data_dict[self.data_key] = self.__mask__(data_dict[self.data_key], pixel_value, ratio, token_size)
         return data_dict

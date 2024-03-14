@@ -498,7 +498,10 @@ class YuccaPreprocessor(object):
         # we get some (no need to get all) locations of foreground, that we will later use in the
         # oversampling of foreground classes
         # And we also potentially analyze the connected components of the label
+        max_foreground_locs = 100000  # limited to save space
         foreground_locs = np.array(np.nonzero(label)).T[::10].tolist()
+        if len(foreground_locs) > max_foreground_locs:
+            foreground_locs = foreground_locs[:: round(len(foreground_locs) / max_foreground_locs)]
         if not self.enable_cc_analysis:
             label_cc_n = 0
             label_cc_sizes = 0
