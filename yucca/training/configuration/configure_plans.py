@@ -66,7 +66,7 @@ def load_plans(plans_path):
             plan.pop(key)
         elif key in plan["dataset_properties"]:
             plan["dataset_properties"].pop(key)
-    return
+    return plan
 
 
 def setup_task_type(plans):
