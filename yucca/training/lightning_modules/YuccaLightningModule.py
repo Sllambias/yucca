@@ -151,7 +151,7 @@ class YuccaLightningModule(L.LightningModule):
     def teardown(self, stage: str):  # noqa: U100
         wandb.finish()
 
-    def training_step(self, batch, _batch_idx):
+    def training_step(self, batch, batch_idx):
         inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
         output = self(inputs)
         loss = self.loss_fn_train(output, target)
@@ -171,7 +171,7 @@ class YuccaLightningModule(L.LightningModule):
             logger=True,
         )
 
-        if self.trainer.is_last_batch and self.current_epoch % self.log_image_every_n_epochs == 0:
+        if batch_idx == 0 and self.current_epoch % self.log_image_every_n_epochs == 0 and wandb.run is not None:
             self._log_dict_of_images_to_wandb(
                 {
                     "input": inputs.detach().cpu().to(torch.float32).numpy(),
@@ -185,7 +185,7 @@ class YuccaLightningModule(L.LightningModule):
 
         return loss
 
-    def validation_step(self, batch, _batch_idx):
+    def validation_step(self, batch, batch_idx):
         inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
         output = self(inputs)
         loss = self.loss_fn_val(output, target)
@@ -198,10 +198,7 @@ class YuccaLightningModule(L.LightningModule):
             logger=True,
         )
 
-        if (
-            self.trainer.fit_loop.epoch_loop.val_loop.batch_progress.is_last_batch
-            and self.current_epoch % self.log_image_every_n_epochs == 0
-        ):
+        if batch_idx == 0 and self.current_epoch % self.log_image_every_n_epochs == 0 and wandb.run is not None:
             self._log_dict_of_images_to_wandb(
                 {
                     "input": inputs.detach().cpu().to(torch.float32).numpy(),
@@ -383,5 +380,5 @@ class YuccaLightningModule(L.LightningModule):
             axes[2].set_title("output")
             fig.text(0.5, 0.5, case, ha="center")
 
-            wandb.log({log_key: wandb.Image(fig)})
+            wandb.log({log_key: wandb.Image(fig)}, commit=False)
             plt.close(fig)

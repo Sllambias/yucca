@@ -314,14 +314,12 @@ class YuccaManager:
         flops = self.get_flops(
             lightning_module, input_dims_config.batch_size, input_dims_config.num_modalities, input_dims_config.patch_size
         )
-        logging.info(flop_count_table(flops))
+        logging.info("\n" + flop_count_table(flops))
 
     @staticmethod
     def get_flops(lightning_module, batch_size, modalities, patch_size):
         data = torch.randn((batch_size, modalities, *patch_size))
         flops = measure_FLOPs(lightning_module.model, data)
-        logging.info(f"Total GFLOPs: {flops.total() / 1e9}")
-        logging.debug(f"FLOPs by module: {flops.by_module()}")
         return flops
 
 
