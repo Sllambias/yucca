@@ -60,6 +60,7 @@ class YuccaEvaluator(object):
             "Total Positives Prediction": total_pos_pred,
         }
         self.obj_metrics = []
+        self.surface_metrics = []
 
         if self.task_type == "segmentation":
             self.metrics = {
