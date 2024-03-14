@@ -6,9 +6,9 @@ This is an example of a classification dataset with 2D PNG images and image-leve
 
 import numpy as np
 import pandas as pd
+import shutil
 from tqdm import tqdm
-
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subdirs
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subdirs, subfiles
 from yucca.paths import yucca_raw_data
 from yucca.task_conversion.utils import generate_dataset_json
 
