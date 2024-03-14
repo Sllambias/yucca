@@ -75,6 +75,8 @@ class YuccaAugmentationComposer:
         self.gibbs_ringing_cutfreq = (96, 129)
         self.gibbs_ringing_axes = (0, 2) if is_2d else (0, 3)
 
+        self.mask_value = "min"  # can be an int, float or a str in ['min', 'max']
+
         self.mirror_p_per_sample = 0.0
         self.mirror_p_per_axis = 0.33
         self.mirror_axes = (0, 1) if is_2d else (0, 1, 2)
@@ -188,7 +190,7 @@ class YuccaAugmentationComposer:
                 ),
                 DownsampleSegForDS(deep_supervision=self.deep_supervision),
                 CopyImageToSeg(copy=self.copy_image_to_label),
-                Masking(mask=self.mask_image_for_reconstruction),
+                Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.mask_value),
                 RemoveBatchDimension(),
             ]
         )
@@ -199,7 +201,7 @@ class YuccaAugmentationComposer:
             [
                 AddBatchDimension(),
                 CopyImageToSeg(copy=self.copy_image_to_label),
-                Masking(mask=self.mask_image_for_reconstruction),
+                Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.mask_value),
                 RemoveBatchDimension(),
             ]
         )
@@ -232,6 +234,7 @@ class YuccaAugmentationComposer:
                 "gibbs_ringing_p_per_sample": self.gibbs_ringing_p_per_sample,
                 "gibbs_ringing_cutfreq": self.gibbs_ringing_cutfreq,
                 "gibbs_ringing_axes": self.gibbs_ringing_axes,
+                "mask_value":self.mask_value,
                 "mirror_p_per_sample": self.mirror_p_per_sample,
                 "mirror_p_per_axis": self.mirror_p_per_axis,
                 "mirror_axes": self.mirror_axes,
