@@ -103,3 +103,4 @@ class WritePredictionFromLogits(BasePredictionWriter):
             properties=properties,
             save_softmax=self.save_softmax,
         )
+        del data_dict

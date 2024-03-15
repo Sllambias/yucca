@@ -130,14 +130,6 @@ def main():
     train_batches_per_step = args.train_batches_per_step
     val_batches_per_step = args.val_batches_per_step
 
-    if patch_size is not None:
-        if len(patch_size) == 1:
-            patch_size = patch_size[0]
-            if patch_size not in ["mean", "max", "min"]:
-                patch_size = (int(patch_size),) * 3 if dimensions == "3D" else (int(patch_size),) * 2
-        else:
-            patch_size = tuple(int(n) for n in patch_size)
-
     kwargs = {}
 
     assert model_name in [

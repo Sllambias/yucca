@@ -1,5 +1,6 @@
 import lightning as L
 import torch
+import wandb
 from typing import Literal, Union, Optional
 from yucca.training.augmentation.YuccaAugmentationComposer import YuccaAugmentationComposer
 from yucca.training.configuration.split_data import get_split_config, SplitConfig
@@ -104,10 +105,6 @@ class YuccaManager:
         self.val_batches_per_step = val_batches_per_step
         self.kwargs = kwargs
 
-        # Configure basic parameters
-        if self.patch_size is None and self.model_name == "TinyUNet":
-            self.patch_size = "tiny"
-
         # Automatically changes bfloat training if we're running on a GPU
         # that doesn't support it (otherwise it just crashes.)
         if "bf" in self.precision and torch.cuda.is_available():
@@ -181,6 +178,7 @@ class YuccaManager:
             plan=plan_config.plans,
             model_dimensions=task_config.model_dimensions,
             num_classes=plan_config.num_classes,
+            ckpt_patch_size=self.ckpt_config.ckpt_patch_size,
             model_name=task_config.model_name,
             max_vram=self.max_vram,
             batch_size=self.batch_size,
@@ -253,6 +251,7 @@ class YuccaManager:
             datamodule=self.data_module,
             ckpt_path="last",
         )
+        self.finish()
 
     def run_finetuning(self):
         self.initialize(stage="fit")
@@ -263,6 +262,7 @@ class YuccaManager:
             model=self.model_module,
             datamodule=self.data_module,
         )
+        self.finish()
 
     def predict_folder(
         self,
@@ -271,6 +271,7 @@ class YuccaManager:
         output_folder: str = yucca_results,
         save_softmax=False,
     ):
+        self.batch_size = 1
         self.initialize(
             stage="predict",
             disable_tta=disable_tta,
@@ -283,7 +284,12 @@ class YuccaManager:
                 model=self.model_module,
                 dataloaders=self.data_module,
                 ckpt_path=self.ckpt_config.ckpt_path,
+                return_predictions=False,
             )
+        self.finish()
+
+    def finish(self):
+        wandb.finish()
 
 
 if __name__ == "__main__":
