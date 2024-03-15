@@ -9,7 +9,7 @@ import os
 import matplotlib.pyplot as plt
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
-from torchmetrics.classification import Dice, Accuracy, AUROC, MulticlassF1Score
+from torchmetrics.classification import Dice, Accuracy, AUROC
 from torchmetrics.regression import MeanAbsoluteError
 from yucca.training.loss_and_optim.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.utils.files_and_folders import recursive_find_python_class
