@@ -40,7 +40,7 @@ class MotionGhosting(YuccaTransform):
             else:
                 imageVolume[:, :, 0:-1:numReps] = alpha * imageVolume[:, :, 0:-1:numReps]
 
-            imageVolume = abs(np.fft.ifftn(imageVolume, s=[h, w, d]))
+            imageVolume = np.fft.ifftn(imageVolume, s=[h, w, d])
         if len(imageVolume.shape) == 2:
             assert axis in [0, 1], "Incorrect or no axis"
             h, w = imageVolume.shape
@@ -50,7 +50,7 @@ class MotionGhosting(YuccaTransform):
                 imageVolume[0:-1:numReps, :] = alpha * imageVolume[0:-1:numReps, :]
             else:
                 imageVolume[:, 0:-1:numReps] = alpha * imageVolume[:, 0:-1:numReps]
-            imageVolume = abs(np.fft.ifftn(imageVolume, s=[h, w]))
+            imageVolume = np.fft.ifftn(imageVolume, s=[h, w])
         return imageVolume
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
