@@ -279,13 +279,13 @@ class YuccaManager:
             prediction_output_dir=output_folder,
             save_softmax=save_softmax,
         )
-        with torch.inference_mode():
-            self.trainer.predict(
-                model=self.model_module,
-                dataloaders=self.data_module,
-                ckpt_path=self.ckpt_config.ckpt_path,
-                return_predictions=False,
-            )
+
+        self.trainer.predict(
+            model=self.model_module,
+            dataloaders=self.data_module,
+            ckpt_path=self.ckpt_config.ckpt_path,
+            return_predictions=False,
+        )
         self.finish()
 
     def finish(self):
