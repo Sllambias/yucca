@@ -14,6 +14,7 @@ from torchmetrics.regression import MeanAbsoluteError
 from yucca.training.loss_and_optim.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.utils.kwargs import filter_kwargs
+from yucca.evaluation.training_metrics import F1
 
 
 class YuccaLightningModule(L.LightningModule):
@@ -89,21 +90,26 @@ class YuccaLightningModule(L.LightningModule):
 
         if self.task_type == "segmentation":
             self.train_metrics = MetricCollection(
-                {"train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)},
                 {
-                    "train/F1": MulticlassF1Score(
+                    "train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
+                    "train/F1": F1(
                         num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None
-                    )
+                    ),
                 },
             )
+
             self.val_metrics = MetricCollection(
-                {"val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)},
                 {
-                    "val/F1": MulticlassF1Score(
-                        num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None
-                    )
+                    "val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
                 },
             )
+            # self.val_class_metrics = MetricCollection(
+            #    {
+            #        "val/F1": MulticlassF1Score(
+            #            num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None
+            #        )
+            #    }
+            # )
             _default_loss = "DiceCE"
 
         if self.task_type == "self-supervised":
@@ -172,7 +178,7 @@ class YuccaLightningModule(L.LightningModule):
             output = output[0]
             target = target[0]
 
-        metrics = self.train_metrics(output, target)
+        metrics = self.compute_metrics(self.train_metrics, output, target)
         self.log_dict(
             {"train/loss": loss} | metrics,
             on_step=self.step_logging,
@@ -245,6 +251,21 @@ class YuccaLightningModule(L.LightningModule):
 
         logits, case_properties = self.preprocessor.reverse_preprocessing(logits, case_properties)
         return {"logits": logits, "properties": case_properties, "case_id": case_id[0]}
+
+    def compute_metrics(self, metrics, output, target, ignore_index: int = 0):
+        metrics = metrics(output, target)
+        tmp = {}
+        to_drop = []
+        for key in metrics.keys():
+            if metrics[key].numel() > 1:
+                to_drop.append(key)
+                for i, val in enumerate(metrics[key]):
+                    if not i == ignore_index:
+                        tmp[key + "_" + str(i)] = val
+        for k in to_drop:
+            metrics.pop(k)
+        metrics.update(tmp)
+        return metrics
 
     def configure_optimizers(self):
         # Initialize and configure the loss(es) here.
