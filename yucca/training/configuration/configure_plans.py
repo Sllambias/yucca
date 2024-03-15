@@ -58,8 +58,15 @@ def get_plan_config(
 def load_plans(plans_path):
     # If plans is still none the ckpt files were either empty/invalid or didn't exist and we load the plans
     # from the preprocessed folder.
+    keys_to_drop = ["original_sizes", "original_spacings", "new_sizes", "new_spacings"]
     logging.info("Loading plans.json")
-    return load_json(plans_path)
+    plan = load_json(plans_path)
+    for key in keys_to_drop:
+        if key in plan:
+            plan.pop(key)
+        elif key in plan["dataset_properties"]:
+            plan["dataset_properties"].pop(key)
+    return plan
 
 
 def setup_task_type(plans):

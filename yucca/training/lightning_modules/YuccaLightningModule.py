@@ -4,6 +4,9 @@ import yucca
 import wandb
 import copy
 import logging
+import numpy as np
+import os
+import matplotlib.pyplot as plt
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Dice, Accuracy, AUROC
@@ -11,6 +14,7 @@ from torchmetrics.regression import MeanAbsoluteError
 from yucca.training.loss_and_optim.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.utils.kwargs import filter_kwargs
+from yucca.evaluation.training_metrics import F1
 
 
 class YuccaLightningModule(L.LightningModule):
@@ -86,10 +90,19 @@ class YuccaLightningModule(L.LightningModule):
 
         if self.task_type == "segmentation":
             self.train_metrics = MetricCollection(
-                {"train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
+                {
+                    "train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
+                    "train/F1": F1(
+                        num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None
+                    ),
+                },
             )
+
             self.val_metrics = MetricCollection(
-                {"val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
+                {
+                    "val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
+                    "val/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
+                },
             )
             _default_loss = "DiceCE"
 
@@ -101,6 +114,7 @@ class YuccaLightningModule(L.LightningModule):
         if self.loss_fn is None:
             self.loss_fn = _default_loss
 
+        self.log_image_every_n_epochs = 1
         # Inference
         self.sliding_window_overlap = sliding_window_overlap
         self.test_time_augmentation = test_time_augmentation
@@ -147,8 +161,8 @@ class YuccaLightningModule(L.LightningModule):
     def teardown(self, stage: str):  # noqa: U100
         wandb.finish()
 
-    def training_step(self, batch, _batch_idx):
-        inputs, target = batch["image"], batch["label"]
+    def training_step(self, batch, batch_idx):
+        inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
         output = self(inputs)
         loss = self.loss_fn_train(output, target)
 
@@ -158,7 +172,7 @@ class YuccaLightningModule(L.LightningModule):
             output = output[0]
             target = target[0]
 
-        metrics = self.train_metrics(output, target)
+        metrics = self.compute_metrics(self.train_metrics, output, target)
         self.log_dict(
             {"train/loss": loss} | metrics,
             on_step=self.step_logging,
@@ -166,13 +180,26 @@ class YuccaLightningModule(L.LightningModule):
             prog_bar=self.progress_bar,
             logger=True,
         )
+
+        if batch_idx == 0 and self.current_epoch % self.log_image_every_n_epochs == 0 and wandb.run is not None:
+            self._log_dict_of_images_to_wandb(
+                {
+                    "input": inputs.detach().cpu().to(torch.float32).numpy(),
+                    "target": target.detach().cpu().to(torch.float32).numpy(),
+                    "output": output.detach().cpu().to(torch.float32).numpy(),
+                    "file_path": file_path,
+                },
+                log_key="train",
+                task_type=self.task_type,
+            )
+
         return loss
 
-    def validation_step(self, batch, _batch_idx):
-        inputs, target = batch["image"], batch["label"]
+    def validation_step(self, batch, batch_idx):
+        inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
         output = self(inputs)
         loss = self.loss_fn_val(output, target)
-        metrics = self.val_metrics(output, target)
+        metrics = self.compute_metrics(self.val_metrics, output, target)
         self.log_dict(
             {"val/loss": loss} | metrics,
             on_step=self.step_logging,
@@ -180,6 +207,18 @@ class YuccaLightningModule(L.LightningModule):
             prog_bar=self.progress_bar,
             logger=True,
         )
+
+        if batch_idx == 0 and self.current_epoch % self.log_image_every_n_epochs == 0 and wandb.run is not None:
+            self._log_dict_of_images_to_wandb(
+                {
+                    "input": inputs.detach().cpu().to(torch.float32).numpy(),
+                    "target": target.detach().cpu().to(torch.float32).numpy(),
+                    "output": output.detach().cpu().to(torch.float32).numpy(),
+                    "file_path": file_path,
+                },
+                log_key="val",
+                task_type=self.task_type,
+            )
 
     def on_predict_start(self):
         preprocessor_class = recursive_find_python_class(
@@ -206,6 +245,21 @@ class YuccaLightningModule(L.LightningModule):
 
         logits, case_properties = self.preprocessor.reverse_preprocessing(logits, case_properties)
         return {"logits": logits, "properties": case_properties, "case_id": case_id[0]}
+
+    def compute_metrics(self, metrics, output, target, ignore_index: int = 0):
+        metrics = metrics(output, target)
+        tmp = {}
+        to_drop = []
+        for key in metrics.keys():
+            if metrics[key].numel() > 1:
+                to_drop.append(key)
+                for i, val in enumerate(metrics[key]):
+                    if not i == ignore_index:
+                        tmp[key + "_" + str(i)] = val
+        for k in to_drop:
+            metrics.pop(k)
+        metrics.update(tmp)
+        return metrics
 
     def configure_optimizers(self):
         # Initialize and configure the loss(es) here.
@@ -300,3 +354,59 @@ class YuccaLightningModule(L.LightningModule):
             f"Wrong shape: {rejected_keys_shape}.\n"
             f"Post check not succesful: {rejected_keys_data}."
         )
+
+    def _log_dict_of_images_to_wandb(self, imagedict: {}, log_key: str, task_type: str = "segmentation"):
+        # This needs to handle the following cases:
+        # Segmentation      : {"input": (b,m,x,y(,z)), "target": (b,1,x,y(,z)), "output": (b,c,x,y(,z)), "file_path": [pathA, pathB, ...]}
+        # Self-supervised   : {"input": (b,m,x,y(,z)), "target": (b,m,x,y(,z)), "output": (b,m,x,y(,z)), "file_path": [pathA, pathB, ...]}
+        # Classification    : {"input": (b,m,x,y(,z)), "target": (b,1,x), "output": (b,c,x), "file_path": [pathA, pathB, ...]}
+
+        batch_idx = np.random.randint(0, imagedict["input"].shape[0])
+        channel_idx = np.random.randint(0, imagedict["input"].shape[1])
+
+        if len(imagedict["input"].shape) == 5:  # 3D images.
+            # We need to select a slice to visualize.
+            if task_type == "segmentation" and len(imagedict["target"][batch_idx, 0].nonzero()) > 0:
+                # Select a foreground slice if any exist.
+                foreground_locations = imagedict["target"][batch_idx, 0].nonzero()
+                slice_to_visualize = foreground_locations[0][np.random.randint(0, len(foreground_locations[0]))]
+            else:
+                slice_to_visualize = np.random.randint(0, imagedict["input"].shape[2])
+
+            imagedict["input"] = imagedict["input"][:, :, slice_to_visualize]
+            if len(imagedict["target"].shape) == 5:
+                imagedict["target"] = imagedict["target"][:, :, slice_to_visualize]
+            if len(imagedict["output"].shape) == 5:
+                imagedict["output"] = imagedict["output"][:, :, slice_to_visualize]
+
+        image = imagedict["input"][batch_idx, channel_idx]
+        case = os.path.splitext(os.path.split(imagedict["file_path"][batch_idx])[-1])[0]
+
+        if task_type in ["segmentation", "classification"]:
+            target = imagedict["target"][batch_idx, 0]
+            output = imagedict["output"][batch_idx].argmax(0)
+        elif task_type == "self-supervised":
+            target = imagedict["target"][batch_idx, channel_idx]
+            output = imagedict["output"][batch_idx, channel_idx]
+        else:
+            logging.warn(
+                f"Unknown task type. Found {task_type} and expected one in ['classification', 'segmentation', 'self-supervised']"
+            )
+
+        if len(target.shape) == 1:
+            fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(5, 5), dpi=100, constrained_layout=True)
+            axes[0].imshow(image, cmap="gray", vmin=np.quantile(image, 0.01), vmax=np.quantile(image, 0.99))
+            axes[0].set_title("input")
+            fig.suptitle(f"{case}. Target: {target} | Output: {output}", fontsize=16)
+        else:
+            fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(15, 5), dpi=100, constrained_layout=True)
+            axes[0].imshow(image, cmap="gray", vmin=np.quantile(image, 0.01), vmax=np.quantile(image, 0.99))
+            axes[0].set_title("input")
+            axes[1].imshow(target, cmap="gray")
+            axes[1].set_title("target")
+            axes[2].imshow(output, cmap="gray")
+            axes[2].set_title("output")
+            fig.suptitle(case, fontsize=16)
+
+            wandb.log({log_key: wandb.Image(fig)}, commit=False)
+            plt.close(fig)

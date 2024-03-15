@@ -126,7 +126,7 @@ def get_loggers(
                 group=experiment,
                 log_model=log_model,
                 version=ckpt_wandb_id if use_ckpt_id else None,
-                resume="must" if use_ckpt_id else None,
+                resume="allow" if use_ckpt_id else None,
                 entity=wandb_entity,
             )
         )

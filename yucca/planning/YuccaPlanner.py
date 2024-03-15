@@ -73,8 +73,7 @@ class YuccaPlanner(object):
         self.determine_transpose()
         self.determine_target_size_from_fixed_size_or_spacing()
         self.validate_target_size()
-        self.drop_keys_from_dict(dict=self.dataset_properties, keys=["original_sizes", "original_spacings"])
-
+        self.drop_keys_from_dict(dict=self.dataset_properties, keys=[])
         self.populate_plans_file()
 
         save_json(self.plans, self.plans_path, sort_keys=False)

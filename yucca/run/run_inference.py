@@ -99,13 +99,13 @@ def main():
         action="store_true",
         required=False,
     )
-    # parser.add_argument(
-    #    "--overwrite",
-    #    default=False,
-    #    action="store_true",
-    #    required=False,
-    #    help="Overwrite existing predictions",
-    # )
+    parser.add_argument(
+        "--overwrite",
+        default=False,
+        action="store_true",
+        required=False,
+        help="Overwrite existing predictions",
+    )
     parser.add_argument(
         "--predict_train",
         default=False,
@@ -149,7 +149,7 @@ def main():
     experiment = args.experiment
     disable_tta = args.disable_tta
     no_eval = args.no_eval
-    # overwrite = args.overwrite
+    overwrite = args.overwrite
     predict_train = args.predict_train
     profile = args.profile
     save_softmax = args.save_softmax
@@ -231,7 +231,8 @@ def main():
     manager.predict_folder(
         inpath,
         disable_tta,
-        outpath,
+        overwrite_predictions=overwrite,
+        output_folder=outpath,
         save_softmax=save_softmax,
         # overwrite=overwrite, # Commented out until overwrite arg is added in manager.
     )
@@ -241,6 +242,7 @@ def main():
             manager.model_module.num_classes,
             folder_with_predictions=outpath,
             folder_with_ground_truth=ground_truth,
+            overwrite=overwrite,
             task_type=task_type,
             use_wandb=use_wandb,
         )

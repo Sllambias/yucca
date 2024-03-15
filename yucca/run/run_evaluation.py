@@ -67,6 +67,13 @@ def main():
         required=False,
     )
     parser.add_argument("--obj_eval", help="enable object evaluation", action="store_true", default=None, required=False)
+    parser.add_argument(
+        "--overwrite",
+        default=False,
+        action="store_true",
+        required=False,
+        help="Overwrite existing predictions",
+    )
     parser.add_argument("--split_idx", type=int, help="idx of splits to use for training.", default=0)
     parser.add_argument(
         "--split_data_method", help="Specify splitting method. Either kfold, simple_train_val_split", default="kfold"
@@ -76,6 +83,8 @@ def main():
         help="Specify the parameter for the selected split method. For KFold use an int, for simple_split use a float between 0.0-1.0.",
         default=5,
     )
+    parser.add_argument("--surface_eval", help="enable surface evaluation", action="store_true", default=None, required=False)
+
     parser.add_argument(
         "--version", "-v", help="version number of the model. Defaults to 0.", default=0, type=int, required=False
     )
@@ -89,6 +98,7 @@ def main():
     plan_id = args.pl
     checkpoint = args.chk
     obj = args.obj_eval
+    overwrite = args.overwrite
     as_binary = args.as_binary
     classes = args.c
     predpath = args.pred
@@ -99,6 +109,7 @@ def main():
     split_idx = args.split_idx
     split_data_method = args.split_data_method
     split_data_param = args.split_data_param
+    surface_eval = args.surface_eval
     assert (predpath and gtpath) or source_task, "Either supply BOTH paths or the source task"
 
     if not predpath:
@@ -123,6 +134,8 @@ def main():
         folder_with_predictions=predpath,
         folder_with_ground_truth=gtpath,
         do_object_eval=obj,
+        do_surface_eval=surface_eval,
+        overwrite=overwrite,
         as_binary=as_binary,
         task_type=task_type,
         use_wandb=use_wandb,

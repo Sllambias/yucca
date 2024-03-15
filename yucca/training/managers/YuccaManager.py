@@ -1,6 +1,7 @@
 import lightning as L
 import torch
 import wandb
+import logging
 from typing import Literal, Union, Optional
 from yucca.training.augmentation.YuccaAugmentationComposer import YuccaAugmentationComposer
 from yucca.training.configuration.split_data import get_split_config, SplitConfig
@@ -15,6 +16,8 @@ from yucca.training.data_loading.YuccaDataModule import YuccaDataModule
 from yucca.training.data_loading.samplers import InfiniteRandomSampler
 from yucca.training.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from yucca.paths import yucca_results
+from yucca.utils.torch_utils import measure_FLOPs
+from fvcore.nn import flop_count_table
 
 
 class YuccaManager:
@@ -118,6 +121,7 @@ class YuccaManager:
         self,
         stage: Literal["fit", "test", "predict"],
         disable_tta: bool = False,
+        overwrite_predictions: bool = False,
         pred_data_dir: str = None,
         save_softmax: bool = False,
         prediction_output_dir: str = "./",
@@ -202,7 +206,8 @@ class YuccaManager:
             | splits_config.lm_hparams()
             | plan_config.lm_hparams()
             | input_dims_config.lm_hparams()
-            | callback_config.lm_hparams(),
+            | callback_config.lm_hparams()
+            | augmenter.lm_hparams(),
             deep_supervision=self.deep_supervision,
             learning_rate=self.learning_rate,
             loss_fn=self.loss,
@@ -214,21 +219,21 @@ class YuccaManager:
         self.data_module = YuccaDataModule(
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
-            input_dims_config=input_dims_config,
-            num_workers=self.num_workers,
             image_extension=plan_config.image_extension,
-            task_type=plan_config.task_type,
+            input_dims_config=input_dims_config,
+            overwrite_predictions=overwrite_predictions,
+            num_workers=self.num_workers,
             pred_data_dir=pred_data_dir,
+            pred_save_dir=prediction_output_dir,
             pre_aug_patch_size=augmenter.pre_aug_patch_size,
             splits_config=splits_config,
             split_idx=task_config.split_idx,
+            task_type=plan_config.task_type,
             train_data_dir=path_config.train_data_dir,
         )
 
-        if (
-            not issubclass(self.data_module.train_sampler, InfiniteRandomSampler) and self.train_batches_per_step is not None
-        ) or (not issubclass(self.data_module.val_sampler, InfiniteRandomSampler) and self.val_batches_per_step is not None):
-            print("Warning: you are limiting the amount of batches pr. step, but not sampling using InfiniteRandomSampler.")
+        self.verify_modules_are_valid()
+        self.visualize_model_with_FLOPs(self.model_module, input_dims_config)
 
         self.trainer = L.Trainer(
             callbacks=callback_config.callbacks,
@@ -268,6 +273,7 @@ class YuccaManager:
         self,
         input_folder,
         disable_tta: bool = False,
+        overwrite_predictions: bool = False,
         output_folder: str = yucca_results,
         save_softmax=False,
     ):
@@ -275,6 +281,7 @@ class YuccaManager:
         self.initialize(
             stage="predict",
             disable_tta=disable_tta,
+            overwrite_predictions=overwrite_predictions,
             pred_data_dir=input_folder,
             prediction_output_dir=output_folder,
             save_softmax=save_softmax,
@@ -290,6 +297,30 @@ class YuccaManager:
 
     def finish(self):
         wandb.finish()
+
+    def verify_modules_are_valid(self):
+        # Method to expand for additional verifications
+        self.verify_samplers_are_valid()
+
+    def verify_samplers_are_valid(self):
+        if (
+            not issubclass(self.data_module.train_sampler, InfiniteRandomSampler) and self.train_batches_per_step is not None
+        ) or (not issubclass(self.data_module.val_sampler, InfiniteRandomSampler) and self.val_batches_per_step is not None):
+            logging.info(
+                "Warning: you are limiting the amount of batches pr. step, but not sampling using InfiniteRandomSampler."
+            )
+
+    def visualize_model_with_FLOPs(self, lightning_module, input_dims_config):
+        flops = self.get_flops(
+            lightning_module, input_dims_config.batch_size, input_dims_config.num_modalities, input_dims_config.patch_size
+        )
+        logging.info("\n" + flop_count_table(flops))
+
+    @staticmethod
+    def get_flops(lightning_module, batch_size, modalities, patch_size):
+        data = torch.randn((batch_size, modalities, *patch_size))
+        flops = measure_FLOPs(lightning_module.model, data)
+        return flops
 
 
 if __name__ == "__main__":
