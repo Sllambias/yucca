@@ -199,7 +199,7 @@ class YuccaLightningModule(L.LightningModule):
         inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
         output = self(inputs)
         loss = self.loss_fn_val(output, target)
-        metrics = self.compute_metrics(val_metrics, output, target)
+        metrics = self.compute_metrics(self.val_metrics, output, target)
         self.log_dict(
             {"val/loss": loss} | metrics,
             on_step=self.step_logging,
