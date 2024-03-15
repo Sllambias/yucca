@@ -115,8 +115,7 @@ class YuccaPreprocessor(object):
             f"{'Number of threads:':25.25} {self.threads}"
         )
         p = Pool(self.threads)
-
-        p.map(self.preprocess_train_subject, self.subject_ids)
+        p.map_async(self.preprocess_train_subject, self.subject_ids)
         p.close()
         p.join()
 
@@ -183,7 +182,10 @@ class YuccaPreprocessor(object):
         end_time = time.time()
         logging.info(
             f"Preprocessed case: {subject_id} \n"
-            f"size before: {image_props['original_size']} size after: {image_props['new_size']} \n"
+            f"size before: {image_props['original_size']} \n"
+            f"cropping enabled: {self.plans['crop_to_nonzero']} \n"
+            f"size after crop: {image_props['size_before_transpose']} \n"
+            f"size final: {image_props['new_size']} \n"
             f"spacing before: {image_props['original_spacing']} spacing after: {image_props['new_spacing']} \n"
             f"Saving {subject_id} in {arraypath} \n"
             f"Time elapsed: {round(end_time-start_time, 4)} \n"
@@ -206,7 +208,7 @@ class YuccaPreprocessor(object):
             # Check if impath is a modality of subject_id (subject_id + _XXX + .) where XXX are three digits
             if re.search(escaped_subject_id + "_" + r"\d{3}" + ".", os.path.split(impath)[-1])
         ]
-
+        assert len(imagepaths) > 0, "found no images"
         image_props["image files"] = imagepaths
         images = [read_file_to_nifti_or_np(image) for image in imagepaths]
         if label_exists:
@@ -216,7 +218,7 @@ class YuccaPreprocessor(object):
                 for labelpath in subfiles(join(self.input_dir, "labelsTr"))
                 if os.path.split(labelpath)[-1].startswith(subject_id + ".")
             ]
-            assert len(label) < 2, f"unexpected number of labels found. Expected 1 or 0 and found {len(label)}"
+            assert len(label) == 1, f"unexpected number of labels found. Expected 1 and found {len(label)}"
             image_props["label file"] = label[0]
             label = read_file_to_nifti_or_np(label[0], dtype=np.uint8)
         else:
@@ -229,7 +231,7 @@ class YuccaPreprocessor(object):
                 self.run_sanity_checks(images, None, subject_id, imagepaths)
 
         images, label, image_props["nifti_metadata"] = self.apply_nifti_preprocessing_and_return_numpy(
-            images, np.array(images[0].shape), label
+            images, np.array(images[0].shape), label, include_header=False
         )
 
         original_size = images[0].shape
@@ -248,13 +250,15 @@ class YuccaPreprocessor(object):
         else:
             image_props["crop_to_nonzero"] = self.plans["crop_to_nonzero"]
 
+        image_props["size_before_transpose"] = list(images[0].shape)
         if label_exists and preprocess_label:
             images, label = self.transpose_case(images, self.transpose_forward, label)
         else:
             images = self.transpose_case(images, self.transpose_forward, None)
-        resample_target_size, final_target_size = self.determine_target_size(
+        image_props["size_after_transpose"] = list(images[0].shape)
+        resample_target_size, final_target_size, new_spacing = self.determine_target_size(
             images_transposed=images,
-            original_spacing=image_props["nifti_metadata"]["original_spacing"],
+            original_spacing=np.array(image_props["nifti_metadata"]["original_spacing"]),
             transpose_forward=self.transpose_forward,
         )
 
@@ -293,7 +297,7 @@ class YuccaPreprocessor(object):
         image_props["original_spacing"] = image_props["nifti_metadata"]["original_spacing"]
         image_props["original_size"] = original_size
         image_props["original_orientation"] = image_props["nifti_metadata"]["original_orientation"]
-        image_props["new_spacing"] = self.target_spacing
+        image_props["new_spacing"] = new_spacing
         image_props["new_direction"] = image_props["nifti_metadata"]["final_direction"]
 
         return images, label, image_props
@@ -333,7 +337,7 @@ class YuccaPreprocessor(object):
         ], "images must be either 2D or 3D for preprocessing"
 
         images, _, image_properties["nifti_metadata"] = self.apply_nifti_preprocessing_and_return_numpy(
-            images, image_properties["original_shape"], label=None
+            images, image_properties["original_shape"], label=None, include_header=True
         )
 
         image_properties["uncropped_shape"] = np.array(images[0].shape)
@@ -348,9 +352,9 @@ class YuccaPreprocessor(object):
 
         images = self.transpose_case(images, self.transpose_forward, None)
 
-        resample_target_size, _ = self.determine_target_size(
+        resample_target_size, _, _ = self.determine_target_size(
             images_transposed=images,
-            original_spacing=image_properties["nifti_metadata"]["original_spacing"],
+            original_spacing=np.array(image_properties["nifti_metadata"]["original_spacing"]),
             transpose_forward=self.transpose_forward,
         )
 
@@ -422,6 +426,8 @@ class YuccaPreprocessor(object):
             [0, 1] + [i + 2 for i in self.transpose_backward]
         )
 
+        # Now move the tensor to the CPU
+        images = images.cpu()
         assert np.all(images.shape[2:] == image_properties["cropped_shape"]), (
             f"Reversing cropping: "
             f"image should be of shape: {image_properties['cropped_shape']}"
@@ -492,7 +498,7 @@ class YuccaPreprocessor(object):
         # we get some (no need to get all) locations of foreground, that we will later use in the
         # oversampling of foreground classes
         # And we also potentially analyze the connected components of the label
-        foreground_locs = np.array(np.nonzero(label)).T[::10]
+        foreground_locs = np.array(np.nonzero(label)).T[::10].tolist()
         if not self.enable_cc_analysis:
             label_cc_n = 0
             label_cc_sizes = 0
@@ -511,12 +517,13 @@ class YuccaPreprocessor(object):
         images,
         original_size,
         label=None,
+        include_header=False,
     ):
         # If qform and sform are both missing the header is corrupt and we do not trust the
         # direction from the affine
         # Make sure you know what you're doing
         metadata = {
-            "original_spacing": np.array([1.0] * len(original_size)),
+            "original_spacing": np.array([1.0] * len(original_size)).tolist(),
             "original_orientation": None,
             "final_direction": None,
             "header": None,
@@ -538,8 +545,9 @@ class YuccaPreprocessor(object):
                 ]
                 if label is not None and isinstance(label, nib.Nifti1Image):
                     label = reorient_nib_image(label, metadata["original_orientation"], metadata["final_direction"])
-            metadata["header"] = images[0].header
-            metadata["original_spacing"] = get_nib_spacing(images[0])
+            if include_header:
+                metadata["header"] = images[0].header
+            metadata["original_spacing"] = get_nib_spacing(images[0]).tolist()
             metadata["affine"] = images[0].affine
 
         images = [nifti_or_np_to_np(image) for image in images]
@@ -560,12 +568,17 @@ class YuccaPreprocessor(object):
         # Additionally we make sure each dimension is divisible by 16 to avoid issues with standard pooling/stride settings
         if self.target_size is not None:
             if self.plans["keep_aspect_ratio_when_using_target_size"] is True:
-                resample_target_size = np.array(image_shape_t * np.min(self.target_size / image_shape_t))
+                resample_target_size = np.array(image_shape_t * np.min(self.target_size / image_shape_t)).astype(int)
                 final_target_size = self.target_size
                 final_target_size = [math.ceil(i / 16) * 16 for i in final_target_size]
             else:
                 resample_target_size = self.target_size
                 resample_target_size = [math.ceil(i / 16) * 16 for i in resample_target_size]
+            original_spacing_t = original_spacing[transpose_forward]
+            new_spacing = (
+                (np.array(resample_target_size).astype(float) / image_shape_t.astype(float))
+                * np.array(original_spacing_t).astype(float)
+            ).tolist()
 
         # Otherwise we need to calculate a new target shape, and we need to factor in that
         # the images will first be transposed and THEN resampled.
@@ -575,10 +588,10 @@ class YuccaPreprocessor(object):
             original_spacing_t = original_spacing[transpose_forward]
             target_spacing_t = target_spacing[transpose_forward]
             resample_target_size = np.round((original_spacing_t / target_spacing_t).astype(float) * image_shape_t).astype(int)
-            self.target_spacing = target_spacing_t.tolist()
+            new_spacing = target_spacing_t.tolist()
         else:
             resample_target_size = image_shape_t
-        return resample_target_size, final_target_size
+        return resample_target_size, final_target_size, new_spacing
 
     def resample_and_normalize_case(
         self,
