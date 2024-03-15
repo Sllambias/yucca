@@ -47,6 +47,7 @@ class YuccaAugmentationComposer:
         self.random_crop = False
         self.mask_image_for_reconstruction = False
         self.patch_size = patch_size
+        self.cval = "min"  # can be an int, float or a str in ['min', 'max']
 
         # label/segmentation transforms
         self.skip_label = False
@@ -75,7 +76,6 @@ class YuccaAugmentationComposer:
         self.gibbs_ringing_cutfreq = (96, 129)
         self.gibbs_ringing_axes = (0, 2) if is_2d else (0, 3)
 
-        self.mask_value = "min"  # can be an int, float or a str in ['min', 'max']
         self.mask_ratio = 0.5
 
         self.mirror_p_per_sample = 0.0
@@ -133,6 +133,7 @@ class YuccaAugmentationComposer:
                     patch_size=self.patch_size,
                     crop=True,
                     random_crop=self.random_crop,
+                    cval=self.cval,
                     p_deform_per_sample=self.elastic_deform_p_per_sample,
                     deform_sigma=self.elastic_deform_sigma,
                     deform_alpha=self.elastic_deform_alpha,
@@ -191,7 +192,7 @@ class YuccaAugmentationComposer:
                 ),
                 DownsampleSegForDS(deep_supervision=self.deep_supervision),
                 CopyImageToSeg(copy=self.copy_image_to_label),
-                Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.mask_value, ratio=self.mask_ratio),
+                Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.cval, ratio=self.mask_ratio),
                 RemoveBatchDimension(),
             ]
         )
@@ -202,7 +203,7 @@ class YuccaAugmentationComposer:
             [
                 AddBatchDimension(),
                 CopyImageToSeg(copy=self.copy_image_to_label),
-                Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.mask_value, ratio=self.mask_ratio),
+                Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.cval, ratio=self.mask_ratio),
                 RemoveBatchDimension(),
             ]
         )
