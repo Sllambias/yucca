@@ -9,7 +9,7 @@ import os
 import matplotlib.pyplot as plt
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
-from torchmetrics.classification import Dice, Accuracy, AUROC
+from torchmetrics.classification import Dice, Accuracy, AUROC, MulticlassF1Score
 from torchmetrics.regression import MeanAbsoluteError
 from yucca.training.loss_and_optim.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.utils.files_and_folders import recursive_find_python_class
@@ -89,10 +89,20 @@ class YuccaLightningModule(L.LightningModule):
 
         if self.task_type == "segmentation":
             self.train_metrics = MetricCollection(
-                {"train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
+                {"train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)},
+                {
+                    "train/F1": MulticlassF1Score(
+                        num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None
+                    )
+                },
             )
             self.val_metrics = MetricCollection(
-                {"val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)}
+                {"val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None)},
+                {
+                    "val/F1": MulticlassF1Score(
+                        num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None
+                    )
+                },
             )
             _default_loss = "DiceCE"
 
