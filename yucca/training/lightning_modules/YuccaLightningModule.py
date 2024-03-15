@@ -101,15 +101,9 @@ class YuccaLightningModule(L.LightningModule):
             self.val_metrics = MetricCollection(
                 {
                     "val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
+                    "val/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
                 },
             )
-            # self.val_class_metrics = MetricCollection(
-            #    {
-            #        "val/F1": MulticlassF1Score(
-            #            num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None
-            #        )
-            #    }
-            # )
             _default_loss = "DiceCE"
 
         if self.task_type == "self-supervised":
@@ -205,7 +199,7 @@ class YuccaLightningModule(L.LightningModule):
         inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
         output = self(inputs)
         loss = self.loss_fn_val(output, target)
-        metrics = self.val_metrics(output, target)
+        metrics = self.compute_metrics(val_metrics, output, target)
         self.log_dict(
             {"val/loss": loss} | metrics,
             on_step=self.step_logging,
