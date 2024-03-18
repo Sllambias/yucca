@@ -37,26 +37,35 @@ class CropPad(YuccaTransform):
 
     def __croppad__(
         self,
-        image: np.ndarray,
-        label: np.ndarray,
+        data_dict: np.ndarray,
         image_properties: dict,
         input_shape: np.ndarray,
         target_image_shape: list | tuple,
         target_label_shape: list | tuple,
         **pad_kwargs,
     ):
+        image = data_dict[self.data_key]
+        if data_dict.get(self.label_key) is not None:
+            label = data_dict[self.label_key]
+        else:
+            label = None
+
         if len(self.patch_size) == 3:
-            return self.generate_3D_case_from_3D(
+            image, label = self.generate_3D_case_from_3D(
                 image, image_properties, label, target_image_shape, target_label_shape, **pad_kwargs
             )
         elif len(self.patch_size) == 2 and len(input_shape) == 4:
-            return self.generate_2D_case_from_3D(
+            image, label = self.generate_2D_case_from_3D(
                 image, image_properties, label, target_image_shape, target_label_shape, **pad_kwargs
             )
         elif len(self.patch_size) == 2 and len(input_shape) == 3:
-            return self.generate_2D_case_from_2D(
+            image, label = self.generate_2D_case_from_2D(
                 image, image_properties, label, target_image_shape, target_label_shape, **pad_kwargs
             )
+        if label is not None:
+            return {self.data_key: image, self.label_key: label}
+        else:
+            return {self.data_key: image}
 
     def generate_3D_case_from_3D(self, image, image_properties, label, target_image_shape, target_label_shape, **pad_kwargs):
         image_out = np.zeros(target_image_shape)
@@ -290,11 +299,10 @@ class CropPad(YuccaTransform):
             data=data_dict[self.data_key], pad_value=self.pad_value, target_shape=self.patch_size
         )
 
-        data_dict[self.data_key], data_dict[self.label_key] = self.__croppad__(
-            image=data_dict[self.data_key],
+        data_dict = self.__croppad__(
+            data_dict=data_dict,
             image_properties=image_properties,
             input_shape=input_shape,
-            label=data_dict[self.label_key],
             target_image_shape=target_image_shape,
             target_label_shape=target_label_shape,
             **pad_kwargs,
