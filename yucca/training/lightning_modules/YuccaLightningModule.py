@@ -347,8 +347,8 @@ class YuccaLightningModule(L.LightningModule):
                 if param_name not in rejected_keys_new and param_name not in rejected_keys_shape:
                     rejected_keys_data.append(param_name)
 
-        print(f"Succesfully transferred weights for {successful}/{successful+unsuccessful} layers")
-        print(
+        logging.warn(f"Succesfully transferred weights for {successful}/{successful+unsuccessful} layers")
+        logging.warn(
             f"Rejected the following keys:\n"
             f"Not in old dict: {rejected_keys_new}.\n"
             f"Wrong shape: {rejected_keys_shape}.\n"
