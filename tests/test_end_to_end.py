@@ -123,3 +123,23 @@ def test_inference():
         ],
         check=True,
     )
+
+
+def test_inference_with_surface_dice():
+    # First: a very basic short training
+    subprocess.run(
+        [
+            "yucca_inference",
+            "-s",
+            "Task000_TEST_SEGMENTATION",
+            "-t",
+            "Task000_TEST_SEGMENTATION",
+            "-d",
+            "3D",
+            "-m",
+            "TinyUNet",
+            "--no_wandb",
+            "--surface_eval",
+        ],
+        check=True,
+    )
