@@ -1,6 +1,6 @@
 import numpy as np
 from yucca.utils.nib_utils import get_nib_spacing
-from surface_distance import metrics
+from yucca.evaluation.deepmind_surface_distance import metrics
 
 
 def get_surface_metrics_for_label(gt, pred, label, as_binary: bool = False):
