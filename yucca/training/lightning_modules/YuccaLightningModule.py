@@ -347,14 +347,14 @@ class YuccaLightningModule(L.LightningModule):
                 if param_name not in rejected_keys_new and param_name not in rejected_keys_shape:
                     rejected_keys_data.append(param_name)
 
-        logging.info(f"Succesfully transferred weights for {successful}/{successful+unsuccessful} layers")
-        logging.info(
+        print(f"Succesfully transferred weights for {successful}/{successful+unsuccessful} layers")
+        print(
             f"Rejected the following keys:\n"
             f"Not in old dict: {rejected_keys_new}.\n"
             f"Wrong shape: {rejected_keys_shape}.\n"
             f"Post check not succesful: {rejected_keys_data}."
         )
-        
+
         return successful
 
     def _log_dict_of_images_to_wandb(self, imagedict: {}, log_key: str, task_type: str = "segmentation"):
@@ -412,4 +412,3 @@ class YuccaLightningModule(L.LightningModule):
 
             wandb.log({log_key: wandb.Image(fig)}, commit=False)
             plt.close(fig)
-
