@@ -46,17 +46,18 @@ class NumpyToTorch(YuccaTransform):
             self.label_dtype = None  # Then we let Torch infer.
 
     def __convert__(self, datadict):
-        data = torch.tensor(datadict[self.data_key], dtype=torch.float32)
+        datadict[self.data_key] = torch.tensor(datadict[self.data_key], dtype=torch.float32)
+
         label = datadict.get(self.label_key)
 
-        if label is None:
-            return {self.data_key: data}
+        if label is not None:
+            if isinstance(label, list):
+                label = [torch.tensor(i, dtype=self.label_dtype) for i in label]
+            else:
+                label = torch.tensor(label, dtype=self.label_dtype)
+            datadict[self.label_key] = label
 
-        if isinstance(label, list):
-            label = [torch.tensor(i, dtype=self.label_dtype) for i in label]
-        else:
-            label = torch.tensor(label, dtype=self.label_dtype)
-        return {self.data_key: data, self.label_key: label}
+        return datadict
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
@@ -79,21 +80,20 @@ class AddBatchDimension(YuccaTransform):
     def get_params():
         pass
 
-    def __unsqueeze__(self, data, label):
-        data = data[np.newaxis]
-        if label is None:
-            return data, label
-        if isinstance(label, list):
-            label = [s[np.newaxis] for s in label]
-        else:
-            label = label[np.newaxis]
-        return data, label
+    def __unsqueeze__(self, data_dict):
+        data_dict[self.data_key] = data_dict[self.data_key][np.newaxis]
+        label = data_dict.get(self.label_key)
+        if label is not None:
+            if isinstance(label, list):
+                label = [s[np.newaxis] for s in label]
+            else:
+                label = label[np.newaxis]
+            data_dict[self.label_key] = label
+        return data_dict
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
-        data_dict[self.data_key], data_dict[self.label_key] = self.__unsqueeze__(
-            data_dict[self.data_key], data_dict[self.label_key]
-        )
+        data_dict = self.__unsqueeze__(data_dict)
         return data_dict
 
 
@@ -106,17 +106,18 @@ class RemoveBatchDimension(YuccaTransform):
     def get_params():
         pass
 
-    def __squeeze__(self, data, label):
-        data = data[0]
-        if isinstance(label, list):
-            label = [s[0] for s in label]
-        else:
-            label = label[0]
-        return data, label
+    def __squeeze__(self, data_dict):
+        data_dict[self.data_key] = data_dict[self.data_key][0]
+        label = data_dict.get(self.label_key)
+        if label is not None:
+            if isinstance(label, list):
+                label = [s[0] for s in label]
+            else:
+                label = label[0]
+            data_dict[self.label_key] = label
+        return data_dict
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
-        data_dict[self.data_key], data_dict[self.label_key] = self.__squeeze__(
-            data_dict[self.data_key], data_dict[self.label_key]
-        )
+        data_dict = self.__squeeze__(data_dict)
         return data_dict

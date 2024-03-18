@@ -62,10 +62,10 @@ class CropPad(YuccaTransform):
             image, label = self.generate_2D_case_from_2D(
                 image, image_properties, label, target_image_shape, target_label_shape, **pad_kwargs
             )
+        data_dict[self.data_key] = image
         if label is not None:
-            return {self.data_key: image, self.label_key: label}
-        else:
-            return {self.data_key: image}
+            data_dict[self.label_key] = label
+        return data_dict
 
     def generate_3D_case_from_3D(self, image, image_properties, label, target_image_shape, target_label_shape, **pad_kwargs):
         image_out = np.zeros(target_image_shape)

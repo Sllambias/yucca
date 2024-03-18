@@ -87,8 +87,7 @@ class Spatial(YuccaTransform):
 
     def __CropDeformRotateScale__(
         self,
-        imageVolume,
-        labelVolume,
+        data_dict,
         patch_size,
         alpha,
         sigma,
@@ -98,16 +97,17 @@ class Spatial(YuccaTransform):
         scale_factor,
         skip_label,
     ):
+        image = data_dict[self.data_key]
         if not self.do_crop:
-            patch_size = imageVolume.shape[2:]
+            patch_size = image.shape[2:]
         if self.cval == "min":
-            cval = float(imageVolume.min())
+            cval = float(image.min())
         else:
             cval = self.cval
         assert isinstance(cval, (int, float)), f"got {cval} of type {type(cval)}"
 
         coords = create_zero_centered_coordinate_matrix(patch_size)
-        imageCanvas = np.zeros((imageVolume.shape[0], imageVolume.shape[1], *patch_size), dtype=np.float32)
+        imageCanvas = np.zeros((image.shape[0], image.shape[1], *patch_size), dtype=np.float32)
 
         # First we apply deformation to the coordinate matrix
         if np.random.uniform() < self.p_deform_per_sample:
@@ -139,40 +139,42 @@ class Spatial(YuccaTransform):
                 crop_center_idx = [
                     np.random.randint(
                         int(patch_size[d] / 2),
-                        imageVolume.shape[d + 2] - int(patch_size[d] / 2) + 1,
+                        image.shape[d + 2] - int(patch_size[d] / 2) + 1,
                     )
                 ]
                 coords[d] += crop_center_idx
         else:
             # Reversing the zero-centering of the coordinates
             for d in range(len(patch_size)):
-                coords[d] += imageVolume.shape[d + 2] / 2.0 - 0.5
+                coords[d] += image.shape[d + 2] / 2.0 - 0.5
 
         # Mapping the images to the distorted coordinates
-        for b in range(imageVolume.shape[0]):
-            for c in range(imageVolume.shape[1]):
+        for b in range(image.shape[0]):
+            for c in range(image.shape[1]):
                 imageCanvas[b, c] = map_coordinates(
-                    imageVolume[b, c].astype(float),
+                    image[b, c].astype(float),
                     coords,
                     order=3,
                     mode="constant",
                     cval=cval,
-                ).astype(imageVolume.dtype)
+                ).astype(image.dtype)
 
-        if not skip_label:
+        data_dict[self.data_key] = imageCanvas
+        if data_dict.get(self.label_key) is not None and not skip_label:
+            label = data_dict.get(self.label_key)
             labelCanvas = np.zeros(
-                (labelVolume.shape[0], labelVolume.shape[1], *patch_size),
+                (label.shape[0], label.shape[1], *patch_size),
                 dtype=np.float32,
             )
 
             # Mapping the labelmentations to the distorted coordinates
-            for b in range(labelVolume.shape[0]):
-                for c in range(labelVolume.shape[1]):
-                    labelCanvas[b, c] = map_coordinates(labelVolume[b, c], coords, order=0, mode="constant", cval=0.0).astype(
-                        labelVolume.dtype
+            for b in range(label.shape[0]):
+                for c in range(label.shape[1]):
+                    labelCanvas[b, c] = map_coordinates(label[b, c], coords, order=0, mode="constant", cval=0.0).astype(
+                        label.dtype
                     )
-            return imageCanvas, labelCanvas
-        return imageCanvas, labelVolume
+            data_dict[self.label_key] = labelCanvas
+        return data_dict
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
@@ -197,12 +199,8 @@ class Spatial(YuccaTransform):
             scale_factor=self.scale_factor,
         )
 
-        (
-            data_dict[self.data_key],
-            data_dict[self.label_key],
-        ) = self.__CropDeformRotateScale__(
-            data_dict[self.data_key],
-            data_dict[self.label_key],
+        data_dict = self.__CropDeformRotateScale__(
+            data_dict,
             self.patch_size,
             deform_alpha,
             deform_sigma,
