@@ -300,3 +300,5 @@ class YuccaLightningModule(L.LightningModule):
             f"Wrong shape: {rejected_keys_shape}.\n"
             f"Post check not succesful: {rejected_keys_data}."
         )
+
+        return successful
