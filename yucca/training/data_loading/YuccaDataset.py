@@ -99,7 +99,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         elif self.task_type == "segmentation":
             data_dict.update({"image": data[:-1], "label": data[-1:]})
         elif self.task_type == "self-supervised":
-            data_dict.update({"image": data, "label": None})
+            data_dict.update({"image": data})
         elif self.task_type == "contrastive":
             view1 = self._transform({"image": data, "label": None}, case)["image"]
             view2 = self._transform({"image": data, "label": None}, case)["image"]
@@ -112,8 +112,8 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
     def _transform(self, data_dict, case):
         metadata = self.load_and_maybe_keep_pickle(case[: -len(".npy")] + ".pkl")
         data_dict = self.croppad(data_dict, metadata)
-        if self.composed_transforms is not None:
-            data_dict = self.composed_transforms(data_dict)
+        #if self.composed_transforms is not None:
+        #    data_dict = self.composed_transforms(data_dict)
         return self.to_torch(data_dict)
 
 

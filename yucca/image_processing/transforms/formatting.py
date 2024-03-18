@@ -50,13 +50,13 @@ class NumpyToTorch(YuccaTransform):
         label = datadict.get(self.label_key)
 
         if label is None:
-            return data, label
+            return {self.data_key: data}
 
         if isinstance(label, list):
             label = [torch.tensor(i, dtype=self.label_dtype) for i in label]
         else:
             label = torch.tensor(label, dtype=self.label_dtype)
-        return data, label
+        return {self.data_key: data, self.label_key: label}
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
@@ -66,7 +66,7 @@ class NumpyToTorch(YuccaTransform):
         ), f"Incorrect data size or shape.\
             \nShould be (B, C, X, Y, Z) or (B, C, X, Y) or (C, X, Y, Z) or (C, X, Y) and is: {data_len}"
         self.get_params(data_dict.get(self.label_key))
-        data_dict[self.data_key], data_dict[self.label_key] = self.__convert__(data_dict)
+        data_dict = self.__convert__(data_dict)
         return data_dict
 
 
