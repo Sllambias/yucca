@@ -107,7 +107,6 @@ def test_finetune():
 
 
 def test_inference():
-    # First: a very basic short training
     subprocess.run(
         [
             "yucca_inference",
@@ -120,6 +119,42 @@ def test_inference():
             "-m",
             "TinyUNet",
             "--no_wandb",
+        ],
+        check=True,
+    )
+
+
+def test_evaluation():
+    subprocess.run(
+        [
+            "yucca_evaluation",
+            "-s",
+            "Task000_TEST_SEGMENTATION",
+            "-t",
+            "Task000_TEST_SEGMENTATION",
+            "-d",
+            "3D",
+            "-m",
+            "TinyUNet",
+            "--no_wandb",
+            "--surface_eval",
+        ],
+        check=True,
+    )
+
+    subprocess.run(
+        [
+            "yucca_evaluation",
+            "-s",
+            "Task000_TEST_SEGMENTATION",
+            "-t",
+            "Task000_TEST_SEGMENTATION",
+            "-d",
+            "3D",
+            "-m",
+            "TinyUNet",
+            "--no_wandb",
+            "--obj_eval",
         ],
         check=True,
     )
