@@ -16,6 +16,8 @@ class GibbsRinging(YuccaTransform):
         return cutFreq, axis
 
     def __gibbsRinging__(self, imageVolume, numSample, axis):
+        m = min(0, imageVolume.min())
+        imageVolume += abs(m)
         if len(imageVolume.shape) == 3:
             assert axis in [0, 1, 2], "Incorrect or no axis"
 
@@ -54,6 +56,7 @@ class GibbsRinging(YuccaTransform):
                 imageVolume[:, int(np.ceil(h / 2) + np.ceil(numSample / 2)) : h] = 0
                 imageVolume = abs(np.fft.ifftn(np.fft.ifftshift(imageVolume), s=[w, h]))
                 imageVolume = imageVolume.conj().T
+        imageVolume -= m
         return imageVolume
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):

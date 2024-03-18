@@ -23,6 +23,7 @@ class Spatial(YuccaTransform):
         data_key="image",
         label_key="label",
         crop=False,
+        cval="min",
         patch_size: Tuple[int] = None,
         random_crop=True,
         p_deform_per_sample=1,
@@ -41,6 +42,7 @@ class Spatial(YuccaTransform):
         self.label_key = label_key
         self.skip_label = skip_label
         self.do_crop = crop
+        self.cval = cval
         self.patch_size = patch_size
         self.random_crop = random_crop
 
@@ -98,6 +100,11 @@ class Spatial(YuccaTransform):
     ):
         if not self.do_crop:
             patch_size = imageVolume.shape[2:]
+        if self.cval == "min":
+            cval = float(imageVolume.min())
+        else:
+            cval = self.cval
+        assert isinstance(cval, (int, float)), f"got {cval} of type {type(cval)}"
 
         coords = create_zero_centered_coordinate_matrix(patch_size)
         imageCanvas = np.zeros((imageVolume.shape[0], imageVolume.shape[1], *patch_size), dtype=np.float32)
@@ -149,7 +156,7 @@ class Spatial(YuccaTransform):
                     coords,
                     order=3,
                     mode="constant",
-                    cval=0.0,
+                    cval=cval,
                 ).astype(imageVolume.dtype)
 
         if not skip_label:

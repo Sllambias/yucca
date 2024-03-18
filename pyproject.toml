@@ -37,7 +37,9 @@ dependencies = [
     "weave",
     "python-dotenv==1.0.0",
     "monai",
-    "flake8-unused-arguments"
+    "flake8-unused-arguments",
+    "surface-distance-based-measures@git+https://github.com/google-deepmind/surface-distance",
+    "fvcore",
 ]
 
 [project.optional-dependencies]

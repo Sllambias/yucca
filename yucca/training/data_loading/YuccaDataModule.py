@@ -49,14 +49,16 @@ class YuccaDataModule(pl.LightningDataModule):
         self,
         input_dims_config: InputDimensionsConfig,
         image_extension: str,
-        splits_config: Optional[SplitConfig] = None,
-        split_idx: Optional[int] = None,
-        task_type: Optional[str] = None,
         composed_train_transforms: Optional[torchvision.transforms.Compose] = None,
         composed_val_transforms: Optional[torchvision.transforms.Compose] = None,
         num_workers: Optional[int] = None,
+        overwrite_predictions: bool = False,
         pred_data_dir: Optional[str] = None,
+        pred_save_dir: Optional[str] = None,
         pre_aug_patch_size: Optional[Union[list, tuple]] = None,
+        splits_config: Optional[SplitConfig] = None,
+        split_idx: Optional[int] = None,
+        task_type: Optional[str] = None,
         train_sampler: Optional[Sampler] = InfiniteRandomSampler,
         val_sampler: Optional[Sampler] = InfiniteRandomSampler,
         train_data_dir: Optional[str] = None,
@@ -79,12 +81,13 @@ class YuccaDataModule(pl.LightningDataModule):
         self.pre_aug_patch_size = pre_aug_patch_size
 
         # Set in the predict loop
+        self.overwrite_predictions = overwrite_predictions
         self.pred_data_dir = pred_data_dir
+        self.pred_save_dir = pred_save_dir
 
         # Set default values
-
         self.num_workers = max(0, int(torch.get_num_threads() - 1)) if num_workers is None else num_workers
-        self.val_num_workers = self.num_workers // 2 if self.num_workers > 0 else self.num_workers
+        self.val_num_workers = self.num_workers
         self.train_sampler = train_sampler
         self.val_sampler = val_sampler
         logging.info(f"Using {self.num_workers} workers")
@@ -128,7 +131,12 @@ class YuccaDataModule(pl.LightningDataModule):
             assert self.pred_data_dir is not None, "set a pred_data_dir for inference to work"
             # This dataset contains ONLY the images (and not the labels)
             # It will return a tuple of (case, case_id)
-            self.pred_dataset = YuccaTestDataset(self.pred_data_dir, suffix=self.image_extension)
+            self.pred_dataset = YuccaTestDataset(
+                self.pred_data_dir,
+                pred_save_dir=self.pred_save_dir,
+                overwrite_predictions=self.overwrite_predictions,
+                suffix=self.image_extension,
+            )
 
     def train_dataloader(self):
         logging.info(f"Starting training with data from: {self.train_data_dir}")

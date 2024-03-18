@@ -41,10 +41,13 @@ class YuccaAugmentationComposer:
     def setup_default_params(self, is_2d, patch_size):
         print("Composing Transforms")
         # Define whether we crop before or after applying augmentations
-        # Define if cropping is random or always centered
-        self.random_crop = True
+        # Define if the cropping performed during the spatial transform is random or always centered
+        #   We have ALREADY selected a random crop when we prepared the case in the dataloader
+        #   so unless you know what you're doing this should be disabled to avoid border artifacts
+        self.random_crop = False
         self.mask_image_for_reconstruction = False
         self.patch_size = patch_size
+        self.cval = "min"  # can be an int, float or a str in ['min', 'max']
 
         # label/segmentation transforms
         self.skip_label = False
@@ -72,6 +75,8 @@ class YuccaAugmentationComposer:
         self.gibbs_ringing_p_per_sample = 0.2
         self.gibbs_ringing_cutfreq = (96, 129)
         self.gibbs_ringing_axes = (0, 2) if is_2d else (0, 3)
+
+        self.mask_ratio = 0.5
 
         self.mirror_p_per_sample = 0.0
         self.mirror_p_per_axis = 0.33
@@ -114,8 +119,7 @@ class YuccaAugmentationComposer:
         if task_type_preset == "self-supervised":
             self.skip_label = True
             self.copy_image_to_label = True
-            # This should be uncommented when masking is properly implemented
-            # self.mask_image_for_reconstruction = True
+            self.mask_image_for_reconstruction = True
 
     def overwrite_params(self, parameter_dict):
         for key, value in parameter_dict.items():
@@ -129,6 +133,7 @@ class YuccaAugmentationComposer:
                     patch_size=self.patch_size,
                     crop=True,
                     random_crop=self.random_crop,
+                    cval=self.cval,
                     p_deform_per_sample=self.elastic_deform_p_per_sample,
                     deform_sigma=self.elastic_deform_sigma,
                     deform_alpha=self.elastic_deform_alpha,
@@ -187,7 +192,7 @@ class YuccaAugmentationComposer:
                 ),
                 DownsampleSegForDS(deep_supervision=self.deep_supervision),
                 CopyImageToSeg(copy=self.copy_image_to_label),
-                Masking(mask=self.mask_image_for_reconstruction),
+                Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.cval, ratio=self.mask_ratio),
                 RemoveBatchDimension(),
             ]
         )
@@ -198,11 +203,65 @@ class YuccaAugmentationComposer:
             [
                 AddBatchDimension(),
                 CopyImageToSeg(copy=self.copy_image_to_label),
-                Masking(mask=self.mask_image_for_reconstruction),
+                Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.cval, ratio=self.mask_ratio),
                 RemoveBatchDimension(),
             ]
         )
         return val_transforms
+
+    def lm_hparams(self):
+        hparams = {
+            "augmentation_parameters": {
+                "deep_supervision": self.deep_supervision,
+                "pre_aug_patch_size": self.pre_aug_patch_size,
+                "random_crop": self.random_crop,
+                "cval": self.cval,
+                "mask_image_for_reconstruction": self.mask_image_for_reconstruction,
+                "patch_size": self.patch_size,
+                "skip_label": self.skip_label,
+                "label_dtype": self.label_dtype,
+                "copy_image_to_label": self.copy_image_to_label,
+                "additive_noise_p_per_sample": self.additive_noise_p_per_sample,
+                "additive_noise_mean": self.additive_noise_mean,
+                "additive_noise_sigma": self.additive_noise_sigma,
+                "biasfield_p_per_sample": self.biasfield_p_per_sample,
+                "blurring_p_per_sample": self.blurring_p_per_sample,
+                "blurring_sigma": self.blurring_sigma,
+                "blurring_p_per_channel": self.blurring_p_per_channel,
+                "elastic_deform_p_per_sample": self.elastic_deform_p_per_sample,
+                "elastic_deform_alpha": self.elastic_deform_alpha,
+                "elastic_deform_sigma": self.elastic_deform_sigma,
+                "gamma_p_per_sample": self.gamma_p_per_sample,
+                "gamma_p_invert_image": self.gamma_p_invert_image,
+                "gamma_range": self.gamma_range,
+                "gibbs_ringing_p_per_sample": self.gibbs_ringing_p_per_sample,
+                "gibbs_ringing_cutfreq": self.gibbs_ringing_cutfreq,
+                "gibbs_ringing_axes": self.gibbs_ringing_axes,
+                "mask_ratio": self.mask_ratio,
+                "mirror_p_per_sample": self.mirror_p_per_sample,
+                "mirror_p_per_axis": self.mirror_p_per_axis,
+                "mirror_axes": self.mirror_axes,
+                "motion_ghosting_p_per_sample": self.motion_ghosting_p_per_sample,
+                "motion_ghosting_alpha": self.motion_ghosting_alpha,
+                "motion_ghosting_numreps": self.motion_ghosting_numreps,
+                "motion_ghosting_axes": self.motion_ghosting_axes,
+                "multiplicative_noise_p_per_sample": self.multiplicative_noise_p_per_sample,
+                "multiplicative_noise_mean": self.multiplicative_noise_mean,
+                "multiplicative_noise_sigma": self.multiplicative_noise_sigma,
+                "rotation_p_per_sample": self.rotation_p_per_sample,
+                "rotation_p_per_axis": self.rotation_p_per_axis,
+                "rotation_x": self.rotation_x,
+                "rotation_y": self.rotation_y,
+                "rotation_z": self.rotation_z,
+                "scale_p_per_sample": self.scale_p_per_sample,
+                "scale_factor": self.scale_factor,
+                "simulate_lowres_p_per_sample": self.simulate_lowres_p_per_sample,
+                "simulate_lowres_p_per_channel": self.simulate_lowres_p_per_channel,
+                "simulate_lowres_p_per_axis": self.simulate_lowres_p_per_axis,
+                "simulate_lowres_zoom_range": self.simulate_lowres_zoom_range,
+            }
+        }
+        return hparams
 
 
 if __name__ == "__main__":
