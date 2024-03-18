@@ -1,6 +1,6 @@
 [project]
 name = "yucca"
-version = "0.3.23"
+version = "0.3.24"
 authors = [
   { name="Sebastian Llambias", email="llambias@live.dk" },
   { name="Asbjørn Munk", email="9844416+asbjrnmunk@users.noreply.github.com" },
@@ -38,7 +38,6 @@ dependencies = [
     "python-dotenv==1.0.0",
     "monai",
     "flake8-unused-arguments",
-    "surface-distance-based-measures@git+https://github.com/google-deepmind/surface-distance",
     "fvcore",
 ]
 
