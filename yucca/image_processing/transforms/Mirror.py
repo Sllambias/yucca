@@ -47,7 +47,6 @@ class Mirror(YuccaTransform):
             data_dict[self.label_key] = label
         return data_dict
 
-
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
         assert (
@@ -55,7 +54,7 @@ class Mirror(YuccaTransform):
         ), f"Incorrect data size or shape.\
             \nShould be (b, c, x, y, z) or (b, c, x, y) and is: {data_dict[self.data_key].shape}"
 
-        data_dict= self.__mirror__(
+        data_dict = self.__mirror__(
             data_dict,
             self.axes,
         )
