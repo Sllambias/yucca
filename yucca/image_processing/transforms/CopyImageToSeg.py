@@ -12,8 +12,9 @@ class CopyImageToSeg(YuccaTransform):
         # No parameters to retrieve
         pass
 
-    def __copy__(self, imageVolume):
-        return imageVolume, imageVolume.copy()
+    def __copy__(self, data_dict):
+        data_dict[self.label_key] = data_dict[self.data_key].copy()
+        return data_dict
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
@@ -22,5 +23,5 @@ class CopyImageToSeg(YuccaTransform):
         ), f"Incorrect data size or shape.\
             \nShould be (b, c, x, y, z) or (b, c, x, y) and is: {data_dict[self.data_key].shape}"
         if self.copy:
-            data_dict[self.data_key], data_dict[self.label_key] = self.__copy__(data_dict[self.data_key])
+            data_dict = self.__copy__(data_dict)
         return data_dict

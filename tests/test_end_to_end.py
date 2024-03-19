@@ -47,7 +47,30 @@ def test_training():
         check=True,
     )
 
-
+    # First: a very basic short training
+    subprocess.run(
+        [
+            "yucca_train",
+            "-t",
+            "Task000_TEST_SEGMENTATION",
+            "-m",
+            "TinyUNet",
+            "-man",
+            "YuccaManager_AllAlways",
+            "--epochs",
+            "2",
+            "--batch_size",
+            "2",
+            "--patch_size",
+            "32",
+            "--disable_logging",
+            "--train_batches_per_step",
+            "1",
+            "--val_batches_per_step",
+            "1",
+        ],
+        check=True,
+    )
 def test_finetune():
     from yucca.paths import yucca_models
 

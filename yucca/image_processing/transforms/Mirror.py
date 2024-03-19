@@ -24,28 +24,28 @@ class Mirror(YuccaTransform):
         # No parameters to retrieve
         pass
 
-    def __mirror__(self, imageVolume, labelVolume, axes):
-        # Input will be [c, x, y, z] or [c, x, y]
-        if 0 in axes and np.random.uniform() < self.p_mirror_per_axis:
-            imageVolume[:, :] = imageVolume[:, ::-1]
-            labelVolume[:, :] = labelVolume[:, ::-1]
-        if 1 in axes and np.random.uniform() < self.p_mirror_per_axis:
-            imageVolume[:, :, :] = imageVolume[:, :, ::-1]
-            labelVolume[:, :, :] = labelVolume[:, :, ::-1]
-        if 2 in axes and np.random.uniform() < self.p_mirror_per_axis:
-            imageVolume[:, :, :, :] = imageVolume[:, :, :, ::-1]
-            labelVolume[:, :, :, :] = labelVolume[:, :, :, ::-1]
-        return imageVolume, labelVolume
-
-    def __mirrorimage__(self, imageVolume, axes):
-        # Input will be [c, x, y, z] or [c, x, y]
-        if 0 in axes and np.random.uniform() < self.p_mirror_per_axis:
-            imageVolume[:, :] = imageVolume[:, ::-1]
-        if 1 in axes and np.random.uniform() < self.p_mirror_per_axis:
-            imageVolume[:, :, :] = imageVolume[:, :, ::-1]
-        if 2 in axes and np.random.uniform() < self.p_mirror_per_axis:
-            imageVolume[:, :, :, :] = imageVolume[:, :, :, ::-1]
-        return imageVolume
+    def __mirror__(self, data_dict, axes):
+        image = data_dict[self.data_key]
+        label = data_dict.get(self.label_key)
+        # Input will be [b, c, x, y, z] or [b, c, x, y]
+        for b in range(image.shape[0]):
+            if np.random.uniform() < self.p_per_sample:
+                if 0 in axes and np.random.uniform() < self.p_mirror_per_axis:
+                    image[b, :, :] = image[b, :, ::-1]
+                    if label is not None and not self.skip_label:
+                        label[b, :, :] = label[b, :, ::-1]
+                if 1 in axes and np.random.uniform() < self.p_mirror_per_axis:
+                    image[b, :, :, :] = image[b, :, :, ::-1]
+                    if label is not None and not self.skip_label:
+                        label[b, :, :, :] = label[b, :, :, ::-1]
+                if 2 in axes and np.random.uniform() < self.p_mirror_per_axis:
+                    image[b, :, :, :, :] = image[b, :, :, :, ::-1]
+                    if label is not None and not self.skip_label:
+                        label[b, :, :, :, :] = label[b, :, :, :, ::-1]
+        data_dict[self.data_key] = image
+        if label is not None and not self.skip_label:
+            data_dict[self.label_key] = label
+        return data_dict
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
@@ -54,17 +54,8 @@ class Mirror(YuccaTransform):
         ), f"Incorrect data size or shape.\
             \nShould be (b, c, x, y, z) or (b, c, x, y) and is: {data_dict[self.data_key].shape}"
 
-        for b in range(data_dict[self.data_key].shape[0]):
-            if np.random.uniform() < self.p_per_sample:
-                if self.skip_label:
-                    data_dict[self.data_key][b] = self.__mirrorimage__(data_dict[self.data_key][b], self.axes)
-                else:
-                    (
-                        data_dict[self.data_key][b],
-                        data_dict[self.label_key][b],
-                    ) = self.__mirror__(
-                        data_dict[self.data_key][b],
-                        data_dict[self.label_key][b],
-                        self.axes,
-                    )
+        data_dict = self.__mirror__(
+            data_dict,
+            self.axes,
+        )
         return data_dict

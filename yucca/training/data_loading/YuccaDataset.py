@@ -99,10 +99,10 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         elif self.task_type == "segmentation":
             data_dict.update({"image": data[:-1], "label": data[-1:]})
         elif self.task_type == "self-supervised":
-            data_dict.update({"image": data, "label": None})
+            data_dict.update({"image": data})
         elif self.task_type == "contrastive":
-            view1 = self._transform({"image": data, "label": None}, case)["image"]
-            view2 = self._transform({"image": data, "label": None}, case)["image"]
+            view1 = self._transform({"image": data}, case)["image"]
+            view2 = self._transform({"image": data}, case)["image"]
             data_dict.update({"image": (view1, view2)})
             return data_dict
         else:
