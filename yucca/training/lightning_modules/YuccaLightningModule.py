@@ -368,7 +368,7 @@ class YuccaLightningModule(L.LightningModule):
 
         if len(imagedict["input"].shape) == 5:  # 3D images.
             # We need to select a slice to visualize.
-            if task_type == "segmentation" and len(imagedict["target"][batch_idx, 0].nonzero()) > 0:
+            if task_type == "segmentation" and len(imagedict["target"][batch_idx, 0].nonzero()[0]) > 0:
                 # Select a foreground slice if any exist.
                 foreground_locations = imagedict["target"][batch_idx, 0].nonzero()
                 slice_to_visualize = foreground_locations[0][np.random.randint(0, len(foreground_locations[0]))]
