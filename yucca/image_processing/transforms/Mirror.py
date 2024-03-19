@@ -56,7 +56,7 @@ class Mirror(YuccaTransform):
             \nShould be (b, c, x, y, z) or (b, c, x, y) and is: {data_dict[self.data_key].shape}"
 
         data_dict= self.__mirror__(
-            data_dict
+            data_dict,
             self.axes,
         )
         return data_dict
