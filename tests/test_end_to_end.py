@@ -38,6 +38,8 @@ def test_training():
             "2",
             "--batch_size",
             "2",
+            "--man",
+            "YuccaManager_AllAlways"
             "--disable_logging",
             "--train_batches_per_step",
             "3",
