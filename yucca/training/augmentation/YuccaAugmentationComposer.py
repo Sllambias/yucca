@@ -1,3 +1,4 @@
+from torch import Value
 from torchvision import transforms
 from yucca.image_processing.matrix_ops import get_max_rotated_size
 from yucca.image_processing.transforms.formatting import (
@@ -28,7 +29,7 @@ class YuccaAugmentationComposer:
         deep_supervision: bool = False,
         is_2D: bool = False,
         parameter_dict: dict = {},
-        task_type_preset: str = None,
+        task_type_preset: str = "segmentation",
     ):
         self._pre_aug_patch_size = None
         self.deep_supervision = deep_supervision
@@ -115,16 +116,20 @@ class YuccaAugmentationComposer:
             self._pre_aug_patch_size = get_max_rotated_size(self.patch_size)
         return self._pre_aug_patch_size
 
-    def apply_task_type_specific_preset(self, task_type_preset):
-        if task_type_preset == "classification":
+    def apply_task_type_specific_preset(self, preset):
+        if preset == "segmentation":
+            # we do nothing and use the default parameters
+            pass
+
+        elif preset == "classification":
             self.skip_label = True
 
-        if task_type_preset == "self-supervised":
+        elif preset == "self-supervised":
             self.skip_label = True
             self.copy_image_to_label = True
             self.mask_image_for_reconstruction = True
 
-        if task_type_preset == "basic":
+        elif preset == "basic":
             # The following augmentations will have nonzero probablity
             # self.p_rotation_per_sample
             # self.p_rotation_per_axis
@@ -146,6 +151,9 @@ class YuccaAugmentationComposer:
             self.p_simulate_lowres_per_sample = 0.0
             self.p_simulate_lowres_per_channel = 0.0
             self.p_simulate_lowres_per_axis = 0.0
+
+        else:
+            raise ValueError(f"{preset} is not a valid `task_type_preset`.")
 
     def overwrite_params(self, parameter_dict):
         for key, value in parameter_dict.items():
