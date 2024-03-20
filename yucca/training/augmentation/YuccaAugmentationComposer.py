@@ -1,4 +1,3 @@
-# %%
 from torchvision import transforms
 from yucca.image_processing.matrix_ops import get_max_rotated_size
 from yucca.image_processing.transforms.formatting import (
@@ -276,9 +275,9 @@ class YuccaAugmentationComposer:
 
 
 if __name__ == "__main__":
-    from yucca.training.augmentation.augmentation_presets import no_aug
+    from yucca.training.augmentation.augmentation_presets import basic
 
-    x = YuccaAugmentationComposer(patch_size=(32, 32), parameter_dict=no_aug)
-
-
-# %%
+    x = YuccaAugmentationComposer(patch_size=(32, 32), parameter_dict=basic)
+    print("ALL AUGMENTATION PARAMETERS: ", x.lm_hparams())
+    print("")
+    print("BASIC PARAMETERS: ", basic)
