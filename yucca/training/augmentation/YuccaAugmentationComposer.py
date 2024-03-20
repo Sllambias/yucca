@@ -55,17 +55,17 @@ class YuccaAugmentationComposer:
         self.copy_image_to_label = False
 
         # Default probabilities (all ON by default)
-        # For augmentations with AUG_P_PER_SAMPLE, AUG_P_PER_CHANNEL and AUG_P_PER_AXIS they are applied in the following order: 
+        # For augmentations with AUG_P_PER_SAMPLE, AUG_P_PER_CHANNEL and AUG_P_PER_AXIS they are applied in the following order:
         #
         # for sample in dataset: # iterate over the batch
-        #  if p_per_sample > np.random.uniform(): 
+        #  if p_per_sample > np.random.uniform():
         #    for channel in sample: # iterate over the channel/modalities
         #      if p_per_channel > np.random.uniform():
         #        for axis in channel: # iterate over the h,w,d dimensions
         #          if p_per_axis > np.random.uniform():
-        #            sample[channel, axis] = apply_aug(sample[channel, axis]) 
+        #            sample[channel, axis] = apply_aug(sample[channel, axis])
         # Therefore, to enable any augmentation the AUG_P_PER_SAMPLE must be > 0.
-        
+
         self.additive_noise_p_per_sample = 0.2
         self.biasfield_p_per_sample = 0.33
         self.blurring_p_per_sample = 0.2
