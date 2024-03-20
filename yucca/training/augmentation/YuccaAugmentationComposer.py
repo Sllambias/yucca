@@ -1,4 +1,3 @@
-from torch import Value
 from torchvision import transforms
 from yucca.image_processing.matrix_ops import get_max_rotated_size
 from yucca.image_processing.transforms.formatting import (
