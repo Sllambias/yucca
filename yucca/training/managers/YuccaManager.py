@@ -213,7 +213,7 @@ class YuccaManager:
             loss_fn=self.loss,
             momentum=self.momentum,
             step_logging=self.step_logging,
-            test_time_augmentation=not disable_tta if disable_tta is True else bool(augmenter.mirror_p_per_sample),
+            test_time_augmentation=not disable_tta if disable_tta is True else augmenter.p_mirror_per_sample > 0,
         )
 
         self.data_module = YuccaDataModule(
