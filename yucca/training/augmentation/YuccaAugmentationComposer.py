@@ -1,3 +1,4 @@
+# %%
 from torchvision import transforms
 from yucca.image_processing.matrix_ops import get_max_rotated_size
 from yucca.image_processing.transforms.formatting import (
@@ -54,28 +55,28 @@ class YuccaAugmentationComposer:
         self.label_dtype = int
         self.copy_image_to_label = False
 
-        # turn all augmentations on by default
+        # Default probabilities (all ON by default)
         # `p_aug > 0` turns on augmentation `aug`
-        self.p_additive_noise_per_sample = 0.2
-        self.p_biasfield_per_sample = 0.33
-        self.p_blurring_per_sample = 0.2
-        self.p_blurring_per_channel = 0.5
-        self.p_elastic_deform_per_sample = 0.33
-        self.p_gamma_per_sample = 0.2
-        self.p_gamma_invert_image = 0.05
-        self.p_gibbs_ringing_per_sample = 0.2
-        self.p_mirror_per_sample = 0.0
-        self.p_mirror_per_axis = 0.33
-        self.p_motion_ghosting_per_sample = 0.2
-        self.p_multiplicative_noise_per_sample = 0.2
-        self.p_rotation_per_sample = 0.2
-        self.p_rotation_per_axis = 0.66
-        self.p_scale_per_sample = 0.2
-        self.p_simulate_lowres_per_sample = 0.2
-        self.p_simulate_lowres_per_channel = 0.5
-        self.p_simulate_lowres_per_axis = 0.33
+        self.additive_noise_p_per_sample = 0.2
+        self.biasfield_p_per_sample = 0.33
+        self.blurring_p_per_sample = 0.2
+        self.blurring_p_per_channel = 0.5
+        self.elastic_deform_p_per_sample = 0.33
+        self.gamma_p_per_sample = 0.2
+        self.gamma_p_invert_image = 0.05
+        self.gibbs_ringing_p_per_sample = 0.2
+        self.mirror_p_per_sample = 0.0
+        self.mirror_p_per_axis = 0.33
+        self.motion_ghosting_p_per_sample = 0.2
+        self.multiplicative_noise_p_per_sample = 0.2
+        self.rotation_p_per_sample = 0.2
+        self.rotation_p_per_axis = 0.66
+        self.scale_p_per_sample = 0.2
+        self.simulate_lowres_p_per_sample = 0.2
+        self.simulate_lowres_p_per_channel = 0.5
+        self.simulate_lowres_p_per_axis = 0.33
 
-        # default params
+        # default augmentation values
         self.additive_noise_mean = (0.0, 0.0)
         self.additive_noise_sigma = (1e-3, 1e-4)
 
@@ -111,7 +112,7 @@ class YuccaAugmentationComposer:
     @property
     def pre_aug_patch_size(self):
         # First check if any spatial transforms are included
-        if self.p_elastic_deform_per_sample > 0 or self.p_rotation_per_sample > 0 or self.p_scale_per_sample > 0:
+        if self.elastic_deform_p_per_sample > 0 or self.rotation_p_per_sample > 0 or self.scale_p_per_sample > 0:
             self._pre_aug_patch_size = get_max_rotated_size(self.patch_size)
         return self._pre_aug_patch_size
 
@@ -127,29 +128,6 @@ class YuccaAugmentationComposer:
             self.skip_label = True
             self.copy_image_to_label = True
             self.mask_image_for_reconstruction = True
-
-        elif preset == "basic":
-            # The following augmentations will have nonzero probablity
-            # self.p_rotation_per_sample
-            # self.p_rotation_per_axis
-            # self.p_scale_per_sample
-            # self.p_mirror_per_axis
-
-            # turn off all others
-            self.p_additive_noise_per_sample = 0.0
-            self.p_biasfield_per_sample = 0.0
-            self.p_blurring_per_sample = 0.0
-            self.p_blurring_per_channel = 0.0
-            self.p_elastic_deform_per_sample = 0.0
-            self.p_gamma_per_sample = 0.0
-            self.p_gamma_invert_image = 0.0
-            self.p_gibbs_ringing_per_sample = 0.0
-            self.p_mirror_per_sample = 0.0
-            self.p_motion_ghosting_per_sample = 0.0
-            self.p_multiplicative_noise_per_sample = 0.0
-            self.p_simulate_lowres_per_sample = 0.0
-            self.p_simulate_lowres_per_channel = 0.0
-            self.p_simulate_lowres_per_axis = 0.0
 
         else:
             raise ValueError(f"{preset} is not a valid `task_type_preset`.")
@@ -167,60 +145,60 @@ class YuccaAugmentationComposer:
                     crop=True,
                     random_crop=self.random_crop,
                     cval=self.cval,
-                    p_deform_per_sample=self.p_elastic_deform_per_sample,
+                    p_deform_per_sample=self.elastic_deform_p_per_sample,
                     deform_sigma=self.elastic_deform_sigma,
                     deform_alpha=self.elastic_deform_alpha,
-                    p_rot_per_sample=self.p_rotation_per_sample,
-                    p_rot_per_axis=self.p_rotation_per_axis,
+                    p_rot_per_sample=self.rotation_p_per_sample,
+                    p_rot_per_axis=self.rotation_p_per_axis,
                     x_rot_in_degrees=self.rotation_x,
                     y_rot_in_degrees=self.rotation_y,
                     z_rot_in_degrees=self.rotation_z,
-                    p_scale_per_sample=self.p_scale_per_sample,
+                    p_scale_per_sample=self.scale_p_per_sample,
                     scale_factor=self.scale_factor,
                     skip_label=self.skip_label,
                 ),
                 AdditiveNoise(
-                    p_per_sample=self.p_additive_noise_per_sample,
+                    p_per_sample=self.additive_noise_p_per_sample,
                     mean=self.additive_noise_mean,
                     sigma=self.additive_noise_sigma,
                 ),
                 Blur(
-                    p_per_sample=self.p_blurring_per_sample,
-                    p_per_channel=self.p_blurring_per_channel,
+                    p_per_sample=self.blurring_p_per_sample,
+                    p_per_channel=self.blurring_p_per_channel,
                     sigma=self.blurring_sigma,
                 ),
                 MultiplicativeNoise(
-                    p_per_sample=self.p_multiplicative_noise_per_sample,
+                    p_per_sample=self.multiplicative_noise_p_per_sample,
                     mean=self.multiplicative_noise_mean,
                     sigma=self.multiplicative_noise_sigma,
                 ),
                 MotionGhosting(
-                    p_per_sample=self.p_motion_ghosting_per_sample,
+                    p_per_sample=self.motion_ghosting_p_per_sample,
                     alpha=self.motion_ghosting_alpha,
                     numReps=self.motion_ghosting_numreps,
                     axes=self.motion_ghosting_axes,
                 ),
                 GibbsRinging(
-                    p_per_sample=self.p_gibbs_ringing_per_sample,
+                    p_per_sample=self.gibbs_ringing_p_per_sample,
                     cutFreq=self.gibbs_ringing_cutfreq,
                     axes=self.gibbs_ringing_axes,
                 ),
                 SimulateLowres(
-                    p_per_sample=self.p_simulate_lowres_per_sample,
-                    p_per_channel=self.p_simulate_lowres_per_channel,
-                    p_per_axis=self.p_simulate_lowres_per_axis,
+                    p_per_sample=self.simulate_lowres_p_per_sample,
+                    p_per_channel=self.simulate_lowres_p_per_channel,
+                    p_per_axis=self.simulate_lowres_p_per_axis,
                     zoom_range=self.simulate_lowres_zoom_range,
                 ),
-                BiasField(p_per_sample=self.p_biasfield_per_sample),
+                BiasField(p_per_sample=self.biasfield_p_per_sample),
                 Gamma(
-                    p_per_sample=self.p_gamma_per_sample,
-                    p_invert_image=self.p_gamma_invert_image,
+                    p_per_sample=self.gamma_p_per_sample,
+                    p_invert_image=self.gamma_p_invert_image,
                     gamma_range=self.gamma_range,
                 ),
                 Mirror(
-                    p_per_sample=self.p_mirror_per_sample,
+                    p_per_sample=self.mirror_p_per_sample,
                     axes=self.mirror_axes,
-                    p_mirror_per_axis=self.p_mirror_per_axis,
+                    p_mirror_per_axis=self.mirror_p_per_axis,
                     skip_label=self.skip_label,
                 ),
                 DownsampleSegForDS(deep_supervision=self.deep_supervision),
@@ -254,43 +232,43 @@ class YuccaAugmentationComposer:
                 "skip_label": self.skip_label,
                 "label_dtype": self.label_dtype,
                 "copy_image_to_label": self.copy_image_to_label,
-                "p_additive_noise_per_sample": self.p_additive_noise_per_sample,
+                "additive_noise_p_per_sample": self.additive_noise_p_per_sample,
                 "additive_noise_mean": self.additive_noise_mean,
                 "additive_noise_sigma": self.additive_noise_sigma,
-                "p_biasfield_per_sample": self.p_biasfield_per_sample,
-                "p_blurring_per_sample": self.p_blurring_per_sample,
+                "biasfield_p_per_sample": self.biasfield_p_per_sample,
+                "blurring_p_per_sample": self.blurring_p_per_sample,
                 "blurring_sigma": self.blurring_sigma,
-                "p_blurring_per_channel": self.p_blurring_per_channel,
-                "p_elastic_deform_per_sample": self.p_elastic_deform_per_sample,
+                "blurring_p_per_channel": self.blurring_p_per_channel,
+                "elastic_deform_p_per_sample": self.elastic_deform_p_per_sample,
                 "elastic_deform_alpha": self.elastic_deform_alpha,
                 "elastic_deform_sigma": self.elastic_deform_sigma,
-                "p_gamma_per_sample": self.p_gamma_per_sample,
-                "p_gamma_invert_image": self.p_gamma_invert_image,
+                "gamma_p_per_sample": self.gamma_p_per_sample,
+                "gamma_p_invert_image": self.gamma_p_invert_image,
                 "gamma_range": self.gamma_range,
-                "p_gibbs_ringing_per_sample": self.p_gibbs_ringing_per_sample,
+                "gibbs_ringing_p_per_sample": self.gibbs_ringing_p_per_sample,
                 "gibbs_ringing_cutfreq": self.gibbs_ringing_cutfreq,
                 "gibbs_ringing_axes": self.gibbs_ringing_axes,
                 "mask_ratio": self.mask_ratio,
-                "p_mirror_per_sample": self.p_mirror_per_sample,
-                "p_mirror_per_axis": self.p_mirror_per_axis,
+                "mirror_p_per_sample": self.mirror_p_per_sample,
+                "mirror_p_per_axis": self.mirror_p_per_axis,
                 "mirror_axes": self.mirror_axes,
-                "p_motion_ghosting_per_sample": self.p_motion_ghosting_per_sample,
+                "motion_ghosting_p_per_sample": self.motion_ghosting_p_per_sample,
                 "motion_ghosting_alpha": self.motion_ghosting_alpha,
                 "motion_ghosting_numreps": self.motion_ghosting_numreps,
                 "motion_ghosting_axes": self.motion_ghosting_axes,
-                "p_multiplicative_noise_per_sample": self.p_multiplicative_noise_per_sample,
+                "multiplicative_noise_p_per_sample": self.multiplicative_noise_p_per_sample,
                 "multiplicative_noise_mean": self.multiplicative_noise_mean,
                 "multiplicative_noise_sigma": self.multiplicative_noise_sigma,
-                "p_rotation_per_sample": self.p_rotation_per_sample,
-                "p_rotation_per_axis": self.p_rotation_per_axis,
+                "rotation_p_per_sample": self.rotation_p_per_sample,
+                "rotation_p_per_axis": self.rotation_p_per_axis,
                 "rotation_x": self.rotation_x,
                 "rotation_y": self.rotation_y,
                 "rotation_z": self.rotation_z,
-                "p_scale_per_sample": self.p_scale_per_sample,
+                "scale_p_per_sample": self.scale_p_per_sample,
                 "scale_factor": self.scale_factor,
-                "p_simulate_lowres_per_sample": self.p_simulate_lowres_per_sample,
-                "p_simulate_lowres_per_channel": self.p_simulate_lowres_per_channel,
-                "p_simulate_lowres_per_axis": self.p_simulate_lowres_per_axis,
+                "simulate_lowres_p_per_sample": self.simulate_lowres_p_per_sample,
+                "simulate_lowres_p_per_channel": self.simulate_lowres_p_per_channel,
+                "simulate_lowres_p_per_axis": self.simulate_lowres_p_per_axis,
                 "simulate_lowres_zoom_range": self.simulate_lowres_zoom_range,
             }
         }
@@ -298,4 +276,9 @@ class YuccaAugmentationComposer:
 
 
 if __name__ == "__main__":
-    x = YuccaAugmentationComposer()
+    from yucca.training.augmentation.augmentation_presets import no_aug
+
+    x = YuccaAugmentationComposer(patch_size=(32, 32), parameter_dict=no_aug)
+
+
+# %%
