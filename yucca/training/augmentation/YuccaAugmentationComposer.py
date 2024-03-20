@@ -55,7 +55,7 @@ class YuccaAugmentationComposer:
         self.copy_image_to_label = False
 
         # turn all augmentations on by default
-        # p_x turns off augmentation x
+        # `p_aug > 0` turns on augmentation `aug`
         self.p_additive_noise_per_sample = 0.2
         self.p_biasfield_per_sample = 0.33
         self.p_blurring_per_sample = 0.2
