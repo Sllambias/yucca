@@ -13,6 +13,7 @@ YUCCA_PREPROCESSED_DATA=<path-to-yucca-data-diretory>/preprocessed_data
 YUCCA_MODELS=<path-to-yucca-data-diretory>/models
 YUCCA_RESULTS=<path-to-yucca-data-diretory>/results
 ```
+
 As an example `<path-to-yucca-data-diretory>` could be substituted by `/data/yucca`.
 
 
@@ -51,3 +52,21 @@ source $CONDA_PREFIX/etc/profile.d/conda.sh
 conda activate YOUR_YUCCA_ENV_HERE
 ```
 ## Yucca installed as a package with poetry environments
+To setup environment variables add the following `.env` file to the root project folder, i.e. the folder where your pyproject.toml is located:
+1. Add the environment variables to the `.env` file.
+```
+YUCCA_SOURCE=<path-to-non-converted-datasets>
+YUCCA_RAW_DATA=<path-to-yucca-data-diretory>/raw_data
+YUCCA_PREPROCESSED_DATA=<path-to-yucca-data-diretory>/preprocessed_data
+YUCCA_MODELS=<path-to-yucca-data-diretory>/models
+YUCCA_RESULTS=<path-to-yucca-data-diretory>/results
+```
+2. 
+2a. Add the poetry dotenv plugin
+```
+poetry self add poetry-plugin-dotenv
+```
+2b. Update environment variables at runtime
+```
+poetry run dotenv
+```
