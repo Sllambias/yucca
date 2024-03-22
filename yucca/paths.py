@@ -4,7 +4,7 @@ PLEASE READ YUCCA/DOCUMENTATION/TUTORIALS/ENVIRONMENT_VARIABLES.MD FOR INFORMATI
 
 import os
 import warnings
-from dotenv import find_dotenv, load_dotenv
+from dotenv import load_dotenv
 
 from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p
 
