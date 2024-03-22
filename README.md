@@ -2,11 +2,6 @@
 
 <img src="https://github.com/Sllambias/yucca/assets/9844416/dc37d3c0-5181-4bb2-9630-dee9bc67165e" width="368" height="402" />
 
-[![Paper](https://img.shields.io/badge/arXiv-1904.10620-44cc11.svg)](https://arxiv.org/abs/1904.10620)
-![coverage](https://img.shields.io/badge/coverage-80%25-yellowgreen)
-![downloads](https://img.shields.io/badge/downloads-13k%2Fmonth-brightgreen)
-![version](https://img.shields.io/badge/version-1.2.3-blue)
-
 </div>
 
 # Yucca
