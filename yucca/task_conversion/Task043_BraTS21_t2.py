@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 import nibabel as nib
 import numpy as np
 import shutil
+from tqdm import tqdm
 
 
 def convert(path: str, subdir: str = "brats21/training_data"):
@@ -38,7 +39,7 @@ def convert(path: str, subdir: str = "brats21/training_data"):
     training_samples, test_samples = train_test_split(subdirs(base_in, join=False), random_state=4215532)
 
     ###Populate Target Directory###
-    for sTr in training_samples:
+    for sTr in tqdm(training_samples):
         src_image_file_path1 = join(base_in, sTr, sTr + "_t2" + file_suffix)
         dst_image_file_path1 = f"{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz"
 
@@ -52,7 +53,7 @@ def convert(path: str, subdir: str = "brats21/training_data"):
 
         shutil.copy2(src_image_file_path1, dst_image_file_path1)
 
-    for sTs in test_samples:
+    for sTs in tqdm(test_samples):
         src_image_file_path1 = join(base_in, sTs, sTs + "_t2" + file_suffix)
         dst_image_file_path1 = f"{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz"
 
