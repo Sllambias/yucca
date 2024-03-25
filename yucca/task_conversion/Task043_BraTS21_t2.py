@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 import nibabel as nib
 import numpy as np
 import shutil
-import tqdm
+from tqdm import tqdm
 
 
 def convert(path: str, subdir: str = "brats21/training_data"):
