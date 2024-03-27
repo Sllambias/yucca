@@ -1,5 +1,6 @@
 from torchvision import transforms
 from yucca.image_processing.matrix_ops import get_max_rotated_size
+from yucca.image_processing.transforms.normalize import Normalize
 from yucca.image_processing.transforms.formatting import (
     AddBatchDimension,
     RemoveBatchDimension,
@@ -84,6 +85,7 @@ class YuccaAugmentationComposer:
         self.simulate_lowres_p_per_sample = 0.2
         self.simulate_lowres_p_per_channel = 0.5
         self.simulate_lowres_p_per_axis = 0.33
+        self.normalize = False
 
         # default augmentation values
         self.additive_noise_mean = (0.0, 0.0)
@@ -213,6 +215,7 @@ class YuccaAugmentationComposer:
                 DownsampleSegForDS(deep_supervision=self.deep_supervision),
                 CopyImageToSeg(copy=self.copy_image_to_label),
                 Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.cval, ratio=self.mask_ratio),
+                Normalize(normalize=self.normalize),
                 RemoveBatchDimension(),
             ]
         )
