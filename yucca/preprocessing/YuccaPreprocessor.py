@@ -161,7 +161,6 @@ class YuccaPreprocessor(object):
         subject_id = subject_id.split(os.extsep, 1)[0]
         arraypath = join(self.target_dir, subject_id + ".npy")
         picklepath = join(self.target_dir, subject_id + ".pkl")
-
         if isfile(arraypath) and isfile(picklepath):
             logging.info(f"Case: {subject_id} already exists. Skipping.")
             return
@@ -175,7 +174,6 @@ class YuccaPreprocessor(object):
 
         # save the image
         np.save(arraypath, images)
-
         # save metadata as .pkl
         save_pickle(image_props, picklepath)
 
@@ -200,7 +198,6 @@ class YuccaPreprocessor(object):
         # of the label named Case_4 as both would start with "Case_4", however only the correct one is
         # followed by an underscore
         escaped_subject_id = re.escape(subject_id)
-
         # path to all modalities of subject_id
         imagepaths = [
             impath
@@ -249,8 +246,8 @@ class YuccaPreprocessor(object):
                 label = crop_to_box(label, nonzero_box)
         else:
             image_props["crop_to_nonzero"] = self.plans["crop_to_nonzero"]
-
         image_props["size_before_transpose"] = list(images[0].shape)
+
         if label_exists and preprocess_label:
             images, label = self.transpose_case(images, self.transpose_forward, label)
         else:
@@ -261,7 +258,6 @@ class YuccaPreprocessor(object):
             original_spacing=np.array(image_props["nifti_metadata"]["original_spacing"]),
             transpose_forward=self.transpose_forward,
         )
-
         if label_exists and preprocess_label:
             images, label = self.resample_and_normalize_case(
                 images=images,
@@ -292,14 +288,12 @@ class YuccaPreprocessor(object):
             image_props["foreground_locations"] = []
 
         image_props["new_size"] = list(images[0].shape)
-
         # save relevant values
         image_props["original_spacing"] = image_props["nifti_metadata"]["original_spacing"]
         image_props["original_size"] = original_size
         image_props["original_orientation"] = image_props["nifti_metadata"]["original_orientation"]
         image_props["new_spacing"] = new_spacing
         image_props["new_direction"] = image_props["nifti_metadata"]["final_direction"]
-
         return images, label, image_props
 
     def preprocess_case_for_inference(self, images: list | tuple, patch_size: tuple, sliding_window_prediction: bool = True):
@@ -566,6 +560,8 @@ class YuccaPreprocessor(object):
     ):
         final_target_size = None
         image_shape_t = np.array(images_transposed[0].shape)
+        original_spacing_t = original_spacing[transpose_forward]
+
         # We do not want to change the aspect ratio so we resample using the minimum alpha required
         # to attain 1 correct dimension, and then the rest will be padded.
         # Additionally we make sure each dimension is divisible by 16 to avoid issues with standard pooling/stride settings
@@ -577,7 +573,6 @@ class YuccaPreprocessor(object):
             else:
                 resample_target_size = self.target_size
                 resample_target_size = [math.ceil(i / 16) * 16 for i in resample_target_size]
-            original_spacing_t = original_spacing[transpose_forward]
             new_spacing = (
                 (np.array(resample_target_size).astype(float) / image_shape_t.astype(float))
                 * np.array(original_spacing_t).astype(float)
@@ -588,12 +583,12 @@ class YuccaPreprocessor(object):
         # Find new shape based on the target spacing
         elif self.target_spacing is not None:
             target_spacing = np.array(self.target_spacing, dtype=float)
-            original_spacing_t = original_spacing[transpose_forward]
             target_spacing_t = target_spacing[transpose_forward]
             resample_target_size = np.round((original_spacing_t / target_spacing_t).astype(float) * image_shape_t).astype(int)
             new_spacing = target_spacing_t.tolist()
         else:
             resample_target_size = image_shape_t
+            new_spacing = original_spacing_t.tolist()
         return resample_target_size, final_target_size, new_spacing
 
     def resample_and_normalize_case(
