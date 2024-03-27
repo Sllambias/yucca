@@ -151,6 +151,7 @@ class YuccaAugmentationComposer:
         tr_transforms = transforms.Compose(
             [
                 AddBatchDimension(),
+                # augmentations
                 Spatial(
                     patch_size=self.patch_size,
                     crop=True,
@@ -212,10 +213,12 @@ class YuccaAugmentationComposer:
                     p_mirror_per_axis=self.mirror_p_per_axis,
                     skip_label=self.skip_label,
                 ),
+                Normalize(normalize=self.normalize),
+                # seg
                 DownsampleSegForDS(deep_supervision=self.deep_supervision),
                 CopyImageToSeg(copy=self.copy_image_to_label),
+                # mae
                 Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.cval, ratio=self.mask_ratio),
-                Normalize(normalize=self.normalize),
                 RemoveBatchDimension(),
             ]
         )
