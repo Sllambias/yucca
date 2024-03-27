@@ -25,6 +25,6 @@ class Normalize(YuccaTransform):
         ), f"Incorrect data size or shape.\
             \nShould be (b, c, x, y, z) or (b, c, x, y) and is: {data_dict[self.data_key].shape}"
 
-        if self.copy:
+        if self.normalize:
             data_dict = self.__normalize__(data_dict)
         return data_dict
