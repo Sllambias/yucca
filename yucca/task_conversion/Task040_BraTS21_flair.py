@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 def convert(path: str, subdir: str = "brats21/training_data"):
     # Target names
-    task_name = "Task040_BraTS21_flair.py"
+    task_name = "Task040_BraTS21_flair"
     task_prefix = "BraTS21"
 
     ###OUTPUT DATA
