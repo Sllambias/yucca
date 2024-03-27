@@ -4,9 +4,14 @@ from yucca.preprocessing.normalization import normalizer
 
 class Normalize(YuccaTransform):
     def __init__(self, normalize: bool = False, data_key: str = "image", scheme: str = "volume_wise_znorm"):
+        assert scheme in [
+            "255to1",
+            "clip",
+            "volume_wise_znorm",
+        ], f"Scheme {scheme} not supported, only schemes which are not relying on dataset level properties are currently supported"
+
         self.normalize = normalize
         self.data_key = data_key
-
         self.scheme = scheme
 
     @staticmethod
