@@ -39,6 +39,7 @@ class YuccaLightningModule(L.LightningModule):
         step_logging: bool = False,
         test_time_augmentation: bool = False,
         progress_bar: bool = False,
+        log_image_every_n_epochs: int = 1,
     ):
         super().__init__()
         # Extract parameters from the configurator
@@ -114,7 +115,7 @@ class YuccaLightningModule(L.LightningModule):
         if self.loss_fn is None:
             self.loss_fn = _default_loss
 
-        self.log_image_every_n_epochs = 1
+        self.log_image_every_n_epochs = log_image_every_n_epochs
         # Inference
         self.sliding_window_overlap = sliding_window_overlap
         self.test_time_augmentation = test_time_augmentation
