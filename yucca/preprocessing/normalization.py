@@ -1,9 +1,10 @@
 import warnings
 from skimage import exposure
 import numpy as np
+from typing import Optional
 
 
-def normalizer(array: np.ndarray, scheme: str, intensities: dict = None):
+def normalizer(array: np.ndarray, scheme: str, intensities: Optional[dict] = None):
     """
     Normalizing function for preprocessing and inference.
 
