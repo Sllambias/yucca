@@ -3,7 +3,7 @@ from skimage import exposure
 import numpy as np
 
 
-def normalizer(array: np.ndarray, scheme: str, intensities: {}):
+def normalizer(array: np.ndarray, scheme: str, intensities: dict = None):
     """
     Normalizing function for preprocessing and inference.
 
