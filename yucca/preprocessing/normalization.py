@@ -33,9 +33,9 @@ def normalizer(array: np.ndarray, scheme: str, intensities: Optional[dict] = Non
 
     elif scheme == "range":
         print(array.max(), array.min(), intensities)
-        return (array - array.min()) / (array.max() - array.min()) * (intensities["max"] - intensities["min"]) + intensities[
-            "min"
-        ]
+        return (array - array.min()) / (array.max() - array.min() + 1e-9) * (
+            intensities["max"] - intensities["min"] + 1e-9
+        ) + intensities["min"]
 
     elif scheme == "standardize":
         assert intensities is not None, "ERROR: dataset wide stats are required for standardize"
