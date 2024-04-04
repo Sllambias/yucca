@@ -1,10 +1,7 @@
 from torchvision import transforms
 from yucca.image_processing.matrix_ops import get_max_rotated_size
 from yucca.image_processing.transforms.normalize import Normalize
-from yucca.image_processing.transforms.formatting import (
-    AddBatchDimension,
-    RemoveBatchDimension,
-)
+from yucca.image_processing.transforms.formatting import AddBatchDimension, RemoveBatchDimension, CollectMetadata
 from yucca.image_processing.transforms.BiasField import BiasField
 from yucca.image_processing.transforms.Blur import Blur
 from yucca.image_processing.transforms.CopyImageToSeg import CopyImageToSeg
@@ -112,6 +109,8 @@ class YuccaAugmentationComposer:
         self.multiplicative_noise_mean = (0, 0)
         self.multiplicative_noise_sigma = (1e-3, 1e-4)
 
+        self.normalization_scheme = "volume_wise_znorm"
+
         self.rotation_x = (-30.0, 30.0)
         self.rotation_y = (-0.0, 0.0) if is_2D else (-30.0, 30.0)
         self.rotation_z = (-0.0, 0.0) if is_2D else (-30.0, 30.0)
@@ -150,6 +149,7 @@ class YuccaAugmentationComposer:
     def compose_train_transforms(self):
         tr_transforms = transforms.Compose(
             [
+                CollectMetadata(),
                 AddBatchDimension(),
                 # augmentations
                 Spatial(
@@ -213,7 +213,7 @@ class YuccaAugmentationComposer:
                     p_mirror_per_axis=self.mirror_p_per_axis,
                     skip_label=self.skip_label,
                 ),
-                Normalize(normalize=self.normalize),
+                Normalize(normalize=self.normalize, scheme=self.normalization_scheme),
                 # seg
                 DownsampleSegForDS(deep_supervision=self.deep_supervision),
                 CopyImageToSeg(copy=self.copy_image_to_label),
