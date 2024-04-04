@@ -8,6 +8,7 @@ class Normalize(YuccaTransform):
     ):
         assert scheme in [
             "255to1",
+            "range",
             "clip",
             "volume_wise_znorm",
         ], f"Scheme {scheme} not supported, only schemes which are not relying on dataset level properties are currently supported"
@@ -23,9 +24,11 @@ class Normalize(YuccaTransform):
         pass
 
     def __normalize__(self, data_dict):
-        data_dict[self.data_key] = normalizer(
-            data_dict[self.data_key], scheme=self.scheme, intensities=data_dict[self.metadata_key]
-        )
+        for b in range(data_dict[self.data_key].shape[0]):
+            for c in range(data_dict[self.data_key].shape[1]):
+                data_dict[self.data_key][b, c] = normalizer(
+                    data_dict[self.data_key][b, c], scheme=self.scheme, intensities=data_dict[self.metadata_key]
+                )
         return data_dict
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):

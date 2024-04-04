@@ -291,9 +291,20 @@ class YuccaAugmentationComposer:
 
 
 if __name__ == "__main__":
-    from yucca.training.augmentation.augmentation_presets import basic
+    from yucca.training.augmentation.augmentation_presets import all_always
+    import numpy as np
 
-    x = YuccaAugmentationComposer(patch_size=(32, 32), parameter_dict=basic)
-    print("ALL AUGMENTATION PARAMETERS: ", x.lm_hparams())
-    print("")
-    print("BASIC PARAMETERS: ", basic)
+    augs = all_always
+    # all_always["normalization_scheme"] = "range"
+    x = YuccaAugmentationComposer(patch_size=(32, 32, 32), parameter_dict=augs)
+    # print("ALL AUGMENTATION PARAMETERS: ", x.lm_hparams())
+    # print("")
+    # print("BASIC PARAMETERS: ", augs)
+    ttf = x.train_transforms
+
+    for i in range(20):
+        arr = np.random.randn(1, 32, 32, 32)
+        arr = (arr - arr.min()) / (arr.max() - arr.min())
+        # print(f"BEFORE: min: {arr.min()} max: {arr.max()}")
+        arr = ttf({"image": arr})["image"]
+        print(f"AFTER: min: {arr.min()} max: {arr.max()}")

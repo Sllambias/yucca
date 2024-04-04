@@ -53,7 +53,7 @@ class MotionGhosting(YuccaTransform):
             else:
                 imageVolume[:, 0:-1:numReps] = alpha * imageVolume[:, 0:-1:numReps]
             imageVolume = abs(np.fft.ifftn(imageVolume, s=[h, w]))
-        imageVolume -= m
+        imageVolume -= abs(m)
         return imageVolume
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):

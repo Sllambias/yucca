@@ -16,7 +16,7 @@ def normalizer(array: np.ndarray, scheme: str, intensities: Optional[dict] = Non
     Clip = for contrast clipping. This will clip values to the 0.01 and 99.99th percentiles
         and then perform 0-1 normalization.
     """
-    accepted_schemes = ["clipping", "minmax", "no_norm", "standardize", "volume_wise_znorm", "255to1"]
+    accepted_schemes = ["clipping", "minmax", "range", "no_norm", "standardize", "volume_wise_znorm", "255to1"]
 
     assert scheme in accepted_schemes, "invalid normalization scheme inserted" f"attempted scheme: {scheme}"
     assert array is not None
@@ -32,6 +32,7 @@ def normalizer(array: np.ndarray, scheme: str, intensities: Optional[dict] = Non
         return array / 255
 
     elif scheme == "range":
+        print(array.max(), array.min(), intensities)
         return (array - array.min()) / (array.max() - array.min()) * (intensities["max"] - intensities["min"]) + intensities[
             "min"
         ]
@@ -47,7 +48,7 @@ def normalizer(array: np.ndarray, scheme: str, intensities: Optional[dict] = Non
 
     elif scheme == "volume_wise_znorm":
         empty_val = array.min()  # We assume the background is the minimum value
-
+        print(array.shape)
         if empty_val != array[0, 0, 0]:
             warnings.warn(
                 "Tried to normalize an array where the top right value was not the same as the minimum value."

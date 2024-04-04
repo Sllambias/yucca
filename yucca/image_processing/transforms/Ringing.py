@@ -56,7 +56,7 @@ class GibbsRinging(YuccaTransform):
                 imageVolume[:, int(np.ceil(h / 2) + np.ceil(numSample / 2)) : h] = 0
                 imageVolume = abs(np.fft.ifftn(np.fft.ifftshift(imageVolume), s=[w, h]))
                 imageVolume = imageVolume.conj().T
-        imageVolume -= m
+        imageVolume -= abs(m)
         return imageVolume
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
