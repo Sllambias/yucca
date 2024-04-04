@@ -16,5 +16,5 @@ class YuccaManager_Tester(YuccaManager):
             "simulate_lowres_p_per_channel": 0.0,
             "simulate_lowres_p_per_axis": 0.0,
             "normalize": True,
-            "normalization_scheme": "range",
+            "normalization_scheme": "minmax",
         }

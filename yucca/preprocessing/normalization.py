@@ -26,7 +26,7 @@ def normalizer(array: np.ndarray, scheme: str, intensities: Optional[dict] = Non
 
     elif scheme == "minmax":
         assert intensities is not None, "ERROR: dataset wide stats are required for minmax"
-        return (array - intensities["min"]) / (intensities["max"] - intensities["min"])
+        return (array - intensities["min"]) / (intensities["max"] - intensities["min"] + 1e-9)
 
     elif scheme == "255to1":
         return array / 255
@@ -48,7 +48,6 @@ def normalizer(array: np.ndarray, scheme: str, intensities: Optional[dict] = Non
 
     elif scheme == "volume_wise_znorm":
         empty_val = array.min()  # We assume the background is the minimum value
-        print(array.shape)
         if empty_val != array[0, 0, 0]:
             warnings.warn(
                 "Tried to normalize an array where the top right value was not the same as the minimum value."

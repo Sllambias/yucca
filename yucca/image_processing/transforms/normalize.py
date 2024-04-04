@@ -8,6 +8,7 @@ class Normalize(YuccaTransform):
     ):
         assert scheme in [
             "255to1",
+            "minmax",
             "range",
             "clip",
             "volume_wise_znorm",
