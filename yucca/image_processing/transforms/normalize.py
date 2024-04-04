@@ -3,7 +3,9 @@ from yucca.preprocessing.normalization import normalizer
 
 
 class Normalize(YuccaTransform):
-    def __init__(self, normalize: bool = False, data_key: str = "image", scheme: str = "volume_wise_znorm"):
+    def __init__(
+        self, normalize: bool = False, data_key: str = "image", metadata_key="metadata", scheme: str = "volume_wise_znorm"
+    ):
         assert scheme in [
             "255to1",
             "clip",
@@ -12,6 +14,7 @@ class Normalize(YuccaTransform):
 
         self.normalize = normalize
         self.data_key = data_key
+        self.metadata_key = metadata_key
         self.scheme = scheme
 
     @staticmethod
@@ -20,7 +23,9 @@ class Normalize(YuccaTransform):
         pass
 
     def __normalize__(self, data_dict):
-        data_dict[self.data_key] = normalizer(data_dict[self.data_key], scheme=self.scheme)
+        data_dict[self.data_key] = normalizer(
+            data_dict[self.data_key], scheme=self.scheme, intensities=data_dict[self.metadata_key]
+        )
         return data_dict
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
