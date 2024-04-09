@@ -79,6 +79,8 @@ class MultiplicativeNoise(YuccaTransform):
 
     def __multiplicativeNoise__(self, imageVolume, mean, sigma):
         # J = I + I*n
+        mn = imageVolume.min()
+        mx = imageVolume.max()
         gauss = np.random.normal(mean, sigma, imageVolume.shape)
         imageVolume += imageVolume * gauss
         if self.clip_to_input_range:

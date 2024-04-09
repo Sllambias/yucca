@@ -26,7 +26,7 @@ def augment_gamma(
         rnge = mx - mn
         data_sample = np.power(((data_sample - mn) / float(rnge + epsilon)), gamma) * rnge + mn
         if clip_to_input_range:
-            data_sample = np.clip(data_sample, a_max=mn, a_max=mx)
+            data_sample = np.clip(data_sample, a_min=mn, a_max=mx)
     else:
         for c in range(data_sample.shape[0]):
             if np.random.random() < 0.5 and gamma_range[0] < 1:
@@ -38,7 +38,7 @@ def augment_gamma(
             rnge = mx - mn
             data_sample[c] = np.power(((data_sample[c] - mn) / float(rnge + epsilon)), gamma) * float(rnge + epsilon) + mn
             if clip_to_input_range:
-                data_sample[c] = np.clip(data_sample[c], a_max=mn, a_max=mx)
+                data_sample[c] = np.clip(data_sample[c], a_min=mn, a_max=mx)
     if invert_image:
         data_sample = -data_sample
     return data_sample

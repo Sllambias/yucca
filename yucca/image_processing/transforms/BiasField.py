@@ -44,9 +44,10 @@ class BiasField(YuccaTransform):
             x0 = np.random.randint(0, x)
             y0 = np.random.randint(0, y)
             G = 1 - (np.power((X - x0), 2) / (x**2) + np.power((Y - y0), 2) / (y**2))
+        imageVolume = np.multiply(G, imageVolume)
         if self.clip_to_input_range:
             imageVolume = np.clip(imageVolume, a_min=mn, a_max=mx)
-        return np.multiply(G, imageVolume)
+        return imageVolume
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict

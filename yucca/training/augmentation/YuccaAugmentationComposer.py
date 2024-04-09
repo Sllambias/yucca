@@ -46,6 +46,8 @@ class YuccaAugmentationComposer:
         self.mask_image_for_reconstruction = False
         self.patch_size = patch_size
         self.cval = "min"  # can be an int, float or a str in ['min', 'max']
+        self.clip_to_input_range = False  # ensures no augmentations go beyond the input range of the image/patch
+        self.normalize = False
 
         # label/segmentation transforms
         self.skip_label = False
@@ -82,7 +84,6 @@ class YuccaAugmentationComposer:
         self.simulate_lowres_p_per_sample = 0.2
         self.simulate_lowres_p_per_channel = 0.5
         self.simulate_lowres_p_per_axis = 0.33
-        self.normalize = False
 
         # default augmentation values
         self.additive_noise_mean = (0.0, 0.0)
@@ -157,6 +158,7 @@ class YuccaAugmentationComposer:
                     crop=True,
                     random_crop=self.random_crop,
                     cval=self.cval,
+                    clip_to_input_range=self.clip_to_input_range,
                     p_deform_per_sample=self.elastic_deform_p_per_sample,
                     deform_sigma=self.elastic_deform_sigma,
                     deform_alpha=self.elastic_deform_alpha,
@@ -173,39 +175,49 @@ class YuccaAugmentationComposer:
                     p_per_sample=self.additive_noise_p_per_sample,
                     mean=self.additive_noise_mean,
                     sigma=self.additive_noise_sigma,
+                    clip_to_input_range=self.clip_to_input_range,
                 ),
                 Blur(
                     p_per_sample=self.blurring_p_per_sample,
                     p_per_channel=self.blurring_p_per_channel,
                     sigma=self.blurring_sigma,
+                    clip_to_input_range=self.clip_to_input_range,
                 ),
                 MultiplicativeNoise(
                     p_per_sample=self.multiplicative_noise_p_per_sample,
                     mean=self.multiplicative_noise_mean,
                     sigma=self.multiplicative_noise_sigma,
+                    clip_to_input_range=self.clip_to_input_range,
                 ),
                 MotionGhosting(
                     p_per_sample=self.motion_ghosting_p_per_sample,
                     alpha=self.motion_ghosting_alpha,
                     numReps=self.motion_ghosting_numreps,
                     axes=self.motion_ghosting_axes,
+                    clip_to_input_range=self.clip_to_input_range,
                 ),
                 GibbsRinging(
                     p_per_sample=self.gibbs_ringing_p_per_sample,
                     cutFreq=self.gibbs_ringing_cutfreq,
                     axes=self.gibbs_ringing_axes,
+                    clip_to_input_range=self.clip_to_input_range,
                 ),
                 SimulateLowres(
                     p_per_sample=self.simulate_lowres_p_per_sample,
                     p_per_channel=self.simulate_lowres_p_per_channel,
                     p_per_axis=self.simulate_lowres_p_per_axis,
                     zoom_range=self.simulate_lowres_zoom_range,
+                    clip_to_input_range=self.clip_to_input_range,
                 ),
-                BiasField(p_per_sample=self.biasfield_p_per_sample),
+                BiasField(
+                    p_per_sample=self.biasfield_p_per_sample,
+                    clip_to_input_range=self.clip_to_input_range,
+                ),
                 Gamma(
                     p_per_sample=self.gamma_p_per_sample,
                     p_invert_image=self.gamma_p_invert_image,
                     gamma_range=self.gamma_range,
+                    clip_to_input_range=self.clip_to_input_range,
                 ),
                 Mirror(
                     p_per_sample=self.mirror_p_per_sample,
@@ -294,17 +306,34 @@ if __name__ == "__main__":
     from yucca.training.augmentation.augmentation_presets import all_always
     import numpy as np
 
+    print("NO CLIPPING")
     augs = all_always
-    # all_always["normalization_scheme"] = "range"
+    augs["clip_to_input_range"] = False
     x = YuccaAugmentationComposer(patch_size=(32, 32, 32), parameter_dict=augs)
-    # print("ALL AUGMENTATION PARAMETERS: ", x.lm_hparams())
-    # print("")
-    # print("BASIC PARAMETERS: ", augs)
     ttf = x.train_transforms
-
-    for i in range(20):
+    mns = []
+    for i in range(100):
         arr = np.random.randn(1, 32, 32, 32)
         arr = (arr - arr.min()) / (arr.max() - arr.min())
-        # print(f"BEFORE: min: {arr.min()} max: {arr.max()}")
+        mn = arr.min()
+        mx = arr.max()
         arr = ttf({"image": arr})["image"]
-        print(f"AFTER: min: {arr.min()} max: {arr.max()}")
+        # print(f"BEFORE: min: {mn} max: {mx} AFTER: min: {arr.min()} max: {arr.max()}")
+        mns.append(arr.min())
+    print("no clip min:", np.min(mns))
+
+    print("WITH CLIPPING")
+    augs = all_always
+    augs["clip_to_input_range"] = True
+    x = YuccaAugmentationComposer(patch_size=(32, 32, 32), parameter_dict=augs)
+    ttf = x.train_transforms
+    mns = []
+    for i in range(100):
+        arr = np.random.randn(1, 32, 32, 32)
+        arr = (arr - arr.min()) / (arr.max() - arr.min())
+        mn = arr.min()
+        mx = arr.max()
+        arr = ttf({"image": arr})["image"]
+        # print(f"BEFORE: min: {mn} max: {mx} AFTER: min: {arr.min()} max: {arr.max()}")
+        mns.append(arr.min())
+    print("with clip min:", np.min(mns))
