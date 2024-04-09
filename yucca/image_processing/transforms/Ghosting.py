@@ -11,12 +11,14 @@ class MotionGhosting(YuccaTransform):
         alpha=(0.85, 0.95),
         numReps=(2, 5),
         axes=(0, 3),
+        clip_to_input_range=False,
     ):
         self.data_key = data_key
         self.p_per_sample = p_per_sample
         self.alpha = alpha
         self.numReps = numReps
         self.axes = axes
+        self.clip_to_input_range = clip_to_input_range
 
     @staticmethod
     def get_params(alpha: Tuple[float], numReps: Tuple[float], axes: Tuple[float]) -> Tuple[float]:
@@ -26,7 +28,9 @@ class MotionGhosting(YuccaTransform):
         return alpha, numReps, axis
 
     def __motionGhosting__(self, imageVolume, alpha, numReps, axis):
-        m = min(0, imageVolume.min())
+        mn = imageVolume.min()
+        mx = imageVolume.max()
+        m = min(0, mn)
         imageVolume += abs(m)
         if len(imageVolume.shape) == 3:
             assert axis in [0, 1, 2], "Incorrect or no axis"
@@ -54,6 +58,8 @@ class MotionGhosting(YuccaTransform):
                 imageVolume[:, 0:-1:numReps] = alpha * imageVolume[:, 0:-1:numReps]
             imageVolume = abs(np.fft.ifftn(imageVolume, s=[h, w]))
         imageVolume -= abs(m)
+        if self.clip_to_input_range:
+            imageVolume = np.clip(imageVolume, a_min=mn, a_max=mx)
         return imageVolume
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):

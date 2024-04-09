@@ -5,11 +5,19 @@ from scipy.ndimage import gaussian_filter
 
 
 class Blur(YuccaTransform):
-    def __init__(self, data_key="image", p_per_sample=1, p_per_channel=0.5, sigma=(0.5, 1.0)):
+    def __init__(
+        self,
+        data_key="image",
+        p_per_sample=1,
+        p_per_channel=0.5,
+        sigma=(0.5, 1.0),
+        clip_to_input_range=False,
+    ):
         self.data_key = data_key
         self.p_per_sample = p_per_sample
         self.p_per_channel = p_per_channel
         self.sigma = sigma
+        self.clip_to_input_range = clip_to_input_range
 
     @staticmethod
     def get_params(sigma: Tuple[float]):
@@ -18,8 +26,13 @@ class Blur(YuccaTransform):
 
     def __blur__(self, imageVolume, sigma):
         for c in range(imageVolume.shape[0]):
+            mn = imageVolume[c].min()
+            mx = imageVolume[c].max()
+
             if np.random.uniform() < self.p_per_channel:
                 imageVolume[c] = gaussian_filter(imageVolume[c], sigma, order=0)
+                if self.clip_to_input_range:
+                    imageVolume[c] = np.clip(imageVolume[c], a_min=mn, a_max=mx)
         return imageVolume
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):

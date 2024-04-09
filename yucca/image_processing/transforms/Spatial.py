@@ -24,7 +24,9 @@ class Spatial(YuccaTransform):
         label_key="label",
         crop=False,
         cval="min",
+        order=3,
         patch_size: Tuple[int] = None,
+        clip_to_input_range=True,
         random_crop=True,
         p_deform_per_sample=1,
         deform_sigma=(20, 30),
@@ -41,10 +43,12 @@ class Spatial(YuccaTransform):
         self.data_key = data_key
         self.label_key = label_key
         self.skip_label = skip_label
+        self.order = order
         self.do_crop = crop
         self.cval = cval
         self.patch_size = patch_size
         self.random_crop = random_crop
+        self.clip_to_input_range = clip_to_input_range
 
         self.p_deform_per_sample = p_deform_per_sample
         self.deform_sigma = deform_sigma
@@ -151,14 +155,18 @@ class Spatial(YuccaTransform):
         # Mapping the images to the distorted coordinates
         for b in range(image.shape[0]):
             for c in range(image.shape[1]):
+                mn = image.min()
+                mx = image.max()
+
                 imageCanvas[b, c] = map_coordinates(
                     image[b, c].astype(float),
                     coords,
-                    order=3,
+                    order=self.order,
                     mode="constant",
                     cval=cval,
                 ).astype(image.dtype)
-
+                if self.clip_to_input_range:
+                    imageCanvas[b, c] = np.clip(imageCanvas[b, c], a_min=mn, a_max=mx)
         data_dict[self.data_key] = imageCanvas
         if data_dict.get(self.label_key) is not None and not skip_label:
             label = data_dict.get(self.label_key)

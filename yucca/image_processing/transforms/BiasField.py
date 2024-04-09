@@ -3,9 +3,15 @@ import numpy as np
 
 
 class BiasField(YuccaTransform):
-    def __init__(self, data_key="image", p_per_sample=1):
+    def __init__(
+        self,
+        data_key="image",
+        p_per_sample=1,
+        clip_to_input_range=False,
+    ):
         self.data_key = data_key
         self.p_per_sample = p_per_sample
+        self.clip_to_input_range = clip_to_input_range
 
     @staticmethod
     def get_params():
@@ -13,6 +19,9 @@ class BiasField(YuccaTransform):
         pass
 
     def __biasField__(self, imageVolume):
+        mn = imageVolume.min()
+        mx = imageVolume.max()
+
         if len(imageVolume.shape) == 3:
             x, y, z = imageVolume.shape
             X, Y, Z = np.meshgrid(
@@ -35,6 +44,8 @@ class BiasField(YuccaTransform):
             x0 = np.random.randint(0, x)
             y0 = np.random.randint(0, y)
             G = 1 - (np.power((X - x0), 2) / (x**2) + np.power((Y - y0), 2) / (y**2))
+        if self.clip_to_input_range:
+            imageVolume = np.clip(imageVolume, a_min=mn, a_max=mx)
         return np.multiply(G, imageVolume)
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):

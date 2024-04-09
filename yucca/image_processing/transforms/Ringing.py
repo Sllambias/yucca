@@ -3,11 +3,19 @@ import numpy as np
 
 
 class GibbsRinging(YuccaTransform):
-    def __init__(self, data_key="image", p_per_sample=1, cutFreq=(96, 129), axes=(0, 3)):
+    def __init__(
+        self,
+        data_key="image",
+        p_per_sample=1,
+        cutFreq=(96, 129),
+        axes=(0, 3),
+        clip_to_input_range=False,
+    ):
         self.data_key = data_key
         self.p_per_sample = p_per_sample
         self.cutFreq = cutFreq
         self.axes = axes
+        self.clip_to_input_range = clip_to_input_range
 
     @staticmethod
     def get_params(cutFreq, axes):
@@ -16,7 +24,9 @@ class GibbsRinging(YuccaTransform):
         return cutFreq, axis
 
     def __gibbsRinging__(self, imageVolume, numSample, axis):
-        m = min(0, imageVolume.min())
+        mn = imageVolume.min()
+        mx = imageVolume.max()
+        m = min(0, mn)
         imageVolume += abs(m)
         if len(imageVolume.shape) == 3:
             assert axis in [0, 1, 2], "Incorrect or no axis"
@@ -57,6 +67,8 @@ class GibbsRinging(YuccaTransform):
                 imageVolume = abs(np.fft.ifftn(np.fft.ifftshift(imageVolume), s=[w, h]))
                 imageVolume = imageVolume.conj().T
         imageVolume -= abs(m)
+        if self.clip_to_input_range:
+            imageVolume = np.clip(imageVolume, a_min=mn, a_max=mx)
         return imageVolume
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
