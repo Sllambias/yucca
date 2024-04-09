@@ -1,6 +1,7 @@
 from yucca.image_processing.transforms.YuccaTransform import YuccaTransform
 import numpy as np
 
+
 # Stolen from Batchgenerators to avoid import error caused by deprecated modules imported in
 # Batchgenerators.
 def augment_gamma(
