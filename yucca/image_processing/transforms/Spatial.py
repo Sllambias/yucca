@@ -111,7 +111,7 @@ class Spatial(YuccaTransform):
         assert isinstance(cval, (int, float)), f"got {cval} of type {type(cval)}"
 
         coords = create_zero_centered_coordinate_matrix(patch_size)
-        imageCanvas = np.zeros((image.shape[0], image.shape[1], *patch_size), dtype=np.float32)
+        image_canvas = np.zeros((image.shape[0], image.shape[1], *patch_size), dtype=np.float32)
 
         # First we apply deformation to the coordinate matrix
         if np.random.uniform() < self.p_deform_per_sample:
@@ -155,10 +155,10 @@ class Spatial(YuccaTransform):
         # Mapping the images to the distorted coordinates
         for b in range(image.shape[0]):
             for c in range(image.shape[1]):
-                mn = image.min()
-                mx = image.max()
+                img_min = image.min()
+                img_max = image.max()
 
-                imageCanvas[b, c] = map_coordinates(
+                image_canvas[b, c] = map_coordinates(
                     image[b, c].astype(float),
                     coords,
                     order=self.order,
@@ -166,8 +166,8 @@ class Spatial(YuccaTransform):
                     cval=cval,
                 ).astype(image.dtype)
                 if self.clip_to_input_range:
-                    imageCanvas[b, c] = np.clip(imageCanvas[b, c], a_min=mn, a_max=mx)
-        data_dict[self.data_key] = imageCanvas
+                    image_canvas[b, c] = np.clip(image_canvas[b, c], a_min=img_min, a_max=img_max)
+        data_dict[self.data_key] = image_canvas
         if data_dict.get(self.label_key) is not None and not skip_label:
             label = data_dict.get(self.label_key)
             labelCanvas = np.zeros(

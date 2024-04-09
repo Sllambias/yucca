@@ -83,9 +83,9 @@ class Gamma(YuccaTransform):
             do_invert = True
         return do_invert
 
-    def __gamma__(self, imageVolume, gamma_range, invert_image, per_channel):
+    def __gamma__(self, image, gamma_range, invert_image, per_channel):
         return augment_gamma(
-            imageVolume,
+            image,
             gamma_range,
             invert_image,
             per_channel,

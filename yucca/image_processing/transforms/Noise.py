@@ -24,14 +24,14 @@ class AdditiveNoise(YuccaTransform):
         sigma = float(np.random.uniform(*sigma))
         return mean, sigma
 
-    def __additiveNoise__(self, imageVolume, mean, sigma):
+    def __additiveNoise__(self, image, mean, sigma):
         # J = I+n
-        mn = imageVolume.min()
-        mx = imageVolume.max()
-        imageVolume += np.random.normal(mean, sigma, imageVolume.shape)
+        img_min = image.min()
+        img_max = image.max()
+        image += np.random.normal(mean, sigma, image.shape)
         if self.clip_to_input_range:
-            imageVolume = np.clip(imageVolume, a_min=mn, a_max=mx)
-        return imageVolume
+            image = np.clip(image, a_min=img_min, a_max=img_max)
+        return image
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
@@ -77,15 +77,15 @@ class MultiplicativeNoise(YuccaTransform):
         sigma = float(np.random.uniform(*sigma))
         return mean, sigma
 
-    def __multiplicativeNoise__(self, imageVolume, mean, sigma):
+    def __multiplicativeNoise__(self, image, mean, sigma):
         # J = I + I*n
-        mn = imageVolume.min()
-        mx = imageVolume.max()
-        gauss = np.random.normal(mean, sigma, imageVolume.shape)
-        imageVolume += imageVolume * gauss
+        img_min = image.min()
+        img_max = image.max()
+        gauss = np.random.normal(mean, sigma, image.shape)
+        image += image * gauss
         if self.clip_to_input_range:
-            imageVolume = np.clip(imageVolume, a_min=mn, a_max=mx)
-        return imageVolume
+            image = np.clip(image, a_min=img_min, a_max=img_max)
+        return image
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict

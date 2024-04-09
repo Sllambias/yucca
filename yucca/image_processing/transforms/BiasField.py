@@ -18,12 +18,12 @@ class BiasField(YuccaTransform):
         # No parameters to retrieve
         pass
 
-    def __biasField__(self, imageVolume):
-        mn = imageVolume.min()
-        mx = imageVolume.max()
+    def __biasField__(self, image):
+        img_min = image.min()
+        img_max = image.max()
 
-        if len(imageVolume.shape) == 3:
-            x, y, z = imageVolume.shape
+        if len(image.shape) == 3:
+            x, y, z = image.shape
             X, Y, Z = np.meshgrid(
                 np.linspace(0, x, x, endpoint=False),
                 np.linspace(0, y, y, endpoint=False),
@@ -35,7 +35,7 @@ class BiasField(YuccaTransform):
             z0 = np.random.randint(0, z)
             G = 1 - (np.power((X - x0), 2) / (x**2) + np.power((Y - y0), 2) / (y**2) + np.power((Z - z0), 2) / (z**2))
         else:
-            x, y = imageVolume.shape
+            x, y = image.shape
             X, Y = np.meshgrid(
                 np.linspace(0, x, x, endpoint=False),
                 np.linspace(0, y, y, endpoint=False),
@@ -44,10 +44,10 @@ class BiasField(YuccaTransform):
             x0 = np.random.randint(0, x)
             y0 = np.random.randint(0, y)
             G = 1 - (np.power((X - x0), 2) / (x**2) + np.power((Y - y0), 2) / (y**2))
-        imageVolume = np.multiply(G, imageVolume)
+        image = np.multiply(G, image)
         if self.clip_to_input_range:
-            imageVolume = np.clip(imageVolume, a_min=mn, a_max=mx)
-        return imageVolume
+            image = np.clip(image, a_min=img_min, a_max=img_max)
+        return image
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict

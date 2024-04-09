@@ -23,53 +23,53 @@ class GibbsRinging(YuccaTransform):
         axis = np.random.randint(*axes)
         return cutFreq, axis
 
-    def __gibbsRinging__(self, imageVolume, numSample, axis):
-        mn = imageVolume.min()
-        mx = imageVolume.max()
-        m = min(0, mn)
-        imageVolume += abs(m)
-        if len(imageVolume.shape) == 3:
+    def __gibbsRinging__(self, image, numSample, axis):
+        img_min = image.min()
+        img_max = image.max()
+        m = min(0, img_min)
+        image += abs(m)
+        if len(image.shape) == 3:
             assert axis in [0, 1, 2], "Incorrect or no axis"
 
-            h, w, d = imageVolume.shape
+            h, w, d = image.shape
             if axis == 0:
-                imageVolume = imageVolume.transpose(0, 2, 1)
-                imageVolume = np.fft.fftshift(np.fft.fftn(imageVolume, s=[h, d, w]))
-                imageVolume[:, :, 0 : int(np.ceil(w / 2) - np.ceil(numSample / 2))] = 0
-                imageVolume[:, :, int(np.ceil(w / 2) + np.ceil(numSample / 2)) : w] = 0
-                imageVolume = abs(np.fft.ifftn(np.fft.ifftshift(imageVolume), s=[h, d, w]))
-                imageVolume = imageVolume.transpose(0, 2, 1)
+                image = image.transpose(0, 2, 1)
+                image = np.fft.fftshift(np.fft.fftn(image, s=[h, d, w]))
+                image[:, :, 0 : int(np.ceil(w / 2) - np.ceil(numSample / 2))] = 0
+                image[:, :, int(np.ceil(w / 2) + np.ceil(numSample / 2)) : w] = 0
+                image = abs(np.fft.ifftn(np.fft.ifftshift(image), s=[h, d, w]))
+                image = image.transpose(0, 2, 1)
             elif axis == 1:
-                imageVolume = imageVolume.transpose(1, 2, 0)
-                imageVolume = np.fft.fftshift(np.fft.fftn(imageVolume, s=[w, d, h]))
-                imageVolume[:, :, 0 : int(np.ceil(h / 2) - np.ceil(numSample / 2))] = 0
-                imageVolume[:, :, int(np.ceil(h / 2) + np.ceil(numSample / 2)) : h] = 0
-                imageVolume = abs(np.fft.ifftn(np.fft.ifftshift(imageVolume), s=[w, d, h]))
-                imageVolume = imageVolume.transpose(2, 0, 1)
+                image = image.transpose(1, 2, 0)
+                image = np.fft.fftshift(np.fft.fftn(image, s=[w, d, h]))
+                image[:, :, 0 : int(np.ceil(h / 2) - np.ceil(numSample / 2))] = 0
+                image[:, :, int(np.ceil(h / 2) + np.ceil(numSample / 2)) : h] = 0
+                image = abs(np.fft.ifftn(np.fft.ifftshift(image), s=[w, d, h]))
+                image = image.transpose(2, 0, 1)
             else:
-                imageVolume = np.fft.fftshift(np.fft.fftn(imageVolume, s=[h, w, d]))
-                imageVolume[:, :, 0 : int(np.ceil(d / 2) - np.ceil(numSample / 2))] = 0
-                imageVolume[:, :, int(np.ceil(d / 2) + np.ceil(numSample / 2)) : d] = 0
-                imageVolume = abs(np.fft.ifftn(np.fft.ifftshift(imageVolume), s=[h, w, d]))
-        elif len(imageVolume.shape) == 2:
+                image = np.fft.fftshift(np.fft.fftn(image, s=[h, w, d]))
+                image[:, :, 0 : int(np.ceil(d / 2) - np.ceil(numSample / 2))] = 0
+                image[:, :, int(np.ceil(d / 2) + np.ceil(numSample / 2)) : d] = 0
+                image = abs(np.fft.ifftn(np.fft.ifftshift(image), s=[h, w, d]))
+        elif len(image.shape) == 2:
             assert axis in [0, 1], "incorrect or no axis"
-            h, w = imageVolume.shape
+            h, w = image.shape
             if axis == 0:
-                imageVolume = np.fft.fftshift(np.fft.fftn(imageVolume, s=[h, w]))
-                imageVolume[:, 0 : int(np.ceil(w / 2) - np.ceil(numSample / 2))] = 0
-                imageVolume[:, int(np.ceil(w / 2) + np.ceil(numSample / 2)) : w] = 0
-                imageVolume = abs(np.fft.ifftn(np.fft.ifftshift(imageVolume), s=[h, w]))
+                image = np.fft.fftshift(np.fft.fftn(image, s=[h, w]))
+                image[:, 0 : int(np.ceil(w / 2) - np.ceil(numSample / 2))] = 0
+                image[:, int(np.ceil(w / 2) + np.ceil(numSample / 2)) : w] = 0
+                image = abs(np.fft.ifftn(np.fft.ifftshift(image), s=[h, w]))
             else:
-                imageVolume = imageVolume.conj().T
-                imageVolume = np.fft.fftshift(np.fft.fftn(imageVolume, s=[w, h]))
-                imageVolume[:, 0 : int(np.ceil(h / 2) - np.ceil(numSample / 2))] = 0
-                imageVolume[:, int(np.ceil(h / 2) + np.ceil(numSample / 2)) : h] = 0
-                imageVolume = abs(np.fft.ifftn(np.fft.ifftshift(imageVolume), s=[w, h]))
-                imageVolume = imageVolume.conj().T
-        imageVolume -= abs(m)
+                image = image.conj().T
+                image = np.fft.fftshift(np.fft.fftn(image, s=[w, h]))
+                image[:, 0 : int(np.ceil(h / 2) - np.ceil(numSample / 2))] = 0
+                image[:, int(np.ceil(h / 2) + np.ceil(numSample / 2)) : h] = 0
+                image = abs(np.fft.ifftn(np.fft.ifftshift(image), s=[w, h]))
+                image = image.conj().T
+        image -= abs(m)
         if self.clip_to_input_range:
-            imageVolume = np.clip(imageVolume, a_min=mn, a_max=mx)
-        return imageVolume
+            image = np.clip(image, a_min=img_min, a_max=img_max)
+        return image
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict

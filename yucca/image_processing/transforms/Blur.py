@@ -24,16 +24,16 @@ class Blur(YuccaTransform):
         sigma = np.random.uniform(*sigma)
         return sigma
 
-    def __blur__(self, imageVolume, sigma):
-        for c in range(imageVolume.shape[0]):
-            mn = imageVolume[c].min()
-            mx = imageVolume[c].max()
+    def __blur__(self, image, sigma):
+        for c in range(image.shape[0]):
+            img_min = image[c].min()
+            img_max = image[c].max()
 
             if np.random.uniform() < self.p_per_channel:
-                imageVolume[c] = gaussian_filter(imageVolume[c], sigma, order=0)
+                image[c] = gaussian_filter(image[c], sigma, order=0)
                 if self.clip_to_input_range:
-                    imageVolume[c] = np.clip(imageVolume[c], a_min=mn, a_max=mx)
-        return imageVolume
+                    image[c] = np.clip(image[c], a_min=img_min, a_max=img_max)
+        return image
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict

@@ -27,40 +27,40 @@ class MotionGhosting(YuccaTransform):
         axis = np.random.randint(*axes)
         return alpha, numReps, axis
 
-    def __motionGhosting__(self, imageVolume, alpha, numReps, axis):
-        mn = imageVolume.min()
-        mx = imageVolume.max()
-        m = min(0, mn)
-        imageVolume += abs(m)
-        if len(imageVolume.shape) == 3:
+    def __motionGhosting__(self, image, alpha, numReps, axis):
+        img_min = image.min()
+        img_max = image.max()
+        m = min(0, img_min)
+        image += abs(m)
+        if len(image.shape) == 3:
             assert axis in [0, 1, 2], "Incorrect or no axis"
 
-            h, w, d = imageVolume.shape
+            h, w, d = image.shape
 
-            imageVolume = np.fft.fftn(imageVolume, s=[h, w, d])
+            image = np.fft.fftn(image, s=[h, w, d])
 
             if axis == 0:
-                imageVolume[0:-1:numReps, :, :] = alpha * imageVolume[0:-1:numReps, :, :]
+                image[0:-1:numReps, :, :] = alpha * image[0:-1:numReps, :, :]
             elif axis == 1:
-                imageVolume[:, 0:-1:numReps, :] = alpha * imageVolume[:, 0:-1:numReps, :]
+                image[:, 0:-1:numReps, :] = alpha * image[:, 0:-1:numReps, :]
             else:
-                imageVolume[:, :, 0:-1:numReps] = alpha * imageVolume[:, :, 0:-1:numReps]
+                image[:, :, 0:-1:numReps] = alpha * image[:, :, 0:-1:numReps]
 
-            imageVolume = abs(np.fft.ifftn(imageVolume, s=[h, w, d]))
-        if len(imageVolume.shape) == 2:
+            image = abs(np.fft.ifftn(image, s=[h, w, d]))
+        if len(image.shape) == 2:
             assert axis in [0, 1], "Incorrect or no axis"
-            h, w = imageVolume.shape
-            imageVolume = np.fft.fftn(imageVolume, s=[h, w])
+            h, w = image.shape
+            image = np.fft.fftn(image, s=[h, w])
 
             if axis == 0:
-                imageVolume[0:-1:numReps, :] = alpha * imageVolume[0:-1:numReps, :]
+                image[0:-1:numReps, :] = alpha * image[0:-1:numReps, :]
             else:
-                imageVolume[:, 0:-1:numReps] = alpha * imageVolume[:, 0:-1:numReps]
-            imageVolume = abs(np.fft.ifftn(imageVolume, s=[h, w]))
-        imageVolume -= abs(m)
+                image[:, 0:-1:numReps] = alpha * image[:, 0:-1:numReps]
+            image = abs(np.fft.ifftn(image, s=[h, w]))
+        image -= abs(m)
         if self.clip_to_input_range:
-            imageVolume = np.clip(imageVolume, a_min=mn, a_max=mx)
-        return imageVolume
+            image = np.clip(image, a_min=img_min, a_max=img_max)
+        return image
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
