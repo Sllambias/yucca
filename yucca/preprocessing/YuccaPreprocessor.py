@@ -61,7 +61,15 @@ class YuccaPreprocessor(object):
     which is used later to oversample foreground.
     """
 
-    def __init__(self, plans_path, task=None, threads=None, disable_sanity_checks=False, enable_cc_analysis=False):
+    def __init__(
+        self,
+        plans_path,
+        task=None,
+        threads=None,
+        disable_sanity_checks=False,
+        enable_cc_analysis=False,
+        allow_missing_modalities=True,
+    ):
         self.name = str(self.__class__.__name__)
         self.task = task
         self.plans_path = plans_path
@@ -69,6 +77,7 @@ class YuccaPreprocessor(object):
         self.threads = threads
         self.disable_sanity_checks = disable_sanity_checks
         self.enable_cc_analysis = enable_cc_analysis
+        self.allow_missing_modalities = allow_missing_modalities
 
         # lists for information we would like to attain
         self.transpose_forward = []
@@ -115,7 +124,7 @@ class YuccaPreprocessor(object):
             f"{'Number of threads:':25.25} {self.threads}"
         )
         p = Pool(self.threads)
-        p.map_async(self.preprocess_train_subject, self.subject_ids)
+        p.map(self.preprocess_train_subject, self.subject_ids)
         p.close()
         p.join()
 
@@ -205,7 +214,15 @@ class YuccaPreprocessor(object):
             # Check if impath is a modality of subject_id (subject_id + _XXX + .) where XXX are three digits
             if re.search(escaped_subject_id + "_" + r"\d{3}" + ".", os.path.split(impath)[-1])
         ]
+
+        expected_modalities = set([f"{i:03}" for i in range(len(self.plans["normalization_scheme"]))])
+        found_modalities = [os.path.split(impath)[-1].split(os.extsep, 1)[0][-3:] for impath in imagepaths]
+        missing_modalities = [int(missing_mod) for missing_mod in list(expected_modalities.difference(found_modalities))]
+
         assert len(imagepaths) > 0, "found no images"
+        if not self.allow_missing_modalities:
+            assert not len(missing_modalities) > 0, "found missing modalities and allow_missing_modalities is not enabled."
+        print(missing_modalities)
         image_props["image files"] = imagepaths
         images = [read_file_to_nifti_or_np(image) for image in imagepaths]
         if label_exists:
@@ -258,6 +275,12 @@ class YuccaPreprocessor(object):
             original_spacing=np.array(image_props["nifti_metadata"]["original_spacing"]),
             transpose_forward=self.transpose_forward,
         )
+
+        # here we need to make sure missing modalities are accounted for, as the order of the images
+        # can matter for normalization operations
+        for missing_mod in missing_modalities:
+            images.insert(missing_mod, np.array([]))
+
         if label_exists and preprocess_label:
             images, label = self.resample_and_normalize_case(
                 images=images,
@@ -615,6 +638,7 @@ class YuccaPreprocessor(object):
 
         # Resample to target shape and spacing
         for i in range(len(images)):
+            print(i.size())
             try:
                 images[i] = resize(images[i], output_shape=target_size, order=3)
             except OverflowError:
