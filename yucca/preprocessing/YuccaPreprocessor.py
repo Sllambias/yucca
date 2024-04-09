@@ -178,8 +178,7 @@ class YuccaPreprocessor(object):
 
         images, label, image_props = self._preprocess_train_subject(subject_id, label_exists=True, preprocess_label=True)
 
-        # Stack and fix dimensions
-        images = np.vstack((np.array(images), np.array(label)[np.newaxis]))
+        images = self.cast_to_numpy_array(images=images, label=label, classification=False)
 
         # save the image
         np.save(arraypath, images)
@@ -222,7 +221,6 @@ class YuccaPreprocessor(object):
         assert len(imagepaths) > 0, "found no images"
         if not self.allow_missing_modalities:
             assert not len(missing_modalities) > 0, "found missing modalities and allow_missing_modalities is not enabled."
-        print(missing_modalities)
         image_props["image files"] = imagepaths
         images = [read_file_to_nifti_or_np(image) for image in imagepaths]
         if label_exists:
@@ -310,7 +308,7 @@ class YuccaPreprocessor(object):
             image_props["label_cc_n"] = image_props["label_cc_sizes"] = 0
             image_props["foreground_locations"] = []
 
-        image_props["new_size"] = list(images[0].shape)
+        image_props["new_size"] = list(images[int(found_modalities[0])].shape)
         # save relevant values
         image_props["original_spacing"] = image_props["nifti_metadata"]["original_spacing"]
         image_props["original_size"] = original_size
@@ -634,15 +632,16 @@ class YuccaPreprocessor(object):
         for i in range(len(images)):
             image = images[i]
             assert image is not None
-            images[i] = normalizer(image, scheme=norm_op[i], intensities=self.intensities[i])
-
-        # Resample to target shape and spacing
-        for i in range(len(images)):
-            print(i.size())
-            try:
-                images[i] = resize(images[i], output_shape=target_size, order=3)
-            except OverflowError:
-                logging.error("Unexpected values in either shape or image for resize")
+            if image.size == 0:
+                assert self.allow_missing_modalities is True, "missing modality and allow_missing_modalities is not enabled"
+            else:
+                # Normalize
+                images[i] = normalizer(image, scheme=norm_op[i], intensities=self.intensities[i])
+                # Resample to target shape and spacing
+                try:
+                    images[i] = resize(images[i], output_shape=target_size, order=3)
+                except OverflowError:
+                    logging.error("Unexpected values in either shape or image for resize")
         if label is not None:
             try:
                 label = resize(label, output_shape=target_size, order=0, anti_aliasing=False)
@@ -698,6 +697,21 @@ class YuccaPreprocessor(object):
                     f"Directions do not match for {subject_id}"
                     f"One is: {get_nib_orientation(images[0])} while another is {get_nib_orientation(image)}"
                 )
+
+    def cast_to_numpy_array(self, images: list, label=None, classification=False):
+        dtype = "float32" if not self.allow_missing_modalities else "object"
+
+        if label is None:  # self-supervised
+            images = np.array(images, dtype=dtype)
+        elif classification:
+            images.append(label)
+            images = np.array(images, dtype=dtype)
+        elif self.allow_missing_modalities:  # Segmentation with missing modalities
+            images.append(np.array(label)[np.newaxis])
+            images = np.array(images, dtype=dtype)
+        else:  # Standard segmentation
+            images = np.vstack((np.array(images), np.array(label)[np.newaxis]))
+        return images
 
     def verify_label_validity(self, label, subject_id):
         # Check if the ground truth only contains expected values
