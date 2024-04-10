@@ -4,11 +4,19 @@ from typing import Tuple
 
 
 class AdditiveNoise(YuccaTransform):
-    def __init__(self, data_key="image", p_per_sample=1, mean=(0.0, 0.0), sigma=(1e-3, 1e-4)):
+    def __init__(
+        self,
+        data_key="image",
+        p_per_sample=1,
+        mean=(0.0, 0.0),
+        sigma=(1e-3, 1e-4),
+        clip_to_input_range=False,
+    ):
         self.data_key = data_key
         self.p_per_sample = p_per_sample
         self.mean = mean
         self.sigma = sigma
+        self.clip_to_input_range = clip_to_input_range
 
     @staticmethod
     def get_params(mean: Tuple[float], sigma: Tuple[float]) -> Tuple[float]:
@@ -16,10 +24,14 @@ class AdditiveNoise(YuccaTransform):
         sigma = float(np.random.uniform(*sigma))
         return mean, sigma
 
-    def __additiveNoise__(self, imageVolume, mean, sigma):
+    def __additiveNoise__(self, image, mean, sigma):
         # J = I+n
-        gauss = np.random.normal(mean, sigma, imageVolume.shape)
-        return imageVolume + gauss
+        img_min = image.min()
+        img_max = image.max()
+        image += np.random.normal(mean, sigma, image.shape)
+        if self.clip_to_input_range:
+            image = np.clip(image, a_min=img_min, a_max=img_max)
+        return image
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
@@ -45,11 +57,19 @@ class MultiplicativeNoise(YuccaTransform):
         multiplicativeNoise_sigma
     """
 
-    def __init__(self, data_key="image", p_per_sample=1, mean=(0.0, 0.0), sigma=(1e-3, 1e-4)):
+    def __init__(
+        self,
+        data_key="image",
+        p_per_sample=1,
+        mean=(0.0, 0.0),
+        sigma=(1e-3, 1e-4),
+        clip_to_input_range=False,
+    ):
         self.data_key = data_key
         self.p_per_sample = p_per_sample
         self.mean = mean
         self.sigma = sigma
+        self.clip_to_input_range = clip_to_input_range
 
     @staticmethod
     def get_params(mean: Tuple[float], sigma: Tuple[float]) -> Tuple[float]:
@@ -57,10 +77,15 @@ class MultiplicativeNoise(YuccaTransform):
         sigma = float(np.random.uniform(*sigma))
         return mean, sigma
 
-    def __multiplicativeNoise__(self, imageVolume, mean, sigma):
+    def __multiplicativeNoise__(self, image, mean, sigma):
         # J = I + I*n
-        gauss = np.random.normal(mean, sigma, imageVolume.shape)
-        return imageVolume + imageVolume * gauss
+        img_min = image.min()
+        img_max = image.max()
+        gauss = np.random.normal(mean, sigma, image.shape)
+        image += image * gauss
+        if self.clip_to_input_range:
+            image = np.clip(image, a_min=img_min, a_max=img_max)
+        return image
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict

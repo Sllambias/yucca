@@ -16,7 +16,7 @@ def normalizer(array: np.ndarray, scheme: str, intensities: Optional[dict] = Non
     Clip = for contrast clipping. This will clip values to the 0.01 and 99.99th percentiles
         and then perform 0-1 normalization.
     """
-    accepted_schemes = ["clipping", "minmax", "no_norm", "standardize", "volume_wise_znorm", "255to1"]
+    accepted_schemes = ["clipping", "minmax", "range", "no_norm", "standardize", "volume_wise_znorm", "255to1"]
 
     assert scheme in accepted_schemes, "invalid normalization scheme inserted" f"attempted scheme: {scheme}"
     assert array is not None
@@ -26,10 +26,16 @@ def normalizer(array: np.ndarray, scheme: str, intensities: Optional[dict] = Non
 
     elif scheme == "minmax":
         assert intensities is not None, "ERROR: dataset wide stats are required for minmax"
-        return (array - intensities["min"]) / (intensities["max"] - intensities["min"])
+        return (array - intensities["min"]) / (intensities["max"] - intensities["min"] + 1e-9)
 
     elif scheme == "255to1":
         return array / 255
+
+    elif scheme == "range":
+        print(array.max(), array.min(), intensities)
+        return (array - array.min()) / (array.max() - array.min() + 1e-9) * (
+            intensities["max"] - intensities["min"] + 1e-9
+        ) + intensities["min"]
 
     elif scheme == "standardize":
         assert intensities is not None, "ERROR: dataset wide stats are required for standardize"
@@ -42,7 +48,6 @@ def normalizer(array: np.ndarray, scheme: str, intensities: Optional[dict] = Non
 
     elif scheme == "volume_wise_znorm":
         empty_val = array.min()  # We assume the background is the minimum value
-
         if empty_val != array[0, 0, 0]:
             warnings.warn(
                 "Tried to normalize an array where the top right value was not the same as the minimum value."

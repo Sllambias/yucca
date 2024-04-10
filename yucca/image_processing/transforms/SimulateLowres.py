@@ -11,12 +11,14 @@ class SimulateLowres(YuccaTransform):
         p_per_channel=0.5,
         p_per_axis=0.33,
         zoom_range=(0.5, 1.0),
+        clip_to_input_range=False,
     ):
         self.data_key = data_key
         self.p_per_sample = p_per_sample
         self.p_per_channel = p_per_channel
         self.p_per_axis = p_per_axis
         self.zoom_range = zoom_range
+        self.clip_to_input_range = clip_to_input_range
 
     @staticmethod
     def get_params(zoom_range, shape, p_per_axis):
@@ -31,17 +33,21 @@ class SimulateLowres(YuccaTransform):
                 shape[i] = zoomed_shape[i]
         return shape
 
-    def __simulatelowres__(self, imageVolume, target_shape):
-        shape = imageVolume.shape
+    def __simulatelowres__(self, image, target_shape):
+        img_min = image.min()
+        img_max = image.max()
+        shape = image.shape
         downsampled = resize(
-            imageVolume.astype(float),
+            image.astype(float),
             target_shape,
             order=0,
             mode="edge",
             anti_aliasing=False,
         )
-        imageVolume = resize(downsampled, shape, order=3, mode="edge", anti_aliasing=False)
-        return imageVolume
+        image = resize(downsampled, shape, order=3, mode="edge", anti_aliasing=False)
+        if self.clip_to_input_range:
+            image = np.clip(image, a_min=img_min, a_max=img_max)
+        return image
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict

@@ -121,3 +121,28 @@ class RemoveBatchDimension(YuccaTransform):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
         data_dict = self.__squeeze__(data_dict)
         return data_dict
+
+
+class CollectMetadata(YuccaTransform):
+    # Class to collect arbitrary metadata used in later transforms.
+    # Values here are collected BEFORE ANY augmentations are applied.
+    def __init__(self, data_key="image", label_key="label"):
+        self.data_key = data_key
+        self.label_key = label_key
+
+    @staticmethod
+    def get_params():
+        pass
+
+    def __collect__(self, data_dict):
+        metadata = {}
+        data = data_dict[self.data_key]
+        metadata["min"] = data.min()
+        metadata["max"] = data.max()
+        data_dict["metadata"] = metadata
+        return data_dict
+
+    def __call__(self, packed_data_dict=None, **unpacked_data_dict):
+        data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
+        data_dict = self.__collect__(data_dict)
+        return data_dict
