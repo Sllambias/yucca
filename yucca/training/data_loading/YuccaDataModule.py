@@ -48,7 +48,7 @@ class YuccaDataModule(pl.LightningDataModule):
     def __init__(
         self,
         input_dims_config: InputDimensionsConfig,
-        image_extension: str,
+        image_extension: str = None,
         composed_train_transforms: Optional[torchvision.transforms.Compose] = None,
         composed_val_transforms: Optional[torchvision.transforms.Compose] = None,
         num_workers: Optional[int] = None,
@@ -128,7 +128,8 @@ class YuccaDataModule(pl.LightningDataModule):
             )
 
         if stage == "predict":
-            assert self.pred_data_dir is not None, "set a pred_data_dir for inference to work"
+            assert self.pred_data_dir is not None, "`pred_data_dir` is required in inference"
+            assert self.image_extension is not None, "`image_extension` is required in inference"
             # This dataset contains ONLY the images (and not the labels)
             # It will return a tuple of (case, case_id)
             self.pred_dataset = YuccaTestDataset(
