@@ -8,3 +8,4 @@ class YuccaPlanner_MissingModalities(YuccaPlanner):
         )
         self.name = str(self.__class__.__name__)
         self.allow_missing_modalities = True
+
