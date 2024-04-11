@@ -217,6 +217,7 @@ class YuccaManager:
         )
 
         self.data_module = YuccaDataModule(
+            allow_missing_modalities=plan_config.allow_missing_modalities,
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
             image_extension=plan_config.image_extension,

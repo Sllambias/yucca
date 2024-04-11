@@ -177,9 +177,7 @@ class YuccaPreprocessor(object):
         start_time = time.time()
 
         images, label, image_props = self._preprocess_train_subject(subject_id, label_exists=True, preprocess_label=True)
-
         images = self.cast_to_numpy_array(images=images, label=label, classification=False)
-
         # save the image
         np.save(arraypath, images)
         # save metadata as .pkl
@@ -299,7 +297,6 @@ class YuccaPreprocessor(object):
                 images, label = self.pad_to_size(images, size=final_target_size, label=label)
             else:
                 images = self.pad_to_size(images, size=final_target_size, label=None)
-
         if label_exists and preprocess_label:
             image_props["foreground_locations"], image_props["label_cc_n"], image_props["label_cc_sizes"] = self.analyze_label(
                 label=images[-1]
