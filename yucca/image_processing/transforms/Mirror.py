@@ -7,7 +7,7 @@ class Mirror(YuccaTransform):
         self,
         data_key="image",
         label_key="label",
-        p_per_sample=1,
+        p_per_sample: float = 1.0,
         axes=(0, 1, 2),
         p_mirror_per_axis=0.33,
         skip_label=False,

@@ -7,9 +7,9 @@ class SimulateLowres(YuccaTransform):
     def __init__(
         self,
         data_key="image",
-        p_per_sample=1,
-        p_per_channel=0.5,
-        p_per_axis=0.33,
+        p_per_sample: float = 1.0,
+        p_per_channel: float = 0.5,
+        p_per_axis: float = 0.33,
         zoom_range=(0.5, 1.0),
         clip_to_input_range=False,
     ):

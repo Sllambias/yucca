@@ -7,7 +7,7 @@ class AdditiveNoise(YuccaTransform):
     def __init__(
         self,
         data_key="image",
-        p_per_sample=1,
+        p_per_sample: float = 1.0,
         mean=(0.0, 0.0),
         sigma=(1e-3, 1e-4),
         clip_to_input_range=False,
@@ -60,7 +60,7 @@ class MultiplicativeNoise(YuccaTransform):
     def __init__(
         self,
         data_key="image",
-        p_per_sample=1,
+        p_per_sample: float = 1.0,
         mean=(0.0, 0.0),
         sigma=(1e-3, 1e-4),
         clip_to_input_range=False,
