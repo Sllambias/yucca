@@ -214,7 +214,7 @@ class YuccaLightningModule(L.LightningModule):
             logger=True,
         )
 
-        if batch_idx == 0 and self.current_epoch % self.log_image_every_n_epochs == 0 and wandb.run is not None:
+        if batch_idx == 0 and wandb.run is not None and self.log_image_this_epoch is True:
             self._log_dict_of_images_to_wandb(
                 {
                     "input": inputs.detach().cpu().to(torch.float32).numpy(),
