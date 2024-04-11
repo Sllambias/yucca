@@ -116,8 +116,7 @@ class YuccaLightningModule(L.LightningModule):
             self.loss_fn = _default_loss
 
         self.log_image_every_n_epochs = log_image_every_n_epochs
-        if self.log_image_every_n_epochs is None:
-            self.log_image_every_n_epochs = self.get_image_logging_epochs(self.trainer.max_epochs)
+
         # Inference
         self.sliding_window_overlap = sliding_window_overlap
         self.test_time_augmentation = test_time_augmentation
@@ -163,6 +162,10 @@ class YuccaLightningModule(L.LightningModule):
 
     def teardown(self, stage: str):  # noqa: U100
         wandb.finish()
+
+    def on_train_start(self):
+        if self.log_image_every_n_epochs is None:
+            self.log_image_every_n_epochs = self.get_image_logging_epochs(self.trainer.max_epochs)
 
     def training_step(self, batch, batch_idx):
         inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
@@ -431,6 +434,6 @@ class YuccaLightningModule(L.LightningModule):
     @staticmethod
     def get_image_logging_epochs(final_epoch: int = 1000):
         first_half = np.logspace(0, 5, 10, base=4, endpoint=False)
-        second_half = 1000 - np.logspace(0, 5, 10, base=4, endpoint=False)[::-1]
+        second_half = final_epoch - np.logspace(0, 5, 10, base=4, endpoint=False)[::-1]
         indices = sorted(np.concatenate((first_half, second_half)).astype(int))
         return indices
