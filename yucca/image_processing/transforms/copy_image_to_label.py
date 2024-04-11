@@ -1,7 +1,7 @@
 from yucca.image_processing.transforms.YuccaTransform import YuccaTransform
 
 
-class CopyImageToSeg(YuccaTransform):
+class CopyImageToLabel(YuccaTransform):
     def __init__(self, copy=False, data_key="image", label_key="label"):
         self.copy = copy
         self.data_key = data_key

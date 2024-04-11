@@ -4,7 +4,7 @@ from yucca.image_processing.transforms.normalize import Normalize
 from yucca.image_processing.transforms.formatting import AddBatchDimension, RemoveBatchDimension, CollectMetadata
 from yucca.image_processing.transforms.BiasField import BiasField
 from yucca.image_processing.transforms.Blur import Blur
-from yucca.image_processing.transforms.CopyImageToSeg import CopyImageToSeg
+from yucca.image_processing.transforms.copy_image_to_label import CopyImageToLabel
 from yucca.image_processing.transforms.Gamma import Gamma
 from yucca.image_processing.transforms.Ghosting import MotionGhosting
 from yucca.image_processing.transforms.Masking import Masking
@@ -228,7 +228,7 @@ class YuccaAugmentationComposer:
                 Normalize(normalize=self.normalize, scheme=self.normalization_scheme),
                 # seg
                 DownsampleSegForDS(deep_supervision=self.deep_supervision),
-                CopyImageToSeg(copy=self.copy_image_to_label),
+                CopyImageToLabel(copy=self.copy_image_to_label),
                 # mae
                 Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.cval, ratio=self.mask_ratio),
                 RemoveBatchDimension(),
@@ -240,7 +240,7 @@ class YuccaAugmentationComposer:
         val_transforms = transforms.Compose(
             [
                 AddBatchDimension(),
-                CopyImageToSeg(copy=self.copy_image_to_label),
+                CopyImageToLabel(copy=self.copy_image_to_label),
                 Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.cval, ratio=self.mask_ratio),
                 RemoveBatchDimension(),
             ]

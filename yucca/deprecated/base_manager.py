@@ -34,7 +34,7 @@ from yucca.utils.saving import save_prediction_from_logits
 from yucca.utils.torch_utils import maybe_to_gpu
 from yucca.image_processing.transforms.BiasField import BiasField
 from yucca.image_processing.transforms.Blur import Blur
-from yucca.image_processing.transforms.CopyImageToSeg import CopyImageToSeg
+from yucca.image_processing.transforms.copy_image_to_label import CopyImageToLabel
 from yucca.image_processing.transforms.cropping_and_padding import CropPad
 from yucca.image_processing.transforms.formatting import NumpyToTorch
 from yucca.image_processing.transforms.Gamma import Gamma
@@ -140,7 +140,7 @@ class base_manager(object):
         # Label/segmentation transforms
         self.SkipSeg = False
         self.SegDtype = int
-        self.CopyImageToSeg = False
+        self.copy_image_to_label = False
 
         self.AdditiveNoise_p_per_sample = 0.0
         self.AdditiveNoise_mean = (0.0, 0.0)
@@ -515,8 +515,8 @@ class base_manager(object):
         if self.deep_supervision:
             train_transforms.append(DownsampleSegForDS())
 
-        if self.CopyImageToSeg:
-            train_transforms.append(CopyImageToSeg())
+        if self.copy_image_to_label:
+            train_transforms.append(CopyImageToLabel())
 
         if self.MaskImageForReconstruction:
             train_transforms.append(Masking())
@@ -536,8 +536,8 @@ class base_manager(object):
         if self.deep_supervision:
             val_transforms.append(DownsampleSegForDS())
 
-        if self.CopyImageToSeg:
-            val_transforms.append(CopyImageToSeg())
+        if self.copy_image_to_label:
+            val_transforms.append(CopyImageToLabel())
 
         if self.MaskImageForReconstruction:
             val_transforms.append(Masking())
