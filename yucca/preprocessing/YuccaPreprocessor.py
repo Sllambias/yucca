@@ -68,7 +68,7 @@ class YuccaPreprocessor(object):
         threads=None,
         disable_sanity_checks=False,
         enable_cc_analysis=False,
-        allow_missing_modalities=True,
+        allow_missing_modalities=False,
     ):
         self.name = str(self.__class__.__name__)
         self.task = task
