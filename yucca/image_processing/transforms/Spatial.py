@@ -24,27 +24,31 @@ class Spatial(YuccaTransform):
         label_key="label",
         crop=False,
         cval="min",
+        order=3,
         patch_size: Tuple[int] = None,
+        clip_to_input_range=True,
         random_crop=True,
-        p_deform_per_sample=1,
+        p_deform_per_sample: float = 1.0,
         deform_sigma=(20, 30),
         deform_alpha=(300, 600),
-        p_rot_per_sample=1,
-        p_rot_per_axis=1,
+        p_rot_per_sample: float = 1.0,
+        p_rot_per_axis: float = 1.0,
         x_rot_in_degrees=(0.0, 10.0),
         y_rot_in_degrees=(0.0, 10.0),
         z_rot_in_degrees=(0.0, 10.0),
-        p_scale_per_sample=1,
+        p_scale_per_sample: float = 1.0,
         scale_factor=(0.85, 1.15),
         skip_label=False,
     ):
         self.data_key = data_key
         self.label_key = label_key
         self.skip_label = skip_label
+        self.order = order
         self.do_crop = crop
         self.cval = cval
         self.patch_size = patch_size
         self.random_crop = random_crop
+        self.clip_to_input_range = clip_to_input_range
 
         self.p_deform_per_sample = p_deform_per_sample
         self.deform_sigma = deform_sigma
@@ -107,7 +111,7 @@ class Spatial(YuccaTransform):
         assert isinstance(cval, (int, float)), f"got {cval} of type {type(cval)}"
 
         coords = create_zero_centered_coordinate_matrix(patch_size)
-        imageCanvas = np.zeros((image.shape[0], image.shape[1], *patch_size), dtype=np.float32)
+        image_canvas = np.zeros((image.shape[0], image.shape[1], *patch_size), dtype=np.float32)
 
         # First we apply deformation to the coordinate matrix
         if np.random.uniform() < self.p_deform_per_sample:
@@ -151,15 +155,19 @@ class Spatial(YuccaTransform):
         # Mapping the images to the distorted coordinates
         for b in range(image.shape[0]):
             for c in range(image.shape[1]):
-                imageCanvas[b, c] = map_coordinates(
+                img_min = image.min()
+                img_max = image.max()
+
+                image_canvas[b, c] = map_coordinates(
                     image[b, c].astype(float),
                     coords,
-                    order=3,
+                    order=self.order,
                     mode="constant",
                     cval=cval,
                 ).astype(image.dtype)
-
-        data_dict[self.data_key] = imageCanvas
+                if self.clip_to_input_range:
+                    image_canvas[b, c] = np.clip(image_canvas[b, c], a_min=img_min, a_max=img_max)
+        data_dict[self.data_key] = image_canvas
         if data_dict.get(self.label_key) is not None and not skip_label:
             label = data_dict.get(self.label_key)
             labelCanvas = np.zeros(
