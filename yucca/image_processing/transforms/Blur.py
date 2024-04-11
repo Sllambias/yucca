@@ -5,22 +5,35 @@ from scipy.ndimage import gaussian_filter
 
 
 class Blur(YuccaTransform):
-    def __init__(self, data_key="image", p_per_sample: float = 1.0, p_per_channel: float = 0.5, sigma=(0.5, 1.0)):
+    def __init__(
+        self,
+        data_key="image",
+        p_per_sample: float = 1.0,
+        p_per_channel: float = 0.5,
+        sigma=(0.5, 1.0),
+        clip_to_input_range=False,
+    ):
         self.data_key = data_key
         self.p_per_sample = p_per_sample
         self.p_per_channel = p_per_channel
         self.sigma = sigma
+        self.clip_to_input_range = clip_to_input_range
 
     @staticmethod
     def get_params(sigma: Tuple[float]):
         sigma = np.random.uniform(*sigma)
         return sigma
 
-    def __blur__(self, imageVolume, sigma):
-        for c in range(imageVolume.shape[0]):
+    def __blur__(self, image, sigma):
+        for c in range(image.shape[0]):
+            img_min = image[c].min()
+            img_max = image[c].max()
+
             if np.random.uniform() < self.p_per_channel:
-                imageVolume[c] = gaussian_filter(imageVolume[c], sigma, order=0)
-        return imageVolume
+                image[c] = gaussian_filter(image[c], sigma, order=0)
+                if self.clip_to_input_range:
+                    image[c] = np.clip(image[c], a_min=img_min, a_max=img_max)
+        return image
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict

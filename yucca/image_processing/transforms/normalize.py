@@ -3,15 +3,20 @@ from yucca.preprocessing.normalization import normalizer
 
 
 class Normalize(YuccaTransform):
-    def __init__(self, normalize: bool = False, data_key: str = "image", scheme: str = "volume_wise_znorm"):
+    def __init__(
+        self, normalize: bool = False, data_key: str = "image", metadata_key="metadata", scheme: str = "volume_wise_znorm"
+    ):
         assert scheme in [
             "255to1",
+            "minmax",
+            "range",
             "clip",
             "volume_wise_znorm",
         ], f"Scheme {scheme} not supported, only schemes which are not relying on dataset level properties are currently supported"
 
         self.normalize = normalize
         self.data_key = data_key
+        self.metadata_key = metadata_key
         self.scheme = scheme
 
     @staticmethod
@@ -20,7 +25,11 @@ class Normalize(YuccaTransform):
         pass
 
     def __normalize__(self, data_dict):
-        data_dict[self.data_key] = normalizer(data_dict[self.data_key], scheme=self.scheme)
+        for b in range(data_dict[self.data_key].shape[0]):
+            for c in range(data_dict[self.data_key].shape[1]):
+                data_dict[self.data_key][b, c] = normalizer(
+                    data_dict[self.data_key][b, c], scheme=self.scheme, intensities=data_dict[self.metadata_key]
+                )
         return data_dict
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
