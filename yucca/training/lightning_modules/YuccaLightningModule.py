@@ -39,7 +39,7 @@ class YuccaLightningModule(L.LightningModule):
         step_logging: bool = False,
         test_time_augmentation: bool = False,
         progress_bar: bool = False,
-        log_image_every_n_epochs: int = 1,
+        log_image_every_n_epochs: int = None,
     ):
         super().__init__()
         # Extract parameters from the configurator
@@ -116,6 +116,8 @@ class YuccaLightningModule(L.LightningModule):
             self.loss_fn = _default_loss
 
         self.log_image_every_n_epochs = log_image_every_n_epochs
+        if self.log_image_every_n_epochs is None:
+            self.log_image_every_n_epochs = self.get_image_logging_epochs(self.trainer.max_epochs)
         # Inference
         self.sliding_window_overlap = sliding_window_overlap
         self.test_time_augmentation = test_time_augmentation
@@ -182,7 +184,7 @@ class YuccaLightningModule(L.LightningModule):
             logger=True,
         )
 
-        if batch_idx == 0 and self.current_epoch % self.log_image_every_n_epochs == 0 and wandb.run is not None:
+        if batch_idx == 0 and wandb.run is not None and self.log_image_this_epoch is True:
             self._log_dict_of_images_to_wandb(
                 {
                     "input": inputs.detach().cpu().to(torch.float32).numpy(),
@@ -410,6 +412,25 @@ class YuccaLightningModule(L.LightningModule):
             axes[2].imshow(output, cmap="gray")
             axes[2].set_title("output")
             fig.suptitle(case, fontsize=16)
-
             wandb.log({log_key: wandb.Image(fig)}, commit=False)
             plt.close(fig)
+
+    @property
+    def log_image_this_epoch(self):
+        if isinstance(self.log_image_every_n_epochs, int):
+            if self.current_epoch % self.log_image_every_n_epochs == 0:
+                return True
+            else:
+                return False
+        if isinstance(self.log_image_every_n_epochs, list):
+            if self.current_epoch in self.log_image_every_n_epochs:
+                return True
+            else:
+                return False
+
+    @staticmethod
+    def get_image_logging_epochs(final_epoch: int = 1000):
+        first_half = np.logspace(0, 5, 10, base=4, endpoint=False)
+        second_half = 1000 - np.logspace(0, 5, 10, base=4, endpoint=False)[::-1]
+        indices = sorted(np.concatenate((first_half, second_half)).astype(int))
+        return indices
