@@ -3,7 +3,7 @@ import numpy as np
 
 
 class BiasField(YuccaTransform):
-    def __init__(self, data_key="image", p_per_sample=1):
+    def __init__(self, data_key="image", p_per_sample: float = 1.0):
         self.data_key = data_key
         self.p_per_sample = p_per_sample
 

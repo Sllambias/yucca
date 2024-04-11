@@ -98,7 +98,7 @@ class YuccaAugmentationComposer:
 
         self.gamma_range = (0.5, 2.0)
 
-        self.gibbs_ringing_cutfreq = (96, 129)
+        self.gibbs_ringing_cut_freq = (96, 129)
         self.gibbs_ringing_axes = (0, 2) if is_2D else (0, 3)
 
         self.mask_ratio = 0.5
@@ -106,7 +106,7 @@ class YuccaAugmentationComposer:
         self.mirror_axes = (0, 1) if is_2D else (0, 1, 2)
 
         self.motion_ghosting_alpha = (0.85, 0.95)
-        self.motion_ghosting_numreps = (2, 11)
+        self.motion_ghosting_num_reps = (2, 11)
         self.motion_ghosting_axes = (0, 2) if is_2D else (0, 3)
 
         self.multiplicative_noise_mean = (0, 0)
@@ -187,12 +187,12 @@ class YuccaAugmentationComposer:
                 MotionGhosting(
                     p_per_sample=self.motion_ghosting_p_per_sample,
                     alpha=self.motion_ghosting_alpha,
-                    numReps=self.motion_ghosting_numreps,
+                    num_reps=self.motion_ghosting_num_reps,
                     axes=self.motion_ghosting_axes,
                 ),
                 GibbsRinging(
                     p_per_sample=self.gibbs_ringing_p_per_sample,
-                    cutFreq=self.gibbs_ringing_cutfreq,
+                    cut_freq=self.gibbs_ringing_cut_freq,
                     axes=self.gibbs_ringing_axes,
                 ),
                 SimulateLowres(

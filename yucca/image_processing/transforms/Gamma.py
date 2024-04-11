@@ -73,8 +73,8 @@ class Gamma(YuccaTransform):
     def __init__(
         self,
         data_key="image",
-        p_per_sample=1,
-        p_invert_image=0.05,
+        p_per_sample: float = 1.0,
+        p_invert_image: float = 0.05,
         gamma_range=(0.5, 2.0),
         per_channel=True,
     ):

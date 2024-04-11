@@ -4,7 +4,7 @@ from typing import Tuple
 
 
 class AdditiveNoise(YuccaTransform):
-    def __init__(self, data_key="image", p_per_sample=1, mean=(0.0, 0.0), sigma=(1e-3, 1e-4)):
+    def __init__(self, data_key="image", p_per_sample: float = 1.0, mean=(0.0, 0.0), sigma=(1e-3, 1e-4)):
         self.data_key = data_key
         self.p_per_sample = p_per_sample
         self.mean = mean
@@ -45,7 +45,7 @@ class MultiplicativeNoise(YuccaTransform):
         multiplicativeNoise_sigma
     """
 
-    def __init__(self, data_key="image", p_per_sample=1, mean=(0.0, 0.0), sigma=(1e-3, 1e-4)):
+    def __init__(self, data_key="image", p_per_sample: float = 1.0, mean=(0.0, 0.0), sigma=(1e-3, 1e-4)):
         self.data_key = data_key
         self.p_per_sample = p_per_sample
         self.mean = mean

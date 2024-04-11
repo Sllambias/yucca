@@ -5,7 +5,7 @@ from scipy.ndimage import gaussian_filter
 
 
 class Blur(YuccaTransform):
-    def __init__(self, data_key="image", p_per_sample=1, p_per_channel=0.5, sigma=(0.5, 1.0)):
+    def __init__(self, data_key="image", p_per_sample: float = 1.0, p_per_channel: float = 0.5, sigma=(0.5, 1.0)):
         self.data_key = data_key
         self.p_per_sample = p_per_sample
         self.p_per_channel = p_per_channel
