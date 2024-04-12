@@ -46,7 +46,10 @@ def get_plan_config(
         plans = ckpt_plans
 
     task_type = setup_task_type(plans)
-    num_classes = max(1, plans.get("num_classes") or len(plans["dataset_properties"]["classes"]))
+    if task_type == "self-supervised":
+        num_classes = max(1, plans.get("num_modalities") or len(plans["dataset_properties"]["modalities"]))
+    else:
+        num_classes = max(1, plans.get("num_classes") or len(plans["dataset_properties"]["classes"]))
     image_extension = plans.get("image_extension") or plans["dataset_properties"].get("image_extension") or "nii.gz"
     allow_missing_modalities = plans.get("allow_missing_modalities") or False
 

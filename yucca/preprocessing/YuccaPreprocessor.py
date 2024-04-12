@@ -84,6 +84,11 @@ class YuccaPreprocessor(object):
         self.transpose_backward = []
         self.target_spacing = []
 
+        # set up for segmentation
+        self.classification = False
+        self.label_exists = True
+        self.preprocess_label = True
+
     def initialize_paths(self):
         self.target_dir = join(yucca_preprocessed_data, self.task, self.plans["plans_name"])
         self.input_dir = join(yucca_raw_data, self.task)
@@ -176,10 +181,14 @@ class YuccaPreprocessor(object):
 
         start_time = time.time()
 
-        images, label, image_props = self._preprocess_train_subject(subject_id, label_exists=True, preprocess_label=True)
-        images = self.cast_to_numpy_array(images=images, label=label, classification=False)
+        images, label, image_props = self._preprocess_train_subject(
+            subject_id, label_exists=self.label_exists, preprocess_label=self.preprocess_label
+        )
+        images = self.cast_to_numpy_array(images=images, label=label, classification=self.classification)
+
         # save the image
         np.save(arraypath, images)
+
         # save metadata as .pkl
         save_pickle(image_props, picklepath)
 
@@ -702,7 +711,7 @@ class YuccaPreprocessor(object):
             images = np.array(images, dtype=dtype)
         elif classification:
             images.append(label)
-            images = np.array(images, dtype=dtype)
+            images = np.array(images, dtype="object")
         elif self.allow_missing_modalities:  # Segmentation with missing modalities
             images.append(np.array(label)[np.newaxis])
             images = np.array(images, dtype=dtype)

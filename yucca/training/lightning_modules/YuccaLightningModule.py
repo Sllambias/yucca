@@ -9,12 +9,12 @@ import os
 import matplotlib.pyplot as plt
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
-from torchmetrics.classification import Dice, Accuracy, AUROC
+from torchmetrics.classification import Dice
 from torchmetrics.regression import MeanAbsoluteError
 from yucca.training.loss_and_optim.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.utils.kwargs import filter_kwargs
-from yucca.evaluation.training_metrics import F1
+from yucca.evaluation.training_metrics import Accuracy, AUROC, F1
 
 
 class YuccaLightningModule(L.LightningModule):
@@ -73,21 +73,23 @@ class YuccaLightningModule(L.LightningModule):
 
         self.progress_bar = progress_bar
 
+        logging.info(f"Starting a {self.task_type} task")
         if self.task_type == "classification":
             tmetrics_task = "multiclass" if self.num_classes > 2 else "binary"
             # can we get per-class?
             self.train_metrics = MetricCollection(
                 {
-                    "train_acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
-                    "train_roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
+                    "train/acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
+                    "train/roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
                 }
             )
             self.val_metrics = MetricCollection(
                 {
-                    "val_acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
-                    "val_roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
+                    "val/acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
+                    "val/roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
                 }
             )
+            _default_loss = "CE"
 
         if self.task_type == "segmentation":
             self.train_metrics = MetricCollection(

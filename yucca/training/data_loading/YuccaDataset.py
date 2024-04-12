@@ -100,7 +100,6 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
             data = self.replace_missing_modalities_with_zero_arrays(data)
 
         image, label = self.unpack_array(data)
-
         data_dict = {"file_path": case}  # metadata that can be very useful for debugging.
         if self.task_type in ["classification", "segmentation"]:
             data_dict.update({"image": image, "label": label})
@@ -126,7 +125,8 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         assert data.dtype == "object", "allow missing modalities is true but dtype is not object"
         # First find the array with the largest array.
         # in classification this avoids setting the zero array to the 1d array with classes
-        idx_largest_array = np.max([(idx, i.size) for idx, i in enumerate(data)], 0)[0]
+        sizes = [i.size for i in data]
+        idx_largest_array = np.where(sizes == np.max(sizes))[0][0]
         for idx, i in enumerate(data):
             if i.size == 0:
                 data[idx] = np.zeros(data[idx_largest_array].squeeze().shape)
