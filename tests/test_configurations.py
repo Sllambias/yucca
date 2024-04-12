@@ -40,6 +40,7 @@ def test_configurations(setup_preprocessed_segmentation_data):
         model_dimensions=task_config.model_dimensions,
         num_classes=plan_config.num_classes,
         model_name=task_config.model_name,
+        max_vram=4,
         batch_size="tiny",
         patch_size="tiny",
     )
