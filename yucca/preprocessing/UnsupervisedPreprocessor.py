@@ -2,18 +2,13 @@
 Takes raw data conforming with Yucca standards and preprocesses according to the generic scheme
 """
 
-import numpy as np
 import re
-import os
-import logging
-import time
+
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     subfiles,
-    save_pickle,
-    isfile,
 )
 
 
