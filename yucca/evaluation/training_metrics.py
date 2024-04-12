@@ -19,7 +19,6 @@ class AUROC(Metric):
         self.method = TorchAUROC(*args, **kwargs)
 
     def forward(self, input: Tensor, target: Tensor) -> Tensor:
-        print(target)
         if len(target.shape) == len(input.shape):
             assert target.shape[1] == 1
             target = target[:, 0]
