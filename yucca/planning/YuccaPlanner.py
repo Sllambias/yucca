@@ -47,6 +47,7 @@ class YuccaPlanner(object):
         self.target_coordinate_system = "RAS"
         self.crop_to_nonzero = True
         self.norm_op = "standardize"
+        self.allow_missing_modalities = False
 
         # This is only relevant for planners with fixed sizes.
         self.keep_aspect_ratio_when_using_target_size = True
@@ -138,7 +139,13 @@ class YuccaPlanner(object):
             current_module="yucca.preprocessing",
         )
 
-        preprocessor = preprocessor(self.plans_path, self.task, self.threads, self.disable_sanity_checks)
+        preprocessor = preprocessor(
+            plans_path=self.plans_path,
+            task=self.task,
+            threads=self.threads,
+            disable_sanity_checks=self.disable_sanity_checks,
+            allow_missing_modalities=self.allow_missing_modalities,
+        )
         preprocessor.run()
         self.postprocess()
 
@@ -162,6 +169,7 @@ class YuccaPlanner(object):
         self.plans["dataset_properties"] = self.dataset_properties
         self.plans["plans_name"] = self.name
         self.plans["suggested_dimensionality"] = self.suggested_dimensionality
+        self.plans["allow_missing_modalities"] = self.allow_missing_modalities
 
     def postprocess(self):
         pkl_files = subfiles(self.plans_folder, suffix=".pkl")
