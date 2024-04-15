@@ -102,7 +102,6 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         else:
             image, label = self.unpack(data)
 
-        image, label = self.unpack_array(data)
         data_dict = {"file_path": case}  # metadata that can be very useful for debugging.
         if self.task_type in ["classification", "segmentation"]:
             data_dict.update({"image": image, "label": label})
