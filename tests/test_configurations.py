@@ -8,7 +8,7 @@ def test_configurations(setup_preprocessed_segmentation_data):
     from yucca.training.configuration.configure_checkpoint import get_checkpoint_config
     from yucca.training.configuration.configure_seed import seed_everything_and_get_seed_config
     from yucca.paths import yucca_models, yucca_raw_data, yucca_preprocessed_data
-    print(yucca_models, yucca_raw_data, yucca_preprocessed_data)
+
     task_config = get_task_config(task="Task000_TEST_SEGMENTATION")
     assert task_config is not None and isinstance(task_config.continue_from_most_recent, bool)
 
