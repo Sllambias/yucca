@@ -9,12 +9,12 @@ import os
 import matplotlib.pyplot as plt
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
-from torchmetrics.classification import Dice, Accuracy, AUROC
+from torchmetrics.classification import Dice
 from torchmetrics.regression import MeanAbsoluteError
 from yucca.training.loss_and_optim.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.utils.kwargs import filter_kwargs
-from yucca.evaluation.training_metrics import F1
+from yucca.evaluation.training_metrics import Accuracy, AUROC, F1
 
 
 class YuccaLightningModule(L.LightningModule):
@@ -39,7 +39,7 @@ class YuccaLightningModule(L.LightningModule):
         step_logging: bool = False,
         test_time_augmentation: bool = False,
         progress_bar: bool = False,
-        log_image_every_n_epochs: int = 1,
+        log_image_every_n_epochs: int = None,
     ):
         super().__init__()
         # Extract parameters from the configurator
@@ -73,21 +73,23 @@ class YuccaLightningModule(L.LightningModule):
 
         self.progress_bar = progress_bar
 
+        logging.info(f"Starting a {self.task_type} task")
         if self.task_type == "classification":
             tmetrics_task = "multiclass" if self.num_classes > 2 else "binary"
             # can we get per-class?
             self.train_metrics = MetricCollection(
                 {
-                    "train_acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
-                    "train_roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
+                    "train/acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
+                    "train/roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
                 }
             )
             self.val_metrics = MetricCollection(
                 {
-                    "val_acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
-                    "val_roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
+                    "val/acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
+                    "val/roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
                 }
             )
+            _default_loss = "CE"
 
         if self.task_type == "segmentation":
             self.train_metrics = MetricCollection(
@@ -116,6 +118,7 @@ class YuccaLightningModule(L.LightningModule):
             self.loss_fn = _default_loss
 
         self.log_image_every_n_epochs = log_image_every_n_epochs
+
         # Inference
         self.sliding_window_overlap = sliding_window_overlap
         self.test_time_augmentation = test_time_augmentation
@@ -162,6 +165,10 @@ class YuccaLightningModule(L.LightningModule):
     def teardown(self, stage: str):  # noqa: U100
         wandb.finish()
 
+    def on_train_start(self):
+        if self.log_image_every_n_epochs is None:
+            self.log_image_every_n_epochs = self.get_image_logging_epochs(self.trainer.max_epochs)
+
     def training_step(self, batch, batch_idx):
         inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
         output = self(inputs)
@@ -182,7 +189,7 @@ class YuccaLightningModule(L.LightningModule):
             logger=True,
         )
 
-        if batch_idx == 0 and self.current_epoch % self.log_image_every_n_epochs == 0 and wandb.run is not None:
+        if batch_idx == 0 and wandb.run is not None and self.log_image_this_epoch is True:
             self._log_dict_of_images_to_wandb(
                 {
                     "input": inputs.detach().cpu().to(torch.float32).numpy(),
@@ -209,7 +216,7 @@ class YuccaLightningModule(L.LightningModule):
             logger=True,
         )
 
-        if batch_idx == 0 and self.current_epoch % self.log_image_every_n_epochs == 0 and wandb.run is not None:
+        if batch_idx == 0 and wandb.run is not None and self.log_image_this_epoch is True:
             self._log_dict_of_images_to_wandb(
                 {
                     "input": inputs.detach().cpu().to(torch.float32).numpy(),
@@ -410,6 +417,25 @@ class YuccaLightningModule(L.LightningModule):
             axes[2].imshow(output, cmap="gray")
             axes[2].set_title("output")
             fig.suptitle(case, fontsize=16)
-
             wandb.log({log_key: wandb.Image(fig)}, commit=False)
             plt.close(fig)
+
+    @property
+    def log_image_this_epoch(self):
+        if isinstance(self.log_image_every_n_epochs, int):
+            if self.current_epoch % self.log_image_every_n_epochs == 0:
+                return True
+            else:
+                return False
+        if isinstance(self.log_image_every_n_epochs, list):
+            if self.current_epoch in self.log_image_every_n_epochs:
+                return True
+            else:
+                return False
+
+    @staticmethod
+    def get_image_logging_epochs(final_epoch: int = 1000):
+        first_half = np.logspace(0, 5, 10, base=4, endpoint=False)
+        second_half = final_epoch - np.logspace(0, 5, 10, base=4, endpoint=False)[::-1]
+        indices = sorted(np.concatenate((first_half, second_half)).astype(int))
+        return indices
