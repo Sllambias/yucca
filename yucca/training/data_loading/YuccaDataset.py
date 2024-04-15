@@ -24,6 +24,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         self.patch_size = patch_size
         self.task_type = task_type
         assert task_type in ["classification", "segmentation", "self-supervised", "contrastive"]
+        self.supervised = self.task_type in ["classification", "segmentation"]
         self.label_dtype = label_dtype
         self.allow_missing_modalities = allow_missing_modalities
 
@@ -32,7 +33,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         # for segmentation and classification we override the default None
         # because arrays are saved as floats and we want them to be ints.
         if self.label_dtype is None:
-            if self.task_type in ["segmentation", "classification"]:
+            if self.supervised:
                 self.label_dtype = torch.int32
 
         self.croppad = CropPad(patch_size=self.patch_size, p_oversample_foreground=0.33)
@@ -97,7 +98,9 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         data = self.load_and_maybe_keep_volume(case)
 
         if self.allow_missing_modalities:
-            data = self.replace_missing_modalities_with_zero_arrays(data)
+            image, label = self.unpack_with_zeros(data)
+        else:
+            image, label = self.unpack(data)
 
         image, label = self.unpack_array(data)
         data_dict = {"file_path": case}  # metadata that can be very useful for debugging.
@@ -132,23 +135,32 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
                 data[idx] = np.zeros(data[idx_largest_array].squeeze().shape)
         return data
 
-    def unpack_array(self, data):
-        if self.task_type in ["self-supervised", "contrastive"]:
-            if data.dtype == "object":
-                images = np.array([mod for mod in data])
-            else:
-                images = data
-            return images, None
-        elif self.task_type in ["classification", "segmentation"]:
-            if data.dtype == "object":
-                images = np.array([mod for mod in data[:-1]])
-                label = data[-1:][0]
-            else:
-                images = data[:-1]
-                label = data[-1:]
-            return images, label
+    def unpack(self, data):
+        if self.supervised:
+            return data[:-1], data[-1:]
+        return data, None
+
+    def unpack_with_zeros(self, data):
+        assert data.dtype == "object", "allow missing modalities is true but dtype is not object"
+
+        # First find the array with the largest array.
+        # in classification this avoids setting the zero array to the 1d array with classes
+        sizes = [i.size for i in data]
+        idx_largest_array = np.where(sizes == np.max(sizes))[0][0]
+
+        # replace missing modalities with zero-filed arrays
+        for idx, i in enumerate(data):
+            if i.size == 0:
+                data[idx] = np.zeros(data[idx_largest_array].squeeze().shape)
+
+        # unpack array into images and (maybe) labels
+        if self.supervised:
+            images = np.array([mod for mod in data[:-1]])
+            label = data[-1:][0]
         else:
-            logging.warn("No valid task type found.")
+            images = np.array([mod for mod in data])
+            label = None
+        return images, label
 
 
 class YuccaTestDataset(torch.utils.data.Dataset):

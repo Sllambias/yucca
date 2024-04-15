@@ -705,16 +705,17 @@ class YuccaPreprocessor(object):
                 )
 
     def cast_to_numpy_array(self, images: list, label=None, classification=False):
-        dtype = "float32" if not self.allow_missing_modalities else "object"
 
-        if label is None:  # self-supervised
-            images = np.array(images, dtype=dtype)
+        if label is None and not self.allow_missing_modalities:  # self-supervised
+            images = np.array(images, dtype=np.float32)
+        elif label is None and self.allow_missing_modalities:  # self-supervised with missing mods
+            images = np.array(images, dtype="object")
         elif classification:
             images.append(label)
             images = np.array(images, dtype="object")
-        elif self.allow_missing_modalities:  # Segmentation with missing modalities
+        elif self.allow_missing_modalities:  # segmentation with missing modalities
             images.append(np.array(label)[np.newaxis])
-            images = np.array(images, dtype=dtype)
+            images = np.array(images, dtype=np.float32)
         else:  # Standard segmentation
             images = np.vstack((np.array(images), np.array(label)[np.newaxis]))
         return images
