@@ -97,7 +97,7 @@ def main():
     )
     parser.add_argument("--train_batches_per_step", type=int, default=250)
     parser.add_argument("--val_batches_per_step", type=int, default=50)
-
+    parser.add_argument("--fast_dev_run", action="store_true")
     args = parser.parse_args()
 
     # Required
@@ -115,6 +115,7 @@ def main():
     deep_supervision = args.ds
     epochs = args.epochs
     experiment = args.experiment
+    fast_dev_run = args.fast_dev_run
     loss = args.loss
     lr = args.lr
     max_vram = args.max_vram
@@ -130,7 +131,7 @@ def main():
     train_batches_per_step = args.train_batches_per_step
     val_batches_per_step = args.val_batches_per_step
 
-    kwargs = {}
+    kwargs = {"fast_dev_run": fast_dev_run}
 
     assert model_name in [
         "MedNeXt",
