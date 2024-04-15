@@ -98,9 +98,9 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         data = self.load_and_maybe_keep_volume(case)
 
         if self.allow_missing_modalities:
-            image, label = self.unpack_with_zeros(data)
+            image, label = self.unpack_with_zeros(data, supervised=self.supervised)
         else:
-            image, label = self.unpack(data)
+            image, label = self.unpack(data, supervised=self.supervised)
 
         data_dict = {"file_path": case}  # metadata that can be very useful for debugging.
         if self.task_type in ["classification", "segmentation"]:
@@ -123,23 +123,12 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
             data_dict = self.composed_transforms(data_dict)
         return self.to_torch(data_dict)
 
-    def replace_missing_modalities_with_zero_arrays(self, data):
-        assert data.dtype == "object", "allow missing modalities is true but dtype is not object"
-        # First find the array with the largest array.
-        # in classification this avoids setting the zero array to the 1d array with classes
-        sizes = [i.size for i in data]
-        idx_largest_array = np.where(sizes == np.max(sizes))[0][0]
-        for idx, i in enumerate(data):
-            if i.size == 0:
-                data[idx] = np.zeros(data[idx_largest_array].squeeze().shape)
-        return data
-
-    def unpack(self, data):
-        if self.supervised:
+    def unpack(self, data, supervised: bool):
+        if supervised:
             return data[:-1], data[-1:]
         return data, None
 
-    def unpack_with_zeros(self, data):
+    def unpack_with_zeros(self, data, supervised: bool):
         assert data.dtype == "object", "allow missing modalities is true but dtype is not object"
 
         # First find the array with the largest array.
@@ -153,7 +142,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
                 data[idx] = np.zeros(data[idx_largest_array].squeeze().shape)
 
         # unpack array into images and (maybe) labels
-        if self.supervised:
+        if supervised:
             images = np.array([mod for mod in data[:-1]])
             label = data[-1:][0]
         else:
