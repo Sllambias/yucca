@@ -715,9 +715,9 @@ class YuccaPreprocessor(object):
             images = np.array(images, dtype="object")
         elif self.allow_missing_modalities:  # segmentation with missing modalities
             images.append(np.array(label)[np.newaxis])
-            images = np.array(images, dtype=np.float32)
+            images = np.array(images, dtype="object")
         else:  # Standard segmentation
-            images = np.vstack((np.array(images), np.array(label)[np.newaxis]))
+            images = np.vstack((np.array(images), np.array(label)[np.newaxis]), dtype=np.float32)
         return images
 
     def verify_label_validity(self, label, subject_id):
