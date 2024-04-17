@@ -13,6 +13,7 @@ from yucca.training.configuration.configure_paths import get_path_config
 from yucca.training.configuration.configure_plans import get_plan_config
 from yucca.training.configuration.configure_input_dims import get_input_dims_config
 from yucca.training.data_loading.YuccaDataModule import YuccaDataModule
+from yucca.training.data_loading.YuccaDataset import YuccaTrainDataset, YuccaTestDataset
 from yucca.training.data_loading.samplers import InfiniteRandomSampler
 from yucca.training.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from yucca.paths import yucca_results
@@ -117,8 +118,10 @@ class YuccaManager:
         if self.kwargs.get("fast_dev_run"):
             self.setup_fast_dev_run()
 
-        # Statics
+        # defaults
         self.trainer = L.Trainer
+        self.train_dataset = YuccaTrainDataset
+        self.test_dataset = YuccaTestDataset
 
     def initialize(
         self,
@@ -233,7 +236,9 @@ class YuccaManager:
             splits_config=splits_config,
             split_idx=task_config.split_idx,
             task_type=plan_config.task_type,
+            test_dataset=self.test_dataset,
             train_data_dir=path_config.train_data_dir,
+            train_dataset=self.train_dataset,
         )
 
         self.verify_modules_are_valid()

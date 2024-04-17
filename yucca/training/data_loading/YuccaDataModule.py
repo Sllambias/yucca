@@ -60,9 +60,11 @@ class YuccaDataModule(pl.LightningDataModule):
         splits_config: Optional[SplitConfig] = None,
         split_idx: Optional[int] = None,
         task_type: Optional[str] = None,
+        test_dataset: Optional[torch.utils.data.Dataset] = YuccaTestDataset,
+        train_data_dir: Optional[str] = None,
+        train_dataset: Optional[torch.utils.data.Dataset] = YuccaTrainDataset,
         train_sampler: Optional[Sampler] = InfiniteRandomSampler,
         val_sampler: Optional[Sampler] = InfiniteRandomSampler,
-        train_data_dir: Optional[str] = None,
     ):
         super().__init__()
 
