@@ -60,9 +60,9 @@ class YuccaDataModule(pl.LightningDataModule):
         splits_config: Optional[SplitConfig] = None,
         split_idx: Optional[int] = None,
         task_type: Optional[str] = None,
-        test_dataset: Optional[torch.utils.data.Dataset] = YuccaTestDataset,
+        test_dataset_class: Optional[torch.utils.data.Dataset] = YuccaTestDataset,
         train_data_dir: Optional[str] = None,
-        train_dataset: Optional[torch.utils.data.Dataset] = YuccaTrainDataset,
+        train_dataset_class: Optional[torch.utils.data.Dataset] = YuccaTrainDataset,
         train_sampler: Optional[Sampler] = InfiniteRandomSampler,
         val_sampler: Optional[Sampler] = InfiniteRandomSampler,
     ):
@@ -92,9 +92,14 @@ class YuccaDataModule(pl.LightningDataModule):
         # Set default values
         self.num_workers = max(0, int(torch.get_num_threads() - 1)) if num_workers is None else num_workers
         self.val_num_workers = self.num_workers
+        self.test_dataset_class = test_dataset_class
         self.train_sampler = train_sampler
+        self.train_dataset_class = train_dataset_class
         self.val_sampler = val_sampler
         logging.info(f"Using {self.num_workers} workers")
+        logging.info(
+            f"Using dataset class: {self.train_dataset_class} for train/val and {self.test_dataset_class} for inference"
+        )
 
     def setup(self, stage: Literal["fit", "test", "predict"]):
         logging.info(f"Setting up data for stage: {stage}")
@@ -117,7 +122,7 @@ class YuccaDataModule(pl.LightningDataModule):
             if len(self.val_samples) < 100:
                 logging.info(f"Validating on samples: {self.val_samples}")
 
-            self.train_dataset = YuccaTrainDataset(
+            self.train_dataset = self.train_dataset_class(
                 self.train_samples,
                 composed_transforms=self.composed_train_transforms,
                 patch_size=self.pre_aug_patch_size if self.pre_aug_patch_size is not None else self.patch_size,
@@ -125,7 +130,7 @@ class YuccaDataModule(pl.LightningDataModule):
                 allow_missing_modalities=self.allow_missing_modalities,
             )
 
-            self.val_dataset = YuccaTrainDataset(
+            self.val_dataset = self.train_dataset_class(
                 self.val_samples,
                 composed_transforms=self.composed_val_transforms,
                 patch_size=self.patch_size,
@@ -138,7 +143,7 @@ class YuccaDataModule(pl.LightningDataModule):
             assert self.image_extension is not None, "`image_extension` is required in inference"
             # This dataset contains ONLY the images (and not the labels)
             # It will return a tuple of (case, case_id)
-            self.pred_dataset = YuccaTestDataset(
+            self.pred_dataset = self.test_dataset_class(
                 self.pred_data_dir,
                 pred_save_dir=self.pred_save_dir,
                 overwrite_predictions=self.overwrite_predictions,

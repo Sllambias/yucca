@@ -9,7 +9,6 @@ class YuccaTrainDataset_1modality(YuccaTrainDataset):
         **kwargs,
     ):
         super().__init__(
-            patch_based_training=False,
             *args,
             **kwargs,
         )

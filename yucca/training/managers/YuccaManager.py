@@ -120,8 +120,8 @@ class YuccaManager:
 
         # defaults
         self.trainer = L.Trainer
-        self.train_dataset = YuccaTrainDataset
-        self.test_dataset = YuccaTestDataset
+        self.train_dataset_class = YuccaTrainDataset
+        self.test_dataset_class = YuccaTestDataset
 
     def initialize(
         self,
@@ -159,7 +159,7 @@ class YuccaManager:
 
         seed_config = seed_everything_and_get_seed_config(ckpt_seed=self.ckpt_config.ckpt_seed)
 
-        plan_config = get_plan_config(
+        plan_config = self.get_plan_config(
             ckpt_plans=self.ckpt_config.ckpt_plans,
             plans_path=path_config.plans_path,
             stage=stage,
@@ -236,9 +236,9 @@ class YuccaManager:
             splits_config=splits_config,
             split_idx=task_config.split_idx,
             task_type=plan_config.task_type,
-            test_dataset=self.test_dataset,
+            test_dataset_class=self.test_dataset_class,
             train_data_dir=path_config.train_data_dir,
-            train_dataset=self.train_dataset,
+            train_dataset_class=self.train_dataset_class,
         )
 
         self.verify_modules_are_valid()
@@ -303,6 +303,15 @@ class YuccaManager:
             return_predictions=False,
         )
         self.finish()
+
+    @staticmethod
+    def get_plan_config(ckpt_plans, plans_path, stage):
+        plan_config = get_plan_config(
+            ckpt_plans=ckpt_plans,
+            plans_path=plans_path,
+            stage=stage,
+        )
+        return plan_config
 
     def finish(self):
         wandb.finish()
