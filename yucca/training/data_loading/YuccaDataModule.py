@@ -48,7 +48,8 @@ class YuccaDataModule(pl.LightningDataModule):
     def __init__(
         self,
         input_dims_config: InputDimensionsConfig,
-        image_extension: str = None,
+        allow_missing_modalities: Optional[bool] = False,
+        image_extension: Optional[str] = None,
         composed_train_transforms: Optional[torchvision.transforms.Compose] = None,
         composed_val_transforms: Optional[torchvision.transforms.Compose] = None,
         num_workers: Optional[int] = None,
@@ -76,6 +77,7 @@ class YuccaDataModule(pl.LightningDataModule):
         self.train_data_dir = train_data_dir
 
         # Set by initialize()
+        self.allow_missing_modalities = allow_missing_modalities
         self.composed_train_transforms = composed_train_transforms
         self.composed_val_transforms = composed_val_transforms
         self.pre_aug_patch_size = pre_aug_patch_size
@@ -118,6 +120,7 @@ class YuccaDataModule(pl.LightningDataModule):
                 composed_transforms=self.composed_train_transforms,
                 patch_size=self.pre_aug_patch_size if self.pre_aug_patch_size is not None else self.patch_size,
                 task_type=self.task_type,
+                allow_missing_modalities=self.allow_missing_modalities,
             )
 
             self.val_dataset = YuccaTrainDataset(
@@ -125,6 +128,7 @@ class YuccaDataModule(pl.LightningDataModule):
                 composed_transforms=self.composed_val_transforms,
                 patch_size=self.patch_size,
                 task_type=self.task_type,
+                allow_missing_modalities=self.allow_missing_modalities,
             )
 
         if stage == "predict":

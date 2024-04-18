@@ -114,6 +114,9 @@ class YuccaManager:
             if not torch.cuda.is_bf16_supported():
                 self.precision = self.precision.replace("bf", "")
 
+        if self.kwargs.get("fast_dev_run"):
+            self.setup_fast_dev_run()
+
         # Statics
         self.trainer = L.Trainer
 
@@ -217,6 +220,7 @@ class YuccaManager:
         )
 
         self.data_module = YuccaDataModule(
+            allow_missing_modalities=plan_config.allow_missing_modalities,
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
             image_extension=plan_config.image_extension,
@@ -321,6 +325,16 @@ class YuccaManager:
         data = torch.randn((batch_size, modalities, *patch_size))
         flops = measure_FLOPs(lightning_module.model, data)
         return flops
+
+    def setup_fast_dev_run(self):
+        self.batch_size = 2
+        self.patch_size = (32, 32)
+        self.enable_logging = False
+        self.model_dimensions = "2D"
+        self.precision = 32
+        self.kwargs["accelerator"] = "cpu"
+        self.train_batches_per_step = 10
+        self.val_batches_per_step = 5
 
 
 if __name__ == "__main__":
