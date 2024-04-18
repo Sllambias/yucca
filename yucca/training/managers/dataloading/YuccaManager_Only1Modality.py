@@ -1,6 +1,5 @@
 from yucca.training.managers.YuccaManager import YuccaManager
 from yucca.training.data_loading.alternative_datasets.YuccaDataset_1modality import YuccaTrainDataset_1modality
-from yucca.training.configuration.configure_plans import PlanConfig
 
 
 class YuccaManager_Only1Modality(YuccaManager):

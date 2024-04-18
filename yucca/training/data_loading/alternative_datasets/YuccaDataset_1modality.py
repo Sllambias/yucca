@@ -26,7 +26,7 @@ class YuccaTrainDataset_1modality(YuccaTrainDataset):
         images, label = super().unpack_with_zeros(data, supervised)
 
         # first find a modality that is not a zero-array
-        valid_modalities = [i for i in range(images.shape[0]) if np.any(x[i])]
+        valid_modalities = [i for i in range(images.shape[0]) if np.any(data[i])]
 
         chosen_modality = np.random.choice(valid_modalities)
         images = images[chosen_modality : chosen_modality + 1]
