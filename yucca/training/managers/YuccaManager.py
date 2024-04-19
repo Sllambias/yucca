@@ -13,6 +13,7 @@ from yucca.training.configuration.configure_paths import get_path_config
 from yucca.training.configuration.configure_plans import get_plan_config
 from yucca.training.configuration.configure_input_dims import get_input_dims_config
 from yucca.training.data_loading.YuccaDataModule import YuccaDataModule
+from yucca.training.data_loading.YuccaDataset import YuccaTrainDataset, YuccaTestDataset
 from yucca.training.data_loading.samplers import InfiniteRandomSampler
 from yucca.training.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from yucca.paths import yucca_results
@@ -117,8 +118,10 @@ class YuccaManager:
         if self.kwargs.get("fast_dev_run"):
             self.setup_fast_dev_run()
 
-        # Statics
+        # defaults
         self.trainer = L.Trainer
+        self.train_dataset_class = YuccaTrainDataset
+        self.test_dataset_class = YuccaTestDataset
 
     def initialize(
         self,
@@ -156,7 +159,7 @@ class YuccaManager:
 
         seed_config = seed_everything_and_get_seed_config(ckpt_seed=self.ckpt_config.ckpt_seed)
 
-        plan_config = get_plan_config(
+        plan_config = self.get_plan_config(
             ckpt_plans=self.ckpt_config.ckpt_plans,
             plans_path=path_config.plans_path,
             stage=stage,
@@ -233,7 +236,9 @@ class YuccaManager:
             splits_config=splits_config,
             split_idx=task_config.split_idx,
             task_type=plan_config.task_type,
+            test_dataset_class=self.test_dataset_class,
             train_data_dir=path_config.train_data_dir,
+            train_dataset_class=self.train_dataset_class,
         )
 
         self.verify_modules_are_valid()
@@ -298,6 +303,15 @@ class YuccaManager:
             return_predictions=False,
         )
         self.finish()
+
+    @staticmethod
+    def get_plan_config(ckpt_plans, plans_path, stage):
+        plan_config = get_plan_config(
+            ckpt_plans=ckpt_plans,
+            plans_path=plans_path,
+            stage=stage,
+        )
+        return plan_config
 
     def finish(self):
         wandb.finish()

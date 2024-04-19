@@ -98,6 +98,7 @@ def main():
     parser.add_argument("--train_batches_per_step", type=int, default=250)
     parser.add_argument("--val_batches_per_step", type=int, default=50)
     parser.add_argument("--fast_dev_run", action="store_true")
+    parser.add_argument("--accelerator", type=str, default=None)
     args = parser.parse_args()
 
     # Required
@@ -132,6 +133,8 @@ def main():
     val_batches_per_step = args.val_batches_per_step
 
     kwargs = {"fast_dev_run": fast_dev_run}
+    if args.accelerator is not None:
+        kwargs["accelerator"] = args.accelerator
 
     assert model_name in [
         "MedNeXt",

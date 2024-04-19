@@ -1,4 +1,3 @@
-# %%
 from yucca.training.managers.YuccaManager import YuccaManager
 
 
@@ -13,6 +12,3 @@ class YuccaManager_NoPatches(YuccaManager):
             *args,
             **kwargs,
         )
-
-
-# %%
