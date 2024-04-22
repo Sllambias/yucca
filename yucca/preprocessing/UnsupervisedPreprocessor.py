@@ -18,7 +18,7 @@ class UnsupervisedPreprocessor(YuccaPreprocessor):
     def initialize_paths(self):
         # Have to overwrite how we get the subject_ids as there's no labelsTr to get them from.
         # Therefore we use the imagesTr folder and remove the modality suffix.
-        self.target_dir = join(yucca_preprocessed_data, self.task, self.plans["plans_name"])
+        self.target_dir = join(yucca_preprocessed_data, self.task, self.plans["plans_name"] + "__" + self.name)
         self.input_dir = join(yucca_raw_data, self.task)
         self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
 

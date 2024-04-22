@@ -90,7 +90,15 @@ class YuccaPreprocessor(object):
         self.preprocess_label = True
 
     def initialize_paths(self):
-        self.target_dir = join(yucca_preprocessed_data, self.task, self.plans["plans_name"])
+        self.target_dir = join(yucca_preprocessed_data, self.task, self.plans["plans_name"] + "__" + self.name)
+        if self.compress:
+            assert (
+                len(subfiles(self.target_dir, suffix=".npy")) == 0
+            ), "detected uncompressed images in folder while compression is enabled. Please delete uncompressed images first to avoid duplicate"
+        else:
+            assert (
+                len(subfiles(self.target_dir, suffix=".npz")) == 0
+            ), "detected compressed images in folder while compression is disabled. Please delete compressed images first to avoid duplicate"
         self.input_dir = join(yucca_raw_data, self.task)
         self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
         self.subject_ids = [
@@ -173,7 +181,10 @@ class YuccaPreprocessor(object):
         Print the path where the preprocessed data is saved.
         """
         subject_id = subject_id.split(os.extsep, 1)[0]
-        arraypath = join(self.target_dir, subject_id + ".npy")
+        if self.compress:
+            arraypath = join(self.target_dir, subject_id + ".npz")
+        else:
+            arraypath = join(self.target_dir, subject_id + ".npy")
         picklepath = join(self.target_dir, subject_id + ".pkl")
         if isfile(arraypath) and isfile(picklepath):
             logging.info(f"Case: {subject_id} already exists. Skipping.")
@@ -187,7 +198,10 @@ class YuccaPreprocessor(object):
         images = self.cast_to_numpy_array(images=images, label=label, classification=self.classification)
 
         # save the image
-        np.save(arraypath, images)
+        if self.compress:
+            np.savez_compressed(arraypath, data=images)
+        else:
+            np.save(arraypath, images)
 
         # save metadata as .pkl
         save_pickle(image_props, picklepath)
