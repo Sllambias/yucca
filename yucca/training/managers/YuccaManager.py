@@ -13,6 +13,7 @@ from yucca.training.configuration.configure_paths import get_path_config
 from yucca.training.configuration.configure_plans import get_plan_config
 from yucca.training.configuration.configure_input_dims import get_input_dims_config
 from yucca.training.data_loading.YuccaDataModule import YuccaDataModule
+from yucca.training.data_loading.YuccaDataset import YuccaTrainDataset, YuccaTestDataset
 from yucca.training.data_loading.samplers import InfiniteRandomSampler
 from yucca.training.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from yucca.paths import yucca_results
@@ -114,8 +115,13 @@ class YuccaManager:
             if not torch.cuda.is_bf16_supported():
                 self.precision = self.precision.replace("bf", "")
 
-        # Statics
+        if self.kwargs.get("fast_dev_run"):
+            self.setup_fast_dev_run()
+
+        # defaults
         self.trainer = L.Trainer
+        self.train_dataset_class = YuccaTrainDataset
+        self.test_dataset_class = YuccaTestDataset
 
     def initialize(
         self,
@@ -153,7 +159,7 @@ class YuccaManager:
 
         seed_config = seed_everything_and_get_seed_config(ckpt_seed=self.ckpt_config.ckpt_seed)
 
-        plan_config = get_plan_config(
+        plan_config = self.get_plan_config(
             ckpt_plans=self.ckpt_config.ckpt_plans,
             plans_path=path_config.plans_path,
             stage=stage,
@@ -217,6 +223,7 @@ class YuccaManager:
         )
 
         self.data_module = YuccaDataModule(
+            allow_missing_modalities=plan_config.allow_missing_modalities,
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
             image_extension=plan_config.image_extension,
@@ -229,7 +236,9 @@ class YuccaManager:
             splits_config=splits_config,
             split_idx=task_config.split_idx,
             task_type=plan_config.task_type,
+            test_dataset_class=self.test_dataset_class,
             train_data_dir=path_config.train_data_dir,
+            train_dataset_class=self.train_dataset_class,
         )
 
         self.verify_modules_are_valid()
@@ -295,6 +304,15 @@ class YuccaManager:
         )
         self.finish()
 
+    @staticmethod
+    def get_plan_config(ckpt_plans, plans_path, stage):
+        plan_config = get_plan_config(
+            ckpt_plans=ckpt_plans,
+            plans_path=plans_path,
+            stage=stage,
+        )
+        return plan_config
+
     def finish(self):
         wandb.finish()
 
@@ -321,6 +339,16 @@ class YuccaManager:
         data = torch.randn((batch_size, modalities, *patch_size))
         flops = measure_FLOPs(lightning_module.model, data)
         return flops
+
+    def setup_fast_dev_run(self):
+        self.batch_size = 2
+        self.patch_size = (32, 32)
+        self.enable_logging = False
+        self.model_dimensions = "2D"
+        self.precision = 32
+        self.kwargs["accelerator"] = "cpu"
+        self.train_batches_per_step = 10
+        self.val_batches_per_step = 5
 
 
 if __name__ == "__main__":
