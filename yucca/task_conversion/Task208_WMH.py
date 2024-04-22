@@ -41,8 +41,8 @@ def convert(path: str, subdir: str = "WMH"):
             # Loading relevant modalities and the ground truth
             src_flair_file_path = join(train_folder, sTr, "pre", "FLAIR.nii.gz")
             src_t1_file_path = join(train_folder, sTr, "pre", "T1.nii.gz")
-            dst_flair_file_path = f"{target_imagesTr}/{task_prefix}_{}_flair_{sTr}_000.nii.gz"
-            dst_t1_file_path = f"{target_imagesTr}/{task_prefix}_{}_t1_{sTr}_000.nii.gz"
+            dst_flair_file_path = f"{target_imagesTr}/{task_prefix}_{sTr}_flair_000.nii.gz"
+            dst_t1_file_path = f"{target_imagesTr}/{task_prefix}_{sTr}_t1_000.nii.gz"
             shutil.copy2(src_flair_file_path, dst_flair_file_path)
             shutil.copy2(src_t1_file_path, dst_t1_file_path)
 
