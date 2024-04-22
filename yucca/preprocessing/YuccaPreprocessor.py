@@ -69,6 +69,7 @@ class YuccaPreprocessor(object):
         disable_sanity_checks=False,
         enable_cc_analysis=False,
         allow_missing_modalities=False,
+        compress=False,
     ):
         self.name = str(self.__class__.__name__)
         self.task = task
@@ -78,6 +79,7 @@ class YuccaPreprocessor(object):
         self.disable_sanity_checks = disable_sanity_checks
         self.enable_cc_analysis = enable_cc_analysis
         self.allow_missing_modalities = allow_missing_modalities
+        self.compress = compress
 
         # lists for information we would like to attain
         self.transpose_forward = []
@@ -91,14 +93,6 @@ class YuccaPreprocessor(object):
 
     def initialize_paths(self):
         self.target_dir = join(yucca_preprocessed_data, self.task, self.plans["plans_name"] + "__" + self.name)
-        if self.compress:
-            assert (
-                len(subfiles(self.target_dir, suffix=".npy")) == 0
-            ), "detected uncompressed images in folder while compression is enabled. Please delete uncompressed images first to avoid duplicate"
-        else:
-            assert (
-                len(subfiles(self.target_dir, suffix=".npz")) == 0
-            ), "detected compressed images in folder while compression is disabled. Please delete compressed images first to avoid duplicate"
         self.input_dir = join(yucca_raw_data, self.task)
         self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
         self.subject_ids = [
@@ -126,6 +120,7 @@ class YuccaPreprocessor(object):
         self.initialize_properties()
         self.initialize_paths()
         maybe_mkdir_p(self.target_dir)
+        self.verify_compression_level(self.target_dir, self.compress)
 
         logging.info(
             f"{'Preprocessing Task:':25.25} {self.task} \n"
@@ -741,3 +736,14 @@ class YuccaPreprocessor(object):
         assert np.all(np.isin(actual_labels, expected_labels)), (
             f"Unexpected labels found for {subject_id} \n" f"expected: {expected_labels} \n" f"found: {actual_labels}"
         )
+
+    @staticmethod
+    def verify_compression_level(directory: str, compress: bool):
+        if compress:
+            assert (
+                len(subfiles(directory, suffix=".npy")) == 0
+            ), "detected uncompressed images in folder while compression is enabled. Please delete uncompressed images first to avoid duplicates"
+        else:
+            assert (
+                len(subfiles(directory, suffix=".npz")) == 0
+            ), "detected compressed images in folder while compression is disabled. Please delete compressed images first to avoid duplicates"

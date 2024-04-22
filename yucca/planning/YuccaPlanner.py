@@ -146,6 +146,7 @@ class YuccaPlanner(object):
             threads=self.threads,
             disable_sanity_checks=self.disable_sanity_checks,
             allow_missing_modalities=self.allow_missing_modalities,
+            compress=self.compress,
         )
         preprocessor.run()
         self.postprocess()
