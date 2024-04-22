@@ -45,11 +45,13 @@ def convert(path: str, subdir: str = "ADNI_NIFTI"):
                     id_dir = join(session_dir, id)
                     for file in subfiles(id_dir, join=False, suffix=ext):
                         image_path = join(id_dir, file)
-                        file_name = file[: -len(ext)]
+                        other_info = (
+                            file[: -len(ext)].replace(subject, "").replace(modality, "").replace(session, "").replace(id, "")
+                        )
                         try:
                             vol = nib.load(image_path)
                             if should_use_volume(vol):
-                                output_name = f"{task_prefix}_{file_name}_000.nii.gz"
+                                output_name = f"{task_prefix}_{subject}_{modality}_{session}_{id}_{other_info}_000.nii.gz"
                                 output_path = join(target_imagesTr, output_name)
                                 image_file = open(image_path, "rb")
                                 shutil.copyfileobj(image_file, gzip.open(output_path, "wb"))

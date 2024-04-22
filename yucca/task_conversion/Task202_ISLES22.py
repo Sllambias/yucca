@@ -34,8 +34,8 @@ def convert(path: str, subdir: str = "ISLES-2022"):
                 modality_dir = join(session_dir, modality)
                 for file in subfiles(modality_dir, join=False, suffix=ext):
                     image_path = join(modality_dir, file)
-                    file_name = file[: -len(ext)]
-                    output_name = f"{task_prefix}_{file_name}_000.nii.gz"
+                    other_info = file[: -len(ext)].replace(subject, "").replace(session, "").replace(modality, "")
+                    output_name = f"{task_prefix}_{subject}_{modality}_{session}_{other_info}_000.nii.gz"
                     output_path = join(target_imagesTr, output_name)
                     shutil.copy2(image_path, output_path)
 
