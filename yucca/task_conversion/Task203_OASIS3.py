@@ -1,3 +1,4 @@
+from re import sub
 import shutil
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.task_conversion.utils import generate_dataset_json, dirs_in_dir, should_use_volume
@@ -54,10 +55,10 @@ def convert(path: str, subdir: str = "OASIS3"):
                 continue  # skip this modality
             for file in subfiles(modality_dir, join=False, suffix=ext):
                 image_path = join(modality_dir, file)
-                file_name = file[: -len(ext)]
+                other_info = file[: -len(ext)].replace(subject, "").replace(modality, "")
                 vol = nib.load(image_path)
                 if should_use_volume(vol):
-                    output_name = f"{task_prefix}_{file_name}_000.nii.gz"
+                    output_name = f"{task_prefix}_{subject}_{modality}_{other_info}_000.nii.gz"
                     output_path = join(target_imagesTr, output_name)
                     shutil.copy2(image_path, output_path)
                 else:

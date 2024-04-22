@@ -27,9 +27,9 @@ def convert(path: str, subdir: str = "decathlon/Task01_BrainTumour"):
     """Populate Target Directory
     This is also the place to apply any re-orientation, resampling and/or label correction."""
 
-    for file in tqdm(subfiles(subjects_dir, join=False, suffix=ext)):
-        image_path = join(subjects_dir, file)
-        file_name = file[6 : -len(ext)]  # remove the prefix BRATS_ and the suffix .nii.gz
+    for subject in tqdm(subfiles(subjects_dir, join=False, suffix=ext)):
+        image_path = join(subjects_dir, subject)
+        other_info = subject[6 : -len(ext)]  # remove the prefix BRATS_ and the suffix .nii.gz
 
         vol = nib.load(image_path)
 
@@ -38,10 +38,10 @@ def convert(path: str, subdir: str = "decathlon/Task01_BrainTumour"):
         t1gd = vol.slicer[:, :, :, 2]
         t2w = vol.slicer[:, :, :, 3]
 
-        nib.save(flair, filename=f"{target_imagesTr}/{task_prefix}_{file_name}_flair_000.nii.gz")
-        nib.save(t1w, filename=f"{target_imagesTr}/{task_prefix}_{file_name}_t1w_000.nii.gz")
-        nib.save(t1gd, filename=f"{target_imagesTr}/{task_prefix}_{file_name}_t1gd_000.nii.gz")
-        nib.save(t2w, filename=f"{target_imagesTr}/{task_prefix}_{file_name}_t2w_000.nii.gz")
+        nib.save(flair, filename=f"{target_imagesTr}/{task_prefix}_{subject}_flair_{other_info}_000.nii.gz")
+        nib.save(t1w, filename=f"{target_imagesTr}/{task_prefix}_{subject}_t1w_{other_info}_000.nii.gz")
+        nib.save(t1gd, filename=f"{target_imagesTr}/{task_prefix}_{subject}_t1gd_{other_info}_000.nii.gz")
+        nib.save(t2w, filename=f"{target_imagesTr}/{task_prefix}_{subject}_t2w_{other_info}_000.nii.gz")
 
     generate_dataset_json(
         join(target_base, "dataset.json"),
