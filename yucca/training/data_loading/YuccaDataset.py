@@ -67,11 +67,17 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
                     return np.load(path, "r")
                 except ValueError:
                     return np.load(path, allow_pickle=True)
-            image = np.load(path)
-            assert len(image.files) == 1, (
-                "More than one entry in data array. " f"Should only be ['data'] but is {[key for key in image.files]}"
-            )
-            return image[image.files[0]]
+            elif path[-3:] == "npz":
+                try:
+                    image = np.load(path, "r")["data"]
+                except ValueError:
+                    image = np.load(path, allow_pickle=True)["data"]
+                assert len(image.files) == 1, (
+                    "More than one entry in data array. " f"Should only be ['data'] but is {[key for key in image.files]}"
+                )
+                return image[image.files[0]]
+            else:
+                print("no valid data formats found.")
 
         if path in self.already_loaded_cases:
             return self.already_loaded_cases[path]

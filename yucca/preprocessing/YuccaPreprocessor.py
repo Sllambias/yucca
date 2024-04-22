@@ -92,7 +92,7 @@ class YuccaPreprocessor(object):
         self.preprocess_label = True
 
     def initialize_paths(self):
-        self.target_dir = join(yucca_preprocessed_data, self.task, self.plans["plans_name"] + "__" + self.name)
+        self.target_dir = join(yucca_preprocessed_data, self.task, self.plans["plans_name"])
         self.input_dir = join(yucca_raw_data, self.task)
         self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
         self.subject_ids = [
