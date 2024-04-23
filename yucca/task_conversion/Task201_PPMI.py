@@ -60,12 +60,19 @@ def convert(path: str, subdir: str = "PPMI"):
                         image_dir = join(image_dir, "nifti")
                     for file in subfiles(image_dir, join=False, suffix=".nii"):
                         other_info = (
-                            file.replace(subject, "").replace(modality, "").replace(date_simple, "").replace(image, "")
+                            file.replace(subject, "")
+                                .replace(modality, "")
+                                .replace(date_simple, "")
+                                .replace(image, "")
+                                .replace(".nii", "")
+                                .replace(".", "_")
                         )
                         image_path = join(image_dir, file)
                         vol = nib.load(image_path)
                         if should_use_volume(vol):
-                            output_name = f"{task_prefix}_{subject}_{modality}_{date_simple}_{image}_{other_info}_000.nii.gz"
+                            output_name = (
+                                f"{task_prefix}_#_{subject}_#_{modality}_#_{date_simple}_#_{image}_#_{other_info}_000.nii.gz"
+                            )
                             output_path = join(target_imagesTr, output_name)
                             nib.save(vol, filename=output_path)
 

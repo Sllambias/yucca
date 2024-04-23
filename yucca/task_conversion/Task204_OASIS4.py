@@ -1,6 +1,6 @@
 import shutil
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles, subdirs
-from yucca.task_conversion.utils import generate_dataset_json, should_use_volume
+from yucca.task_conversion.utils import generate_dataset_json, should_use_volume, dirs_in_dir
 from yucca.paths import yucca_raw_data
 from tqdm import tqdm
 import nibabel as nib
@@ -37,12 +37,12 @@ def convert(path: str, subdir: str = "OASIS4"):
 
     skipped_volumes = []
     skipped_modalities = []
-    for subject in tqdm(subdirs(subjects_dir), desc="Subjects"):
+    for subject in tqdm(dirs_in_dir(subjects_dir), desc="Subjects"):
         if "mr" not in subject.lower():
             continue  # skip this subject
 
         subject_dir = join(subjects_dir, subject)
-        for modality in subdirs(subject_dir):
+        for modality in dirs_in_dir(subject_dir):
             if should_skip(modality):
                 skipped_modalities.append(modality)
                 continue  # skip this modality
@@ -53,6 +53,7 @@ def convert(path: str, subdir: str = "OASIS4"):
                 vol = nib.load(image_path)
                 if should_use_volume(vol):
                     output_name = f"{task_prefix}_{subject}_{modality}_{other_info}_000.nii.gz"
+                    print(output_name)
                     output_path = join(target_imagesTr, output_name)
                     shutil.copy2(image_path, output_path)
                 else:
