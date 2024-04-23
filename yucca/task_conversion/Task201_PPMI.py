@@ -61,11 +61,11 @@ def convert(path: str, subdir: str = "PPMI"):
                     for file in subfiles(image_dir, join=False, suffix=".nii"):
                         other_info = (
                             file.replace(subject, "")
-                                .replace(modality, "")
-                                .replace(date_simple, "")
-                                .replace(image, "")
-                                .replace(".nii", "")
-                                .replace(".", "_")
+                            .replace(modality, "")
+                            .replace(date_simple, "")
+                            .replace(image, "")
+                            .replace(".nii", "")
+                            .replace(".", "_")
                         )
                         image_path = join(image_dir, file)
                         vol = nib.load(image_path)

@@ -52,21 +52,18 @@ def convert(path: str, subdir: str = "decathlon", subsubdir: str = "Task08_Hepat
         label_ornt = get_nib_orientation(label)
 
         if orig_ornt == label_ornt:
-
             print("same orientation")
 
             orig_spacing = get_nib_spacing(image)
             label_spacing = get_nib_spacing(label)
 
             if orig_spacing.all() == label_spacing.all():
-
                 print("same spacing")
 
                 orig_shape = np.shape(image)
                 label_shape = np.shape(label)
 
                 if orig_shape == label_shape:
-
                     nib.save(image, filename=f"{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz")
                     nib.save(label, filename=f"{target_labelsTr}/{task_prefix}_{sTr}.nii.gz")
                     print("same shape, file saved")
@@ -76,7 +73,6 @@ def convert(path: str, subdir: str = "decathlon", subsubdir: str = "Task08_Hepat
                     skipped.append(join(images_dir_tr, sTr))
 
             else:
-
                 print("Spacing not matching")
                 skipped.append(join(images_dir_tr, sTr))
 
@@ -94,21 +90,18 @@ def convert(path: str, subdir: str = "decathlon", subsubdir: str = "Task08_Hepat
         label_ornt = get_nib_orientation(label)
 
         if orig_ornt == label_ornt:
-
             print("same orientation")
 
             orig_spacing = get_nib_spacing(image)
             label_spacing = get_nib_spacing(label)
 
             if orig_spacing.all() == label_spacing.all():
-
                 print("same spacing")
 
                 orig_shape = np.shape(image)
                 label_shape = np.shape(label)
 
                 if orig_shape == label_shape:
-
                     nib.save(image, filename=f"{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz")
                     nib.save(label, filename=f"{target_labelsTs}/{task_prefix}_{sTs}.nii.gz")
                     print("same shape, file saved")
@@ -118,7 +111,6 @@ def convert(path: str, subdir: str = "decathlon", subsubdir: str = "Task08_Hepat
                     skipped.append(join(images_dir_ts, sTs))
 
             else:
-
                 print("Spacing not matching")
                 skipped.append(join(images_dir_ts, sTs))
 
