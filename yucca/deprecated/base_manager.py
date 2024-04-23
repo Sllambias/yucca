@@ -78,48 +78,24 @@ class base_manager(object):
 
         # These will always be set by the individual Trainer
         # Using arguments supplied by run_training
-        self.train_batches_per_epoch = (
-            self.val_batches_per_epoch
-        ) = (
-            self.batch_size_2D
-        ) = (
-            self.batch_size_3D
-        ) = (
-            self.folds
-        ) = (
+        self.train_batches_per_epoch = self.val_batches_per_epoch = self.batch_size_2D = self.batch_size_3D = self.folds = (
             self.model_dimensions
-        ) = (
-            self.model_name
-        ) = self.outpath = self.patch_size_2D = self.patch_size_3D = self.task = self.plan_id = self.name = None
+        ) = self.model_name = self.outpath = self.patch_size_2D = self.patch_size_3D = self.task = self.plan_id = self.name = (
+            None
+        )
 
         # These can be set by the individual Trainer
         # Using optional arguments supplied by run_training
-        self.starting_lr = (
-            self.grad_scaler
-        ) = (
-            self.loss_fn
-        ) = (
-            self.loss_fn_kwargs
-        ) = (
-            self.lr_scheduler
-        ) = (
+        self.starting_lr = self.grad_scaler = self.loss_fn = self.loss_fn_kwargs = self.lr_scheduler = (
             self.lr_scheduler_kwargs
-        ) = (
-            self.momentum
-        ) = (
-            self.optim
-        ) = (
-            self.optim_kwargs
-        ) = (
-            self.random_seed
-        ) = (
-            self.fast_training
-        ) = self.finetune = self.fast_train_batches_per_epoch = self.fast_val_batches_per_epoch = self.fast_final_epoch = None
+        ) = self.momentum = self.optim = self.optim_kwargs = self.random_seed = self.fast_training = self.finetune = (
+            self.fast_train_batches_per_epoch
+        ) = self.fast_val_batches_per_epoch = self.fast_final_epoch = None
 
         # These will always be set by the plans file
-        self.classes = (
-            self.nclasses
-        ) = self.modalities = self.nmodalities = self.folder_with_preprocessed_data = self.plans = self.plans_path = None
+        self.classes = self.nclasses = self.modalities = self.nmodalities = self.folder_with_preprocessed_data = self.plans = (
+            self.plans_path
+        ) = None
 
         # These will be used during training
         self.tr_losses = []
