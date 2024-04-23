@@ -705,7 +705,6 @@ class YuccaPreprocessor(object):
                 )
 
     def cast_to_numpy_array(self, images: list, label=None, classification=False):
-
         if label is None and not self.allow_missing_modalities:  # self-supervised
             images = np.array(images, dtype=np.float32)
         elif label is None and self.allow_missing_modalities:  # self-supervised with missing mods

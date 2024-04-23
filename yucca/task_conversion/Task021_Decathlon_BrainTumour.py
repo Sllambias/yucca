@@ -57,15 +57,12 @@ def convert(path: str = yucca_source, subdir: str = "decathlon", subsubdir: str 
         orig_ornt = get_nib_orientation(flair)
         label_ornt = get_nib_orientation(label)
         if orig_ornt == label_ornt:
-
             orig_spacing = get_nib_spacing(flair)
             label_spacing = get_nib_spacing(label)
             if orig_spacing.all() == label_spacing.all():
-
                 orig_shape = np.shape(flair)
                 label_shape = np.shape(label)
                 if orig_shape == label_shape:
-
                     nib.save(flair, f"{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz")
                     nib.save(t1w, f"{target_imagesTr}/{task_prefix}_{sTr}_001.nii.gz")
                     nib.save(t1gd, f"{target_imagesTr}/{task_prefix}_{sTr}_002.nii.gz")
@@ -97,14 +94,12 @@ def convert(path: str = yucca_source, subdir: str = "decathlon", subsubdir: str 
         label_ornt = get_nib_orientation(label)
 
         if orig_ornt == label_ornt:
-
             print("same orientation")
 
             orig_spacing = get_nib_spacing(flair)
             label_spacing = get_nib_spacing(label)
 
             if orig_spacing.all() == label_spacing.all():
-
                 print("same spacing")
 
                 orig_shape = np.shape(flair)
@@ -123,7 +118,6 @@ def convert(path: str = yucca_source, subdir: str = "decathlon", subsubdir: str 
                     skipped.append(join(images_dir_ts, sTs))
 
             else:
-
                 print("Spacing not matching")
                 skipped.append(join(images_dir_ts, sTs))
 
