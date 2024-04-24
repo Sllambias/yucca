@@ -71,6 +71,8 @@ def test_training():
         ],
         check=True,
     )
+
+
 def test_finetune():
     from yucca.paths import yucca_models
 

@@ -875,7 +875,6 @@ class MedNeXt_decoder(nn.Module):
         # unpack the output of the encoder
         x_res_0, x_res_1, x_res_2, x_res_3, x = xs
         if self.outside_block_checkpointing:
-
             x_up_3 = checkpoint.checkpoint(self.up_3, x, self.dummy_tensor)
             dec_x = x_res_3 + x_up_3
             x = self.iterative_checkpoint(self.dec_block_3, dec_x)
