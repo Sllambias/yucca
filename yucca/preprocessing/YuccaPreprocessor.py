@@ -255,7 +255,11 @@ class YuccaPreprocessor(object):
                 self.run_sanity_checks(images, None, subject_id, imagepaths)
 
         images, label, image_props["nifti_metadata"] = apply_nifti_preprocessing_and_return_numpy(
-            images, np.array(images[0].shape), label, include_header=False
+            images=images,
+            original_size=np.array(images[0].shape),
+            target_orientation=self.plans["target_coordinate_system"],
+            label=label,
+            include_header=False,
         )
 
         original_size = images[0].shape
@@ -364,6 +368,7 @@ class YuccaPreprocessor(object):
             patch_size=patch_size,
             target_size=self.target_size,
             target_spacing=self.target_spacing,
+            target_orientation=self.plans["target_coordinate_system"],
             transpose_forward=self.transpose_forward,
             allow_missing_modalities=self.allow_missing_modalities,
         )

@@ -184,6 +184,7 @@ def preprocess_case_for_inference(
     patch_size: tuple,
     target_size,
     target_spacing,
+    target_orientation,
     transpose_forward,
     allow_missing_modalities: bool = False,
 ) -> torch.Tensor:
@@ -204,7 +205,7 @@ def preprocess_case_for_inference(
     ], "images must be either 2D or 3D for preprocessing"
 
     images, _, image_properties["nifti_metadata"] = apply_nifti_preprocessing_and_return_numpy(
-        images, image_properties["original_shape"], label=None, include_header=True
+        images, image_properties["original_shape"], target_orientation=target_orientation, label=None, include_header=True
     )
 
     image_properties["uncropped_shape"] = np.array(images[0].shape)
