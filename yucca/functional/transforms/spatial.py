@@ -112,4 +112,5 @@ def spatial(
                 label_canvas[b, c] = map_coordinates(label[b, c], coords, order=0, mode="constant", cval=0.0).astype(
                     label.dtype
                 )
-    return image_canvas, label_canvas
+        return image_canvas, label_canvas
+    return image_canvas, None
