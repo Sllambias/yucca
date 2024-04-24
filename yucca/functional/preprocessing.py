@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 from yucca.functional.normalization import normalizer
 from skimage.transform import resize
-from yucca.image_processing.cropping_and_padding import pad_to_size, get_pad_kwargs
+from yucca.functional.cropping_and_padding import pad_to_size, get_pad_kwargs
 from yucca.functional.testing.data.nifti import verify_nifti_header_is_valid
 from yucca.utils.nib_utils import (
     get_nib_spacing,
@@ -19,7 +19,7 @@ from yucca.utils.loading import read_file_to_nifti_or_np
 from yucca.functional.transpose import transpose_case
 from yucca.functional.testing.data.array import verify_array_shape_is_equal
 from yucca.image_processing.objects.BoundingBox import get_bbox_for_foreground
-from yucca.image_processing.cropping_and_padding import crop_to_box
+from yucca.functional.cropping_and_padding import crop_to_box
 
 
 def determine_resample_size_from_target_size(current_size, current_spacing, target_size, keep_aspect_ratio: bool = False):
@@ -229,7 +229,7 @@ def preprocess_case_for_inference(
     )
 
     images = resample_and_normalize_case(
-        images=images,
+        case=images,
         target_size=resample_target_size,
         norm_op=normalization_scheme,
         intensities=intensities,

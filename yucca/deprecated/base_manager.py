@@ -25,7 +25,7 @@ from batchgenerators.transforms.abstract_transforms import Compose
 from yucca.paths import yucca_preprocessed_data, yucca_models
 from yucca.training.data_loading.YuccaLoader import YuccaLoader
 from yucca.preprocessing.YuccaPreprocessor import YuccaPreprocessor
-from yucca.image_processing.matrix_ops import get_max_rotated_size
+from yucca.functional.matrix_ops import get_max_rotated_size
 from yucca.network_architectures.utils.model_memory_estimation import (
     find_optimal_tensor_dims,
 )

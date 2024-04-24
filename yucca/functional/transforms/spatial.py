@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Optional, Union
-from yucca.image_processing.matrix_ops import (
+from yucca.functional.matrix_ops import (
     create_zero_centered_coordinate_matrix,
     deform_coordinate_matrix,
     Rx,

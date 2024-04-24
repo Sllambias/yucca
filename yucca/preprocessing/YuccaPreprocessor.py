@@ -23,7 +23,7 @@ from yucca.functional.preprocessing import (
 )
 from yucca.utils.loading import load_yaml, read_file_to_nifti_or_np
 from yucca.image_processing.objects.BoundingBox import get_bbox_for_foreground
-from yucca.image_processing.cropping_and_padding import crop_to_box, pad_to_size, get_pad_kwargs
+from yucca.functional.cropping_and_padding import crop_to_box, pad_to_size, get_pad_kwargs
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from multiprocessing import Pool
 from batchgenerators.utilities.file_and_folder_operations import (
@@ -298,7 +298,7 @@ class YuccaPreprocessor(object):
 
         if label_exists and preprocess_label:
             images, label = resample_and_normalize_case(
-                images=images,
+                case=images,
                 target_size=resample_target_size,
                 norm_op=self.plans["normalization_scheme"],
                 intensities=self.intensities,
@@ -307,7 +307,7 @@ class YuccaPreprocessor(object):
             )
         else:
             images = resample_and_normalize_case(
-                images=images,
+                case=images,
                 target_size=resample_target_size,
                 norm_op=self.plans["normalization_scheme"],
                 intensities=self.intensities,
