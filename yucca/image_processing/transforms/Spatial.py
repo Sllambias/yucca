@@ -15,6 +15,7 @@ from yucca.image_processing.matrix_ops import (
 )
 from yucca.image_processing.transforms.YuccaTransform import YuccaTransform
 from typing import Tuple
+from yucca.functional.transforms import spatial
 
 
 class Spatial(YuccaTransform):
@@ -99,89 +100,31 @@ class Spatial(YuccaTransform):
         y_rot,
         z_rot,
         scale_factor,
-        skip_label,
     ):
-        image = data_dict[self.data_key]
-        if not self.do_crop:
-            patch_size = image.shape[2:]
-        if self.cval == "min":
-            cval = float(image.min())
-        else:
-            cval = self.cval
-        assert isinstance(cval, (int, float)), f"got {cval} of type {type(cval)}"
-
-        coords = create_zero_centered_coordinate_matrix(patch_size)
-        image_canvas = np.zeros((image.shape[0], image.shape[1], *patch_size), dtype=np.float32)
-
-        # First we apply deformation to the coordinate matrix
-        if np.random.uniform() < self.p_deform_per_sample:
-            coords = deform_coordinate_matrix(coords, alpha=alpha, sigma=sigma)
-
-        # Then we rotate the coordinate matrix around one or more axes
-        if np.random.uniform() < self.p_rot_per_sample:
-            rot_matrix = np.eye(len(patch_size))
-            if len(patch_size) == 2:
-                rot_matrix = np.dot(rot_matrix, Rz2D(z_rot))
-            else:
-                if np.random.uniform() < self.p_rot_per_axis:
-                    rot_matrix = np.dot(rot_matrix, Rx(x_rot))
-                if np.random.uniform() < self.p_rot_per_axis:
-                    rot_matrix = np.dot(rot_matrix, Ry(y_rot))
-                if np.random.uniform() < self.p_rot_per_axis:
-                    rot_matrix = np.dot(rot_matrix, Rz(z_rot))
-
-            coords = np.dot(coords.reshape(len(patch_size), -1).transpose(), rot_matrix).transpose().reshape(coords.shape)
-
-        # And finally scale it
-        # Scaling effect is "inverted"
-        # i.e. a scale factor of 0.9 will zoom in
-        if np.random.uniform() < self.p_scale_per_sample:
-            coords *= scale_factor
-
-        if self.random_crop and self.do_crop:
-            for d in range(len(patch_size)):
-                crop_center_idx = [
-                    np.random.randint(
-                        int(patch_size[d] / 2),
-                        image.shape[d + 2] - int(patch_size[d] / 2) + 1,
-                    )
-                ]
-                coords[d] += crop_center_idx
-        else:
-            # Reversing the zero-centering of the coordinates
-            for d in range(len(patch_size)):
-                coords[d] += image.shape[d + 2] / 2.0 - 0.5
-
-        # Mapping the images to the distorted coordinates
-        for b in range(image.shape[0]):
-            for c in range(image.shape[1]):
-                img_min = image.min()
-                img_max = image.max()
-
-                image_canvas[b, c] = map_coordinates(
-                    image[b, c].astype(float),
-                    coords,
-                    order=self.order,
-                    mode="constant",
-                    cval=cval,
-                ).astype(image.dtype)
-                if self.clip_to_input_range:
-                    image_canvas[b, c] = np.clip(image_canvas[b, c], a_min=img_min, a_max=img_max)
-        data_dict[self.data_key] = image_canvas
-        if data_dict.get(self.label_key) is not None and not skip_label:
-            label = data_dict.get(self.label_key)
-            labelCanvas = np.zeros(
-                (label.shape[0], label.shape[1], *patch_size),
-                dtype=np.float32,
-            )
-
-            # Mapping the labelmentations to the distorted coordinates
-            for b in range(label.shape[0]):
-                for c in range(label.shape[1]):
-                    labelCanvas[b, c] = map_coordinates(label[b, c], coords, order=0, mode="constant", cval=0.0).astype(
-                        label.dtype
-                    )
-            data_dict[self.label_key] = labelCanvas
+        image, label = spatial(
+            image=data_dict[self.data_key],
+            patch_size=patch_size,
+            p_deform=self.p_deform_per_sample,
+            p_rot=self.p_rot_per_sample,
+            p_rot_per_axis=self.p_rot_per_axis,
+            p_scale=self.p_scale_per_sample,
+            alpha=alpha,
+            sigma=sigma,
+            x_rot=x_rot,
+            y_rot=y_rot,
+            z_rot=z_rot,
+            scale_factor=scale_factor,
+            clip_to_input_range=self.clip_to_input_range,
+            label=data_dict.get(self.label_key),
+            skip_label=self.skip_label,
+            do_crop=self.do_crop,
+            random_crop=self.random_crop,
+            order=self.order,
+            cval=self.cval,
+        )
+        data_dict[self.data_key] = image
+        if label is not None and not self.skip_label:
+            data_dict[self.label_key] = label
         return data_dict
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
@@ -216,6 +159,5 @@ class Spatial(YuccaTransform):
             y_rot_rad,
             z_rot_rad,
             scale_factor,
-            self.skip_label,
         )
         return data_dict

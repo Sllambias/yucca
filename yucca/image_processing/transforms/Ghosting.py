@@ -1,4 +1,5 @@
 from yucca.image_processing.transforms.YuccaTransform import YuccaTransform
+from yucca.functional.transforms import motion_ghosting
 import numpy as np
 from typing import Tuple
 
@@ -28,38 +29,9 @@ class MotionGhosting(YuccaTransform):
         return alpha, num_reps, axis
 
     def __motionGhosting__(self, image, alpha, num_reps, axis):
-        img_min = image.min()
-        img_max = image.max()
-        m = min(0, img_min)
-        image += abs(m)
-        if len(image.shape) == 3:
-            assert axis in [0, 1, 2], "Incorrect or no axis"
-
-            h, w, d = image.shape
-
-            image = np.fft.fftn(image, s=[h, w, d])
-
-            if axis == 0:
-                image[0:-1:num_reps, :, :] = alpha * image[0:-1:num_reps, :, :]
-            elif axis == 1:
-                image[:, 0:-1:num_reps, :] = alpha * image[:, 0:-1:num_reps, :]
-            else:
-                image[:, :, 0:-1:num_reps] = alpha * image[:, :, 0:-1:num_reps]
-
-            image = abs(np.fft.ifftn(image, s=[h, w, d]))
-        if len(image.shape) == 2:
-            assert axis in [0, 1], "Incorrect or no axis"
-            h, w = image.shape
-            image = np.fft.fftn(image, s=[h, w])
-
-            if axis == 0:
-                image[0:-1:num_reps, :] = alpha * image[0:-1:num_reps, :]
-            else:
-                image[:, 0:-1:num_reps] = alpha * image[:, 0:-1:num_reps]
-            image = abs(np.fft.ifftn(image, s=[h, w]))
-        image -= abs(m)
-        if self.clip_to_input_range:
-            image = np.clip(image, a_min=img_min, a_max=img_max)
+        image = motion_ghosting(
+            image=image, alpha=alpha, num_reps=num_reps, axis=axis, clip_to_input_range=self.clip_to_input_range
+        )
         return image
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):

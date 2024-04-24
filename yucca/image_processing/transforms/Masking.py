@@ -2,6 +2,7 @@ import numpy as np
 import logging
 from yucca.image_processing.transforms.YuccaTransform import YuccaTransform
 from typing import Union, Iterable
+from yucca.functional.transforms import mask_batch
 
 
 class Masking(YuccaTransform):
@@ -76,23 +77,7 @@ class Masking(YuccaTransform):
         return pixel_value, ratio, token_size
 
     def __mask__(self, image_volume, pixel_value, ratio, token_size):
-        assert len(image_volume.shape[2:]) == len(token_size), (
-            "mask token size not compatible with input data"
-            f"mask token is: {token_size} and image is shape: {image_volume.shape[2:]}"
-        )
-        # np.ceil to get a grid with exact or larger dims than the input image
-        # later we will crop it to the desired dims
-        slices = [slice(0, shape) for shape in image_volume.shape[2:]]
-        grid_dims = np.ceil(image_volume.shape[2:] / np.array(token_size)).astype(np.uint8)
-
-        grid_flat = np.ones(np.prod(grid_dims))
-        grid_flat[: int(len(grid_flat) * ratio)] = 0
-        np.random.shuffle(grid_flat)
-        grid = grid_flat.reshape(grid_dims)
-        for idx, size in enumerate(token_size):
-            grid = np.repeat(grid, repeats=size, axis=idx)
-
-        image_volume[:, :, grid[*slices] == 0] = pixel_value
+        image_volume = mask_batch(batch=image_volume, pixel_value=pixel_value, ratio=ratio, token_size=token_size)
         return image_volume
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):

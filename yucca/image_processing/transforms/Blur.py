@@ -1,7 +1,7 @@
 from yucca.image_processing.transforms.YuccaTransform import YuccaTransform
 import numpy as np
 from typing import Tuple
-from scipy.ndimage import gaussian_filter
+from yucca.functional.transforms import blur
 
 
 class Blur(YuccaTransform):
@@ -26,13 +26,8 @@ class Blur(YuccaTransform):
 
     def __blur__(self, image, sigma):
         for c in range(image.shape[0]):
-            img_min = image[c].min()
-            img_max = image[c].max()
-
             if np.random.uniform() < self.p_per_channel:
-                image[c] = gaussian_filter(image[c], sigma, order=0)
-                if self.clip_to_input_range:
-                    image[c] = np.clip(image[c], a_min=img_min, a_max=img_max)
+                image[c] = blur(image[c], sigma, clip_to_input_range=self.clip_to_input_range)
         return image
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):

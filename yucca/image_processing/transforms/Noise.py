@@ -1,4 +1,5 @@
 from yucca.image_processing.transforms.YuccaTransform import YuccaTransform
+from yucca.functional.transforms import additive_noise, multiplicative_noise
 import numpy as np
 from typing import Tuple
 
@@ -25,12 +26,7 @@ class AdditiveNoise(YuccaTransform):
         return mean, sigma
 
     def __additiveNoise__(self, image, mean, sigma):
-        # J = I+n
-        img_min = image.min()
-        img_max = image.max()
-        image += np.random.normal(mean, sigma, image.shape)
-        if self.clip_to_input_range:
-            image = np.clip(image, a_min=img_min, a_max=img_max)
+        image = additive_noise(image=image, mean=mean, sigma=sigma, clip_to_input_range=self.clip_to_input_range)
         return image
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
@@ -78,13 +74,7 @@ class MultiplicativeNoise(YuccaTransform):
         return mean, sigma
 
     def __multiplicativeNoise__(self, image, mean, sigma):
-        # J = I + I*n
-        img_min = image.min()
-        img_max = image.max()
-        gauss = np.random.normal(mean, sigma, image.shape)
-        image += image * gauss
-        if self.clip_to_input_range:
-            image = np.clip(image, a_min=img_min, a_max=img_max)
+        image = multiplicative_noise(image=image, mean=mean, sigma=sigma, clip_to_input_range=self.clip_to_input_range)
         return image
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):

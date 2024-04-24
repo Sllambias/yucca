@@ -1,4 +1,5 @@
 from yucca.image_processing.transforms.YuccaTransform import YuccaTransform
+from yucca.functional.transforms import simulate_lowres
 import numpy as np
 from skimage.transform import resize
 
@@ -34,19 +35,7 @@ class SimulateLowres(YuccaTransform):
         return shape
 
     def __simulatelowres__(self, image, target_shape):
-        img_min = image.min()
-        img_max = image.max()
-        shape = image.shape
-        downsampled = resize(
-            image.astype(float),
-            target_shape,
-            order=0,
-            mode="edge",
-            anti_aliasing=False,
-        )
-        image = resize(downsampled, shape, order=3, mode="edge", anti_aliasing=False)
-        if self.clip_to_input_range:
-            image = np.clip(image, a_min=img_min, a_max=img_max)
+        image = simulate_lowres(image, target_shape=target_shape, clip_to_input_range=self.clip_to_input_range)
         return image
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
