@@ -15,6 +15,7 @@ from yucca.training.loss_and_optim.loss_functions.deep_supervision import DeepSu
 from yucca.utils.files_and_folders import recursive_find_python_class
 from yucca.utils.kwargs import filter_kwargs
 from yucca.evaluation.training_metrics import Accuracy, AUROC, F1
+from yucca.functional.visualization import get_train_fig_with_inp_out_tar
 
 
 class YuccaLightningModule(L.LightningModule):
@@ -366,59 +367,18 @@ class YuccaLightningModule(L.LightningModule):
         return successful
 
     def _log_dict_of_images_to_wandb(self, imagedict: {}, log_key: str, task_type: str = "segmentation"):
-        # This needs to handle the following cases:
-        # Segmentation      : {"input": (b,m,x,y(,z)), "target": (b,1,x,y(,z)), "output": (b,c,x,y(,z)), "file_path": [pathA, pathB, ...]}
-        # Self-supervised   : {"input": (b,m,x,y(,z)), "target": (b,m,x,y(,z)), "output": (b,m,x,y(,z)), "file_path": [pathA, pathB, ...]}
-        # Classification    : {"input": (b,m,x,y(,z)), "target": (b,1,x), "output": (b,c,x), "file_path": [pathA, pathB, ...]}
-
         batch_idx = np.random.randint(0, imagedict["input"].shape[0])
-        channel_idx = np.random.randint(0, imagedict["input"].shape[1])
-
-        if len(imagedict["input"].shape) == 5:  # 3D images.
-            # We need to select a slice to visualize.
-            if task_type == "segmentation" and len(imagedict["target"][batch_idx, 0].nonzero()[0]) > 0:
-                # Select a foreground slice if any exist.
-                foreground_locations = imagedict["target"][batch_idx, 0].nonzero()
-                slice_to_visualize = foreground_locations[0][np.random.randint(0, len(foreground_locations[0]))]
-            else:
-                slice_to_visualize = np.random.randint(0, imagedict["input"].shape[2])
-
-            imagedict["input"] = imagedict["input"][:, :, slice_to_visualize]
-            if len(imagedict["target"].shape) == 5:
-                imagedict["target"] = imagedict["target"][:, :, slice_to_visualize]
-            if len(imagedict["output"].shape) == 5:
-                imagedict["output"] = imagedict["output"][:, :, slice_to_visualize]
-
-        image = imagedict["input"][batch_idx, channel_idx]
         case = os.path.splitext(os.path.split(imagedict["file_path"][batch_idx])[-1])[0]
 
-        if task_type in ["segmentation", "classification"]:
-            target = imagedict["target"][batch_idx, 0]
-            output = imagedict["output"][batch_idx].argmax(0)
-        elif task_type == "self-supervised":
-            target = imagedict["target"][batch_idx, channel_idx]
-            output = imagedict["output"][batch_idx, channel_idx]
-        else:
-            logging.warn(
-                f"Unknown task type. Found {task_type} and expected one in ['classification', 'segmentation', 'self-supervised']"
-            )
-
-        if len(target.shape) == 1:
-            fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(5, 5), dpi=100, constrained_layout=True)
-            axes[0].imshow(image, cmap="gray", vmin=np.quantile(image, 0.01), vmax=np.quantile(image, 0.99))
-            axes[0].set_title("input")
-            fig.suptitle(f"{case}. Target: {target} | Output: {output}", fontsize=16)
-        else:
-            fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(15, 5), dpi=100, constrained_layout=True)
-            axes[0].imshow(image, cmap="gray", vmin=np.quantile(image, 0.01), vmax=np.quantile(image, 0.99))
-            axes[0].set_title("input")
-            axes[1].imshow(target, cmap="gray")
-            axes[1].set_title("target")
-            axes[2].imshow(output, cmap="gray")
-            axes[2].set_title("output")
-            fig.suptitle(case, fontsize=16)
-            wandb.log({log_key: wandb.Image(fig)}, commit=False)
-            plt.close(fig)
+        fig = get_train_fig_with_inp_out_tar(
+            input=imagedict["input"][batch_idx],
+            output=imagedict["output"][batch_idx],
+            target=imagedict["target"][batch_idx],
+            fig_title=case,
+            task_type=task_type,
+        )
+        wandb.log({log_key: wandb.Image(fig)}, commit=False)
+        plt.close(fig)
 
     @property
     def log_image_this_epoch(self):

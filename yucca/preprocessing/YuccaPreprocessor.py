@@ -5,35 +5,27 @@ import nibabel as nib
 import os
 import cc3d
 import logging
-import math
 import time
 import re
 from yucca.functional.testing.data.nifti import (
     verify_spacing_is_equal,
     verify_orientation_is_equal,
-    verify_nifti_header_is_valid,
 )
 from yucca.functional.testing.data.array import verify_labels_are_equal, verify_array_shape_is_equal
 from yucca.functional.transpose import transpose_case, transpose_array
 from yucca.functional.preprocessing import (
+    apply_nifti_preprocessing_and_return_numpy,
+    determine_target_size,
     resample_and_normalize_case,
-    determine_resample_size_from_target_size,
-    determine_resample_size_from_target_spacing,
     pad_case_to_size,
+    preprocess_case_for_inference,
+    reverse_preprocessing,
 )
 from yucca.utils.loading import load_yaml, read_file_to_nifti_or_np
 from yucca.image_processing.objects.BoundingBox import get_bbox_for_foreground
 from yucca.image_processing.cropping_and_padding import crop_to_box, pad_to_size, get_pad_kwargs
-from yucca.utils.nib_utils import (
-    get_nib_spacing,
-    get_nib_orientation,
-    reorient_nib_image,
-)
-from yucca.utils.type_conversions import nifti_or_np_to_np
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data
-from yucca.preprocessing.normalization import normalizer
 from multiprocessing import Pool
-from skimage.transform import resize
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     load_json,
@@ -262,7 +254,7 @@ class YuccaPreprocessor(object):
             else:
                 self.run_sanity_checks(images, None, subject_id, imagepaths)
 
-        images, label, image_props["nifti_metadata"] = self.apply_nifti_preprocessing_and_return_numpy(
+        images, label, image_props["nifti_metadata"] = apply_nifti_preprocessing_and_return_numpy(
             images, np.array(images[0].shape), label, include_header=False
         )
 
@@ -290,10 +282,13 @@ class YuccaPreprocessor(object):
 
         image_props["size_after_transpose"] = list(images[0].shape)
 
-        resample_target_size, final_target_size, new_spacing = self.determine_target_size(
+        resample_target_size, final_target_size, new_spacing = determine_target_size(
             images_transposed=images,
             original_spacing=np.array(image_props["nifti_metadata"]["original_spacing"]),
             transpose_forward=self.transpose_forward,
+            target_size=self.target_size,
+            target_spacing=self.target_spacing,
+            keep_aspect_ratio=self.plans["keep_aspect_ratio_when_using_target_size"],
         )
 
         # here we need to make sure missing modalities are accounted for, as the order of the images
@@ -360,64 +355,20 @@ class YuccaPreprocessor(object):
         if sliding_window_prediction is False:
             self.target_size = patch_size
 
-        image_properties = {}
-        ext = images[0][0].split(os.extsep, 1)[1] if isinstance(images[0], tuple) else images[0].split(os.extsep, 1)[1]
-        images = [
-            read_file_to_nifti_or_np(image[0]) if isinstance(image, tuple) else read_file_to_nifti_or_np(image)
-            for image in images
-        ]
-
-        image_properties["image_extension"] = ext
-        image_properties["original_shape"] = np.array(images[0].shape)
-
-        assert len(image_properties["original_shape"]) in [
-            2,
-            3,
-        ], "images must be either 2D or 3D for preprocessing"
-
-        images, _, image_properties["nifti_metadata"] = self.apply_nifti_preprocessing_and_return_numpy(
-            images, image_properties["original_shape"], label=None, include_header=True
-        )
-
-        image_properties["uncropped_shape"] = np.array(images[0].shape)
-
-        if self.plans["crop_to_nonzero"]:
-            nonzero_box = get_bbox_for_foreground(images[0], background_label=0)
-            for i in range(len(images)):
-                images[i] = crop_to_box(images[i], nonzero_box)
-            image_properties["nonzero_box"] = nonzero_box
-
-        image_properties["cropped_shape"] = np.array(images[0].shape)
-
-        images = transpose_case(images, axes=self.transpose_forward)
-
-        resample_target_size, _, _ = self.determine_target_size(
-            images_transposed=images,
-            original_spacing=np.array(image_properties["nifti_metadata"]["original_spacing"]),
-            transpose_forward=self.transpose_forward,
-        )
-
-        images = resample_and_normalize_case(
-            images=images,
-            target_size=resample_target_size,
-            norm_op=self.plans["normalization_scheme"],
+        images, image_properties = preprocess_case_for_inference(
+            crop_to_nonzero=self.plans["crop_to_nonzero"],
+            keep_aspect_ratio=self.plans["keep_aspect_ratio_when_using_target_size"],
+            images=image_properties,
             intensities=self.intensities,
-            label=None,
+            normalization_scheme=self.plans["normalization_scheme"],
+            patch_size=patch_size,
+            target_size=self.target_size,
+            target_spacing=self.target_spacing,
+            transpose_forward=self.transpose_forward,
             allow_missing_modalities=self.allow_missing_modalities,
         )
 
-        # From this point images are shape (1, c, x, y, z)
-        image_properties["resampled_transposed_shape"] = np.array(images[0].shape)
-
-        for i in range(len(images)):
-            images[i], padding = pad_to_size(images[i], patch_size)
-        image_properties["padded_shape"] = np.array(images[0].shape)
-        image_properties["padding"] = padding
-
-        # Stack and fix dimensions
-        images = np.stack(images)[np.newaxis]
-
-        return torch.tensor(images, dtype=torch.float32), image_properties
+        return images, image_properties
 
     def reverse_preprocessing(self, images: torch.Tensor, image_properties: dict):
         """
@@ -432,56 +383,18 @@ class YuccaPreprocessor(object):
         (5) Return: Return the reverted images as a NumPy array.
         The original orientation of the image will be re-applied when saving the prediction
         """
-        image_properties["save_format"] = image_properties.get("image_extension")
         nclasses = max(1, len(self.plans["dataset_properties"]["classes"]))
-        canvas = torch.zeros((1, nclasses, *image_properties["uncropped_shape"]), dtype=images.dtype)
-        shape_after_crop = image_properties["cropped_shape"]
-        shape_after_crop_transposed = shape_after_crop[self.transpose_forward]
-        pad = image_properties["padding"]
 
-        verify_array_shape_is_equal(reference=images.shape[2:], target=image_properties["padded_shape"])
-
-        shape = images.shape[2:]
-        if len(pad) == 6:
-            images = images[
-                :,
-                :,
-                pad[0] : shape[0] - pad[1],
-                pad[2] : shape[1] - pad[3],
-                pad[4] : shape[2] - pad[5],
-            ]
-        elif len(pad) == 4:
-            images = images[:, :, pad[0] : shape[0] - pad[1], pad[2] : shape[1] - pad[3]]
-
-        verify_array_shape_is_equal(reference=images.shape[2:], target=image_properties["resampled_transposed_shape"])
-
-        # Here we Interpolate the array to the original size. The shape starts as [H, W (,D)]. For Torch functionality it is changed to [B, C, H, W (,D)].
-        # Afterwards it's squeezed back into [H, W (,D)] and transposed to the original direction.
-        images = F.interpolate(images, size=shape_after_crop_transposed.tolist(), mode="trilinear").permute(
-            [0, 1] + [i + 2 for i in self.transpose_backward]
+        images = reverse_preprocessing(
+            crop_to_nonzero=self.plans["crop_to_nonzero"],
+            images=images,
+            image_properties=image_properties,
+            n_classes=nclasses,
+            transpose_forward=self.transpose_forward,
+            transpose_backward=self.transpose_backward,
         )
 
-        # Now move the tensor to the CPU
-        images = images.cpu()
-
-        verify_array_shape_is_equal(reference=images.shape[2:], target=image_properties["cropped_shape"])
-
-        if self.plans["crop_to_nonzero"]:
-            bbox = image_properties["nonzero_box"]
-            slices = [
-                slice(None),
-                slice(None),
-                slice(bbox[0], bbox[1]),
-                slice(bbox[2], bbox[3]),
-            ]
-            if len(bbox) == 6:
-                slices.append(
-                    slice(bbox[4], bbox[5]),
-                )
-            canvas[slices] = images
-        else:
-            canvas = images
-        return canvas.numpy(), image_properties
+        return images, image_properties
 
     @staticmethod
     def load_plans(plans_path):
@@ -514,84 +427,6 @@ class YuccaPreprocessor(object):
                     i * np.prod(self.target_spacing) for i in np.unique(numbered_ground_truth, return_counts=True)[-1][1:]
                 ]
         return foreground_locs, label_cc_n, label_cc_sizes
-
-    def apply_nifti_preprocessing_and_return_numpy(
-        self,
-        images,
-        original_size,
-        label=None,
-        include_header=False,
-    ):
-        # If qform and sform are both missing the header is corrupt and we do not trust the
-        # direction from the affine
-        # Make sure you know what you're doing
-        metadata = {
-            "original_spacing": np.array([1.0] * len(original_size)).tolist(),
-            "original_orientation": None,
-            "final_direction": None,
-            "header": None,
-            "affine": None,
-            "reoriented": False,
-        }
-
-        if isinstance(images[0], nib.Nifti1Image):
-            # If qform and sform are both missing the header is corrupt and we do not trust the
-            # direction from the affine
-            # Make sure you know what you're doing
-            if verify_nifti_header_is_valid(images[0]) is True:
-                metadata["reoriented"] = True
-                metadata["original_orientation"] = get_nib_orientation(images[0])
-                metadata["final_direction"] = self.plans["target_coordinate_system"]
-                images = [
-                    reorient_nib_image(image, metadata["original_orientation"], metadata["final_direction"])
-                    for image in images
-                ]
-                if label is not None and isinstance(label, nib.Nifti1Image):
-                    label = reorient_nib_image(label, metadata["original_orientation"], metadata["final_direction"])
-            if include_header:
-                metadata["header"] = images[0].header
-            metadata["original_spacing"] = get_nib_spacing(images[0]).tolist()
-            metadata["affine"] = images[0].affine
-
-        images = [nifti_or_np_to_np(image) for image in images]
-        if label is not None:
-            label = nifti_or_np_to_np(label)
-        return images, label, metadata
-
-    def determine_target_size(
-        self,
-        images_transposed: list,
-        original_spacing,
-        transpose_forward,
-    ):
-        image_shape_t = np.array(images_transposed[0].shape)
-        original_spacing_t = original_spacing[transpose_forward]
-
-        # We do not want to change the aspect ratio so we resample using the minimum alpha required
-        # to attain 1 correct dimension, and then the rest will be padded.
-        # Additionally we make sure each dimension is divisible by 16 to avoid issues with standard pooling/stride settings
-        if self.target_size is not None:
-            resample_target_size, final_target_size, new_spacing = determine_resample_size_from_target_size(
-                current_size=image_shape_t,
-                current_spacing=original_spacing_t,
-                target_size=self.target_size,
-                keep_aspect_ratio=self.plans["keep_aspect_ratio_when_using_target_size"],
-            )
-
-        # Otherwise we need to calculate a new target shape, and we need to factor in that
-        # the images will first be transposed and THEN resampled.
-        # Find new shape based on the target spacing
-        elif self.target_spacing is not None:
-            target_spacing = np.array(self.target_spacing, dtype=float)
-            target_spacing_t = target_spacing[transpose_forward]
-            resample_target_size, final_target_size, new_spacing = determine_resample_size_from_target_spacing(
-                current_size=image_shape_t, current_spacing=original_spacing_t, target_spacing=target_spacing_t
-            )
-        else:
-            resample_target_size = image_shape_t
-            final_target_size = None
-            new_spacing = original_spacing_t.tolist()
-        return resample_target_size, final_target_size, new_spacing
 
     def run_sanity_checks(self, images, label, subject_id, imagepaths):
         self.sanity_check_standard_formats(images, label, subject_id, imagepaths)
