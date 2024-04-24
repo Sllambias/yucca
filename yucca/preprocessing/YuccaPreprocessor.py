@@ -644,4 +644,4 @@ class YuccaPreprocessor(object):
         # Check if the ground truth only contains expected values
         expected_labels = np.array(self.plans["dataset_properties"]["classes"], dtype=np.float32)
         actual_labels = np.unique(label).astype(np.float32)
-        verify_labels_are_equal(reference=expected_labels, target=actual_labels, id=subject_id)
+        verify_labels_are_equal(expected_labels=expected_labels, actual_labels=actual_labels, id=subject_id)
