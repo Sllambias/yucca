@@ -62,12 +62,12 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
 
     def load_and_maybe_keep_volume(self, path):
         if not self.keep_in_ram:
-            if path[-3:] == "npy":
+            if isfile(path + ".npy"):
                 try:
                     return np.load(path, "r")
                 except ValueError:
                     return np.load(path, allow_pickle=True)
-            elif path[-3:] == "npz":
+            elif isfile(path + ".npz"):
                 try:
                     image = np.load(path, "r")["data"]
                 except ValueError:
