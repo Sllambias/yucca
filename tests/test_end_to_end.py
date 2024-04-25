@@ -126,8 +126,6 @@ def test_finetune():
             "2",
             "--val_batches_per_step",
             "2",
-            "--accelerator",
-            os.environ["accelerator"],
         ],
         check=True,
     )
@@ -146,8 +144,6 @@ def test_inference():
             "-m",
             "TinyUNet",
             "--no_wandb",
-            "--accelerator",
-            os.environ["accelerator"],
         ],
         check=True,
     )
