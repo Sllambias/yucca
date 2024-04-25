@@ -98,6 +98,11 @@ def main():
     parser.add_argument("--train_batches_per_step", type=int, default=250)
     parser.add_argument("--val_batches_per_step", type=int, default=50)
     parser.add_argument("--fast_dev_run", action="store_true")
+    parser.add_argument(
+        "--safe_run",
+        action="store_true",
+        help="use to set safe defaults for e.g. MPS/CPU training. Will set to 2D and small batches/patches",
+    )
     parser.add_argument("--accelerator", type=str, default=None)
     args = parser.parse_args()
 
@@ -126,13 +131,14 @@ def main():
     patch_size = args.patch_size
     precision = args.precision
     profile = args.profile
+    safe_run = args.safe_run
     split_idx = args.split_idx
     split_data_method = args.split_data_method
     split_data_param = args.split_data_param
     train_batches_per_step = args.train_batches_per_step
     val_batches_per_step = args.val_batches_per_step
 
-    kwargs = {"fast_dev_run": fast_dev_run}
+    kwargs = {"fast_dev_run": fast_dev_run, "safe_run": safe_run}
     if args.accelerator is not None:
         kwargs["accelerator"] = args.accelerator
 

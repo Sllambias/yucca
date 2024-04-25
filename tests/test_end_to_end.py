@@ -43,8 +43,6 @@ def test_training():
             "3",
             "--val_batches_per_step",
             "3",
-            "--accelerator",
-            os.environ["accelerator"],
         ],
         check=True,
     )
@@ -70,8 +68,6 @@ def test_training():
             "1",
             "--val_batches_per_step",
             "1",
-            "--accelerator",
-            os.environ["accelerator"],
         ],
         check=True,
     )
