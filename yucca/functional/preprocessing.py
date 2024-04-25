@@ -5,6 +5,8 @@ import nibabel as nib
 import os
 import torch
 import torch.nn.functional as F
+import cc3d
+from typing import Union, List, Optional
 from yucca.functional.normalization import normalizer
 from skimage.transform import resize
 from yucca.functional.cropping_and_padding import pad_to_size, get_pad_kwargs
@@ -16,10 +18,30 @@ from yucca.utils.nib_utils import (
 )
 from yucca.utils.type_conversions import nifti_or_np_to_np
 from yucca.utils.loading import read_file_to_nifti_or_np
-from yucca.functional.transpose import transpose_case
-from yucca.functional.testing.data.array import verify_array_shape_is_equal
+from yucca.functional.transpose import transpose_case, transpose_array
+from yucca.functional.testing.data.array import verify_array_shape_is_equal, verify_labels_are_equal
 from yucca.image_processing.objects.BoundingBox import get_bbox_for_foreground
 from yucca.functional.cropping_and_padding import crop_to_box
+
+
+def analyze_label(label, enable_connected_components_analysis: bool = False, spacing: list = []):
+    # we get some (no need to get all) locations of foreground, that we will later use in the
+    # oversampling of foreground classes
+    # And we also potentially analyze the connected components of the label
+    max_foreground_locs = 100000  # limited to save space
+    foreground_locs = np.array(np.nonzero(label)).T[::10].tolist()
+    if len(foreground_locs) > max_foreground_locs:
+        foreground_locs = foreground_locs[:: round(len(foreground_locs) / max_foreground_locs)]
+    if not enable_connected_components_analysis:
+        label_cc_n = 0
+        label_cc_sizes = 0
+    else:
+        numbered_ground_truth, label_cc_n = cc3d.connected_components(label, connectivity=26, return_N=True)
+        if len(numbered_ground_truth) == 0:
+            label_cc_sizes = 0
+        else:
+            label_cc_sizes = [i * np.prod(spacing) for i in np.unique(numbered_ground_truth, return_counts=True)[-1][1:]]
+    return foreground_locs, label_cc_n, label_cc_sizes
 
 
 def determine_resample_size_from_target_size(current_size, current_spacing, target_size, keep_aspect_ratio: bool = False):
@@ -47,19 +69,18 @@ def determine_resample_size_from_target_spacing(current_size, current_spacing, t
 def resample_and_normalize_case(
     case: list,
     target_size,
-    intensities: list,
     norm_op: str,
+    intensities: list = None,
     label: np.ndarray = None,
     allow_missing_modalities: bool = False,
 ):
     # Normalize and Transpose images to target view.
     # Transpose labels to target view.
-    assert len(case) == len(norm_op) == len(intensities), (
-        "number of images, "
-        "normalization  operations and intensities does not match. \n"
+    assert len(case) == len(norm_op), (
+        "number of images and "
+        "normalization  operations does not match. \n"
         f"len(images) == {len(case)} \n"
         f"len(norm_op) == {len(norm_op)} \n"
-        f"len(intensities) == {len(intensities)} \n"
     )
 
     for i in range(len(case)):
@@ -69,7 +90,11 @@ def resample_and_normalize_case(
             assert allow_missing_modalities is True, "missing modality and allow_missing_modalities is not enabled"
         else:
             # Normalize
-            case[i] = normalizer(image, scheme=norm_op[i], intensities=intensities[i])
+            if intensities is not None:
+                case[i] = normalizer(image, scheme=norm_op[i], intensities=intensities[i])
+            else:
+                case[i] = normalizer(image, scheme=norm_op[i])
+
             # Resample to target shape and spacing
             try:
                 case[i] = resize(case[i], output_shape=target_size, order=3)
@@ -173,6 +198,173 @@ def determine_target_size(
         final_target_size = None
         new_spacing = original_spacing_t.tolist()
     return resample_target_size, final_target_size, new_spacing
+
+
+def preprocess_case_for_training_with_label(
+    images: List[Union[np.ndarray, nib.Nifti1Image]],
+    label: Union[np.ndarray, nib.Nifti1Image],
+    normalization_operation: list,
+    allow_missing_modalities: bool = False,
+    enable_cc_analysis: bool = False,
+    missing_modality_idxs: list = [],
+    crop_to_nonzero: bool = True,
+    keep_aspect_ratio_when_using_target_size: bool = False,
+    image_properties: Optional[dict] = {},
+    intensities: Optional[List] = None,
+    target_orientation: Optional[str] = "RAS",
+    target_size: Optional[List] = None,
+    target_spacing: Optional[List] = None,
+    transpose: Optional[list] = [0, 1, 2],
+):
+    """
+    one of target_size or target_spacing is required.
+    """
+
+    images, label, image_properties["nifti_metadata"] = apply_nifti_preprocessing_and_return_numpy(
+        images=images,
+        original_size=np.array(images[0].shape),
+        target_orientation=target_orientation,
+        label=label,
+        include_header=False,
+    )
+
+    original_size = images[0].shape
+
+    # Cropping is performed to save computational resources. We are only removing background.
+    if crop_to_nonzero:
+        nonzero_box = get_bbox_for_foreground(images[0], background_label=0)
+        image_properties["crop_to_nonzero"] = nonzero_box
+        for i in range(len(images)):
+            images[i] = crop_to_box(images[i], nonzero_box)
+            label = crop_to_box(label, nonzero_box)
+    else:
+        image_properties["crop_to_nonzero"] = crop_to_nonzero
+
+    image_properties["size_before_transpose"] = list(images[0].shape)
+
+    images = transpose_case(images, axes=transpose)
+    label = transpose_array(label, axes=transpose)
+
+    image_properties["size_after_transpose"] = list(images[0].shape)
+
+    resample_target_size, final_target_size, new_spacing = determine_target_size(
+        images_transposed=images,
+        original_spacing=np.array(image_properties["nifti_metadata"]["original_spacing"]),
+        transpose_forward=transpose,
+        target_size=target_size,
+        target_spacing=target_spacing,
+        keep_aspect_ratio=keep_aspect_ratio_when_using_target_size,
+    )
+
+    # here we need to make sure missing modalities are accounted for, as the order of the images
+    # can matter for normalization operations
+    for missing_mod in missing_modality_idxs:
+        images.insert(missing_mod, np.array([]))
+
+    images, label = resample_and_normalize_case(
+        case=images,
+        target_size=resample_target_size,
+        norm_op=normalization_operation,
+        intensities=intensities,
+        label=label,
+        allow_missing_modalities=allow_missing_modalities,
+    )
+
+    if final_target_size is not None:
+        images, label = pad_case_to_size(case=images, size=final_target_size, label=label)
+    image_properties["foreground_locations"], image_properties["label_cc_n"], image_properties["label_cc_sizes"] = (
+        analyze_label(label=images[-1], enable_connected_components_analysis=enable_cc_analysis)
+    )
+
+    first_existing_modality = list(set(range(len(images))).difference(missing_modality_idxs))[0]
+    image_properties["new_size"] = list(images[first_existing_modality].shape)
+    image_properties["original_spacing"] = image_properties["nifti_metadata"]["original_spacing"]
+    image_properties["original_size"] = original_size
+    image_properties["original_orientation"] = image_properties["nifti_metadata"]["original_orientation"]
+    image_properties["new_spacing"] = new_spacing
+    image_properties["new_direction"] = image_properties["nifti_metadata"]["final_direction"]
+    return images, label, image_properties
+
+
+def preprocess_case_for_training_without_label(
+    images: List[Union[np.ndarray, nib.Nifti1Image]],
+    normalization_operation: list,
+    allow_missing_modalities: bool = False,
+    enable_cc_analysis: bool = False,
+    missing_modality_idxs: list = [],
+    crop_to_nonzero: bool = True,
+    keep_aspect_ratio_when_using_target_size: bool = False,
+    image_properties: Optional[dict] = {},
+    intensities: Optional[List] = [],
+    target_orientation: Optional[str] = "RAS",
+    target_size: Optional[List] = None,
+    target_spacing: Optional[List] = None,
+    transpose: Optional[list] = [0, 1, 2],
+):
+    """
+    one of target_size or target_spacing is required.
+    """
+
+    images, label, image_properties["nifti_metadata"] = apply_nifti_preprocessing_and_return_numpy(
+        images=images,
+        original_size=np.array(images[0].shape),
+        target_orientation=target_orientation,
+        label=None,
+        include_header=False,
+    )
+
+    original_size = images[0].shape
+
+    # Cropping is performed to save computational resources. We are only removing background.
+    if crop_to_nonzero:
+        nonzero_box = get_bbox_for_foreground(images[0], background_label=0)
+        image_properties["crop_to_nonzero"] = nonzero_box
+        for i in range(len(images)):
+            images[i] = crop_to_box(images[i], nonzero_box)
+    else:
+        image_properties["crop_to_nonzero"] = crop_to_nonzero
+
+    image_properties["size_before_transpose"] = list(images[0].shape)
+
+    images = transpose_case(images, axes=transpose)
+
+    image_properties["size_after_transpose"] = list(images[0].shape)
+
+    resample_target_size, final_target_size, new_spacing = determine_target_size(
+        images_transposed=images,
+        original_spacing=np.array(image_properties["nifti_metadata"]["original_spacing"]),
+        transpose_forward=transpose,
+        target_size=target_size,
+        target_spacing=target_spacing,
+        keep_aspect_ratio=keep_aspect_ratio_when_using_target_size,
+    )
+
+    # here we need to make sure missing modalities are accounted for, as the order of the images
+    # can matter for normalization operations
+    for missing_mod in missing_modality_idxs:
+        images.insert(missing_mod, np.array([]))
+
+    images = resample_and_normalize_case(
+        case=images,
+        target_size=resample_target_size,
+        norm_op=normalization_operation,
+        intensities=intensities,
+        allow_missing_modalities=allow_missing_modalities,
+    )
+
+    if final_target_size is not None:
+        images = pad_case_to_size(case=images, size=final_target_size, label=None)
+
+    first_existing_modality = list(set(range(len(images))).difference(missing_modality_idxs))[0]
+    image_properties["new_size"] = list(images[first_existing_modality].shape)
+    image_properties["label_cc_n"] = image_properties["label_cc_sizes"] = 0
+    image_properties["foreground_locations"] = []
+    image_properties["original_spacing"] = image_properties["nifti_metadata"]["original_spacing"]
+    image_properties["original_size"] = original_size
+    image_properties["original_orientation"] = image_properties["nifti_metadata"]["original_orientation"]
+    image_properties["new_spacing"] = new_spacing
+    image_properties["new_direction"] = image_properties["nifti_metadata"]["final_direction"]
+    return images, image_properties
 
 
 def preprocess_case_for_inference(

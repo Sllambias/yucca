@@ -77,6 +77,11 @@ def load_plans(plans_path):
 
 
 def setup_task_type(plans):
+    if plans.get("task_type"):
+        task_type = plans.get("task_type")
+        return task_type
+
+    # If key is not present in plan then we try to infer the task_type from the Type of Preprocessor
     preprocessor_class = recursive_find_python_class(
         folder=[join(yucca.__path__[0], "preprocessing")],
         class_name=plans["preprocessor"],

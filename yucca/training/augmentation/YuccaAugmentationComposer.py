@@ -9,10 +9,7 @@ from yucca.image_processing.transforms.Gamma import Gamma
 from yucca.image_processing.transforms.Ghosting import MotionGhosting
 from yucca.image_processing.transforms.Masking import Masking
 from yucca.image_processing.transforms.Mirror import Mirror
-from yucca.image_processing.transforms.Noise import (
-    AdditiveNoise,
-    MultiplicativeNoise,
-)
+from yucca.image_processing.transforms.Noise import AdditiveNoise, MultiplicativeNoise
 from yucca.image_processing.transforms.Ringing import GibbsRinging
 from yucca.image_processing.transforms.sampling import DownsampleSegForDS
 from yucca.image_processing.transforms.SimulateLowres import SimulateLowres
@@ -131,15 +128,12 @@ class YuccaAugmentationComposer:
         if preset == "segmentation":
             # we do nothing and use the default parameters
             pass
-
         elif preset == "classification":
             self.skip_label = True
-
         elif preset == "self-supervised":
             self.skip_label = True
             self.copy_image_to_label = True
             self.mask_image_for_reconstruction = True
-
         else:
             raise ValueError(f"{preset} is not a valid `task_type_preset`.")
 

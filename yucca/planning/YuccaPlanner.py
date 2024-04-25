@@ -4,6 +4,8 @@ from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from yucca.planning.dataset_properties import create_dataset_properties
 from yucca.utils.files_and_folders import recursive_find_python_class
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, isfile, load_pickle, save_json, subfiles
+from yucca.functional.planning import make_plans_file, add_stats_to_plans_post_preprocessing
+from yucca.preprocessing import YuccaPreprocessor, UnsupervisedPreprocessor, ClassificationPreprocessor
 
 
 class YuccaPlanner(object):
@@ -73,6 +75,7 @@ class YuccaPlanner(object):
 
         self.determine_transpose()
         self.determine_target_size_from_fixed_size_or_spacing()
+        self.determine_task_type()
         self.validate_target_size()
         self.drop_keys_from_dict(dict=self.dataset_properties, keys=[])
         self.populate_plans_file()
@@ -150,68 +153,26 @@ class YuccaPlanner(object):
         self.postprocess()
 
     def populate_plans_file(self):
-        self.plans["target_coordinate_system"] = self.target_coordinate_system
-        # When True all the background between the volumes and the edges of the image is removed
-        self.plans["crop_to_nonzero"] = self.crop_to_nonzero
-
-        # Change this to have different normalization schemes for all or some modalities
-        self.plans["normalization_scheme"] = [self.norm_op for _ in self.dataset_properties["modalities"]]
-
-        self.plans["transpose_forward"] = self.transpose_fw
-        self.plans["transpose_backward"] = self.transpose_bw
-
-        # Defaults to the median spacing of the training data.
-        # Change the determine_spacing() function to use different spacings
-        self.plans["keep_aspect_ratio_when_using_target_size"] = self.keep_aspect_ratio_when_using_target_size
-        self.plans["target_size"] = self.fixed_target_size
-        self.plans["target_spacing"] = self.fixed_target_spacing
-        self.plans["preprocessor"] = self.preprocessor
-        self.plans["dataset_properties"] = self.dataset_properties
-        self.plans["plans_name"] = self.name
-        self.plans["suggested_dimensionality"] = self.suggested_dimensionality
-        self.plans["allow_missing_modalities"] = self.allow_missing_modalities
+        self.plans = make_plans_file(
+            allow_missing_modalities=self.allow_missing_modalities,
+            crop_to_nonzero=self.crop_to_nonzero,
+            classes=self.dataset_properties["classes"],
+            norm_op=self.norm_op,
+            modalities=self.dataset_properties["modalities"],
+            plans_name=self.name,
+            dataset_properties=self.dataset_properties,
+            keep_aspect_ratio_when_using_target_size=self.keep_aspect_ratio_when_using_target_size,
+            task_type=self.task_type,
+            target_coordinate_system=self.target_coordinate_system,
+            target_spacing=self.fixed_target_spacing,
+            target_size=self.fixed_target_size,
+            transpose_forward=self.transpose_fw,
+            transpose_backward=self.transpose_bw,
+            suggested_dimensionality=self.suggested_dimensionality,
+        )
 
     def postprocess(self):
-        pkl_files = subfiles(self.plans_folder, suffix=".pkl")
-
-        new_spacings = []
-        new_sizes = []
-        n_cc = []
-        size_cc = []
-        for pkl_file in pkl_files:
-            pkl_file = load_pickle(pkl_file)
-            new_spacings.append(pkl_file["new_spacing"])
-            new_sizes.append(pkl_file["new_size"])
-            n_cc.append(pkl_file["label_cc_n"])
-            if np.mean(pkl_file["label_cc_sizes"]) > 0:
-                size_cc.append(np.mean(pkl_file["label_cc_sizes"], dtype=int))
-
-        mean_size = np.mean(new_sizes, 0, dtype=int).tolist()
-        min_size = np.min(new_sizes, 0).tolist()
-        max_size = np.max(new_sizes, 0).tolist()
-
-        if len(size_cc) > 0:
-            mean_cc = np.mean(size_cc, dtype=int).tolist()
-            min_cc = np.min(size_cc).tolist()
-            max_cc = np.max(size_cc).tolist()
-            mean_n_cc = np.mean(n_cc, dtype=int).tolist()
-            min_n_cc = np.min(n_cc, initial=-1).tolist()
-            max_n_cc = np.max(n_cc, initial=-1).tolist()
-        else:
-            mean_cc = min_cc = max_cc = mean_n_cc = min_n_cc = max_n_cc = 0
-
-        self.plans["new_sizes"] = new_sizes
-        self.plans["new_spacings"] = new_spacings
-        self.plans["new_mean_size"] = mean_size
-        self.plans["new_min_size"] = min_size
-        self.plans["new_max_size"] = max_size
-        self.plans["mean_cc_size"] = mean_cc
-        self.plans["max_cc_size"] = max_cc
-        self.plans["min_cc_size"] = min_cc
-        self.plans["mean_n_cc"] = mean_n_cc
-        self.plans["max_n_cc"] = max_n_cc
-        self.plans["min_n_cc"] = min_n_cc
-
+        self.plans = add_stats_to_plans_post_preprocessing(plans=self.plans, directory=self.plans_folder)
         save_json(self.plans, self.plans_path, sort_keys=False)
 
     def set_paths(self):
@@ -221,6 +182,23 @@ class YuccaPlanner(object):
         self.plans_folder = join(self.target_dir, self.name)
         self.plans_path = join(self.plans_folder, self.name + "_plans.json")
         maybe_mkdir_p(join(self.target_dir, self.name))
+
+    def determine_task_type(self):
+        preprocessor_class = recursive_find_python_class(
+            folder=[join(yucca.__path__[0], "preprocessing")],
+            class_name=self.preprocessor,
+            current_module="yucca.preprocessing",
+        )
+        # If key is not present in plan then we try to infer the task_type from the Type of Preprocessor
+        assert (
+            preprocessor_class
+        ), f"{self.preprocessor} was found in plans, but no class with the corresponding name was found"
+        if issubclass(preprocessor_class, ClassificationPreprocessor):
+            self.task_type = "classification"
+        elif issubclass(preprocessor_class, UnsupervisedPreprocessor):
+            self.task_type = "self-supervised"
+        else:
+            self.task_type = "segmentation"
 
 
 class YuccaPlannerX(YuccaPlanner):

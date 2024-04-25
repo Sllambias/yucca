@@ -19,6 +19,8 @@ from yucca.functional.preprocessing import (
     resample_and_normalize_case,
     pad_case_to_size,
     preprocess_case_for_inference,
+    preprocess_case_for_training_with_label,
+    preprocess_case_for_training_without_label,
     reverse_preprocessing,
 )
 from yucca.utils.loading import load_yaml, read_file_to_nifti_or_np
@@ -235,6 +237,7 @@ class YuccaPreprocessor(object):
             assert not len(missing_modalities) > 0, "found missing modalities and allow_missing_modalities is not enabled."
         image_props["image files"] = imagepaths
         images = [read_file_to_nifti_or_np(image) for image in imagepaths]
+
         if label_exists:
             # Do the same with label
             label = [
@@ -254,90 +257,41 @@ class YuccaPreprocessor(object):
             else:
                 self.run_sanity_checks(images, None, subject_id, imagepaths)
 
-        images, label, image_props["nifti_metadata"] = apply_nifti_preprocessing_and_return_numpy(
-            images=images,
-            original_size=np.array(images[0].shape),
-            target_orientation=self.plans["target_coordinate_system"],
-            label=label,
-            include_header=False,
-        )
-
-        original_size = images[0].shape
-
         if label_exists and preprocess_label:
+            images, label, image_props = preprocess_case_for_training_with_label(
+                images=images,
+                label=label,
+                normalization_operation=self.plans["normalization_scheme"],
+                allow_missing_modalities=self.allow_missing_modalities,
+                enable_cc_analysis=self.enable_cc_analysis,
+                missing_modality_idxs=missing_modalities,
+                crop_to_nonzero=self.plans["crop_to_nonzero"],
+                keep_aspect_ratio_when_using_target_size=self.plans["keep_aspect_ratio_when_using_target_size"],
+                image_properties=image_props,
+                intensities=self.intensities,
+                target_orientation=self.plans["target_coordinate_system"],
+                target_size=self.target_size,
+                target_spacing=self.target_spacing,
+                transpose=self.transpose_forward,
+            )
             self.verify_label_validity(label, subject_id)
 
-        # Cropping is performed to save computational resources. We are only removing background.
-        if self.plans["crop_to_nonzero"]:
-            nonzero_box = get_bbox_for_foreground(images[0], background_label=0)
-            image_props["crop_to_nonzero"] = nonzero_box
-            for i in range(len(images)):
-                images[i] = crop_to_box(images[i], nonzero_box)
-            if label_exists and preprocess_label:
-                label = crop_to_box(label, nonzero_box)
         else:
-            image_props["crop_to_nonzero"] = self.plans["crop_to_nonzero"]
-
-        image_props["size_before_transpose"] = list(images[0].shape)
-
-        images = transpose_case(images, axes=self.transpose_forward)
-        if label_exists and preprocess_label:
-            label = transpose_array(label, axes=self.transpose_forward)
-
-        image_props["size_after_transpose"] = list(images[0].shape)
-
-        resample_target_size, final_target_size, new_spacing = determine_target_size(
-            images_transposed=images,
-            original_spacing=np.array(image_props["nifti_metadata"]["original_spacing"]),
-            transpose_forward=self.transpose_forward,
-            target_size=self.target_size,
-            target_spacing=self.target_spacing,
-            keep_aspect_ratio=self.plans["keep_aspect_ratio_when_using_target_size"],
-        )
-
-        # here we need to make sure missing modalities are accounted for, as the order of the images
-        # can matter for normalization operations
-        for missing_mod in missing_modalities:
-            images.insert(missing_mod, np.array([]))
-
-        if label_exists and preprocess_label:
-            images, label = resample_and_normalize_case(
-                case=images,
-                target_size=resample_target_size,
-                norm_op=self.plans["normalization_scheme"],
-                intensities=self.intensities,
-                label=label,
+            images, image_props = preprocess_case_for_training_without_label(
+                images=images,
+                normalization_operation=self.plans["normalization_scheme"],
                 allow_missing_modalities=self.allow_missing_modalities,
-            )
-        else:
-            images = resample_and_normalize_case(
-                case=images,
-                target_size=resample_target_size,
-                norm_op=self.plans["normalization_scheme"],
+                enable_cc_analysis=self.enable_cc_analysis,
+                missing_modality_idxs=missing_modalities,
+                crop_to_nonzero=self.plans["crop_to_nonzero"],
+                keep_aspect_ratio_when_using_target_size=self.plans["keep_aspect_ratio_when_using_target_size"],
+                image_properties=image_props,
                 intensities=self.intensities,
-                allow_missing_modalities=self.allow_missing_modalities,
+                target_orientation=self.plans["target_coordinate_system"],
+                target_size=self.target_size,
+                target_spacing=self.target_spacing,
+                transpose=self.transpose_forward,
             )
-
-        if final_target_size is not None:
-            if label_exists and preprocess_label:
-                images, label = pad_case_to_size(case=images, size=final_target_size, label=label)
-            else:
-                images = pad_case_to_size(case=images, size=final_target_size, label=None)
-        if label_exists and preprocess_label:
-            image_props["foreground_locations"], image_props["label_cc_n"], image_props["label_cc_sizes"] = self.analyze_label(
-                label=images[-1]
-            )
-        else:
-            image_props["label_cc_n"] = image_props["label_cc_sizes"] = 0
-            image_props["foreground_locations"] = []
-
-        image_props["new_size"] = list(images[int(found_modalities[0])].shape)
-        # save relevant values
-        image_props["original_spacing"] = image_props["nifti_metadata"]["original_spacing"]
-        image_props["original_size"] = original_size
-        image_props["original_orientation"] = image_props["nifti_metadata"]["original_orientation"]
-        image_props["new_spacing"] = new_spacing
-        image_props["new_direction"] = image_props["nifti_metadata"]["final_direction"]
         return images, label, image_props
 
     def preprocess_case_for_inference(self, images: list | tuple, patch_size: tuple, sliding_window_prediction: bool = True):
@@ -411,27 +365,6 @@ class YuccaPreprocessor(object):
             raise FileNotFoundError(
                 f"Plan file not found. Got {plans_path} with ext {os.path.splitext(plans_path)[-1]}. Expects either a '.json' or '.yaml' file."
             )
-
-    def analyze_label(self, label):
-        # we get some (no need to get all) locations of foreground, that we will later use in the
-        # oversampling of foreground classes
-        # And we also potentially analyze the connected components of the label
-        max_foreground_locs = 100000  # limited to save space
-        foreground_locs = np.array(np.nonzero(label)).T[::10].tolist()
-        if len(foreground_locs) > max_foreground_locs:
-            foreground_locs = foreground_locs[:: round(len(foreground_locs) / max_foreground_locs)]
-        if not self.enable_cc_analysis:
-            label_cc_n = 0
-            label_cc_sizes = 0
-        else:
-            numbered_ground_truth, label_cc_n = cc3d.connected_components(label, connectivity=26, return_N=True)
-            if len(numbered_ground_truth) == 0:
-                label_cc_sizes = 0
-            else:
-                label_cc_sizes = [
-                    i * np.prod(self.target_spacing) for i in np.unique(numbered_ground_truth, return_counts=True)[-1][1:]
-                ]
-        return foreground_locs, label_cc_n, label_cc_sizes
 
     def run_sanity_checks(self, images, label, subject_id, imagepaths):
         self.sanity_check_standard_formats(images, label, subject_id, imagepaths)

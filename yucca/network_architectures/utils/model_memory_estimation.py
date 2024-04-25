@@ -92,10 +92,13 @@ def find_optimal_tensor_dims(
     max_memory_usage_in_gb=None,
 ):
     if max_memory_usage_in_gb is None:
-        try:
-            gpu_vram_in_gb = int(torch.cuda.get_device_properties(0).total_memory / 1024**2 * 0.001)
-        except RuntimeError:
-            gpu_vram_in_gb = 12
+        if not torch.cuda.is_available():
+            gpu_vram_in_gb = 6
+        else:
+            try:
+                gpu_vram_in_gb = int(torch.cuda.get_device_properties(0).total_memory / 1024**2 * 0.001)
+            except RuntimeError:
+                gpu_vram_in_gb = 12
         # Don't wanna utilize more than 8/12GB, to ensure epoch times are kept relatively low
         if dimensionality == "2D":
             max_memory_usage_in_gb = min(8, gpu_vram_in_gb)
