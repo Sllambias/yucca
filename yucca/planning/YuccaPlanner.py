@@ -160,6 +160,7 @@ class YuccaPlanner(object):
             norm_op=self.norm_op,
             modalities=self.dataset_properties["modalities"],
             plans_name=self.name,
+            preprocessor=self.preprocessor,
             dataset_properties=self.dataset_properties,
             keep_aspect_ratio_when_using_target_size=self.keep_aspect_ratio_when_using_target_size,
             task_type=self.task_type,

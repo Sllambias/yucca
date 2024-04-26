@@ -34,8 +34,20 @@ class YuccaAugmentationComposer:
         self.val_transforms = self.compose_val_transforms()
 
     def setup_default_params(self, is_2D, patch_size):
+        """
+        Default probabilities (all ON by default)
+        For augmentations with AUG_P_PER_SAMPLE, AUG_P_PER_CHANNEL and AUG_P_PER_AXIS they are applied in the following order:
+                for sample in dataset: # iterate over the batch
+         if p_per_sample > np.random.uniform():
+           for channel in sample: # iterate over the channel/modalities
+             if p_per_channel > np.random.uniform():
+               for axis in channel: # iterate over the h,w,d dimensions
+                 if p_per_axis > np.random.uniform():
+                   sample[channel, axis] = apply_aug(sample[channel, axis])
+        Therefore, to enable any augmentation the AUG_P_PER_SAMPLE must be > 0.
+        """
         print("Composing Transforms")
-        # Define whether we crop before or after applying augmentations
+
         # Define if the cropping performed during the spatial transform is random or always centered
         #   We have ALREADY selected a random crop when we prepared the case in the dataloader
         #   so unless you know what you're doing this should be disabled to avoid border artifacts
@@ -51,18 +63,7 @@ class YuccaAugmentationComposer:
         self.label_dtype = int
         self.copy_image_to_label = False
 
-        # Default probabilities (all ON by default)
-        # For augmentations with AUG_P_PER_SAMPLE, AUG_P_PER_CHANNEL and AUG_P_PER_AXIS they are applied in the following order:
-        #
-        # for sample in dataset: # iterate over the batch
-        #  if p_per_sample > np.random.uniform():
-        #    for channel in sample: # iterate over the channel/modalities
-        #      if p_per_channel > np.random.uniform():
-        #        for axis in channel: # iterate over the h,w,d dimensions
-        #          if p_per_axis > np.random.uniform():
-        #            sample[channel, axis] = apply_aug(sample[channel, axis])
-        # Therefore, to enable any augmentation the AUG_P_PER_SAMPLE must be > 0.
-
+        # default augmentation probabilities
         self.additive_noise_p_per_sample = 0.2
         self.biasfield_p_per_sample = 0.33
         self.blurring_p_per_sample = 0.2

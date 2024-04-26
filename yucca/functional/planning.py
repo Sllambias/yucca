@@ -24,6 +24,7 @@ def make_plans_file(
     assert task_type in ["classification", "segmentation", "self-supervised"]
     plans = {}
     plans["target_coordinate_system"] = target_coordinate_system
+    plans["preprocessor"] = preprocessor
     # When True all the background between the volumes and the edges of the image is removed
     plans["crop_to_nonzero"] = crop_to_nonzero
 
