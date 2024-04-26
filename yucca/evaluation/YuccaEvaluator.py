@@ -7,7 +7,7 @@ import sys
 import wandb
 from batchgenerators.utilities.file_and_folder_operations import subfiles, join, load_json, isfile
 from sklearn.metrics import confusion_matrix
-from yucca.evaluation.metrics import (
+from yucca.functional.evaluation.metrics import (
     dice,
     jaccard,
     sensitivity,
@@ -21,8 +21,8 @@ from yucca.evaluation.metrics import (
     accuracy,
     auroc,
 )
-from yucca.evaluation.obj_metrics import get_obj_stats_for_label
-from yucca.evaluation.surface_metrics import get_surface_metrics_for_label
+from yucca.functional.evaluation.obj_metrics import get_obj_stats_for_label
+from yucca.functional.evaluation.surface_metrics import get_surface_metrics_for_label
 from yucca.paths import yucca_raw_data
 from weave.monitoring import StreamTable
 from tqdm import tqdm

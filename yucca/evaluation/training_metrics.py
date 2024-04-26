@@ -1,5 +1,5 @@
-from torchmetrics.classification import MulticlassF1Score
 from torch import Tensor
+from torchmetrics.classification import MulticlassF1Score
 from torchmetrics.classification import Accuracy as TorchAccuracy
 from torchmetrics.classification import AUROC as TorchAUROC
 from torchmetrics import Metric

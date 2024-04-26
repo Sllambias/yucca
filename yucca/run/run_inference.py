@@ -3,7 +3,7 @@ import yucca
 from yucca.task_conversion.utils import maybe_get_task_from_task_id
 from yucca.paths import yucca_raw_data, yucca_results, yucca_models
 from yucca.evaluation.YuccaEvaluator import YuccaEvaluator
-from yucca.training.managers.YuccaManager import YuccaManager
+from yucca.managers.YuccaManager import YuccaManager
 from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from batchgenerators.utilities.file_and_folder_operations import (
     join,

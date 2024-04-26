@@ -1,4 +1,4 @@
-from yucca.image_processing.transforms.YuccaTransform import YuccaTransform
+from yucca.yucca.training.augmentation.transforms.YuccaTransform import YuccaTransform
 import numpy as np
 
 
