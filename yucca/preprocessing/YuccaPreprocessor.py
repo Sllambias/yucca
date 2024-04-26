@@ -23,9 +23,9 @@ from yucca.functional.preprocessing import (
     preprocess_case_for_training_without_label,
     reverse_preprocessing,
 )
-from yucca.utils.loading import load_yaml, read_file_to_nifti_or_np
-from yucca.image_processing.objects.BoundingBox import get_bbox_for_foreground
+from yucca.functional.bounding_boxes import get_bbox_for_foreground
 from yucca.functional.cropping_and_padding import crop_to_box, pad_to_size, get_pad_kwargs
+from yucca.utils.loading import load_yaml, read_file_to_nifti_or_np
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from multiprocessing import Pool
 from batchgenerators.utilities.file_and_folder_operations import (
