@@ -5,10 +5,10 @@ from dataclasses import dataclass
 from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor
 from lightning.pytorch.profilers import AdvancedProfiler
 from lightning.pytorch.loggers import WandbLogger
-from yucca.callbacks.loggers import YuccaLogger
-from yucca.functional.utils.saving import WritePredictionFromLogits
-from yucca.paths import yucca_wandb_entity
 from lightning.pytorch.profilers.profiler import Profiler
+from yucca.callbacks.loggers import YuccaLogger
+from yucca.callbacks.prediction_writer import WritePredictionFromLogits
+from yucca.paths import yucca_wandb_entity
 
 
 @dataclass
