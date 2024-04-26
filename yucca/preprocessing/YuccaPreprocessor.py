@@ -12,7 +12,7 @@ from yucca.functional.testing.data.nifti import (
     verify_orientation_is_equal,
 )
 from yucca.functional.testing.data.array import verify_labels_are_equal, verify_array_shape_is_equal
-from yucca.functional.transpose import transpose_case, transpose_array
+from yucca.functional.array_operations.transpose import transpose_case, transpose_array
 from yucca.functional.preprocessing import (
     apply_nifti_preprocessing_and_return_numpy,
     determine_target_size,
@@ -23,9 +23,9 @@ from yucca.functional.preprocessing import (
     preprocess_case_for_training_without_label,
     reverse_preprocessing,
 )
-from yucca.functional.bounding_boxes import get_bbox_for_foreground
-from yucca.functional.cropping_and_padding import crop_to_box, pad_to_size, get_pad_kwargs
-from yucca.utils.loading import load_yaml, read_file_to_nifti_or_np
+from yucca.functional.array_operations.bounding_boxes import get_bbox_for_foreground
+from yucca.functional.array_operations.cropping_and_padding import crop_to_box, pad_to_size, get_pad_kwargs
+from yucca.functional.utils.loading import load_yaml, read_file_to_nifti_or_np
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from multiprocessing import Pool
 from batchgenerators.utilities.file_and_folder_operations import (

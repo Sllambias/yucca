@@ -1,5 +1,5 @@
 from yucca.image_processing.transforms.YuccaTransform import YuccaTransform
-from yucca.functional.normalization import normalizer
+from yucca.functional.array_operations.normalization import normalizer
 
 
 class Normalize(YuccaTransform):

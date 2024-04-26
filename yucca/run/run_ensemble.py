@@ -9,7 +9,7 @@ from the same task as the one the model is trained on.
 """
 
 import argparse
-from yucca.utils.saving import merge_softmax_from_folders
+from yucca.functional.utils.saving import merge_softmax_from_folders
 
 
 def main():

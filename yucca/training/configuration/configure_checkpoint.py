@@ -3,7 +3,7 @@ from batchgenerators.utilities.file_and_folder_operations import join, isfile
 from dataclasses import dataclass
 from typing import Union
 from yucca.training.configuration.configure_paths import PathConfig
-from yucca.utils.dict import without_keys
+from yucca.functional.utils.dict import without_keys
 import logging
 
 

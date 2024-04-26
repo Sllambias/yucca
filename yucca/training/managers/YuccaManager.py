@@ -17,7 +17,7 @@ from yucca.training.data_loading.YuccaDataset import YuccaTrainDataset, YuccaTes
 from yucca.training.data_loading.samplers import InfiniteRandomSampler
 from yucca.training.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from yucca.paths import yucca_results
-from yucca.utils.torch_utils import measure_FLOPs
+from yucca.functional.utils.torch_utils import measure_FLOPs
 from fvcore.nn import flop_count_table
 
 

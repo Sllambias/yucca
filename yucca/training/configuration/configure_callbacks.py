@@ -6,7 +6,7 @@ from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor
 from lightning.pytorch.profilers import AdvancedProfiler
 from lightning.pytorch.loggers import WandbLogger
 from yucca.evaluation.loggers import YuccaLogger
-from yucca.utils.saving import WritePredictionFromLogits
+from yucca.functional.utils.saving import WritePredictionFromLogits
 from yucca.paths import yucca_wandb_entity
 from lightning.pytorch.profilers.profiler import Profiler
 

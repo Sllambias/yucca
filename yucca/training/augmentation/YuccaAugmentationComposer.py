@@ -1,5 +1,5 @@
 from torchvision import transforms
-from yucca.functional.matrix_ops import get_max_rotated_size
+from yucca.functional.array_operations.matrix_ops import get_max_rotated_size
 from yucca.image_processing.transforms.normalize import Normalize
 from yucca.image_processing.transforms.formatting import AddBatchDimension, RemoveBatchDimension, CollectMetadata
 from yucca.image_processing.transforms.BiasField import BiasField

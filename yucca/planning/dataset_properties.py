@@ -1,9 +1,9 @@
 import logging
 from typing import Dict, List
 from batchgenerators.utilities.file_and_folder_operations import subfiles, join, load_json, save_pickle
-from yucca.utils.nib_utils import get_nib_spacing
-from yucca.utils.type_conversions import nifti_or_np_to_np
-from yucca.utils.loading import read_file_to_nifti_or_np
+from yucca.functional.utils.nib_utils import get_nib_spacing
+from yucca.functional.utils.type_conversions import nifti_or_np_to_np
+from yucca.functional.utils.loading import read_file_to_nifti_or_np
 import nibabel as nib
 import numpy as np
 from tqdm.contrib.concurrent import process_map

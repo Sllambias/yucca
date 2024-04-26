@@ -7,21 +7,21 @@ import torch
 import torch.nn.functional as F
 import cc3d
 from typing import Union, List, Optional
-from yucca.functional.normalization import normalizer
+from yucca.functional.array_operations.normalization import normalizer
 from skimage.transform import resize
-from yucca.functional.cropping_and_padding import pad_to_size, get_pad_kwargs
+from yucca.functional.array_operations.cropping_and_padding import pad_to_size, get_pad_kwargs
 from yucca.functional.testing.data.nifti import verify_nifti_header_is_valid
-from yucca.utils.nib_utils import (
+from yucca.functional.testing.data.array import verify_array_shape_is_equal, verify_labels_are_equal
+from yucca.functional.array_operations.transpose import transpose_case, transpose_array
+from yucca.functional.array_operations.bounding_boxes import get_bbox_for_foreground
+from yucca.functional.array_operations.cropping_and_padding import crop_to_box
+from yucca.functional.utils.nib_utils import (
     get_nib_spacing,
     get_nib_orientation,
     reorient_nib_image,
 )
-from yucca.utils.type_conversions import nifti_or_np_to_np
-from yucca.utils.loading import read_file_to_nifti_or_np
-from yucca.functional.transpose import transpose_case, transpose_array
-from yucca.functional.testing.data.array import verify_array_shape_is_equal, verify_labels_are_equal
-from yucca.functional.bounding_boxes import get_bbox_for_foreground
-from yucca.functional.cropping_and_padding import crop_to_box
+from yucca.functional.utils.type_conversions import nifti_or_np_to_np
+from yucca.functional.utils.loading import read_file_to_nifti_or_np
 
 
 def analyze_label(label, enable_connected_components_analysis: bool = False, spacing: list = []):

@@ -1,6 +1,6 @@
 import nibabel as nib
 import numpy as np
-from yucca.utils.nib_utils import get_nib_orientation, get_nib_spacing
+from yucca.functional.utils.nib_utils import get_nib_orientation, get_nib_spacing
 
 
 def verify_spacing_is_equal(reference: nib.Nifti1Image, target: nib.Nifti1Image, id: str = ""):

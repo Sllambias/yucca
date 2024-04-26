@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from typing import Union, Literal
 from yucca.preprocessing.UnsupervisedPreprocessor import UnsupervisedPreprocessor
 from yucca.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
-from yucca.utils.dict import without_keys
-from yucca.utils.files_and_folders import recursive_find_python_class
+from yucca.functional.utils.dict import without_keys
+from yucca.functional.utils.files_and_folders import recursive_find_python_class
 import logging
 
 

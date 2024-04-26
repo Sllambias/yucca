@@ -5,7 +5,7 @@ Created on Fri Dec 16 13:25:09 2022
 
 @author: zcr545
 """
-from yucca.functional.bounding_boxes import get_bbox_for_label
+from yucca.functional.array_operations.bounding_boxes import get_bbox_for_label
 
 
 class Box(object):

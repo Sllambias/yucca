@@ -26,9 +26,9 @@ import numpy as np
 import yucca
 import math
 import logging
-from yucca.utils.torch_utils import get_available_device, flush_and_get_torch_memory_allocated
-from yucca.utils.files_and_folders import recursive_find_python_class
-from yucca.utils.kwargs import filter_kwargs
+from yucca.functional.utils.torch_utils import get_available_device, flush_and_get_torch_memory_allocated
+from yucca.functional.utils.files_and_folders import recursive_find_python_class
+from yucca.functional.utils.kwargs import filter_kwargs
 
 from batchgenerators.utilities.file_and_folder_operations import join
 from torch import nn

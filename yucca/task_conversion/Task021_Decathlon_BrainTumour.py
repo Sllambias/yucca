@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data, yucca_source
-from yucca.utils.nib_utils import get_nib_orientation, get_nib_spacing
+from yucca.functional.utils.nib_utils import get_nib_orientation, get_nib_spacing
 
 
 def convert(path: str = yucca_source, subdir: str = "decathlon", subsubdir: str = "Task01_BrainTumour"):
