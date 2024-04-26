@@ -20,7 +20,7 @@ from yucca.utils.type_conversions import nifti_or_np_to_np
 from yucca.utils.loading import read_file_to_nifti_or_np
 from yucca.functional.transpose import transpose_case, transpose_array
 from yucca.functional.testing.data.array import verify_array_shape_is_equal, verify_labels_are_equal
-from yucca.yucca.image_processing.BoundingBox import get_bbox_for_foreground
+from yucca.functional.bounding_boxes import get_bbox_for_foreground
 from yucca.functional.cropping_and_padding import crop_to_box
 
 
