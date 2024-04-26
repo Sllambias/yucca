@@ -11,7 +11,7 @@ from yucca.functional.array_operations.normalization import normalizer
 from skimage.transform import resize
 from yucca.functional.array_operations.cropping_and_padding import pad_to_size, get_pad_kwargs
 from yucca.functional.testing.data.nifti import verify_nifti_header_is_valid
-from yucca.functional.testing.data.array import verify_array_shape_is_equal
+from yucca.functional.testing.data.array import verify_shape_is_equal
 from yucca.functional.array_operations.transpose import transpose_case, transpose_array
 from yucca.functional.array_operations.bounding_boxes import get_bbox_for_foreground
 from yucca.functional.array_operations.cropping_and_padding import crop_to_box
@@ -465,7 +465,7 @@ def reverse_preprocessing(crop_to_nonzero, images, image_properties, n_classes, 
     shape_after_crop_transposed = shape_after_crop[transpose_forward]
     pad = image_properties["padding"]
 
-    verify_array_shape_is_equal(reference=images.shape[2:], target=image_properties["padded_shape"])
+    verify_shape_is_equal(reference=images.shape[2:], target=image_properties["padded_shape"])
 
     shape = images.shape[2:]
     if len(pad) == 6:
@@ -479,7 +479,7 @@ def reverse_preprocessing(crop_to_nonzero, images, image_properties, n_classes, 
     elif len(pad) == 4:
         images = images[:, :, pad[0] : shape[0] - pad[1], pad[2] : shape[1] - pad[3]]
 
-    verify_array_shape_is_equal(reference=images.shape[2:], target=image_properties["resampled_transposed_shape"])
+    verify_shape_is_equal(reference=images.shape[2:], target=image_properties["resampled_transposed_shape"])
 
     # Here we Interpolate the array to the original size. The shape starts as [H, W (,D)]. For Torch functionality it is changed to [B, C, H, W (,D)].
     # Afterwards it's squeezed back into [H, W (,D)] and transposed to the original direction.
@@ -490,7 +490,7 @@ def reverse_preprocessing(crop_to_nonzero, images, image_properties, n_classes, 
     # Now move the tensor to the CPU
     images = images.cpu()
 
-    verify_array_shape_is_equal(reference=images.shape[2:], target=image_properties["cropped_shape"])
+    verify_shape_is_equal(reference=images.shape[2:], target=image_properties["cropped_shape"])
 
     if crop_to_nonzero:
         bbox = image_properties["nonzero_box"]

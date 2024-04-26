@@ -15,3 +15,9 @@ def verify_array_shape_is_equal(reference: np.ndarray, target: np.ndarray, id=""
     assert np.all(reference.shape == target.shape), (
         f"Sizes do not match for {id}" f"Image is: {reference.shape} while the label is {target.shape}"
     )
+
+
+def verify_shape_is_equal(reference: np.ndarray, target: np.ndarray, id=""):
+    assert np.all(reference == target), (
+        f"Sizes do not match for {id}" f"Image is: {reference.shape} while the label is {target.shape}"
+    )
