@@ -316,7 +316,7 @@ class YuccaPreprocessor(object):
         images, image_properties = preprocess_case_for_inference(
             crop_to_nonzero=self.plans["crop_to_nonzero"],
             keep_aspect_ratio=self.plans["keep_aspect_ratio_when_using_target_size"],
-            images=image_properties,
+            images=images,
             intensities=self.intensities,
             normalization_scheme=self.plans["normalization_scheme"],
             patch_size=patch_size,
