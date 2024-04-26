@@ -1,5 +1,4 @@
 import numpy as np
-from typing import Tuple
 
 
 def additive_noise(image, mean, sigma, clip_to_input_range: bool = False):

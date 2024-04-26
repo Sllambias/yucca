@@ -4,8 +4,8 @@ import os
 from typing import Union, Literal, Optional
 import logging
 from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle
-from yucca.yucca.training.augmentation.transforms.cropping_and_padding import CropPad
-from yucca.yucca.training.augmentation.transforms.formatting import NumpyToTorch
+from yucca.augmentation.transforms.cropping_and_padding import CropPad
+from yucca.augmentation.transforms.formatting import NumpyToTorch
 
 
 class YuccaTrainDataset(torch.utils.data.Dataset):
@@ -190,7 +190,7 @@ if __name__ == "__main__":
     import torch
     from yucca.paths import yucca_preprocessed_data
     from batchgenerators.utilities.file_and_folder_operations import join
-    from yucca.yucca.data_loading.samplers import InfiniteRandomSampler
+    from yucca.data_loading.samplers import InfiniteRandomSampler
 
     files = subfiles(join(yucca_preprocessed_data, "Task001_OASIS/YuccaPlanner"), suffix="npy")
     ds = YuccaTrainDataset(files, patch_size=(12, 12, 12))

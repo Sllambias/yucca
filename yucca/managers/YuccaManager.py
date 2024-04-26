@@ -12,10 +12,10 @@ from yucca.configuration.configure_seed import seed_everything_and_get_seed_conf
 from yucca.configuration.configure_paths import get_path_config
 from yucca.configuration.configure_plans import get_plan_config
 from yucca.configuration.configure_input_dims import get_input_dims_config
-from yucca.yucca.data_loading.YuccaDataModule import YuccaDataModule
-from yucca.yucca.data_loading.YuccaDataset import YuccaTrainDataset, YuccaTestDataset
-from yucca.yucca.data_loading.samplers import InfiniteRandomSampler
-from yucca.yucca.lightning_modules.YuccaLightningModule import YuccaLightningModule
+from yucca.data_loading.YuccaDataModule import YuccaDataModule
+from yucca.data_loading.YuccaDataset import YuccaTrainDataset, YuccaTestDataset
+from yucca.data_loading.samplers import InfiniteRandomSampler
+from yucca.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from yucca.paths import yucca_results
 from yucca.functional.utils.torch_utils import measure_FLOPs
 from fvcore.nn import flop_count_table

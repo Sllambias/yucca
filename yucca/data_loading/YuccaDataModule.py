@@ -7,8 +7,8 @@ from torch.utils.data import DataLoader, Sampler
 from batchgenerators.utilities.file_and_folder_operations import join
 from yucca.configuration.configure_input_dims import InputDimensionsConfig
 from yucca.configuration.split_data import SplitConfig
-from yucca.yucca.data_loading.YuccaDataset import YuccaTestDataset, YuccaTrainDataset
-from yucca.yucca.data_loading.samplers import InfiniteRandomSampler
+from yucca.data_loading.YuccaDataset import YuccaTestDataset, YuccaTrainDataset
+from yucca.data_loading.samplers import InfiniteRandomSampler
 
 
 class YuccaDataModule(pl.LightningDataModule):

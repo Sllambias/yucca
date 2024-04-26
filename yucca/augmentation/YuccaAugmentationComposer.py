@@ -1,19 +1,19 @@
 from torchvision import transforms
 from yucca.functional.array_operations.matrix_ops import get_max_rotated_size
-from yucca.yucca.training.augmentation.transforms.normalize import Normalize
-from yucca.yucca.training.augmentation.transforms.formatting import AddBatchDimension, RemoveBatchDimension, CollectMetadata
-from yucca.yucca.training.augmentation.transforms.BiasField import BiasField
-from yucca.yucca.training.augmentation.transforms.Blur import Blur
-from yucca.yucca.training.augmentation.transforms.copy_image_to_label import CopyImageToLabel
-from yucca.yucca.training.augmentation.transforms.Gamma import Gamma
-from yucca.yucca.training.augmentation.transforms.Ghosting import MotionGhosting
-from yucca.yucca.training.augmentation.transforms.Masking import Masking
-from yucca.yucca.training.augmentation.transforms.Mirror import Mirror
-from yucca.yucca.training.augmentation.transforms.Noise import AdditiveNoise, MultiplicativeNoise
-from yucca.yucca.training.augmentation.transforms.Ringing import GibbsRinging
-from yucca.yucca.training.augmentation.transforms.sampling import DownsampleSegForDS
-from yucca.yucca.training.augmentation.transforms.SimulateLowres import SimulateLowres
-from yucca.yucca.training.augmentation.transforms.Spatial import Spatial
+from yucca.augmentation.transforms.normalize import Normalize
+from yucca.augmentation.transforms.formatting import AddBatchDimension, RemoveBatchDimension, CollectMetadata
+from yucca.augmentation.transforms.BiasField import BiasField
+from yucca.augmentation.transforms.Blur import Blur
+from yucca.augmentation.transforms.copy_image_to_label import CopyImageToLabel
+from yucca.augmentation.transforms.Gamma import Gamma
+from yucca.augmentation.transforms.Ghosting import MotionGhosting
+from yucca.augmentation.transforms.Masking import Masking
+from yucca.augmentation.transforms.Mirror import Mirror
+from yucca.augmentation.transforms.Noise import AdditiveNoise, MultiplicativeNoise
+from yucca.augmentation.transforms.Ringing import GibbsRinging
+from yucca.augmentation.transforms.sampling import DownsampleSegForDS
+from yucca.augmentation.transforms.SimulateLowres import SimulateLowres
+from yucca.augmentation.transforms.Spatial import Spatial
 
 
 class YuccaAugmentationComposer:

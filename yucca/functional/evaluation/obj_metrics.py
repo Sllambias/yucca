@@ -1,7 +1,7 @@
 import numpy as np
 import cc3d
 from yucca.functional.utils.nib_utils import get_nib_spacing
-from yucca.yucca.functional.evaluation.metrics import sensitivity, precision, f1
+from yucca.functional.evaluation.metrics import sensitivity, precision, f1
 
 
 def get_obj_stats_for_label(gt, pred, label, as_binary=False):
