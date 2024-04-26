@@ -131,9 +131,9 @@ def main():
     kwargs = {}
 
     manager = recursive_find_python_class(
-        folder=[join(yucca.__path__[0], "training", "managers")],
+        folder=[join(yucca.__path__[0], "managers")],
         class_name=manager_name,
-        current_module="yucca.training.managers",
+        current_module="yucca.managers",
     )
 
     manager = manager(
