@@ -1,9 +1,7 @@
 import numpy as np
 import torch
-import torch.nn.functional as F
 import nibabel as nib
 import os
-import cc3d
 import logging
 import time
 import re
@@ -12,19 +10,12 @@ from yucca.functional.testing.data.nifti import (
     verify_orientation_is_equal,
 )
 from yucca.functional.testing.data.array import verify_labels_are_equal, verify_array_shape_is_equal
-from yucca.functional.array_operations.transpose import transpose_case, transpose_array
 from yucca.functional.preprocessing import (
-    apply_nifti_preprocessing_and_return_numpy,
-    determine_target_size,
-    resample_and_normalize_case,
-    pad_case_to_size,
     preprocess_case_for_inference,
     preprocess_case_for_training_with_label,
     preprocess_case_for_training_without_label,
     reverse_preprocessing,
 )
-from yucca.functional.array_operations.bounding_boxes import get_bbox_for_foreground
-from yucca.functional.array_operations.cropping_and_padding import crop_to_box, pad_to_size, get_pad_kwargs
 from yucca.functional.utils.loading import load_yaml, read_file_to_nifti_or_np
 from yucca.paths import yucca_preprocessed_data, yucca_raw_data
 from multiprocessing import Pool
@@ -281,7 +272,6 @@ class YuccaPreprocessor(object):
                 images=images,
                 normalization_operation=self.plans["normalization_scheme"],
                 allow_missing_modalities=self.allow_missing_modalities,
-                enable_cc_analysis=self.enable_cc_analysis,
                 missing_modality_idxs=missing_modalities,
                 crop_to_nonzero=self.plans["crop_to_nonzero"],
                 keep_aspect_ratio_when_using_target_size=self.plans["keep_aspect_ratio_when_using_target_size"],

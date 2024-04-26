@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from yucca.yucca.training.augmentation.transforms.YuccaTransform import YuccaTransform
+from yucca.augmentation.transforms.YuccaTransform import YuccaTransform
 from typing import Optional
 
 

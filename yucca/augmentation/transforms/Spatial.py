@@ -4,16 +4,7 @@ From: https://stackoverflow.com/questions/59738230/apply-rotation-defined-by-eul
 """
 
 import numpy as np
-from scipy.ndimage import map_coordinates
-from yucca.functional.array_operations.matrix_ops import (
-    create_zero_centered_coordinate_matrix,
-    deform_coordinate_matrix,
-    Rx,
-    Ry,
-    Rz,
-    Rz2D,
-)
-from yucca.yucca.training.augmentation.transforms.YuccaTransform import YuccaTransform
+from yucca.augmentation.transforms.YuccaTransform import YuccaTransform
 from typing import Tuple
 from yucca.functional.transforms import spatial
 

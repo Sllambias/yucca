@@ -1,7 +1,5 @@
-from yucca.yucca.training.augmentation.transforms.YuccaTransform import YuccaTransform
+from yucca.augmentation.transforms.YuccaTransform import YuccaTransform
 from yucca.functional.transforms import downsample_label
-import numpy as np
-from skimage.transform import resize
 
 
 class DownsampleSegForDS(YuccaTransform):

@@ -1,7 +1,6 @@
-from yucca.yucca.training.augmentation.transforms.YuccaTransform import YuccaTransform
+from yucca.augmentation.transforms.YuccaTransform import YuccaTransform
 from yucca.functional.transforms import simulate_lowres
 import numpy as np
-from skimage.transform import resize
 
 
 class SimulateLowres(YuccaTransform):

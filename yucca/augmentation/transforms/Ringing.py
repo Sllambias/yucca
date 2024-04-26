@@ -1,4 +1,4 @@
-from yucca.yucca.training.augmentation.transforms.YuccaTransform import YuccaTransform
+from yucca.augmentation.transforms.YuccaTransform import YuccaTransform
 from yucca.functional.transforms import gibbs_ringing
 import numpy as np
 

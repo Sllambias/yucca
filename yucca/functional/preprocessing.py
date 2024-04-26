@@ -11,7 +11,7 @@ from yucca.functional.array_operations.normalization import normalizer
 from skimage.transform import resize
 from yucca.functional.array_operations.cropping_and_padding import pad_to_size, get_pad_kwargs
 from yucca.functional.testing.data.nifti import verify_nifti_header_is_valid
-from yucca.functional.testing.data.array import verify_array_shape_is_equal, verify_labels_are_equal
+from yucca.functional.testing.data.array import verify_array_shape_is_equal
 from yucca.functional.array_operations.transpose import transpose_case, transpose_array
 from yucca.functional.array_operations.bounding_boxes import get_bbox_for_foreground
 from yucca.functional.array_operations.cropping_and_padding import crop_to_box
@@ -290,7 +290,6 @@ def preprocess_case_for_training_without_label(
     images: List[Union[np.ndarray, nib.Nifti1Image]],
     normalization_operation: list,
     allow_missing_modalities: bool = False,
-    enable_cc_analysis: bool = False,
     missing_modality_idxs: list = [],
     crop_to_nonzero: bool = True,
     keep_aspect_ratio_when_using_target_size: bool = False,

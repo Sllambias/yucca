@@ -5,7 +5,7 @@ from yucca.planning.dataset_properties import create_dataset_properties
 from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, isfile, load_pickle, save_json, subfiles
 from yucca.functional.planning import make_plans_file, add_stats_to_plans_post_preprocessing
-from yucca.preprocessing import YuccaPreprocessor, UnsupervisedPreprocessor, ClassificationPreprocessor
+from yucca.preprocessing import UnsupervisedPreprocessor, ClassificationPreprocessor
 
 
 class YuccaPlanner(object):

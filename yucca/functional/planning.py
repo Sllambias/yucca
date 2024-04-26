@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Optional, List, Union
-from batchgenerators.utilities.file_and_folder_operations import save_json, subfiles, load_pickle
+from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle
 
 
 def make_plans_file(
