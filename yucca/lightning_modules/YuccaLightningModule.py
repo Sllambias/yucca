@@ -251,7 +251,6 @@ class YuccaLightningModule(L.LightningModule):
             patch_size=self.patch_size,
             sliding_window_prediction=self.sliding_window_prediction,
         )
-
         logits, case_properties = self.preprocessor.reverse_preprocessing(logits, case_properties)
         return {"logits": logits, "properties": case_properties, "case_id": case_id[0]}
 

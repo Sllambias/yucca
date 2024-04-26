@@ -334,7 +334,7 @@ class YuccaPreprocessor(object):
         """
         nclasses = max(1, len(self.plans["dataset_properties"]["classes"]))
 
-        images = reverse_preprocessing(
+        images, image_properties = reverse_preprocessing(
             crop_to_nonzero=self.plans["crop_to_nonzero"],
             images=images,
             image_properties=image_properties,
