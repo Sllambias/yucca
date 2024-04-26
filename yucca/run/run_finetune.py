@@ -87,11 +87,6 @@ def main():
     )
     parser.add_argument("--precision", type=str, default="bf16-mixed")
     parser.add_argument("--profile", help="Enable profiling.", action="store_true", default=False)
-    parser.add_argument(
-        "--safe_run",
-        action="store_true",
-        help="use to set safe defaults for e.g. MPS/CPU training. Will set to 2D and small batches/patches",
-    )
     parser.add_argument("--split_idx", type=int, help="idx of splits to use for training.", default=0)
     parser.add_argument(
         "--split_data_method", help="Specify splitting method. Either kfold, simple_train_val_split", default="kfold"
@@ -127,14 +122,13 @@ def main():
     patch_size = args.patch_size
     precision = args.precision
     profile = args.profile
-    safe_run = args.safe_run
     split_idx = args.split_idx
     split_data_method = args.split_data_method
     split_data_param = args.split_data_param
     train_batches_per_step = args.train_batches_per_step
     val_batches_per_step = args.val_batches_per_step
 
-    kwargs = {"safe_run": safe_run}
+    kwargs = {}
 
     manager = recursive_find_python_class(
         folder=[join(yucca.__path__[0], "training", "managers")],

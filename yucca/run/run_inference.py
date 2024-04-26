@@ -126,11 +126,6 @@ def main():
         required=False,
         help="Save softmax outputs. Required for softmax fusion.",
     )
-    parser.add_argument(
-        "--safe_run",
-        action="store_true",
-        help="use to set safe defaults for e.g. MPS/CPU training. Will set to 2D and small batches/patches",
-    )
 
     args = parser.parse_args()
 
@@ -157,11 +152,10 @@ def main():
     overwrite = args.overwrite
     predict_train = args.predict_train
     profile = args.profile
-    safe_run = args.safe_run
     save_softmax = args.save_softmax
     use_wandb = not args.no_wandb
 
-    kwargs = {"safe_run": safe_run}
+    kwargs = {}
 
     path_to_versions = join(
         yucca_models,

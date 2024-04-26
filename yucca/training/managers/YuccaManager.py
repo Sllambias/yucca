@@ -118,9 +118,6 @@ class YuccaManager:
         if self.kwargs.get("fast_dev_run"):
             self.setup_fast_dev_run()
 
-        if self.kwargs.get("accelerator") == "mps" or self.kwargs.get("accelerator") == "cpu":
-            self.setup_safe_run()
-
         # defaults
         self.trainer = L.Trainer
         self.train_dataset_class = YuccaTrainDataset
@@ -352,12 +349,6 @@ class YuccaManager:
         self.kwargs["accelerator"] = "cpu"
         self.train_batches_per_step = 10
         self.val_batches_per_step = 5
-
-    def setup_safe_run(self):
-        self.batch_size = 2
-        self.patch_size = (32, 32)
-        self.model_dimensions = "2D"
-        self.precision = 32
 
 
 if __name__ == "__main__":
