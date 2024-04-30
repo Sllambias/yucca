@@ -2,10 +2,11 @@ import logging
 import math
 from typing import Union
 import numpy as np
-from batchgenerators.utilities.file_and_folder_operations import join, subfiles, isfile, save_pickle, load_pickle
+from batchgenerators.utilities.file_and_folder_operations import join, isfile, save_pickle, load_pickle
 from sklearn.model_selection import KFold
 from dataclasses import dataclass
 from yucca.training.configuration.configure_paths import PathConfig
+from yucca.utils.files_and_folders import subfiles
 
 
 @dataclass
@@ -95,9 +96,9 @@ def simple_split(file_names: list[str], p: float):
 
 
 def get_file_names(train_data_dir):
-    file_names = subfiles(train_data_dir, join=False, suffix=".npy")
+    file_names = subfiles(train_data_dir, join=False, remove_extension=True, suffix=".npy")
     if not file_names:
-        file_names = subfiles(train_data_dir, join=False, suffix=".npz")
+        file_names = subfiles(train_data_dir, join=False, remove_extension=True, suffix=".npz")
         if file_names:
             logging.warning("Only found compressed (.npz) files. This might increase runtime.")
 

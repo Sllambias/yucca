@@ -9,6 +9,7 @@ from batchgenerators.utilities.file_and_folder_operations import (
     subfiles,
     subdirs,
 )
+from typing import Union, List
 
 
 def replace_in_file(file_path, pattern_replacement):
@@ -17,6 +18,44 @@ def replace_in_file(file_path, pattern_replacement):
             for pattern, replacement in pattern_replacement.items():
                 line = line.replace(pattern, replacement)
             print(line, end="")
+
+
+def subfiles(
+    folder: str,
+    join: bool = True,
+    remove_extension: bool = False,
+    prefix: Union[List[str], str] = None,
+    suffix: Union[List[str], str] = None,
+    sort: bool = True,
+) -> List[str]:
+    # Copy of batchgenerators subfiles with the added "remove_extension" arg
+
+    if join:
+        l = os.path.join
+    else:
+        l = lambda x, y: y
+
+    if remove_extension:
+        r = lambda x: x.split(".")[0]  # regular os.splitext doesn't account for double extensions like .nii.gz or .tar.gz
+    else:
+        r = lambda x: x
+
+    if prefix is not None and isinstance(prefix, str):
+        prefix = [prefix]
+    if suffix is not None and isinstance(suffix, str):
+        suffix = [suffix]
+
+    res = [
+        r(l(folder, i))
+        for i in os.listdir(folder)
+        if os.path.isfile(os.path.join(folder, i))
+        and (prefix is None or any([i.startswith(j) for j in prefix]))
+        and (suffix is None or any([i.endswith(j) for j in suffix]))
+    ]
+
+    if sort:
+        res.sort()
+    return res
 
 
 def rename_file_or_dir(file: str, patterns: dict):

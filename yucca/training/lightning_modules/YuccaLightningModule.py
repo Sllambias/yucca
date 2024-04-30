@@ -162,9 +162,6 @@ class YuccaLightningModule(L.LightningModule):
     def forward(self, inputs):
         return self.model(inputs)
 
-    def teardown(self, stage: str):  # noqa: U100
-        wandb.finish()
-
     def on_train_start(self):
         if self.log_image_every_n_epochs is None:
             self.log_image_every_n_epochs = self.get_image_logging_epochs(self.trainer.max_epochs)
