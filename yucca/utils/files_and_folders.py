@@ -6,7 +6,6 @@ import shutil
 import os
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
-    subfiles,
     subdirs,
 )
 from typing import Union, List
@@ -33,7 +32,7 @@ def subfiles(
     if join:
         l = os.path.join
     else:
-        l = lambda x, y: y
+        l = lambda x, y: y  # noqa: U100
 
     if remove_extension:
         r = lambda x: x.split(".")[0]  # regular os.splitext doesn't account for double extensions like .nii.gz or .tar.gz
