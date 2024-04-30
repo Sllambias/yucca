@@ -63,19 +63,13 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
     def load_and_maybe_keep_volume(self, path):
         if not self.keep_in_ram:
             if isfile(path + ".npy"):
-<<<<<<< Updated upstream
-=======
                 path = path + ".npy"
->>>>>>> Stashed changes
                 try:
                     return np.load(path, "r")
                 except ValueError:
                     return np.load(path, allow_pickle=True)
             elif isfile(path + ".npz"):
-<<<<<<< Updated upstream
-=======
                 path = path + ".npz"
->>>>>>> Stashed changes
                 try:
                     return np.load(path, "r")["data"]
                 except ValueError:
