@@ -2,7 +2,6 @@ from yucca.planning.YuccaPlanner import YuccaPlanner
 
 
 class YuccaPlanner_224x224(YuccaPlanner):
-
     def __init__(self, task, preprocessor="YuccaPreprocessor", threads=None, disable_sanity_checks=False, view=None):
         super().__init__(
             task, preprocessor=preprocessor, threads=threads, disable_sanity_checks=disable_sanity_checks, view=view
