@@ -1,18 +1,13 @@
-import nibabel as nib
-import numpy as np
 import shutil
 from sklearn.model_selection import train_test_split
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles, subdirs
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subdirs
 from yucca.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data, yucca_source
-from yucca.functional.utils.nib_utils import get_nib_orientation, get_nib_spacing
 
 
 def convert(path: str = yucca_source, subdir: str = "MBAS_Dataset"):
     # INPUT DATA
     path = f"{path}/{subdir}"
-
-    file_suffix = ".nii.gz"
 
     # Train/Test Splits
     images_dir = join(path, "Training")
@@ -36,10 +31,6 @@ def convert(path: str = yucca_source, subdir: str = "MBAS_Dataset"):
     maybe_mkdir_p(target_labelsTs)
     maybe_mkdir_p(target_imagesTs)
     maybe_mkdir_p(target_labelsTr)
-
-    labels_dir = images_dir
-
-    skipped = []
 
     for sTr in training_samples:
         src_image_file_path = join(images_dir, sTr, sTr + "_gt.nii.gz")
