@@ -273,7 +273,7 @@ def preprocess_case_for_training_with_label(
     if final_target_size is not None:
         images, label = pad_case_to_size(case=images, size=final_target_size, label=label)
     image_properties["foreground_locations"], image_properties["label_cc_n"], image_properties["label_cc_sizes"] = (
-        analyze_label(label=images[-1], enable_connected_components_analysis=enable_cc_analysis)
+        analyze_label(label=label, enable_connected_components_analysis=enable_cc_analysis)
     )
 
     first_existing_modality = list(set(range(len(images))).difference(missing_modality_idxs))[0]
