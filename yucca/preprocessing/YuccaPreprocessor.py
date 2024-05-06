@@ -317,7 +317,7 @@ class YuccaPreprocessor(object):
                 images = self.pad_to_size(images, size=final_target_size, label=None)
         if label_exists and preprocess_label:
             image_props["foreground_locations"], image_props["label_cc_n"], image_props["label_cc_sizes"] = self.analyze_label(
-                label=images[-1]
+                label=label
             )
         else:
             image_props["label_cc_n"] = image_props["label_cc_sizes"] = 0
