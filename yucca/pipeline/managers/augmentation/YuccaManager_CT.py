@@ -1,5 +1,5 @@
-from yucca.training.managers.YuccaManager import YuccaManager
-from yucca.training.augmentation.augmentation_presets import CT
+from yucca.pipeline.managers.YuccaManager import YuccaManager
+from yucca.data.augmentation.augmentation_presets import CT
 
 
 class YuccaManager_CT(YuccaManager):

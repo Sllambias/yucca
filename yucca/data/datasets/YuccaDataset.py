@@ -1,8 +1,8 @@
 import numpy as np
 import torch
 import os
-from typing import Union, Literal, Optional
 import logging
+from typing import Union, Literal, Optional
 from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle, isfile
 from yucca.data.augmentation.transforms.cropping_and_padding import CropPad
 from yucca.data.augmentation.transforms.formatting import NumpyToTorch
@@ -52,7 +52,8 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
             self._keep_in_ram = False
         return self._keep_in_ram
 
-    def load_and_maybe_keep_pickle(self, picklepath):
+    def load_and_maybe_keep_pickle(self, path):
+        path = path + ".pkl"
         if not self.keep_in_ram:
             return load_pickle(picklepath)
         if picklepath in self.already_loaded_cases:
@@ -61,11 +62,9 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         return self.already_loaded_cases[picklepath]
 
     def load_and_maybe_keep_volume(self, path):
-        # remove extension if file splits include extensions and was generated on e.g. compressed images
-        path, _ = os.path.splitext(path)
+        path = path + ".npy"
         if not self.keep_in_ram:
-            if isfile(path + ".npy"):
-                path = path + ".npy"
+            if isfile(path):
                 try:
                     return np.load(path, "r")
                 except ValueError:
@@ -73,8 +72,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
             else:
                 print("uncompressed data was not found.")
 
-        if isfile(path + ".npy"):
-            path = path + ".npy"
+        if isfile(path):
             if path in self.already_loaded_cases:
                 return self.already_loaded_cases[path]
             try:
@@ -90,8 +88,10 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         return len(self.all_cases)
 
     def __getitem__(self, idx):
-        case = self.all_cases[idx]
+        # remove extension if file splits include extensions
+        case, _ = os.path.splitext(self.all_cases[idx])
         data = self.load_and_maybe_keep_volume(case)
+        metadata = self.load_and_maybe_keep_pickle(case)
 
         if self.allow_missing_modalities:
             image, label = self.unpack_with_zeros(data, supervised=self.supervised)
@@ -110,10 +110,9 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
             return data_dict
         else:
             logging.error(f"Task Type not recognized. Found {self.task_type}")
-        return self._transform(data_dict, case)
+        return self._transform(data_dict, metadata)
 
-    def _transform(self, data_dict, case):
-        metadata = self.load_and_maybe_keep_pickle(case + ".pkl")
+    def _transform(self, data_dict, metadata):
         data_dict = self.croppad(data_dict, metadata)
         if self.composed_transforms is not None:
             data_dict = self.composed_transforms(data_dict)

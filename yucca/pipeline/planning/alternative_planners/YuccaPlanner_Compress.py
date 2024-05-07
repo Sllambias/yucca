@@ -1,4 +1,4 @@
-from yucca.planning.YuccaPlanner import YuccaPlanner
+from yucca.pipeline.planning.YuccaPlanner import YuccaPlanner
 
 
 class YuccaPlanner_Compress(YuccaPlanner):

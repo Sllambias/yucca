@@ -7,10 +7,8 @@ from yucca.data.datasets.YuccaDataset import YuccaTrainDataset
 
 class YuccaCompressedTrainDataset(YuccaTrainDataset):
     def load_and_maybe_keep_volume(self, path: str):
-        # remove extension if file splits include extensions and was generated on uncompressed images
-        path, _ = os.path.splitext(path)
-        if isfile(path + ".npz"):
-            path = path + ".npz"
+        path = path + ".npz"
+        if isfile(path):
             try:
                 return np.load(path, "r")["data"]
             except ValueError:
