@@ -3,7 +3,7 @@ import torch
 import os
 from typing import Union, Literal, Optional
 import logging
-from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle
+from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle, isfile
 from yucca.data.augmentation.transforms.cropping_and_padding import CropPad
 from yucca.data.augmentation.transforms.formatting import NumpyToTorch
 
@@ -61,33 +61,29 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         return self.already_loaded_cases[picklepath]
 
     def load_and_maybe_keep_volume(self, path):
+        # remove extension if file splits include extensions and was generated on e.g. compressed images
+        path, _ = os.path.splitext(path)
         if not self.keep_in_ram:
-            if path[-3:] == "npy":
+            if isfile(path + ".npy"):
+                path = path + ".npy"
                 try:
                     return np.load(path, "r")
                 except ValueError:
                     return np.load(path, allow_pickle=True)
-            image = np.load(path)
-            assert len(image.files) == 1, (
-                "More than one entry in data array. " f"Should only be ['data'] but is {[key for key in image.files]}"
-            )
-            return image[image.files[0]]
+            else:
+                print("uncompressed data was not found.")
 
-        if path in self.already_loaded_cases:
-            return self.already_loaded_cases[path]
-
-        if path[-3:] == "npy":
+        if isfile(path + ".npy"):
+            path = path + ".npy"
+            if path in self.already_loaded_cases:
+                return self.already_loaded_cases[path]
             try:
                 self.already_loaded_cases[path] = np.load(path, "r")
             except ValueError:
                 self.already_loaded_cases[path] = np.load(path, allow_pickle=True)
-            return self.already_loaded_cases[path]
+        else:
+            print("uncompressed data was not found.")
 
-        image = np.load(path)
-        assert len(image.files) == 1, (
-            "More than one entry in data array. " f"Should only be ['data'] but is {[key for key in image.files]}"
-        )
-        self.already_loaded_cases = image[image.files[0]]
         return self.already_loaded_cases[path]
 
     def __len__(self):
@@ -117,7 +113,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         return self._transform(data_dict, case)
 
     def _transform(self, data_dict, case):
-        metadata = self.load_and_maybe_keep_pickle(case[: -len(".npy")] + ".pkl")
+        metadata = self.load_and_maybe_keep_pickle(case + ".pkl")
         data_dict = self.croppad(data_dict, metadata)
         if self.composed_transforms is not None:
             data_dict = self.composed_transforms(data_dict)
