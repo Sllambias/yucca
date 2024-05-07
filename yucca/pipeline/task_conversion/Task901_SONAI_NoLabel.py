@@ -8,7 +8,7 @@ import shutil
 from tqdm import tqdm
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p
 from yucca.paths import yucca_raw_data
-from yucca.task_conversion.utils import generate_dataset_json
+from yucca.pipeline.task_conversion.utils import generate_dataset_json
 
 
 def convert(path: str, txt_file_prefix: str = "data"):

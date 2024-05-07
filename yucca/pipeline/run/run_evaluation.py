@@ -11,7 +11,7 @@ from the same task as the one the model is trained on.
 import argparse
 from batchgenerators.utilities.file_and_folder_operations import load_json, join
 from yucca.pipeline.evaluation.YuccaEvaluator import YuccaEvaluator
-from yucca.task_conversion.utils import maybe_get_task_from_task_id
+from yucca.pipeline.task_conversion.utils import maybe_get_task_from_task_id
 from yucca.paths import yucca_raw_data, yucca_results
 
 

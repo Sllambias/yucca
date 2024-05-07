@@ -1,5 +1,5 @@
 import os
-from yucca.task_conversion.utils import combine_imagesTr_from_tasks, generate_dataset_json
+from yucca.pipeline.task_conversion.utils import combine_imagesTr_from_tasks, generate_dataset_json
 from yucca.paths import yucca_raw_data
 
 

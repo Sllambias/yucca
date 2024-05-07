@@ -13,7 +13,7 @@ for i in range(7):
 """
 
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
-from yucca.task_conversion.utils import generate_dataset_json
+from yucca.pipeline.task_conversion.utils import generate_dataset_json
 import shutil
 from yucca.paths import yucca_raw_data
 from tqdm import tqdm

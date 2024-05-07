@@ -1,6 +1,6 @@
 import argparse
 import yucca
-from yucca.task_conversion.utils import maybe_get_task_from_task_id
+from yucca.pipeline.task_conversion.utils import maybe_get_task_from_task_id
 from yucca.paths import yucca_raw_data, yucca_results, yucca_models
 from yucca.pipeline.evaluation.YuccaEvaluator import YuccaEvaluator
 from yucca.pipeline.managers.YuccaManager import YuccaManager

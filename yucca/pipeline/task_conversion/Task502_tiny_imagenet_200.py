@@ -10,7 +10,7 @@ import shutil
 from tqdm import tqdm
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subdirs, subfiles
 from yucca.paths import yucca_raw_data
-from yucca.task_conversion.utils import generate_dataset_json
+from yucca.pipeline.task_conversion.utils import generate_dataset_json
 
 
 def convert(path: str, subdir: str = "tiny-imagenet-200"):
