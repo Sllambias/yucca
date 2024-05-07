@@ -45,7 +45,9 @@ def main():
 
     if not ensemble:
         planner = recursive_find_python_class(
-            folder=[join(yucca.__path__[0], "planning")], class_name=planner_name, current_module="yucca.pipeline.planning"
+            folder=[join(yucca.__path__[0], "pipeline", "planning")],
+            class_name=planner_name,
+            current_module="yucca.pipeline.planning",
         )
         planner = planner(task, preprocessor_name, threads=threads, disable_sanity_checks=disable_sanity_checks, view=view)
         planner.plan()
@@ -54,7 +56,9 @@ def main():
         views = ["X", "Y", "Z"]
         for view in views:
             planner = recursive_find_python_class(
-                folder=[join(yucca.__path__[0], "planning")], class_name=planner_name, current_module="yucca.pipeline.planning"
+                folder=[join(yucca.__path__[0], "pipeline", "planning")],
+                class_name=planner_name,
+                current_module="yucca.pipeline.planning",
             )
             planner = planner(task, preprocessor_name, threads=threads, disable_sanity_checks=disable_sanity_checks, view=view)
             planner.plan()

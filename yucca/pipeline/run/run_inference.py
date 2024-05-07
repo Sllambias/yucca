@@ -185,7 +185,7 @@ def main():
     print(f"######################################################################## \n" f"{'Using model: ':25} {modelfile}")
 
     manager = recursive_find_python_class(
-        folder=[join(yucca.__path__[0], "managers")],
+        folder=[join(yucca.__path__[0], "pipeline", "managers")],
         class_name=manager_name,
         current_module="yucca.pipeline.managers",
     )
