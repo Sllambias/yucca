@@ -1,12 +1,12 @@
 def test_configurations(setup_preprocessed_segmentation_data):
-    from yucca.configuration.configure_callbacks import get_callback_config
-    from yucca.configuration.configure_paths import get_path_config
-    from yucca.configuration.configure_plans import get_plan_config
-    from yucca.configuration.configure_task import get_task_config
-    from yucca.configuration.configure_input_dims import get_input_dims_config
-    from yucca.configuration.split_data import get_split_config
-    from yucca.configuration.configure_checkpoint import get_checkpoint_config
-    from yucca.configuration.configure_seed import seed_everything_and_get_seed_config
+    from yucca.pipeline.configuration.configure_callbacks import get_callback_config
+    from yucca.pipeline.configuration.configure_paths import get_path_config
+    from yucca.pipeline.configuration.configure_plans import get_plan_config
+    from yucca.pipeline.configuration.configure_task import get_task_config
+    from yucca.pipeline.configuration.configure_input_dims import get_input_dims_config
+    from yucca.pipeline.configuration.split_data import get_split_config
+    from yucca.pipeline.configuration.configure_checkpoint import get_checkpoint_config
+    from yucca.pipeline.configuration.configure_seed import seed_everything_and_get_seed_config
 
     # Random test
     task_config = get_task_config(task="Task000_TEST_SEGMENTATION")

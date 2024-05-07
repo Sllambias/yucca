@@ -11,10 +11,10 @@ from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Dice
 from torchmetrics.regression import MeanAbsoluteError
-from yucca.loss_and_optim.loss_functions.deep_supervision import DeepSupervisionLoss
+from yucca.optimization.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from yucca.functional.utils.kwargs import filter_kwargs
-from yucca.evaluation.training_metrics import Accuracy, AUROC, F1
+from yucca.metrics.training_metrics import Accuracy, AUROC, F1
 from yucca.functional.visualization import get_train_fig_with_inp_out_tar
 
 
