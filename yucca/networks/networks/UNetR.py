@@ -8,7 +8,7 @@ import torch
 from monai.networks.blocks import UnetrBasicBlock, UnetrPrUpBlock, UnetrUpBlock
 from monai.networks.blocks.dynunet_block import UnetOutBlock
 from monai.networks.nets import ViT
-from yucca.network_architectures.networks.YuccaNet import YuccaNet
+from yucca.networks.networks.YuccaNet import YuccaNet
 
 
 class UNetR(YuccaNet):

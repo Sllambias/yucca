@@ -1,9 +1,9 @@
 import torch.nn as nn
 from monai.networks.blocks import UnetrBasicBlock, UnetrUpBlock
 from monai.networks.blocks.dynunet_block import UnetOutBlock
-from yucca.network_architectures.networks.YuccaNet import YuccaNet
-from yucca.network_architectures.blocks_and_layers.conv_blocks import UXNet_encoder
-from yucca.network_architectures.blocks_and_layers.norm import (
+from yucca.networks.networks.YuccaNet import YuccaNet
+from yucca.networks.blocks_and_layers.conv_blocks import UXNet_encoder
+from yucca.networks.blocks_and_layers.norm import (
     LayerNorm2d,
     LayerNorm3d,
 )

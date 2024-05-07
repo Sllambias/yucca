@@ -2,11 +2,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
-from yucca.network_architectures.blocks_and_layers.conv_layers import (
+from yucca.networks.blocks_and_layers.conv_layers import (
     ConvDropoutNormNonlin,
     ConvDropoutNorm,
 )
-from yucca.network_architectures.blocks_and_layers.norm import LayerNorm3d
+from yucca.networks.blocks_and_layers.norm import LayerNorm3d
 from timm.layers import DropPath
 from functools import partial
 from typing import Callable, Optional

@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from yucca.functional.utils.torch_utils import get_available_device
-from yucca.network_architectures.utils.get_steps_for_sliding_window import (
+from yucca.networks.utils.get_steps_for_sliding_window import (
     get_steps_for_sliding_window,
 )
 

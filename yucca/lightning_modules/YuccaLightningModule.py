@@ -132,9 +132,9 @@ class YuccaLightningModule(L.LightningModule):
     def load_model(self):
         logging.info(f"Loading Model: {self.model_dimensions} {self.model_name}")
         self.model = recursive_find_python_class(
-            folder=[join(yucca.__path__[0], "network_architectures")],
+            folder=[join(yucca.__path__[0], "networks")],
             class_name=self.model_name,
-            current_module="yucca.network_architectures",
+            current_module="yucca.networks",
         )
         if self.model_dimensions == "3D":
             conv_op = torch.nn.Conv3d

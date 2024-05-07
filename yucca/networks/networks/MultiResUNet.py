@@ -4,12 +4,12 @@ FROM: https://github.com/j-sripad/mulitresunet-pytorch/blob/main/multiresunet.py
 
 import torch
 import torch.nn as nn
-from yucca.network_architectures.networks.YuccaNet import YuccaNet
-from yucca.network_architectures.blocks_and_layers.conv_blocks import (
+from yucca.networks.networks.YuccaNet import YuccaNet
+from yucca.networks.blocks_and_layers.conv_blocks import (
     Multiresblock,
     Respath,
 )
-from yucca.network_architectures.blocks_and_layers.conv_layers import (
+from yucca.networks.blocks_and_layers.conv_layers import (
     ConvDropoutNormNonlin,
 )
 
