@@ -29,7 +29,7 @@ E.g. to lower the starting Learning Rate we subclass YuccaManager - the default 
 We call this new Manager "YuccaManager_1e5" and save it as "YuccaManager_1e5.py" in the /yucca/training/managers directory as this is where the Parent Class is located. Alternatively it can be saved in a subdirectory of the directory of the parent class e.g. /yucca/training/managers/lr. 
 
 ```
-from yucca.training.managers.YuccaManager import YuccaManager
+from yucca.managers.YuccaManager import YuccaManager
 
 class YuccaManager_1e5(YuccaManager):
     def __init__(self, *args, **kwargs):
@@ -115,7 +115,7 @@ Changing the data augmentation parameters is achieved by defining a dictionary o
 
 To disable blurring entirely and modify the scaling range do:
 ```
-from yucca.training.managers.YuccaManager import YuccaManager
+from yucca.managers.YuccaManager import YuccaManager
 
 class YuccaManager_NewUserSetup(YuccaManager):
     def __init__(self, *args, **kwargs):
@@ -182,7 +182,7 @@ Parent: default Manager class
 Variable: self.learning\_rate
 
 ```
-from yucca.training.managers.YuccaManager import YuccaManager
+from yucca.managers.YuccaManager import YuccaManager
 
 class YuccaManager_LowerLR(YuccaManager):
     def __init__(self, *args, **kwargs):
@@ -199,7 +199,7 @@ Variable: self.lr\_scheduler
 - Used to determine the LR Scheduler CLASS
 
 ```
-from yucca.training.lightning_modules.YuccaLightningModule import YuccaLightningModule
+from yucca.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from torch import optim
 
 class YuccaLightningModule_StepLRS(YuccaLightningModule):
@@ -219,8 +219,8 @@ Variable: self.loss
 The loss class must be saved in /yucca/training/loss_and_optim/loss_functions and be a subclass of nn.Module.
 
 ```
-from yucca.training.managers.YuccaManager import YuccaManager
-from yucca.training.loss_and_optim.loss_functions import NLL
+from yucca.managers.YuccaManager import YuccaManager
+from yucca.loss_and_optim.loss_functions import NLL
 
 class YuccaManager_NLL(YuccaManager):
     def __init__(self, *args, **kwargs):
@@ -242,7 +242,7 @@ Parent: default Manager class
 Variable: self.momentum 
 
 ```
-from yucca.training.managers.YuccaManager import YuccaManager
+from yucca.managers.YuccaManager import YuccaManager
 
 class YuccaManager_mom95(YuccaManager):
     def __init__(self, *args, **kwargs):
@@ -258,7 +258,7 @@ Parent: [YuccaLightningModule](/yucca/training/lightning_modules/YuccaLightningM
 Variable: self.optim
 
 ```
-from yucca.training.lightning_modules.YuccaLightningModule import YuccaLightningModule
+from yucca.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from torch import optim
 
 class YuccaLightningModule_Adam(YuccaLightningModule):
@@ -273,7 +273,7 @@ Parent: default Manager class
 Variable: self.patch_based_training 
 
 ```
-from yucca.training.managers.YuccaManager import YuccaManager
+from yucca.managers.YuccaManager import YuccaManager
 
 class YuccaManager_NoPatches(YuccaManager):
     def __init__(self, *args, **kwargs):
