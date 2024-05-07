@@ -83,9 +83,9 @@ def setup_task_type(plans):
 
     # If key is not present in plan then we try to infer the task_type from the Type of Preprocessor
     preprocessor_class = recursive_find_python_class(
-        folder=[join(yucca.__path__[0], "preprocessing")],
+        folder=[join(yucca.__path__[0], "pipeline", "preprocessing")],
         class_name=plans["preprocessor"],
-        current_module="yucca.preprocessing",
+        current_module="yucca.pipeline.preprocessing",
     )
     assert (
         preprocessor_class

@@ -231,9 +231,9 @@ class YuccaLightningModule(L.LightningModule):
 
     def on_predict_start(self):
         preprocessor_class = recursive_find_python_class(
-            folder=[join(yucca.__path__[0], "preprocessing")],
+            folder=[join(yucca.__path__[0], "pipeline", "preprocessing")],
             class_name=self.plans["preprocessor"],
-            current_module="yucca.preprocessing",
+            current_module="yucca.pipeline.preprocessing",
         )
         self.preprocessor = preprocessor_class(join(self.version_dir, "hparams.yaml"))
 

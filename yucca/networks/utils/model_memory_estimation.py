@@ -145,9 +145,9 @@ def find_optimal_tensor_dims(
             return batch_size, tuple(patch_size)
 
     model = recursive_find_python_class(
-        folder=[join(yucca.__path__[0], "network_architectures")],
+        folder=[join(yucca.__path__[0], "networks")],
         class_name=model_name,
-        current_module="yucca.network_architectures",
+        current_module="yucca.networks",
     )
     model_kwargs = {
         "input_channels": modalities,
