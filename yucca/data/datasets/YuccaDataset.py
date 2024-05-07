@@ -55,11 +55,11 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
     def load_and_maybe_keep_pickle(self, path):
         path = path + ".pkl"
         if not self.keep_in_ram:
-            return load_pickle(picklepath)
-        if picklepath in self.already_loaded_cases:
-            return self.already_loaded_cases[picklepath]
-        self.already_loaded_cases[picklepath] = load_pickle(picklepath)
-        return self.already_loaded_cases[picklepath]
+            return load_pickle(path)
+        if path in self.already_loaded_cases:
+            return self.already_loaded_cases[path]
+        self.already_loaded_cases[path] = load_pickle(path)
+        return self.already_loaded_cases[path]
 
     def load_and_maybe_keep_volume(self, path):
         path = path + ".npy"
