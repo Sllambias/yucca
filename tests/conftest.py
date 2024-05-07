@@ -2,6 +2,7 @@ import pytest
 import os
 import shutil
 import subprocess
+import torch
 from pathlib import Path
 
 
@@ -28,6 +29,13 @@ def set_env():
     os.environ["YUCCA_RESULTS"] = yucca_results
     if os.path.isdir(yucca_results):
         shutil.rmtree(yucca_results)
+
+    if torch.cuda.is_available():
+        accel = "gpu"
+    else:
+        accel = "cpu"
+
+    os.environ["accelerator"] = accel
 
 
 @pytest.fixture
