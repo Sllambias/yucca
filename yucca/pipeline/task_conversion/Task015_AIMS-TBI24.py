@@ -34,8 +34,8 @@ def convert(path: str = yucca_source, subdir: str = "AIMS-TBI24"):
     maybe_mkdir_p(target_labelsTr)
 
     for sTr in training_samples:
-        src_image_file_path = join(images_dir, sTr + "_Lesion.nii.gz")
-        src_label_file_path = join(images_dir, sTr + "_T1.nii.gz")
+        src_image_file_path = join(images_dir, sTr + "_T1.nii.gz")
+        src_label_file_path = join(images_dir, sTr + "_Lesion.nii.gz")
 
         dst_image_file_path = f"{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz"
         dst_label_path = f"{target_labelsTr}/{task_prefix}_{sTr}.nii.gz"
@@ -45,8 +45,8 @@ def convert(path: str = yucca_source, subdir: str = "AIMS-TBI24"):
 
     del sTr
     for sTs in test_samples:
-        src_image_file_path = join(images_dir, sTs + "_Lesion.nii.gz")
-        src_label_file_path = join(images_dir, sTs + "_T1.nii.gz")
+        src_image_file_path = join(images_dir, sTs + "_T1.nii.gz")
+        src_label_file_path = join(images_dir, sTs + "_Lesion.nii.gz")
 
         dst_image_file_path = f"{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz"
         dst_label_path = f"{target_labelsTs}/{task_prefix}_{sTs}.nii.gz"
