@@ -122,7 +122,7 @@ def find_optimal_tensor_dims(
         batch_size = 8
         max_batch_size = 512
         patch_size = [32, 32]
-        absolute_max = 384**2
+        absolute_max = 224**2
     if dimensionality == "3D":
         conv = nn.Conv3d
         dropout = nn.Dropout3d
