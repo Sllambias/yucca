@@ -1,4 +1,6 @@
 import shutil
+import nibabel as nib
+import numpy as np
 from sklearn.model_selection import train_test_split
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
@@ -37,22 +39,32 @@ def convert(path: str = yucca_source, subdir: str = "AIMS-TBI24"):
         src_image_file_path = join(images_dir, sTr + "_T1.nii.gz")
         src_label_file_path = join(images_dir, sTr + "_Lesion.nii.gz")
 
+        label = nib.load(src_label_file_path)
+        labelarr = label.get_fdata()
+        labelarr[labelarr > 0] = 1
+        label = nib.Nifti1Image(labelarr, label.affine, label.header)
+
         dst_image_file_path = f"{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz"
         dst_label_path = f"{target_labelsTr}/{task_prefix}_{sTr}.nii.gz"
 
         shutil.copy2(src_image_file_path, dst_image_file_path)
-        shutil.copy2(src_label_file_path, dst_label_path)
+        nib.save(label, dst_label_path)
 
     del sTr
     for sTs in test_samples:
         src_image_file_path = join(images_dir, sTs + "_T1.nii.gz")
         src_label_file_path = join(images_dir, sTs + "_Lesion.nii.gz")
 
+        label = nib.load(src_label_file_path)
+        labelarr = label.get_fdata()
+        labelarr[labelarr > 0] = 1
+        label = nib.Nifti1Image(labelarr, label.affine, label.header)
+
         dst_image_file_path = f"{target_imagesTs}/{task_prefix}_{sTs}_000.nii.gz"
         dst_label_path = f"{target_labelsTs}/{task_prefix}_{sTs}.nii.gz"
 
         shutil.copy2(src_image_file_path, dst_image_file_path)
-        shutil.copy2(src_label_file_path, dst_label_path)
+        nib.save(label, dst_label_path)
 
     del sTs
     generate_dataset_json(
