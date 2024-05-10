@@ -103,6 +103,7 @@ def main():
     classes = args.c
     predpath = args.pred
     gtpath = args.gt
+    experiment = args.experiment
     num_version = args.version
     task_type = args.task_type
     use_wandb = not args.no_wandb
@@ -122,6 +123,7 @@ def main():
             source_task,
             model + "__" + dimensions,
             manager_name + "__" + plan_id,
+            experiment,
             f"{split_data_method}_{split_data_param}_fold_{split_idx}",
             "version_" + str(num_version),
             checkpoint,

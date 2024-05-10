@@ -219,6 +219,7 @@ def main():
         source_task,
         model + "__" + dimensions,
         manager_name + "__" + planner,
+        experiment,
         f"{split_data_method}_{split_data_param}_fold_{split_idx}",
         f"version_{version}",
         checkpoint,
