@@ -1,6 +1,5 @@
 import numpy as np
 from batchgenerators.utilities.file_and_folder_operations import isfile
-from yucca.data.augmentation.transforms.formatting import NumpyToTorch
 from yucca.data.datasets.YuccaDataset import YuccaTrainDataset
 
 
