@@ -67,6 +67,7 @@ class YuccaPreprocessor(object):
         disable_sanity_checks=False,
         enable_cc_analysis=False,
         allow_missing_modalities=False,
+        compress=False,
     ):
         self.name = str(self.__class__.__name__)
         self.task = task
@@ -76,6 +77,7 @@ class YuccaPreprocessor(object):
         self.disable_sanity_checks = disable_sanity_checks
         self.enable_cc_analysis = enable_cc_analysis
         self.allow_missing_modalities = allow_missing_modalities
+        self.compress = compress
 
         # lists for information we would like to attain
         self.transpose_forward = []
@@ -116,6 +118,7 @@ class YuccaPreprocessor(object):
         self.initialize_properties()
         self.initialize_paths()
         maybe_mkdir_p(self.target_dir)
+        self.verify_compression_level(self.target_dir, self.compress)
 
         logging.info(
             f"{'Preprocessing Task:':25.25} {self.task} \n"
@@ -171,7 +174,10 @@ class YuccaPreprocessor(object):
         Print the path where the preprocessed data is saved.
         """
         subject_id = subject_id.split(os.extsep, 1)[0]
-        arraypath = join(self.target_dir, subject_id + ".npy")
+        if self.compress:
+            arraypath = join(self.target_dir, subject_id + ".npz")
+        else:
+            arraypath = join(self.target_dir, subject_id + ".npy")
         picklepath = join(self.target_dir, subject_id + ".pkl")
         if isfile(arraypath) and isfile(picklepath):
             logging.info(f"Case: {subject_id} already exists. Skipping.")
@@ -185,7 +191,10 @@ class YuccaPreprocessor(object):
         images = self.cast_to_numpy_array(images=images, label=label, classification=self.classification)
 
         # save the image
-        np.save(arraypath, images)
+        if self.compress:
+            np.savez_compressed(arraypath, data=images)
+        else:
+            np.save(arraypath, images)
 
         # save metadata as .pkl
         save_pickle(image_props, picklepath)
@@ -407,3 +416,14 @@ class YuccaPreprocessor(object):
         expected_labels = np.array(self.plans["dataset_properties"]["classes"], dtype=np.float32)
         actual_labels = np.unique(label).astype(np.float32)
         verify_labels_are_equal(expected_labels=expected_labels, actual_labels=actual_labels, id=subject_id)
+
+    @staticmethod
+    def verify_compression_level(directory: str, compress: bool):
+        if compress:
+            assert (
+                len(subfiles(directory, suffix=".npy")) == 0
+            ), "detected uncompressed images in folder while compression is enabled. Please delete uncompressed images first to avoid duplicates"
+        else:
+            assert (
+                len(subfiles(directory, suffix=".npz")) == 0
+            ), "detected compressed images in folder while compression is disabled. Please delete compressed images first to avoid duplicates"

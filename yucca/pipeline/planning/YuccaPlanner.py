@@ -47,6 +47,7 @@ class YuccaPlanner(object):
 
         # Planner Specific settings
         self.name = str(self.__class__.__name__) + str(view or "")
+        self.compress = False
         self.target_coordinate_system = "RAS"
         self.crop_to_nonzero = True
         self.norm_op = "standardize"
@@ -149,6 +150,7 @@ class YuccaPlanner(object):
             threads=self.threads,
             disable_sanity_checks=self.disable_sanity_checks,
             allow_missing_modalities=self.allow_missing_modalities,
+            compress=self.compress,
         )
         preprocessor.run()
         self.postprocess()

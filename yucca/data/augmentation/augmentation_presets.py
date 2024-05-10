@@ -52,3 +52,9 @@ basic["mirror_p_per_axis"] = 0.66
 basic["rotation_p_per_sample"] = 0.2
 basic["rotation_p_per_axis"] = 0.66
 basic["scale_p_per_sample"] = 0.2
+
+
+CT = {}
+CT["gibbs_ringing_p_per_sample"] = 0.0
+CT["motion_ghosting_p_per_sample"] = 0.0
+CT["biasfield_p_per_sample"] = 0.0

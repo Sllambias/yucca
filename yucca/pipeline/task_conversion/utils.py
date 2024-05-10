@@ -52,6 +52,11 @@ def should_use_volume(vol: nib.Nifti1Image):
     return not (np.any(np.array(vol.shape) < 15) or len(vol.shape) != 3 or np.array(vol.dataobj).min() < 0)
 
 
+def remove_punctuation_and_spaces(data: str):
+    data = data.replace(" ", "-").replace(",", "-").replace(".", "-")
+    return data
+
+
 def generate_dataset_json(
     output_file: str,
     imagesTr_dir: str,

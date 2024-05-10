@@ -31,7 +31,7 @@ def main():
         default=False,
         action="store_true",
     )
-    parser.add_argument("--disable_sanity_checks", help="Enable or disable sanity checks", default=False)
+    parser.add_argument("--disable_sanity_checks", help="Enable or disable sanity checks", action="store_true", default=False)
     parser.add_argument("--threads", help="Used to specify the number of processes to use for preprocessing", default=2)
     args = parser.parse_args()
 
