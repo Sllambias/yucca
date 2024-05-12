@@ -36,7 +36,7 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
     intensities = []
     sizes = []
     spacings = []
-
+    background_pixel_values = []
     modalities = properties["modalities"].items()
     mod_ids = list(list(zip(*modalities))[0])
     assert sorted(mod_ids) == mod_ids
@@ -68,6 +68,7 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
             background_pixel_value = -1000
         else:
             background_pixel_value = 0
+        background_pixel_values.append(background_pixel_value)
 
         chunksize = 50 if len(subjects) > 1000 else 1
 
@@ -98,6 +99,7 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
     dims = [len(size) for size in sizes]
     assert all([dim == dims[0] for dim in dims]), f"not all volumes have the same number of dimensions. Sizes were: {dims}"
 
+    properties["background_pixel_values"] = background_pixel_values
     properties["data_dimensions"] = int(len(sizes[0]))
     properties["original_sizes"] = sizes
     properties["original_spacings"] = spacings

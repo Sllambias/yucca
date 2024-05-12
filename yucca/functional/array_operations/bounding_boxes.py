@@ -4,7 +4,7 @@ import numpy as np
 
 def get_bbox_for_foreground(array, background_label=0):
     array = deepcopy(array)
-    array[array != background_label] = 1
+    array[array > background_label] = 1
     return get_bbox_for_label(array, label=1)
 
 

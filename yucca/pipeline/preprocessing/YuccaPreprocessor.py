@@ -105,6 +105,7 @@ class YuccaPreprocessor(object):
         self.dataset_properties = self.plans["dataset_properties"]
         self.intensities = self.dataset_properties["intensities"]
         self.image_extension = self.dataset_properties.get("image_extension") or "nii.gz"
+        self.background_value_for_first_modality = self.dataset_properties.get("background_pixel_values")[0] or 0
 
         # op values
         self.transpose_forward = np.array(self.plans["transpose_forward"], dtype=int)
@@ -263,6 +264,7 @@ class YuccaPreprocessor(object):
                 label=label,
                 normalization_operation=self.plans["normalization_scheme"],
                 allow_missing_modalities=self.allow_missing_modalities,
+                background_pixel_value=self.background_value_for_first_modality,
                 enable_cc_analysis=self.enable_cc_analysis,
                 missing_modality_idxs=missing_modalities,
                 crop_to_nonzero=self.plans["crop_to_nonzero"],
@@ -281,6 +283,7 @@ class YuccaPreprocessor(object):
                 images=images,
                 normalization_operation=self.plans["normalization_scheme"],
                 allow_missing_modalities=self.allow_missing_modalities,
+                background_pixel_value=self.background_value_for_first_modality,
                 missing_modality_idxs=missing_modalities,
                 crop_to_nonzero=self.plans["crop_to_nonzero"],
                 keep_aspect_ratio_when_using_target_size=self.plans["keep_aspect_ratio_when_using_target_size"],
