@@ -57,11 +57,13 @@ def add_stats_to_plans_post_preprocessing(plans, directory):
     new_sizes = []
     n_cc = []
     size_cc = []
+    n_foreground_locs = []
     for pkl_file in pkl_files:
         pkl_file = load_pickle(pkl_file)
         new_spacings.append(pkl_file["new_spacing"])
         new_sizes.append(pkl_file["new_size"])
         n_cc.append(pkl_file["label_cc_n"])
+        n_foreground_locs.append(len(pkl_file["foreground_locations"]))
         if np.mean(pkl_file["label_cc_sizes"]) > 0:
             size_cc.append(np.mean(pkl_file["label_cc_sizes"], dtype=int))
 
@@ -79,6 +81,7 @@ def add_stats_to_plans_post_preprocessing(plans, directory):
     else:
         mean_cc = min_cc = max_cc = mean_n_cc = min_n_cc = max_n_cc = 0
 
+    plans["n_foreground_locs"] = n_foreground_locs
     plans["new_sizes"] = new_sizes
     plans["new_spacings"] = new_spacings
     plans["new_mean_size"] = mean_size
