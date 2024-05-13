@@ -24,7 +24,7 @@ def croppad(
             target_label_shape=target_label_shape,
             **pad_kwargs,
         )
-    elif len(patch_size) == 2 and len(input_dims) == 3:
+    elif len(patch_size) == 2 and input_dims == 3:
         image, label = croppad_2D_case_from_3D(
             image=image,
             image_properties=image_properties,
@@ -35,7 +35,7 @@ def croppad(
             target_label_shape=target_label_shape,
             **pad_kwargs,
         )
-    elif len(patch_size) == 2 and len(input_dims) == 2:
+    elif len(patch_size) == 2 and input_dims == 2:
         image, label = croppad_2D_case_from_2D(
             image=image,
             image_properties=image_properties,
