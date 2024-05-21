@@ -74,7 +74,8 @@ class YuccaLightningModule(L.LightningModule):
 
         self.progress_bar = progress_bar
 
-        logging.info(f"Starting a {self.task_type} task")
+        logging.info(f"Starting a {self.task_type} task \n" f"Deep Supervision Enabled: {self.deep_supervision}")
+
         if self.task_type == "classification":
             tmetrics_task = "multiclass" if self.num_classes > 2 else "binary"
             # can we get per-class?
@@ -157,7 +158,6 @@ class YuccaLightningModule(L.LightningModule):
             "checkpoint_style": "outside_block",
         }
         model_kwargs = filter_kwargs(self.model, model_kwargs)
-
         self.model = self.model(**model_kwargs)
 
     def forward(self, inputs):
@@ -204,6 +204,7 @@ class YuccaLightningModule(L.LightningModule):
     def validation_step(self, batch, batch_idx):
         inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
         output = self(inputs)
+        logging.warn(f"VAL TIME {output.shape}, {target.shape}")
         loss = self.loss_fn_val(output, target)
         metrics = self.compute_metrics(self.val_metrics, output, target)
         self.log_dict(
