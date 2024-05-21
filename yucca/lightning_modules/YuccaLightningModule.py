@@ -379,15 +379,9 @@ class YuccaLightningModule(L.LightningModule):
     @property
     def log_image_this_epoch(self):
         if isinstance(self.log_image_every_n_epochs, int):
-            if self.current_epoch % self.log_image_every_n_epochs == 0:
-                return True
-            else:
-                return False
+            return self.current_epoch % self.log_image_every_n_epochs == 0
         if isinstance(self.log_image_every_n_epochs, list):
-            if self.current_epoch in self.log_image_every_n_epochs:
-                return True
-            else:
-                return False
+            return self.current_epoch in self.log_image_every_n_epochs
 
     @staticmethod
     def get_image_logging_epochs(final_epoch: int = 1000):
