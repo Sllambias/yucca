@@ -204,7 +204,6 @@ class YuccaLightningModule(L.LightningModule):
     def validation_step(self, batch, batch_idx):
         inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
         output = self(inputs)
-        logging.warn(f"VAL TIME {output.shape}, {target.shape}")
         loss = self.loss_fn_val(output, target)
         metrics = self.compute_metrics(self.val_metrics, output, target)
         self.log_dict(

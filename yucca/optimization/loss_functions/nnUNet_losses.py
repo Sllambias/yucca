@@ -13,7 +13,6 @@ import numpy as np
 from torch import nn
 from yucca.optimization.loss_functions.CE import CE
 import torch.nn.functional as F
-import logging
 
 
 def sum_tensor(inp, axes, keepdim=False):
@@ -46,7 +45,6 @@ def get_tp_fp_fn_tn(net_output, gt, axes=None, mask=None, square=False):
 
     shp_x = net_output.shape
     shp_y = gt.shape
-    logging.warn(f"CURRENT SIZES: {shp_x, shp_y}")
     with torch.no_grad():
         if len(shp_x) != len(shp_y):
             gt = gt.view((shp_y[0], 1, *shp_y[1:]))
