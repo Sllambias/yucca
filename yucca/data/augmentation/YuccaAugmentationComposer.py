@@ -222,8 +222,8 @@ class YuccaAugmentationComposer:
                 ),
                 Normalize(normalize=self.normalize, scheme=self.normalization_scheme),
                 # seg
-                DownsampleSegForDS(deep_supervision=self.deep_supervision),
                 CopyImageToLabel(copy=self.copy_image_to_label),
+                DownsampleSegForDS(deep_supervision=self.deep_supervision),
                 # mae
                 Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.cval, ratio=self.mask_ratio),
                 RemoveBatchDimension(),
