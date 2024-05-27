@@ -55,13 +55,9 @@ def convert(path: str = yucca_source, subdir: str = "kits23"):
         target_imagesTr,
         target_imagesTs,
         modalities=("CT",),
-        labels={
-            0: "background",
-            1: "kidney",
-            2: "tumor",
-            3: "cyst"
-        },
-        label_regions=[[1,2,3], [2,3], [2]]
+        labels={0: "background", 1: "kidney", 2: "tumor", 3: "cyst"},
+        regions={0: [0], 1:},
+        ordered_label_regions=[[1, 2, 3], [2, 3], [2]],
         dataset_name=task_name,
         license="",
         dataset_description="The 2023 Kidney and Kidney Tumor Segmentation Challenge",
@@ -71,3 +67,4 @@ def convert(path: str = yucca_source, subdir: str = "kits23"):
 
 if __name__ == "__main__":
     convert()
+# %%
