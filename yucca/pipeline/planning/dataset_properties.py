@@ -27,6 +27,8 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
         "tasks": {task: [] for task in dataset_json["tasks"]},
         "label_hierarchy": dataset_json["label_hierarchy"],
         "modalities": dataset_json["modality"],
+        "regions_in_order": dataset_json["regions_in_order"],
+        "regions_labeled": dataset_json["regions_labeled"],
     }
 
     if len(dataset_json["tasks"]) > 0:

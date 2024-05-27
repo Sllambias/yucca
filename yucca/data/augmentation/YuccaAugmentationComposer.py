@@ -1,19 +1,25 @@
 from torchvision import transforms
 from yucca.functional.array_operations.matrix_ops import get_max_rotated_size
-from yucca.data.augmentation.transforms.normalize import Normalize
-from yucca.data.augmentation.transforms.formatting import AddBatchDimension, RemoveBatchDimension, CollectMetadata
-from yucca.data.augmentation.transforms.BiasField import BiasField
-from yucca.data.augmentation.transforms.Blur import Blur
-from yucca.data.augmentation.transforms.copy_image_to_label import CopyImageToLabel
-from yucca.data.augmentation.transforms.Gamma import Gamma
-from yucca.data.augmentation.transforms.Ghosting import MotionGhosting
-from yucca.data.augmentation.transforms.Masking import Masking
-from yucca.data.augmentation.transforms.Mirror import Mirror
-from yucca.data.augmentation.transforms.Noise import AdditiveNoise, MultiplicativeNoise
-from yucca.data.augmentation.transforms.Ringing import GibbsRinging
-from yucca.data.augmentation.transforms.sampling import DownsampleSegForDS
-from yucca.data.augmentation.transforms.SimulateLowres import SimulateLowres
-from yucca.data.augmentation.transforms.Spatial import Spatial
+from yucca.data.augmentation.transforms import (
+    AddBatchDimension,
+    AdditiveNoise,
+    BiasField,
+    Blur,
+    CollectMetadata,
+    ConvertLabelsToRegions,
+    CopyImageToLabel,
+    DownsampleSegForDS,
+    Gamma,
+    GibbsRinging,
+    Masking,
+    Mirror,
+    MotionGhosting,
+    MultiplicativeNoise,
+    Normalize,
+    RemoveBatchDimension,
+    SimulateLowres,
+    Spatial,
+)
 
 
 class YuccaAugmentationComposer:
@@ -24,9 +30,11 @@ class YuccaAugmentationComposer:
         is_2D: bool = False,
         parameter_dict: dict = {},
         task_type_preset: str = "segmentation",
+        label_regions: list = None,
     ):
         self._pre_aug_patch_size = None
         self.deep_supervision = deep_supervision
+        self.label_regions = label_regions
         self.setup_default_params(is_2D, patch_size)
         self.apply_task_type_specific_preset(task_type_preset)
         self.overwrite_params(parameter_dict)
@@ -62,6 +70,7 @@ class YuccaAugmentationComposer:
         self.skip_label = False
         self.label_dtype = int
         self.copy_image_to_label = False
+        self.convert_labels_to_regions = False
 
         # default augmentation probabilities
         self.additive_noise_p_per_sample = 0.2
@@ -127,8 +136,8 @@ class YuccaAugmentationComposer:
 
     def apply_task_type_specific_preset(self, preset):
         if preset == "segmentation":
-            # we do nothing and use the default parameters
-            pass
+            if self.label_regions is not None:
+                self.convert_labels_to_regions = True
         elif preset == "classification":
             self.skip_label = True
         elif preset == "self-supervised":
@@ -222,6 +231,7 @@ class YuccaAugmentationComposer:
                 ),
                 Normalize(normalize=self.normalize, scheme=self.normalization_scheme),
                 # seg
+                ConvertLabelsToRegions(convert_labels_to_regions=self.convert_labels_to_regions, regions=self.label_regions),
                 CopyImageToLabel(copy=self.copy_image_to_label),
                 DownsampleSegForDS(deep_supervision=self.deep_supervision),
                 # mae
@@ -235,6 +245,7 @@ class YuccaAugmentationComposer:
         val_transforms = transforms.Compose(
             [
                 AddBatchDimension(),
+                ConvertLabelsToRegions(convert_labels_to_regions=self.convert_labels_to_regions, regions=self.label_regions),
                 CopyImageToLabel(copy=self.copy_image_to_label),
                 Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.cval, ratio=self.mask_ratio),
                 RemoveBatchDimension(),
@@ -254,6 +265,7 @@ class YuccaAugmentationComposer:
                 "skip_label": self.skip_label,
                 "label_dtype": self.label_dtype,
                 "copy_image_to_label": self.copy_image_to_label,
+                "convert_labels_to_regions": self.convert_labels_to_regions,
                 "additive_noise_p_per_sample": self.additive_noise_p_per_sample,
                 "additive_noise_mean": self.additive_noise_mean,
                 "additive_noise_sigma": self.additive_noise_sigma,

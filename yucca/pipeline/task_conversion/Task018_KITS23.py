@@ -35,7 +35,7 @@ def convert(path: str = yucca_source, subdir: str = "kits23"):
     """Populate Target Directory
     This is also the place to apply any re-orientation, resampling and/or label correction."""
 
-    for sTr in subdirs(images_dir_tr, join=False):
+     for sTr in subdirs(images_dir_tr, join=False):
         src_image_file_path = join(images_dir_tr, sTr, "imaging" + file_suffix)
         src_label_file_path = join(labels_dir_tr, sTr, "segmentation" + file_suffix)
         dst_image_file_path = f"{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz"
@@ -56,8 +56,8 @@ def convert(path: str = yucca_source, subdir: str = "kits23"):
         target_imagesTs,
         modalities=("CT",),
         labels={0: "background", 1: "kidney", 2: "tumor", 3: "cyst"},
-        regions={0: [0], 1:},
-        ordered_label_regions=[[1, 2, 3], [2, 3], [2]],
+        regions_in_order=[[1, 2, 3], [2, 3], [2]],
+        regions_labeled=[1, 3, 2],
         dataset_name=task_name,
         license="",
         dataset_description="The 2023 Kidney and Kidney Tumor Segmentation Challenge",
