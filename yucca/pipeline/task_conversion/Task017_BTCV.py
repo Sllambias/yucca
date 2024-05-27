@@ -77,8 +77,8 @@ def convert(path: str = yucca_source, subdir: str = "BTCV_Abdomen"):
         },
         dataset_name=task_name,
         license="",
-        dataset_description="ACDC - Automated Cardiac Diagnosis Challenge",
-        dataset_reference="https://www.creatis.insa-lyon.fr/Challenge/acdc/index.html",
+        dataset_description="",
+        dataset_reference="",
     )
 
 
