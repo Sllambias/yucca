@@ -1,11 +1,5 @@
-from yucca.functional.array_operations import *
-from yucca.functional.evaluation import *
-from .planning import *
-from .preprocessing import *
-from .testing import *
-from .transforms import *
-from .utils import *
-from .visualization import *
+from __future__ import annotations
+
 from .planning import make_plans_file, add_stats_to_plans_post_preprocessing
 from .preprocessing import (
     analyze_label,

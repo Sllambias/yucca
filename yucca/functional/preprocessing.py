@@ -10,7 +10,7 @@ from typing import Union, List, Optional
 from yucca.functional.array_operations.normalization import normalizer
 from skimage.transform import resize
 from yucca.functional.array_operations.cropping_and_padding import pad_to_size, get_pad_kwargs
-from yucca.functional.testing.data.nifti import verify_nifti_header_is_valid
+from yucca.functional.testing.data.nifti import verify_nifti_header_is_valid, verify_orientation_is_LR_PA_IS
 from yucca.functional.testing.data.array import verify_shape_is_equal
 from yucca.functional.array_operations.transpose import transpose_case, transpose_array
 from yucca.functional.array_operations.bounding_boxes import get_bbox_for_foreground
@@ -125,6 +125,7 @@ def apply_nifti_preprocessing_and_return_numpy(
     target_orientation,
     label=None,
     include_header=False,
+    strict=True,
 ):
     # If qform and sform are both missing the header is corrupt and we do not trust the
     # direction from the affine
@@ -142,7 +143,12 @@ def apply_nifti_preprocessing_and_return_numpy(
         # If qform and sform are both missing the header is corrupt and we do not trust the
         # direction from the affine
         # Make sure you know what you're doing
+
         if verify_nifti_header_is_valid(images[0]) is True:
+            if strict:
+                assert verify_orientation_is_LR_PA_IS(
+                    images[0]
+                ), "unexpected NIFTI axes. Consider RAS-conversion during task conversion"
             metadata["reoriented"] = True
             metadata["original_orientation"] = get_nib_orientation(images[0])
             metadata["final_direction"] = target_orientation

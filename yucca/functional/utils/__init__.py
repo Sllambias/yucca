@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .dict import without_keys
 from .files_and_folders import (
     recursive_find_python_class,

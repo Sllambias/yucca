@@ -1,7 +1,9 @@
 import shutil
+import nibabel as nib
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles, subdirs
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data, yucca_source
+from yucca.functional.utils.nib_utils import reorient_to_RAS
 
 
 def convert(path: str = yucca_source, subdir: str = "kits23"):
@@ -35,14 +37,21 @@ def convert(path: str = yucca_source, subdir: str = "kits23"):
     """Populate Target Directory
     This is also the place to apply any re-orientation, resampling and/or label correction."""
 
-     for sTr in subdirs(images_dir_tr, join=False):
+    for sTr in subdirs(images_dir_tr, join=False):
         src_image_file_path = join(images_dir_tr, sTr, "imaging" + file_suffix)
         src_label_file_path = join(labels_dir_tr, sTr, "segmentation" + file_suffix)
+
         dst_image_file_path = f"{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz"
         dst_label_file_path = f"{target_labelsTr}/{task_prefix}_{sTr}.nii.gz"
 
-        shutil.copy2(src_image_file_path, dst_image_file_path)
-        shutil.copy2(src_label_file_path, dst_label_file_path)
+        image = nib.load(src_image_file_path)
+        label = nib.load(src_label_file_path)
+
+        image = reorient_to_RAS(image)
+        label = reorient_to_RAS(label)
+
+        nib.save(image, dst_image_file_path)
+        nib.save(label, dst_label_file_path)
 
     # for sTs in subfiles(images_dir_ts, suffix=file_suffix, join=False):
     #    case_id = sTs[: -len(file_suffix)]
@@ -67,4 +76,3 @@ def convert(path: str = yucca_source, subdir: str = "kits23"):
 
 if __name__ == "__main__":
     convert()
-# %%

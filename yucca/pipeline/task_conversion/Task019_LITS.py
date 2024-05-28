@@ -1,4 +1,5 @@
 import shutil
+import gzip
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles, subdirs
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data, yucca_source
@@ -40,14 +41,14 @@ def convert(path: str = yucca_source, subdir: str = "LITS"):
         for sTr in subfiles(images_dir_tr, join=False):
             if not "volume" in sTr:
                 continue
-            case_id = sTr.split("-")[-1]
-            src_image_file_path = join(images_dir_tr, sTr, "volume-" + case_id + file_suffix)
-            src_label_file_path = join(labels_dir_tr, sTr, "segmentation-" + case_id + file_suffix)
-            dst_image_file_path = f"{target_imagesTr}/{task_prefix}_{sTr}_000.nii.gz"
-            dst_label_file_path = f"{target_labelsTr}/{task_prefix}_{sTr}.nii.gz"
+            case_id = sTr.split("-")[-1][: -len(file_suffix)]
+            src_image_file = open(join(images_dir_tr, "volume-" + case_id + file_suffix), "rb")
+            src_label_file = open(join(labels_dir_tr, "segmentation-" + case_id + file_suffix), "rb")
+            dst_image_file_path = f"{target_imagesTr}/{task_prefix}_{case_id}_000.nii.gz"
+            dst_label_file_path = f"{target_labelsTr}/{task_prefix}_{case_id}.nii.gz"
 
-            shutil.copy2(src_image_file_path, dst_image_file_path)
-            shutil.copy2(src_label_file_path, dst_label_file_path)
+            shutil.copyfileobj(src_image_file, gzip.open(dst_image_file_path, "wb"))
+            shutil.copyfileobj(src_label_file, gzip.open(dst_label_file_path, "wb"))
 
     # for sTs in subfiles(images_dir_ts, suffix=file_suffix, join=False):
     #    case_id = sTs[: -len(file_suffix)]
@@ -59,14 +60,16 @@ def convert(path: str = yucca_source, subdir: str = "LITS"):
         join(target_base, "dataset.json"),
         target_imagesTr,
         target_imagesTs,
-        modalities=("",),
+        modalities=("CT",),
         labels={
             0: "background",
+            1: "liver",
+            2: "tumor",
         },
         dataset_name=task_name,
         license="",
-        dataset_description="",
-        dataset_reference="",
+        dataset_description="Liver Tumor Segmentation Challenge from Miccai 2017",
+        dataset_reference="https://competitions.codalab.org/competitions/17094",
     )
 
 
