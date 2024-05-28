@@ -1,6 +1,5 @@
 import torch
 import numpy as np
-import logging
 
 
 class RandomBatchSampler(torch.utils.data.Sampler):
