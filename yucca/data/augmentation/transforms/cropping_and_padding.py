@@ -86,30 +86,3 @@ class CropPad(YuccaTransform):
             **pad_kwargs,
         )
         return data_dict
-
-
-class CropPad_OversampleInCall(CropPad):
-    """
-    Can be useful in cases where oversampling is handled outside the parent class.
-    E.g. if a case is already drawn to oversample a label, then we should guarantee that a patch
-    where foreground exists is actually drawn, and not rely on an additional random probability
-    that a such patch will be drawn.
-    """
-
-    def __call__(self, packed_data_dict=None, image_properties=None, p_oversample_foreground=0.0, **unpacked_data_dict):
-        data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
-
-        input_shape, target_image_shape, target_label_shape, pad_kwargs = self.get_params(
-            data=data_dict[self.data_key], pad_value=self.pad_value, target_shape=self.patch_size
-        )
-
-        data_dict = self.__croppad__(
-            data_dict=data_dict,
-            image_properties=image_properties,
-            input_shape=input_shape,
-            p_oversample_foreground=p_oversample_foreground,
-            target_image_shape=target_image_shape,
-            target_label_shape=target_label_shape,
-            **pad_kwargs,
-        )
-        return data_dict
