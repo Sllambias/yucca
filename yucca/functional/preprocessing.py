@@ -205,6 +205,7 @@ def preprocess_case_for_training_with_label(
     label: Union[np.ndarray, nib.Nifti1Image],
     normalization_operation: list,
     allow_missing_modalities: bool = False,
+    background_pixel_value: int = 0,
     enable_cc_analysis: bool = False,
     missing_modality_idxs: list = [],
     crop_to_nonzero: bool = True,
@@ -232,7 +233,7 @@ def preprocess_case_for_training_with_label(
 
     # Cropping is performed to save computational resources. We are only removing background.
     if crop_to_nonzero:
-        nonzero_box = get_bbox_for_foreground(images[0], background_label=0)
+        nonzero_box = get_bbox_for_foreground(images[0], background_label=background_pixel_value)
         image_properties["crop_to_nonzero"] = nonzero_box
         for i in range(len(images)):
             images[i] = crop_to_box(images[i], nonzero_box)
@@ -289,6 +290,7 @@ def preprocess_case_for_training_without_label(
     images: List[Union[np.ndarray, nib.Nifti1Image]],
     normalization_operation: list,
     allow_missing_modalities: bool = False,
+    background_pixel_value: int = 0,
     missing_modality_idxs: list = [],
     crop_to_nonzero: bool = True,
     keep_aspect_ratio_when_using_target_size: bool = False,
@@ -315,7 +317,7 @@ def preprocess_case_for_training_without_label(
 
     # Cropping is performed to save computational resources. We are only removing background.
     if crop_to_nonzero:
-        nonzero_box = get_bbox_for_foreground(images[0], background_label=0)
+        nonzero_box = get_bbox_for_foreground(images[0], background_label=background_pixel_value)
         image_properties["crop_to_nonzero"] = nonzero_box
         for i in range(len(images)):
             images[i] = crop_to_box(images[i], nonzero_box)
