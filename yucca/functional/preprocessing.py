@@ -237,7 +237,7 @@ def preprocess_case_for_training_with_label(
         image_properties["crop_to_nonzero"] = nonzero_box
         for i in range(len(images)):
             images[i] = crop_to_box(images[i], nonzero_box)
-            label = crop_to_box(label, nonzero_box)
+        label = crop_to_box(label, nonzero_box)
     else:
         image_properties["crop_to_nonzero"] = crop_to_nonzero
 
@@ -261,7 +261,6 @@ def preprocess_case_for_training_with_label(
     # can matter for normalization operations
     for missing_mod in missing_modality_idxs:
         images.insert(missing_mod, np.array([]))
-
     images, label = resample_and_normalize_case(
         case=images,
         target_size=resample_target_size,

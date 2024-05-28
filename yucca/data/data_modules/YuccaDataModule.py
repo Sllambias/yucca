@@ -140,6 +140,7 @@ class YuccaDataModule(pl.LightningDataModule):
 
         if stage == "predict":
             assert self.pred_data_dir is not None, "`pred_data_dir` is required in inference"
+            assert self.pred_save_dir is not None, "`pred_save_dir` is required in inference"
             assert self.image_extension is not None, "`image_extension` is required in inference"
             # This dataset contains ONLY the images (and not the labels)
             # It will return a tuple of (case, case_id)

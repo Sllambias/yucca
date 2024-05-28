@@ -74,7 +74,8 @@ class YuccaLightningModule(L.LightningModule):
 
         self.progress_bar = progress_bar
 
-        logging.info(f"Starting a {self.task_type} task")
+        logging.info(f"Starting a {self.task_type} task \n" f"Deep Supervision Enabled: {self.deep_supervision}")
+
         if self.task_type == "classification":
             tmetrics_task = "multiclass" if self.num_classes > 2 else "binary"
             # can we get per-class?
@@ -157,7 +158,6 @@ class YuccaLightningModule(L.LightningModule):
             "checkpoint_style": "outside_block",
         }
         model_kwargs = filter_kwargs(self.model, model_kwargs)
-
         self.model = self.model(**model_kwargs)
 
     def forward(self, inputs):
@@ -379,15 +379,9 @@ class YuccaLightningModule(L.LightningModule):
     @property
     def log_image_this_epoch(self):
         if isinstance(self.log_image_every_n_epochs, int):
-            if self.current_epoch % self.log_image_every_n_epochs == 0:
-                return True
-            else:
-                return False
+            return self.current_epoch % self.log_image_every_n_epochs == 0
         if isinstance(self.log_image_every_n_epochs, list):
-            if self.current_epoch in self.log_image_every_n_epochs:
-                return True
-            else:
-                return False
+            return self.current_epoch in self.log_image_every_n_epochs
 
     @staticmethod
     def get_image_logging_epochs(final_epoch: int = 1000):
