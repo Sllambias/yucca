@@ -32,3 +32,9 @@ class InfiniteRandomSampler(torch.utils.data.Sampler):
 
     def __len__(self):
         return float("inf")
+
+
+def _infinite_generator(n, rng):
+    """Inifinitely returns a number in [0, n)."""
+    while True:
+        yield from torch.randperm(n, generator=rng).tolist()
