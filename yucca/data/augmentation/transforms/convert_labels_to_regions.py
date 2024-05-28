@@ -22,10 +22,10 @@ class ConvertLabelsToRegions(YuccaTransform):
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
-        assert (
-            len(data_dict[self.label_key].shape) == 5 or len(data_dict[self.label_key].shape) == 4
-        ), f"Incorrect data size or shape.\
-            \nShould be (b, c, x, y, z) or (b, c, x, y) and is: {data_dict[self.label_key].shape}"
         if self.convert_labels_to_regions:
+            assert (
+                len(data_dict[self.label_key].shape) == 5 or len(data_dict[self.label_key].shape) == 4
+            ), f"Incorrect data size or shape.\
+                \nShould be (b, c, x, y, z) or (b, c, x, y) and is: {data_dict[self.label_key].shape}"
             data_dict[self.label_key] = self.__convert__(data_dict[self.label_key], self.regions)
         return data_dict

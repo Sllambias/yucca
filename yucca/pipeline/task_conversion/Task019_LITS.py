@@ -1,6 +1,6 @@
 import shutil
 import gzip
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles, subdirs
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data, yucca_source
 
@@ -39,7 +39,7 @@ def convert(path: str = yucca_source, subdir: str = "LITS"):
     for tr_batch in training_batches:
         images_dir_tr = labels_dir_tr = tr_batch
         for sTr in subfiles(images_dir_tr, join=False):
-            if not "volume" in sTr:
+            if "volume" not in sTr:
                 continue
             case_id = sTr.split("-")[-1][: -len(file_suffix)]
             src_image_file = open(join(images_dir_tr, "volume-" + case_id + file_suffix), "rb")

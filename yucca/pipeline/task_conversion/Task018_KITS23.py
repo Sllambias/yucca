@@ -1,6 +1,5 @@
-import shutil
 import nibabel as nib
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles, subdirs
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subdirs
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data, yucca_source
 from yucca.functional.utils.nib_utils import reorient_to_RAS

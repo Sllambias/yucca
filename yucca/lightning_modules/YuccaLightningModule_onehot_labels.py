@@ -4,7 +4,6 @@ from torchmetrics import MetricCollection
 from torchmetrics.segmentation import GeneralizedDiceScore
 from torchmetrics.classification import MulticlassF1Score
 from yucca.lightning_modules.YuccaLightningModule import YuccaLightningModule
-from torch import nn
 
 
 class YuccaLightningModule_onehot_labels(YuccaLightningModule):
