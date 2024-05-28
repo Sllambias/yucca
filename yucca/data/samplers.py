@@ -73,12 +73,6 @@ class InfiniteRandomSampler_with_oversampling(torch.utils.data.Sampler):
         return float("inf")
 
 
-def _infinite_generator(n, rng):
-    """Inifinitely returns a number in [0, n)."""
-    while True:
-        yield from torch.randperm(n, generator=rng).tolist()
-
-
 def _infinite_generator_with_oversampling(n_total, pos_indexes, rng, p_oversample_foreground):
     while True:
         if np.random.uniform() >= p_oversample_foreground:
