@@ -10,6 +10,15 @@ def convert(path: str, subdir: str = "amos22"):
     path = f"{path}/{subdir}"
     file_suffix = ".nii.gz"
 
+    # Train/Test Splits
+    labels_dir_tr = join(path, "labelsTr")
+    images_dir_tr = join(path, "imagesTr")
+    training_samples = subfiles(labels_dir_tr, join=False, suffix=file_suffix)
+
+    labels_dir_va = join(path, "labelsVa")
+    images_dir_va = join(path, "imagesVa")
+    validation_samples = subfiles(labels_dir_va, join=False, suffix=file_suffix)
+
     images_dir_ts = join(path, "imagesTs")
     test_samples = subfiles(images_dir_ts, join=False, suffix=file_suffix)
 
@@ -22,9 +31,25 @@ def convert(path: str, subdir: str = "amos22"):
     target_base = join(yucca_raw_data, task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
+    target_labelsTr = join(target_base, "labelsTr")
+
     target_imagesTs = join(target_base, "imagesTs")
 
+    maybe_mkdir_p(target_imagesTr)
+    maybe_mkdir_p(target_labelsTr)
     maybe_mkdir_p(target_imagesTs)
+
+    # This is likely also the place to apply any re-orientation, resampling and/or label correction.
+    for sTr in training_samples:
+        serial_number = sTr[: -len(file_suffix)]
+        shutil.copy2(join(images_dir_tr, sTr), f"{target_imagesTr}/{prefix}_{serial_number}_000.nii.gz")
+        shutil.copy2(join(labels_dir_tr, sTr), f"{target_labelsTr}/{prefix}_{serial_number}.nii.gz")
+
+    # This is likely also the place to apply any re-orientation, resampling and/or label correction.
+    for sVa in validation_samples:
+        serial_number = sVa[: -len(file_suffix)]
+        shutil.copy2(join(images_dir_va, sVa), f"{target_imagesTr}/{prefix}_{serial_number}_000.nii.gz")
+        shutil.copy2(join(labels_dir_va, sVa), f"{target_labelsTr}/{prefix}_{serial_number}.nii.gz")
 
     for sTs in test_samples:
         serial_number = sTs[: -len(file_suffix)]
