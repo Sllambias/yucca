@@ -1,8 +1,8 @@
-from yucca.pipeline.managers.YuccaManager import YuccaManager
+from yucca.pipeline.managers.YuccaManagerV2 import YuccaManagerV2
 from yucca.lightning_modules.YuccaLightningModule_onehot_labels import YuccaLightningModule_onehot_labels
 
 
-class YuccaManagerV2_labelregions(YuccaManager):
+class YuccaManagerV2_labelregions(YuccaManagerV2):
     def __init__(
         self,
         *args,

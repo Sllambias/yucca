@@ -34,7 +34,7 @@ class YuccaLightningModule_onehot_labels(YuccaLightningModule):
             },
         )
 
-        self.loss_fn = "BCEWithLogitsLoss"
+        self.loss_fn = "SigmoidDiceBCE"
 
     def training_step(self, batch, batch_idx):
         inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
