@@ -1,7 +1,5 @@
 import nibabel as nib
-import nibabel.processing as nibpro
 import shutil
-from sklearn.model_selection import train_test_split
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data

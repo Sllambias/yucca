@@ -1,10 +1,10 @@
 import nibabel as nib
-import nibabel.processing as nibpro
+import shutil
 from sklearn.model_selection import train_test_split
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
-from yucca.task_conversion.utils import generate_dataset_json
+from yucca.pipeline.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data
-from yucca.functional.testing.nifti import verify_spacing_is_equal, verify_orientation_is_equal
+from yucca.functional.testing.data.nifti import verify_spacing_is_equal, verify_orientation_is_equal
 
 # INPUT DATA
 # Define input path and extension
@@ -18,7 +18,7 @@ task_name = "Task022_Heart"
 task_prefix = "Heart"
 
 # Set target paths
-target_base = join(omni_raw_data, task_name)
+target_base = join(yucca_raw_data, task_name)
 target_imagesTr = join(target_base, "imagesTr")
 target_labelsTr = join(target_base, "labelsTr")
 target_imagesTs = join(target_base, "imagesTs")
