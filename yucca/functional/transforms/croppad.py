@@ -82,8 +82,7 @@ def croppad_3D_case_from_3D(
             else:
                 crop_start_idx += [np.random.randint(image.shape[d + 1] - patch_size[d] + 1)]
     else:
-        locidx = np.random.choice(len(image_properties["foreground_locations"]))
-        location = image_properties["foreground_locations"][locidx]
+        location = select_foreground_voxel_to_include(image_properties)
         for d in range(3):
             if image.shape[d + 1] < patch_size[d]:
                 crop_start_idx += [0]
@@ -166,8 +165,7 @@ def croppad_2D_case_from_3D(
             else:
                 crop_start_idx += [np.random.randint(image.shape[d + 2] - patch_size[d] + 1)]
     else:
-        locidx = np.random.choice(len(image_properties["foreground_locations"]))
-        location = image_properties["foreground_locations"][locidx]
+        location = select_foreground_voxel_to_include(image_properties)
         x_idx = location[0]
         for d in range(2):
             if image.shape[d + 2] < patch_size[d]:
@@ -243,8 +241,7 @@ def croppad_2D_case_from_2D(
             else:
                 crop_start_idx += [np.random.randint(image.shape[d + 1] - patch_size[d] + 1)]
     else:
-        locidx = np.random.choice(len(image_properties["foreground_locations"]))
-        location = image_properties["foreground_locations"][locidx]
+        location = select_foreground_voxel_to_include(image_properties)
         for d in range(2):
             if image.shape[d + 1] < patch_size[d]:
                 crop_start_idx += [0]
@@ -282,3 +279,16 @@ def croppad_2D_case_from_2D(
     )
 
     return image_out, label_out
+
+
+def select_foreground_voxel_to_include(image_properties):
+    if isinstance(image_properties["foreground_locations"], list):
+        locidx = np.random.choice(len(image_properties["foreground_locations"]))
+        location = image_properties["foreground_locations"][locidx]
+    elif isinstance(image_properties["foreground_locations"], dict):
+        selected_class = np.random.choice(list(image_properties["foreground_locations"].keys()))
+        print("I CHOSE THIS ONE:", selected_class)
+
+        locidx = np.random.choice(len(image_properties["foreground_locations"][selected_class]))
+        location = image_properties["foreground_locations"][selected_class][locidx]
+    return location

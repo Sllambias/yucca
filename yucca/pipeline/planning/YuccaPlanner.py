@@ -52,6 +52,7 @@ class YuccaPlanner(object):
         self.crop_to_nonzero = True
         self.norm_op = "standardize"
         self.allow_missing_modalities = False
+        self.get_foreground_locations_per_label = False
 
         # This is only relevant for planners with fixed sizes.
         self.keep_aspect_ratio_when_using_target_size = True
@@ -151,6 +152,7 @@ class YuccaPlanner(object):
             disable_sanity_checks=self.disable_sanity_checks,
             allow_missing_modalities=self.allow_missing_modalities,
             compress=self.compress,
+            get_foreground_locs_per_label=self.get_foreground_locations_per_label,
         )
         preprocessor.run()
         self.postprocess()

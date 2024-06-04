@@ -68,6 +68,7 @@ class YuccaPreprocessor(object):
         enable_cc_analysis=False,
         allow_missing_modalities=False,
         compress=False,
+        get_foreground_locs_per_label=False,
     ):
         self.name = str(self.__class__.__name__)
         self.task = task
@@ -78,6 +79,7 @@ class YuccaPreprocessor(object):
         self.enable_cc_analysis = enable_cc_analysis
         self.allow_missing_modalities = allow_missing_modalities
         self.compress = compress
+        self.get_foreground_locs_per_label = get_foreground_locs_per_label
 
         # lists for information we would like to attain
         self.transpose_forward = []
@@ -266,6 +268,7 @@ class YuccaPreprocessor(object):
                 allow_missing_modalities=self.allow_missing_modalities,
                 background_pixel_value=self.background_value_for_first_modality,
                 enable_cc_analysis=self.enable_cc_analysis,
+                foreground_locs_per_label=self.get_foreground_locs_per_label,
                 missing_modality_idxs=missing_modalities,
                 crop_to_nonzero=self.plans["crop_to_nonzero"],
                 keep_aspect_ratio_when_using_target_size=self.plans["keep_aspect_ratio_when_using_target_size"],

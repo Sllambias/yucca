@@ -24,14 +24,11 @@ from yucca.functional.utils.type_conversions import nifti_or_np_to_np
 from yucca.functional.utils.loading import read_file_to_nifti_or_np
 
 
-def analyze_label(label, enable_connected_components_analysis: bool = False, spacing: list = []):
+def analyze_label(label, enable_connected_components_analysis: bool = False, spacing: list = [], per_class=False):
     # we get some (no need to get all) locations of foreground, that we will later use in the
     # oversampling of foreground classes
     # And we also potentially analyze the connected components of the label
-    max_foreground_locs = 100000  # limited to save space
-    foreground_locs = np.array(np.nonzero(label)).T[::10].tolist()
-    if len(foreground_locs) > max_foreground_locs:
-        foreground_locs = foreground_locs[:: round(len(foreground_locs) / max_foreground_locs)]
+    foreground_locs = get_foreground_locations(label, per_class=per_class, max_locs_total=100000)
     if not enable_connected_components_analysis:
         label_cc_n = 0
         label_cc_sizes = 0
@@ -42,6 +39,27 @@ def analyze_label(label, enable_connected_components_analysis: bool = False, spa
         else:
             label_cc_sizes = [i * np.prod(spacing) for i in np.unique(numbered_ground_truth, return_counts=True)[-1][1:]]
     return foreground_locs, label_cc_n, label_cc_sizes
+
+
+def get_foreground_locations(label, per_class=False, max_locs_total=100000):
+    foreground_locations = {}
+    if not per_class:
+        foreground_locs_for_all = np.array(np.nonzero(label)).T[::10].tolist()
+        if len(foreground_locs_for_all) > max_locs_total:
+            foreground_locs_for_all = foreground_locs_for_all[:: round(len(foreground_locs_for_all) / max_locs_total)]
+        foreground_locations["1"] = foreground_locs_for_all
+    else:
+        foreground_classes_present = np.unique(label)[1:]
+        if len(foreground_classes_present) == 0:
+            return foreground_locations
+        max_locs_per_class = int(max_locs_total / len(foreground_classes_present))
+        for c in foreground_classes_present:
+            foreground_locs_for_c = np.array(np.where(label == int(c))).T[::10]
+            if len(foreground_locs_for_c) > 0:
+                if len(foreground_locs_for_c) > max_locs_per_class:
+                    foreground_locs_for_c = foreground_locs_for_c[:: round(len(foreground_locs_for_c) / max_locs_per_class)]
+                foreground_locations[str(int(c))] = foreground_locs_for_c
+    return foreground_locations
 
 
 def determine_resample_size_from_target_size(current_size, current_spacing, target_size, keep_aspect_ratio: bool = False):
@@ -213,6 +231,7 @@ def preprocess_case_for_training_with_label(
     allow_missing_modalities: bool = False,
     background_pixel_value: int = 0,
     enable_cc_analysis: bool = False,
+    foreground_locs_per_label: bool = False,
     missing_modality_idxs: list = [],
     crop_to_nonzero: bool = True,
     keep_aspect_ratio_when_using_target_size: bool = False,
@@ -279,7 +298,9 @@ def preprocess_case_for_training_with_label(
     if final_target_size is not None:
         images, label = pad_case_to_size(case=images, size=final_target_size, label=label)
     image_properties["foreground_locations"], image_properties["label_cc_n"], image_properties["label_cc_sizes"] = (
-        analyze_label(label=label, enable_connected_components_analysis=enable_cc_analysis)
+        analyze_label(
+            label=label, enable_connected_components_analysis=enable_cc_analysis, per_class=foreground_locs_per_label
+        )
     )
 
     first_existing_modality = list(set(range(len(images))).difference(missing_modality_idxs))[0]
