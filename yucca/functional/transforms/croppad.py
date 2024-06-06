@@ -287,8 +287,6 @@ def select_foreground_voxel_to_include(image_properties):
         location = image_properties["foreground_locations"][locidx]
     elif isinstance(image_properties["foreground_locations"], dict):
         selected_class = np.random.choice(list(image_properties["foreground_locations"].keys()))
-        print("I CHOSE THIS ONE:", selected_class)
-
         locidx = np.random.choice(len(image_properties["foreground_locations"][selected_class]))
         location = image_properties["foreground_locations"][selected_class][locidx]
     return location

@@ -6,7 +6,7 @@ from yucca.optimization.loss_functions.nnUNet_losses import get_tp_fp_fn_tn
 class SoftSigmoidDiceLoss(nn.Module):
     def __init__(self, apply_nonlin=True, batch_dice=False, do_bg=True, smooth=1.0):
         """ """
-        super(SoftDiceLoss, self).__init__()
+        super(SoftSigmoidDiceLoss, self).__init__()
 
         self.do_bg = do_bg
         self.batch_dice = batch_dice

@@ -5,9 +5,10 @@ from yucca.optimization.loss_functions.Dice import SoftSigmoidDiceLoss
 
 
 class SigmoidDiceBCE(nn.Module):
+
     def __init__(
         self,
-        soft_dice_kwargs={},
+        sigmoid_dice_kwargs={},
         ce_kwargs={},
         weight_ce=1,
         weight_dice=1,
@@ -23,7 +24,7 @@ class SigmoidDiceBCE(nn.Module):
         :param weight_ce:
         :param weight_dice:
         """
-        super(DiceCE, self).__init__()
+        super(SigmoidDiceBCE, self).__init__()
         if ignore_label is not None:
             ce_kwargs["reduction"] = "none"
         self.log_dice = log_dice
@@ -33,7 +34,7 @@ class SigmoidDiceBCE(nn.Module):
 
         self.ignore_label = ignore_label
 
-        self.dc = SoftSigmoidDiceLoss(**soft_dice_kwargs)
+        self.dc = SoftSigmoidDiceLoss(**sigmoid_dice_kwargs)
 
     def forward(self, net_output, target):
         """
@@ -54,7 +55,7 @@ class SigmoidDiceBCE(nn.Module):
         if self.log_dice:
             dc_loss = -torch.log(-dc_loss)
 
-        ce_loss = self.ce(net_output, target[:, 0].long()) if self.weight_ce != 0 else 0
+        ce_loss = self.ce(net_output, target) if self.weight_ce != 0 else 0
         if self.ignore_label is not None:
             ce_loss *= mask[:, 0]
             ce_loss = ce_loss.sum() / mask.sum()

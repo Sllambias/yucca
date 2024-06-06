@@ -107,7 +107,11 @@ class YuccaPreprocessor(object):
         self.dataset_properties = self.plans["dataset_properties"]
         self.intensities = self.dataset_properties["intensities"]
         self.image_extension = self.dataset_properties.get("image_extension") or "nii.gz"
-        self.background_value_for_first_modality = self.dataset_properties.get("background_pixel_values")[0] or 0
+
+        if self.dataset_properties.get("background_pixel_values") is not None:
+            self.background_value_for_first_modality = self.dataset_properties.get("background_pixel_values")[0]
+        else:
+            self.background_value_for_first_modality = 0
 
         # op values
         self.transpose_forward = np.array(self.plans["transpose_forward"], dtype=int)
@@ -213,6 +217,7 @@ class YuccaPreprocessor(object):
             f"Saving {subject_id} in {arraypath} \n"
             f"Time elapsed: {round(end_time-start_time, 4)} \n"
         )
+        del images, label, image_props
 
     def _preprocess_train_subject(self, subject_id, label_exists: bool, preprocess_label: bool):
         image_props = {}
