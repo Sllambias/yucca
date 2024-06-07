@@ -1,5 +1,4 @@
 import shutil
-import gzip
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles, subdirs
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data, yucca_source
@@ -18,7 +17,7 @@ def convert(path: str = yucca_source, subdir: str = "ATLAS_2"):
     split the data, uncomment and adapt the following lines to fit your local path. """
 
     images_dir_tr = labels_dir_tr = join(path, "Training")
-    images_dir_ts = labels_dir_ts = join(path, "Testing")
+    # images_dir_ts = labels_dir_ts = join(path, "Testing")
 
     """ Then define target paths """
     target_base = join(yucca_raw_data, task_name)
@@ -47,10 +46,10 @@ def convert(path: str = yucca_source, subdir: str = "ATLAS_2"):
             image_and_label = subfiles(join(images_dir_tr, dataset, sTr, sessions[0], image_types[0]), join=False)
             image = [i for i in image_and_label if "label" not in i][0]
             label = [i for i in image_and_label if "label" in i][0]
-            case_id = image[:-len(file_suffix)]
+            case_id = image[: -len(file_suffix)]
 
             src_image_file = join(images_dir_tr, dataset, sTr, sessions[0], image_types[0], image)
-            src_label_file = join(images_dir_tr, dataset, sTr, sessions[0], image_types[0], label)
+            src_label_file = join(labels_dir_tr, dataset, sTr, sessions[0], image_types[0], label)
 
             dst_image_file_path = f"{target_imagesTr}/{task_prefix}_{case_id}_000.nii.gz"
             dst_label_file_path = f"{target_labelsTr}/{task_prefix}_{case_id}.nii.gz"
