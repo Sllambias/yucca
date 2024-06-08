@@ -1,4 +1,3 @@
-from __future__ import annotations
 from .confusion_matrix import torch_confusion_matrix_from_logits, torch_get_tp_fp_tn_fn
 from .metrics import (
     dice,

@@ -1,4 +1,3 @@
-from __future__ import annotations
 from yucca.functional.transforms.blur import blur
 from yucca.functional.transforms.bias_field import bias_field
 from yucca.functional.transforms.gamma import augment_gamma

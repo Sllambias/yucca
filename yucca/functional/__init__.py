@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from .planning import make_plans_file, add_stats_to_plans_post_preprocessing
 from .preprocessing import (
     analyze_label,
