@@ -12,3 +12,8 @@ class CE(nn.CrossEntropyLoss):
             assert target.shape[1] == 1
             target = target[:, 0]
         return super().forward(input, target.long())
+
+
+class BCEWithLogitsLoss(nn.BCEWithLogitsLoss):
+    def forward(self, input: Tensor, target: Tensor) -> Tensor:
+        return super().forward(input, target.float())

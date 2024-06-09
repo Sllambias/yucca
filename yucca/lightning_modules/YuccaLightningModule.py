@@ -74,7 +74,8 @@ class YuccaLightningModule(L.LightningModule):
 
         self.progress_bar = progress_bar
 
-        logging.info(f"Starting a {self.task_type} task \n" f"Deep Supervision Enabled: {self.deep_supervision}")
+        logging.info(f"{self.__class__.__name__} initialized with the following config: {config}")
+        logging.info(f"Deep Supervision Enabled: {self.deep_supervision}")
 
         if self.task_type == "classification":
             tmetrics_task = "multiclass" if self.num_classes > 2 else "binary"
@@ -205,6 +206,7 @@ class YuccaLightningModule(L.LightningModule):
         inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
         output = self(inputs)
         loss = self.loss_fn_val(output, target)
+
         metrics = self.compute_metrics(self.val_metrics, output, target)
         self.log_dict(
             {"val/loss": loss} | metrics,

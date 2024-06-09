@@ -1,23 +1,23 @@
 import shutil
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles, subdirs
+import gzip
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data, yucca_source
 
 
-def convert(path: str = yucca_source, subdir: str = "ATLAS_2"):
+def convert(path: str = yucca_source, subdir: str = "LITS"):
     """INPUT DATA - Define input path and suffixes"""
     path = join(path, subdir)
-    file_suffix = ".nii.gz"
+    file_suffix = ".nii"
 
     """ OUTPUT DATA - Define the task name and prefix """
-    task_name = "Task020_ATLAS2"
-    task_prefix = "ATLAS2"
+    task_name = "Task019_LITS"
+    task_prefix = "LITS"
 
     """ Access the input data. If images are not split into train/test, and you wish to randomly 
     split the data, uncomment and adapt the following lines to fit your local path. """
 
-    images_dir_tr = labels_dir_tr = join(path, "Training")
-    # images_dir_ts = labels_dir_ts = join(path, "Testing")
+    training_batches = [join(path, "Training Batch 1"), join(path, "Training Batch 2")]
 
     """ Then define target paths """
     target_base = join(yucca_raw_data, task_name)
@@ -36,26 +36,19 @@ def convert(path: str = yucca_source, subdir: str = "ATLAS_2"):
     """Populate Target Directory
     This is also the place to apply any re-orientation, resampling and/or label correction."""
 
-    for dataset in subdirs(images_dir_tr, join=False):
-        for sTr in subdirs(join(images_dir_tr, dataset), join=False):
-            sessions = subdirs(join(images_dir_tr, dataset, sTr), join=False)
-            assert len(sessions) == 1 and sessions[0] == "ses-1", f"unexpected # sessions found: {sessions}"
-            image_types = subdirs(join(images_dir_tr, dataset, sTr, sessions[0]), join=False)
-            assert len(image_types) == 1 and image_types[0] == "anat", f"unexpected type of scan. Found {image_types}"
-
-            image_and_label = subfiles(join(images_dir_tr, dataset, sTr, sessions[0], image_types[0]), join=False)
-            image = [i for i in image_and_label if "label" not in i][0]
-            label = [i for i in image_and_label if "label" in i][0]
-            case_id = image[: -len(file_suffix)]
-
-            src_image_file = join(images_dir_tr, dataset, sTr, sessions[0], image_types[0], image)
-            src_label_file = join(labels_dir_tr, dataset, sTr, sessions[0], image_types[0], label)
-
+    for tr_batch in training_batches:
+        images_dir_tr = labels_dir_tr = tr_batch
+        for sTr in subfiles(images_dir_tr, join=False):
+            if "volume" not in sTr:
+                continue
+            case_id = sTr.split("-")[-1][: -len(file_suffix)]
+            src_image_file = open(join(images_dir_tr, "volume-" + case_id + file_suffix), "rb")
+            src_label_file = open(join(labels_dir_tr, "segmentation-" + case_id + file_suffix), "rb")
             dst_image_file_path = f"{target_imagesTr}/{task_prefix}_{case_id}_000.nii.gz"
             dst_label_file_path = f"{target_labelsTr}/{task_prefix}_{case_id}.nii.gz"
 
-            shutil.copy2(src_image_file, dst_image_file_path)
-            shutil.copy2(src_label_file, dst_label_file_path)
+            shutil.copyfileobj(src_image_file, gzip.open(dst_image_file_path, "wb"))
+            shutil.copyfileobj(src_label_file, gzip.open(dst_label_file_path, "wb"))
 
     # for sTs in subfiles(images_dir_ts, suffix=file_suffix, join=False):
     #    case_id = sTs[: -len(file_suffix)]
@@ -67,15 +60,16 @@ def convert(path: str = yucca_source, subdir: str = "ATLAS_2"):
         join(target_base, "dataset.json"),
         target_imagesTr,
         target_imagesTs,
-        modalities=("T1",),
+        modalities=("CT",),
         labels={
             0: "background",
-            1: "lesion",
+            1: "liver",
+            2: "tumor",
         },
         dataset_name=task_name,
         license="",
-        dataset_description="ATLAS2 from MICCAI 2022",
-        dataset_reference="https://atlas.grand-challenge.org/ATLAS/",
+        dataset_description="Liver Tumor Segmentation Challenge from Miccai 2017",
+        dataset_reference="https://competitions.codalab.org/competitions/17094",
     )
 
 

@@ -22,3 +22,12 @@ def reorient_nib_image(nib_image, original_orientation: str, target_orientation:
     end = nio.axcodes2ornt(target_orientation)
     orientation = nio.ornt_transform(start, end)
     return nib_image.as_reoriented(orientation)
+
+
+def reorient_to_RAS(image: nib.Nifti1Image, strict=True):
+    if strict:
+        from yucca.functional.testing.data.nifti import verify_nifti_header_is_valid  # avoid circular import
+
+        assert verify_nifti_header_is_valid(image)
+    current_orientation = get_nib_orientation(image)
+    return reorient_nib_image(image, original_orientation=current_orientation, target_orientation="RAS")

@@ -68,6 +68,7 @@ class YuccaPreprocessor(object):
         enable_cc_analysis=False,
         allow_missing_modalities=False,
         compress=False,
+        get_foreground_locs_per_label=False,
     ):
         self.name = str(self.__class__.__name__)
         self.task = task
@@ -78,6 +79,7 @@ class YuccaPreprocessor(object):
         self.enable_cc_analysis = enable_cc_analysis
         self.allow_missing_modalities = allow_missing_modalities
         self.compress = compress
+        self.get_foreground_locs_per_label = get_foreground_locs_per_label
 
         # lists for information we would like to attain
         self.transpose_forward = []
@@ -105,7 +107,11 @@ class YuccaPreprocessor(object):
         self.dataset_properties = self.plans["dataset_properties"]
         self.intensities = self.dataset_properties["intensities"]
         self.image_extension = self.dataset_properties.get("image_extension") or "nii.gz"
-        self.background_value_for_first_modality = self.dataset_properties.get("background_pixel_values")[0] or 0
+
+        if self.dataset_properties.get("background_pixel_values") is not None:
+            self.background_value_for_first_modality = self.dataset_properties.get("background_pixel_values")[0]
+        else:
+            self.background_value_for_first_modality = 0
 
         # op values
         self.transpose_forward = np.array(self.plans["transpose_forward"], dtype=int)
@@ -211,6 +217,7 @@ class YuccaPreprocessor(object):
             f"Saving {subject_id} in {arraypath} \n"
             f"Time elapsed: {round(end_time-start_time, 4)} \n"
         )
+        del images, label, image_props
 
     def _preprocess_train_subject(self, subject_id, label_exists: bool, preprocess_label: bool):
         image_props = {}
@@ -266,6 +273,7 @@ class YuccaPreprocessor(object):
                 allow_missing_modalities=self.allow_missing_modalities,
                 background_pixel_value=self.background_value_for_first_modality,
                 enable_cc_analysis=self.enable_cc_analysis,
+                foreground_locs_per_label=self.get_foreground_locs_per_label,
                 missing_modality_idxs=missing_modalities,
                 crop_to_nonzero=self.plans["crop_to_nonzero"],
                 keep_aspect_ratio_when_using_target_size=self.plans["keep_aspect_ratio_when_using_target_size"],

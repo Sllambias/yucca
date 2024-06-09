@@ -65,6 +65,8 @@ def generate_dataset_json(
     labels: dict,
     dataset_name: str,
     label_hierarchy: dict = {},
+    regions_in_order=[],  # We do not want to do these as dicts, as its sensitive to order and they easily become sorted by mistake
+    regions_labeled=[],
     tasks: list = [],
     license: str = "hands off!",
     dataset_description: str = "",
@@ -108,6 +110,8 @@ def generate_dataset_json(
     json_dict["modality"] = {str(i): modalities[i] for i in range(len(modalities))}
     json_dict["labels"] = {str(i): labels[i] for i in labels.keys()} if labels is not None else None
     json_dict["label_hierarchy"] = label_hierarchy
+    json_dict["regions_in_order"] = regions_in_order
+    json_dict["regions_labeled"] = regions_labeled
     json_dict["tasks"] = tasks
     json_dict["numTraining"] = len(train_identifiers)
     json_dict["numTest"] = len(test_identifiers)

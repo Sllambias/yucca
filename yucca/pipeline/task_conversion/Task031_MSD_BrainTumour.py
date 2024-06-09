@@ -1,9 +1,7 @@
 import nibabel as nib
-import numpy as np
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data, yucca_source
-from yucca.functional.utils.nib_utils import get_nib_orientation, get_nib_spacing
 
 
 def convert(path: str = yucca_source, subdir: str = "decathlon", subsubdir: str = "Task01_BrainTumour"):
@@ -20,7 +18,6 @@ def convert(path: str = yucca_source, subdir: str = "decathlon", subsubdir: str 
     ###OUTPUT DATA
     # Target names
     task_name = "Task031_MSD_BrainTumour"
-    task_prefix = ""
 
     # Target paths
     target_base = join(yucca_raw_data, task_name)
