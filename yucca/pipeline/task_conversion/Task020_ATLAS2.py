@@ -1,4 +1,5 @@
 import shutil
+import nibabel as nib
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles, subdirs
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data, yucca_source
@@ -48,14 +49,19 @@ def convert(path: str = yucca_source, subdir: str = "ATLAS_2"):
             label = [i for i in image_and_label if "label" in i][0]
             case_id = image[: -len(file_suffix)]
 
-            src_image_file = join(images_dir_tr, dataset, sTr, sessions[0], image_types[0], image)
-            src_label_file = join(labels_dir_tr, dataset, sTr, sessions[0], image_types[0], label)
+            src_image_file_path = join(images_dir_tr, dataset, sTr, sessions[0], image_types[0], image)
+            src_label_file_path = join(labels_dir_tr, dataset, sTr, sessions[0], image_types[0], label)
+
+            label = nib.load(src_label_file_path)
+            labelarr = label.get_fdata()
+            labelarr[labelarr > 0] = 1
+            label = nib.Nifti1Image(labelarr, label.affine, label.header)
 
             dst_image_file_path = f"{target_imagesTr}/{task_prefix}_{case_id}_000.nii.gz"
             dst_label_file_path = f"{target_labelsTr}/{task_prefix}_{case_id}.nii.gz"
 
-            shutil.copy2(src_image_file, dst_image_file_path)
-            shutil.copy2(src_label_file, dst_label_file_path)
+            shutil.copy2(src_image_file_path, dst_image_file_path)
+            nib.save(label, dst_label_file_path)
 
     # for sTs in subfiles(images_dir_ts, suffix=file_suffix, join=False):
     #    case_id = sTs[: -len(file_suffix)]
