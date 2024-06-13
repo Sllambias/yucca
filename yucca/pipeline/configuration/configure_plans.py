@@ -62,6 +62,7 @@ def get_plan_config(
         regions_in_order = plans["dataset_properties"]["regions_in_order"]
         regions_labeled = plans["dataset_properties"]["regions_labeled"]
         num_classes = len(regions_in_order)
+        assert num_classes > 0, "use_label_regions requires ordered and labeled regions created in TC"
     else:
         num_classes = max(1, plans.get("num_classes") or len(plans["dataset_properties"]["classes"]))
     image_extension = plans.get("image_extension") or plans["dataset_properties"].get("image_extension") or "nii.gz"

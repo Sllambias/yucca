@@ -525,12 +525,12 @@ def reverse_preprocessing(crop_to_nonzero, images, image_properties, n_classes, 
         slices = [
             slice(None),
             slice(None),
-            slice(bbox[0], bbox[1]),
-            slice(bbox[2], bbox[3]),
+            slice(bbox[0], bbox[1] + 1),
+            slice(bbox[2], bbox[3] + 1),
         ]
         if len(bbox) == 6:
             slices.append(
-                slice(bbox[4], bbox[5]),
+                slice(bbox[4], bbox[5] + 1),
             )
         canvas[slices] = images
     else:

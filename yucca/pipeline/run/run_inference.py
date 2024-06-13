@@ -1,7 +1,7 @@
 import argparse
 import yucca
 from yucca.pipeline.task_conversion.utils import maybe_get_task_from_task_id
-from yucca.paths import yucca_raw_data, yucca_results, yucca_models
+from yucca.paths import yucca_raw_data, yucca_results, yucca_models, yucca_preprocessed_data
 from yucca.pipeline.evaluation.YuccaEvaluator import YuccaEvaluator
 from yucca.pipeline.managers.YuccaManager import YuccaManager
 from yucca.functional.utils.files_and_folders import recursive_find_python_class
@@ -11,6 +11,7 @@ from batchgenerators.utilities.file_and_folder_operations import (
     maybe_mkdir_p,
     isdir,
     subdirs,
+    load_pickle,
 )
 from warnings import filterwarnings
 
@@ -73,6 +74,10 @@ def main():
         default=None,
     )
 
+    # Alternatively, these can be used to manually specify paths
+    parser.add_argument("--pred", help="manually specify path to predicted segmentations", default=None, required=False)
+    parser.add_argument("--gt", help="manually specify path to ground truth", default=None, required=False)
+
     # Optionals (occasionally changed)
     parser.add_argument(
         "--experiment",
@@ -114,6 +119,13 @@ def main():
         help="Predict on the training set. Useful for debugging.",
     )
     parser.add_argument(
+        "--predict_val",
+        default=False,
+        action="store_true",
+        required=False,
+        help="Predict on the validation set. Uses the split method, param and idx already supplied.",
+    )
+    parser.add_argument(
         "--profile",
         help="Used to enable inference profiling",
         default=False,
@@ -145,17 +157,24 @@ def main():
     task_type = args.task_type
     version = args.version
 
+    # Alternative manual paths
+    predpath = args.pred
+    gtpath = args.gt
+
     # Optionals (occasionally changed)
     experiment = args.experiment
     disable_tta = args.disable_tta
     no_eval = args.no_eval
     overwrite = args.overwrite
     predict_train = args.predict_train
+    predict_val = args.predict_val
     profile = args.profile
     save_softmax = args.save_softmax
     use_wandb = not args.no_wandb
 
     kwargs = {}
+    strict = True
+    split = None
 
     path_to_versions = join(
         yucca_models,
@@ -168,6 +187,9 @@ def main():
     if version is None:
         versions = [int(i.split("_")[-1]) for i in subdirs(path_to_versions, join=False)]
         version = str(max(versions))
+
+    if predict_val:
+        checkpoint = "last"
 
     modelfile = join(
         yucca_models,
@@ -210,8 +232,8 @@ def main():
     )
 
     # Setting up input paths and output paths
-    inpath = join(yucca_raw_data, target_task, "imagesTs")
-    ground_truth = join(yucca_raw_data, target_task, "labelsTs")
+    inpath = join(yucca_raw_data, target_task, "imagesTs") if not predpath else predpath
+    ground_truth = join(yucca_raw_data, target_task, "labelsTs") if not gtpath else gtpath
 
     outpath = join(
         yucca_results,
@@ -229,7 +251,25 @@ def main():
         inpath = join(yucca_raw_data, target_task, "imagesTr")
         ground_truth = join(yucca_raw_data, target_task, "labelsTr")
         outpath += "Tr"
+    elif predict_val:
+        inpath = join(yucca_raw_data, target_task, "imagesTr")
+        ground_truth = join(yucca_raw_data, target_task, "labelsTr")
+        outpath += "Val"
+        split = load_pickle(join(yucca_preprocessed_data, source_task, "splits.pkl"))
+        split = split[str(split_data_method)][split_data_param][split_idx]["val"]
+        strict = False
 
+    modelfile = join(
+        yucca_models,
+        source_task,
+        model + "__" + dimensions,
+        manager_name + "__" + planner,
+        experiment,
+        f"{split_data_method}_{split_data_param}_fold_{split_idx}",
+        f"version_{version}",
+        "checkpoints",
+        checkpoint + ".ckpt",
+    )
     maybe_mkdir_p(outpath)
 
     manager.predict_folder(
@@ -237,6 +277,7 @@ def main():
         disable_tta,
         overwrite_predictions=overwrite,
         output_folder=outpath,
+        exclude_cases_not_in_list=split,
         save_softmax=save_softmax,
         # overwrite=overwrite, # Commented out until overwrite arg is added in manager.
     )
@@ -249,6 +290,7 @@ def main():
             overwrite=overwrite,
             task_type=task_type,
             use_wandb=use_wandb,
+            strict=strict,
         )
         evaluator.run()
 

@@ -60,7 +60,7 @@ CT["motion_ghosting_p_per_sample"] = 0.0
 CT["biasfield_p_per_sample"] = 0.0
 
 generic = {
-    "random_crop": False,
+    "random_crop": True,
     "mask_image_for_reconstruction": False,
     "clip_to_input_range": False,  # ensures no augmentations go beyond the input range of the image/patch
     "normalize": False,

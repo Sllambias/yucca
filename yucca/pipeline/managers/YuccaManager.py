@@ -12,7 +12,7 @@ from yucca.pipeline.configuration.configure_seed import seed_everything_and_get_
 from yucca.pipeline.configuration.configure_paths import get_path_config
 from yucca.pipeline.configuration.configure_plans import get_plan_config
 from yucca.pipeline.configuration.configure_input_dims import get_input_dims_config
-from yucca.data.data_modules.YuccaDataModule import YuccaDataModule
+from yucca.data.data_modules import YuccaDataModule
 from yucca.data.datasets.YuccaDataset import YuccaTrainDataset, YuccaTestDataset
 from yucca.data.samplers import InfiniteRandomSampler
 from yucca.lightning_modules.YuccaLightningModule import YuccaLightningModule
@@ -65,6 +65,8 @@ class YuccaManager:
         model_name: str = "TinyUNet",
         momentum: float = 0.9,
         num_workers: Optional[int] = None,
+        optimizer=torch.optim.Optimizer,
+        optim_kwargs: dict = None,
         patch_based_training: bool = True,
         patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
         planner: str = "YuccaPlanner",
@@ -96,6 +98,8 @@ class YuccaManager:
         self.num_workers = num_workers
         self.augmentation_params = augmentation_params
         self.batch_size = batch_size
+        self.optimizer = optimizer
+        self.optim_kwargs = optim_kwargs
         self.patch_based_training = patch_based_training
         self.patch_size = patch_size
         self.planner = planner
@@ -121,6 +125,7 @@ class YuccaManager:
             self.setup_fast_dev_run()
 
         # defaults
+        self.data_module_class = YuccaDataModule
         self.lightning_module = YuccaLightningModule
         self.trainer = L.Trainer
         self.train_dataset_class = YuccaTrainDataset
@@ -130,6 +135,7 @@ class YuccaManager:
         self,
         stage: Literal["fit", "test", "predict"],
         disable_tta: bool = False,
+        exclude_cases_not_in_list: list = None,
         overwrite_predictions: bool = False,
         pred_data_dir: str = None,
         save_softmax: bool = False,
@@ -223,14 +229,17 @@ class YuccaManager:
             learning_rate=self.learning_rate,
             loss_fn=self.loss,
             momentum=self.momentum,
+            optimizer=self.optimizer,
+            optim_kwargs=self.optim_kwargs,
             step_logging=self.step_logging,
             test_time_augmentation=not disable_tta if disable_tta is True else augmenter.mirror_p_per_sample > 0,
         )
 
-        self.data_module = YuccaDataModule(
+        self.data_module = self.data_module_class(
             allow_missing_modalities=plan_config.allow_missing_modalities,
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
+            exclude_cases_not_in_list=exclude_cases_not_in_list,
             image_extension=plan_config.image_extension,
             input_dims_config=input_dims_config,
             overwrite_predictions=overwrite_predictions,
@@ -289,12 +298,14 @@ class YuccaManager:
         disable_tta: bool = False,
         overwrite_predictions: bool = False,
         output_folder: str = yucca_results,
+        exclude_cases_not_in_list: list = None,
         save_softmax=False,
     ):
         self.batch_size = 1
         self.initialize(
             stage="predict",
             disable_tta=disable_tta,
+            exclude_cases_not_in_list=exclude_cases_not_in_list,
             overwrite_predictions=overwrite_predictions,
             pred_data_dir=input_folder,
             prediction_output_dir=output_folder,
@@ -308,6 +319,23 @@ class YuccaManager:
             return_predictions=False,
         )
         self.finish()
+
+    def predict_val(
+        self,
+        input_folder,
+        disable_tta: bool = False,
+        overwrite_predictions: bool = False,
+        output_folder: str = yucca_results,
+        save_softmax=False,
+    ):
+        self.data_module_class = DataModule_predict_val
+        self.predict_folder(
+            input_folder=input_folder,
+            disable_tta=disable_tta,
+            overwrite_predictions=overwrite_predictions,
+            output_folder=output_folder,
+            save_softmax=save_softmax,
+        )
 
     @staticmethod
     def get_plan_config(ckpt_plans, plans_path, stage, use_label_regions):
