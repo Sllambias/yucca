@@ -147,11 +147,19 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
 
 
 class YuccaTestDataset(torch.utils.data.Dataset):
-    def __init__(self, raw_data_dir: str, pred_save_dir: str, overwrite_predictions: bool = False, suffix="nii.gz"):
+    def __init__(
+        self,
+        raw_data_dir: str,
+        pred_save_dir: str,
+        overwrite_predictions: bool = False,
+        suffix="nii.gz",
+        pred_include_cases: list = None,
+    ):
         self.data_path = raw_data_dir
         self.pred_save_dir = pred_save_dir
         self.overwrite = overwrite_predictions
         self.suffix = suffix
+        self.pred_include_cases = pred_include_cases
         self.unique_cases = np.unique(
             [i[: -len("_000." + suffix)] for i in subfiles(self.data_path, suffix=self.suffix, join=False)]
         )
@@ -163,6 +171,8 @@ class YuccaTestDataset(torch.utils.data.Dataset):
         logging.info(f"Found {len(self.cases_already_predicted)} already predicted cases. Overwrite: {self.overwrite}")
         if not self.overwrite:
             self.unique_cases = [i for i in self.unique_cases if i not in self.cases_already_predicted]
+        if self.pred_include_cases is not None:
+            self.unique_cases = [i for i in self.unique_cases if i in self.pred_include_cases]
 
     def __len__(self):
         return len(self.unique_cases)

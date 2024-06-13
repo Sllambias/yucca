@@ -40,12 +40,14 @@ class YuccaEvaluator(object):
         do_surface_eval=False,
         overwrite: bool = False,
         task_type: Literal["segmentation", "classification", "regression"] = "segmentation",
+        strict: bool = True,
     ):
         self.name = "results"
 
         self.overwrite = overwrite
         self.use_wandb = use_wandb
         self.task_type = task_type
+        self.strict = strict
 
         self.metrics = {
             "Dice": dice,
@@ -183,7 +185,8 @@ class YuccaEvaluator(object):
         if isfile(self.outpath) and not self.overwrite:
             print(f"Evaluation file already present in {self.outpath}. Skipping.")
         else:
-            self.sanity_checks()
+            if self.strict:
+                self.sanity_checks()
             results_dict = self.evaluate_folder()
             self.save_as_json(results_dict)
             if self.use_wandb:
