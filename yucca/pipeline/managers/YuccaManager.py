@@ -121,6 +121,7 @@ class YuccaManager:
             self.setup_fast_dev_run()
 
         # defaults
+        self.data_module_class = YuccaDataModule
         self.lightning_module = YuccaLightningModule
         self.trainer = L.Trainer
         self.train_dataset_class = YuccaTrainDataset
@@ -130,6 +131,7 @@ class YuccaManager:
         self,
         stage: Literal["fit", "test", "predict"],
         disable_tta: bool = False,
+        exclude_cases_not_in_list: list = None,
         overwrite_predictions: bool = False,
         pred_data_dir: str = None,
         save_softmax: bool = False,
@@ -227,10 +229,11 @@ class YuccaManager:
             test_time_augmentation=not disable_tta if disable_tta is True else augmenter.mirror_p_per_sample > 0,
         )
 
-        self.data_module = YuccaDataModule(
+        self.data_module = self.data_module_class(
             allow_missing_modalities=plan_config.allow_missing_modalities,
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
+            exclude_cases_not_in_list=exclude_cases_not_in_list,
             image_extension=plan_config.image_extension,
             input_dims_config=input_dims_config,
             overwrite_predictions=overwrite_predictions,
@@ -289,12 +292,14 @@ class YuccaManager:
         disable_tta: bool = False,
         overwrite_predictions: bool = False,
         output_folder: str = yucca_results,
+        exclude_cases_not_in_list: list = None,
         save_softmax=False,
     ):
         self.batch_size = 1
         self.initialize(
             stage="predict",
             disable_tta=disable_tta,
+            exclude_cases_not_in_list=exclude_cases_not_in_list,
             overwrite_predictions=overwrite_predictions,
             pred_data_dir=input_folder,
             prediction_output_dir=output_folder,
