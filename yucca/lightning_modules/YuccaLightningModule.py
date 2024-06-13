@@ -63,6 +63,7 @@ class YuccaLightningModule(L.LightningModule):
 
         self.momentum = momentum
         self.optim = optimizer
+        self.optim_kwargs = optim_kwargs
         self.lr_scheduler = lr_scheduler
 
         # Evaluation and logging
