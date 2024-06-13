@@ -52,10 +52,10 @@ class YuccaDataModule(pl.LightningDataModule):
         image_extension: Optional[str] = None,
         composed_train_transforms: Optional[torchvision.transforms.Compose] = None,
         composed_val_transforms: Optional[torchvision.transforms.Compose] = None,
-        exclude_cases_not_in_list: list = None,
         num_workers: Optional[int] = None,
         overwrite_predictions: bool = False,
         pred_data_dir: Optional[str] = None,
+        pred_include_cases: Optional[list] = None,
         pred_save_dir: Optional[str] = None,
         pre_aug_patch_size: Optional[Union[list, tuple]] = None,
         splits_config: Optional[SplitConfig] = None,
@@ -86,7 +86,7 @@ class YuccaDataModule(pl.LightningDataModule):
         self.pre_aug_patch_size = pre_aug_patch_size
 
         # Set in the predict loop
-        self.exclude_cases_not_in_list = exclude_cases_not_in_list
+        self.pred_include_cases = pred_include_cases
         self.overwrite_predictions = overwrite_predictions
         self.pred_data_dir = pred_data_dir
         self.pred_save_dir = pred_save_dir
@@ -151,7 +151,7 @@ class YuccaDataModule(pl.LightningDataModule):
                 pred_save_dir=self.pred_save_dir,
                 overwrite_predictions=self.overwrite_predictions,
                 suffix=self.image_extension,
-                exclude_cases_not_in_list=self.exclude_cases_not_in_list,
+                pred_include_cases=self.pred_include_cases,
             )
 
     def train_dataloader(self):
