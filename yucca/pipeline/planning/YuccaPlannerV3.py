@@ -7,7 +7,7 @@ class YuccaPlannerV3(YuccaPlanner):
         super().__init__(*args, **kwargs)
         self.name = str(self.__class__.__name__)
         self.get_foreground_locations_per_label = True
-        self.norm_op = "volume_wise_znorm"
+        self.norm_op = "ct"
 
     def determine_transpose(self):
         # If no specific view is determined in run training, we select the optimal.

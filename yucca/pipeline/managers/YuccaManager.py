@@ -72,6 +72,7 @@ class YuccaManager:
         planner: str = "YuccaPlanner",
         precision: str = "bf16-mixed",
         profile: bool = False,
+        p_oversample_foreground: Optional[float] = 0.33,
         split_idx: int = 0,
         split_data_method: str = "kfold",
         split_data_param: int = 5,
@@ -105,6 +106,7 @@ class YuccaManager:
         self.planner = planner
         self.precision = precision
         self.profile = profile
+        self.p_oversample_foreground = p_oversample_foreground
         self.split_idx = split_idx
         self.split_data_method = split_data_method
         self.split_data_param = split_data_param
@@ -247,6 +249,7 @@ class YuccaManager:
             pred_data_dir=pred_data_dir,
             pred_save_dir=prediction_output_dir,
             pre_aug_patch_size=augmenter.pre_aug_patch_size,
+            p_oversample_foreground=self.p_oversample_foreground,
             splits_config=splits_config,
             split_idx=task_config.split_idx,
             task_type=plan_config.task_type,

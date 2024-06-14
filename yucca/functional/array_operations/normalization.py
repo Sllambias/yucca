@@ -59,6 +59,18 @@ def normalizer(array: np.ndarray, scheme: str, intensities: Optional[dict] = Non
         array = rescale(array, range=(0, 1))
         return array
 
+    elif scheme == "ct":
+        mean_intensity = intensities["mean"]
+        std_intensity = intensities["std"]
+        lower_bound = intensities["percentile_00_5"]
+        upper_bound = intensities["percentile_99_5"]
+
+        array = array.astype(np.float32, copy=False)
+        np.clip(array, lower_bound, upper_bound, out=array)
+        array -= mean_intensity
+        array /= max(std_intensity, 1e-8)
+        return array
+
 
 def clamp(x, mask, q=0.99):
     q_val = np.quantile(x[mask], q)
