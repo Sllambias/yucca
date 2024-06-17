@@ -73,6 +73,7 @@ class YuccaManager:
         precision: str = "bf16-mixed",
         profile: bool = False,
         p_oversample_foreground: Optional[float] = 0.33,
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR,
         split_idx: int = 0,
         split_data_method: str = "kfold",
         split_data_param: int = 5,
@@ -107,6 +108,7 @@ class YuccaManager:
         self.precision = precision
         self.profile = profile
         self.p_oversample_foreground = p_oversample_foreground
+        self.scheduler = scheduler
         self.split_idx = split_idx
         self.split_data_method = split_data_method
         self.split_data_param = split_data_param
@@ -230,6 +232,7 @@ class YuccaManager:
             deep_supervision=self.deep_supervision,
             learning_rate=self.learning_rate,
             loss_fn=self.loss,
+            lr_scheduler=self.scheduler,
             momentum=self.momentum,
             optimizer=self.optimizer,
             optim_kwargs=self.optim_kwargs,

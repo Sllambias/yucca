@@ -298,14 +298,14 @@ class YuccaEvaluator(object):
 
             if self.as_binary:
                 cmat = confusion_matrix(
-                    np.around(gt.get_fdata().flatten()).astype(bool).astype(int),
-                    np.around(pred.get_fdata().flatten()).astype(bool).astype(int),
+                    np.around(gt.get_fdata().flatten()).astype(bool).astype(np.uint8),
+                    np.around(pred.get_fdata().flatten()).astype(bool).astype(np.uint8),
                     labels=self.labelarr,
                 )
             else:
                 cmat = confusion_matrix(
-                    np.around(gt.get_fdata().flatten()).astype(int),
-                    np.around(pred.get_fdata().flatten()).astype(int),
+                    np.around(gt.get_fdata().flatten()).astype(np.uint8),
+                    np.around(pred.get_fdata().flatten()).astype(np.uint8),
                     labels=self.labelarr,
                 )
 
@@ -337,12 +337,13 @@ class YuccaEvaluator(object):
             casedict["Ground Truth:"] = gtpath
 
             resultdict[case] = casedict
+            del pred, gt, cmat 
+
         for label in self.labels:
             meandict[label] = {
                 k: round(np.nanmean(v), 4) if not np.all(np.isnan(v)) else 0 for k, v in meandict[label].items()
             }
         resultdict["mean"] = meandict
-
         return resultdict
 
     def save_as_json(self, dict):
