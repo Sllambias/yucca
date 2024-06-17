@@ -60,10 +60,10 @@ def normalizer(array: np.ndarray, scheme: str, intensities: Optional[dict] = Non
         return array
 
     elif scheme == "ct":
-        mean_intensity = intensities["mean"]
-        std_intensity = intensities["std"]
-        lower_bound = intensities["percentile_00_5"]
-        upper_bound = intensities["percentile_99_5"]
+        mean_intensity = float(intensities["mean"])
+        std_intensity = float(intensities["std"])
+        lower_bound = float(intensities["percentile_00_5"])
+        upper_bound = float(intensities["percentile_99_5"])
 
         array = array.astype(np.float32, copy=False)
         np.clip(array, lower_bound, upper_bound, out=array)

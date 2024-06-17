@@ -65,7 +65,7 @@ class YuccaManager:
         model_name: str = "TinyUNet",
         momentum: float = 0.9,
         num_workers: Optional[int] = None,
-        optimizer=torch.optim.Optimizer,
+        optimizer: torch.optim.Optimizer = torch.optim.SGD,
         optim_kwargs: dict = None,
         patch_based_training: bool = True,
         patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
@@ -272,6 +272,7 @@ class YuccaManager:
             profiler=callback_config.profiler,
             enable_progress_bar=not self.enable_logging,
             max_epochs=self.max_epochs,
+            devices=1,
             **self.kwargs,
         )
 
