@@ -29,7 +29,7 @@ def make_plans_file(
     plans["crop_to_nonzero"] = crop_to_nonzero
 
     # Change this to have different normalization schemes for all or some modalities
-    plans["normalization_scheme"] = [norm_op for _ in modalities]
+    plans["normalization_scheme"] = norm_op
 
     plans["num_classes"] = len(classes)
     plans["num_modalities"] = len(modalities)
