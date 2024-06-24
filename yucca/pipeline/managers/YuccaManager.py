@@ -73,7 +73,7 @@ class YuccaManager:
         precision: str = "bf16-mixed",
         profile: bool = False,
         p_oversample_foreground: Optional[float] = 0.33,
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR,
+        scheduler=torch.optim.lr_scheduler.CosineAnnealingLR,
         split_idx: int = 0,
         split_data_method: str = "kfold",
         split_data_param: int = 5,
@@ -82,6 +82,7 @@ class YuccaManager:
         train_batches_per_step: int = 250,
         use_label_regions: bool = False,
         val_batches_per_step: int = 50,
+        wandb_log_model=False,
         **kwargs,
     ):
         self.ckpt_path = ckpt_path
@@ -117,6 +118,7 @@ class YuccaManager:
         self.train_batches_per_step = train_batches_per_step
         self.use_label_regions = use_label_regions
         self.val_batches_per_step = val_batches_per_step
+        self.wandb_log_model = wandb_log_model
         self.kwargs = kwargs
 
         # Automatically changes bfloat training if we're running on a GPU
@@ -191,6 +193,7 @@ class YuccaManager:
             prediction_output_dir=prediction_output_dir,
             profile=self.profile,
             save_softmax=save_softmax,
+            wandb_log_model=self.wandb_log_model,
         )
 
         if stage == "fit":
