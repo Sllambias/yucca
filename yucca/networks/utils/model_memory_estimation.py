@@ -129,7 +129,7 @@ def find_optimal_tensor_dims(
         norm = nn.InstanceNorm3d
         batch_size = 2
         max_batch_size = 2
-        patch_size = [32, 32, 32]
+        patch_size = [16, 16, 16]
         absolute_max = 128**3
 
     if fixed_batch_size:
