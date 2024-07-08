@@ -4,6 +4,7 @@ from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkd
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data
 from yucca.functional.testing.data.nifti import verify_spacing_is_equal, verify_orientation_is_equal
+from yucca.functional.utils.nib_utils import get_nib_spacing
 
 # INPUT DATA
 # Define input path and extension
@@ -43,7 +44,7 @@ for sTr in subfiles(images_dir_tr, join=False):
 
     image = nib.load(image_path)
     label = nib.load(label_path)
-    assert verify_spacing_is_equal(image, label), "spacing"
+    assert verify_spacing_is_equal(image, label), f"spacing {sTr}, {get_nib_spacing(image)}, {get_nib_spacing(label)}"
     assert verify_orientation_is_equal(image, label), "orientation"
 
     shutil.copy2(image_path, f"{target_imagesTr}/{sTr}_000.nii.gz")
