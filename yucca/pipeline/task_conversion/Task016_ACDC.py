@@ -1,4 +1,5 @@
 import shutil
+import nibabel as nib
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles, subdirs
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data, yucca_source
@@ -50,8 +51,15 @@ def convert(path: str = yucca_source, subdir: str = "ACDC"):
             dst_image_file_path = f"{target_imagesTr}/{task_prefix}_{case_id}_000.nii.gz"
             dst_label_file_path = f"{target_labelsTr}/{task_prefix}_{case_id}.nii.gz"
 
-            shutil.copy2(src_image_file_path, dst_image_file_path)
-            shutil.copy2(src_label_file_path, dst_label_file_path)
+            image = nib.load(src_image_file_path)
+            label = nib.load(src_label_file_path)
+
+            image.set_sform(None)
+            label.set_sform(None)
+
+            nib.save(image, dst_image_file_path)
+            nib.save(label, dst_label_file_path)
+
     del sTr
 
     for patient in test_samples:
@@ -65,8 +73,14 @@ def convert(path: str = yucca_source, subdir: str = "ACDC"):
             dst_image_file_path = f"{target_imagesTs}/{task_prefix}_{case_id}_000.nii.gz"
             dst_label_file_path = f"{target_labelsTs}/{task_prefix}_{case_id}.nii.gz"
 
-            shutil.copy2(src_image_file_path, dst_image_file_path)
-            shutil.copy2(src_label_file_path, dst_label_file_path)
+            image = nib.load(src_image_file_path)
+            label = nib.load(src_label_file_path)
+
+            image.set_sform(None)
+            label.set_sform(None)
+
+            nib.save(image, dst_image_file_path)
+            nib.save(label, dst_label_file_path)
 
     generate_dataset_json(
         join(target_base, "dataset.json"),
