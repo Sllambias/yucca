@@ -52,7 +52,6 @@ class YuccaDataModule(pl.LightningDataModule):
         image_extension: Optional[str] = None,
         composed_train_transforms: Optional[torchvision.transforms.Compose] = None,
         composed_val_transforms: Optional[torchvision.transforms.Compose] = None,
-        exclude_cases_not_in_list: list = None,
         num_workers: Optional[int] = None,
         overwrite_predictions: bool = False,
         pred_data_dir: Optional[str] = None,

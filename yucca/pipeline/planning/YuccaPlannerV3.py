@@ -9,7 +9,9 @@ class YuccaPlannerV3(YuccaPlanner):
         self.get_foreground_locations_per_label = True
 
     def determine_norm_op_per_modality(self):
-        self.norm_op_per_modality = ["ct" if "ct" in mod.lower() else "standardize" for mod in self.dataset_properties["modalities"]]
+        self.norm_op_per_modality = [
+            "ct" if "ct" in mod.lower() else "standardize" for mod in self.dataset_properties["modalities"]
+        ]
 
     def determine_transpose(self):
         # If no specific view is determined in run training, we select the optimal.

@@ -141,7 +141,7 @@ class YuccaManager:
         self,
         stage: Literal["fit", "test", "predict"],
         disable_tta: bool = False,
-        exclude_cases_not_in_list: list = None,
+        pred_include_cases: list = None,
         overwrite_predictions: bool = False,
         pred_data_dir: str = None,
         save_softmax: bool = False,
@@ -247,7 +247,7 @@ class YuccaManager:
             allow_missing_modalities=plan_config.allow_missing_modalities,
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
-            exclude_cases_not_in_list=exclude_cases_not_in_list,
+            pred_include_cases=pred_include_cases,
             image_extension=plan_config.image_extension,
             input_dims_config=input_dims_config,
             overwrite_predictions=overwrite_predictions,
@@ -308,14 +308,14 @@ class YuccaManager:
         disable_tta: bool = False,
         overwrite_predictions: bool = False,
         output_folder: str = yucca_results,
-        exclude_cases_not_in_list: list = None,
+        pred_include_cases: list = None,
         save_softmax=False,
     ):
         self.batch_size = 1
         self.initialize(
             stage="predict",
             disable_tta=disable_tta,
-            exclude_cases_not_in_list=exclude_cases_not_in_list,
+            pred_include_cases=pred_include_cases,
             overwrite_predictions=overwrite_predictions,
             pred_data_dir=input_folder,
             prediction_output_dir=output_folder,
@@ -329,23 +329,6 @@ class YuccaManager:
             return_predictions=False,
         )
         self.finish()
-
-    def predict_val(
-        self,
-        input_folder,
-        disable_tta: bool = False,
-        overwrite_predictions: bool = False,
-        output_folder: str = yucca_results,
-        save_softmax=False,
-    ):
-        self.data_module_class = DataModule_predict_val
-        self.predict_folder(
-            input_folder=input_folder,
-            disable_tta=disable_tta,
-            overwrite_predictions=overwrite_predictions,
-            output_folder=output_folder,
-            save_softmax=save_softmax,
-        )
 
     @staticmethod
     def get_plan_config(ckpt_plans, plans_path, stage, use_label_regions):

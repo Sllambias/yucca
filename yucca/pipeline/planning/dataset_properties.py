@@ -1,5 +1,4 @@
 import logging
-import os
 import nibabel as nib
 import numpy as np
 from typing import Dict, List

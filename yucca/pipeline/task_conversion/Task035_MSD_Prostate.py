@@ -14,7 +14,6 @@ def convert(path: str = yucca_source, subdir: str = "decathlon", subsubdir: str 
     # OUTPUT DATA
     # Define the task name and prefix
     task_name = "Task035_MSD_Prostate"
-    task_prefix = ""
 
     # Set target paths
     target_base = join(yucca_raw_data, task_name)

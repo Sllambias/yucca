@@ -277,7 +277,7 @@ def main():
         disable_tta,
         overwrite_predictions=overwrite,
         output_folder=outpath,
-        exclude_cases_not_in_list=split,
+        pred_include_cases=split,
         save_softmax=save_softmax,
         # overwrite=overwrite, # Commented out until overwrite arg is added in manager.
     )

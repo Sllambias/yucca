@@ -337,7 +337,7 @@ class YuccaEvaluator(object):
             casedict["Ground Truth:"] = gtpath
 
             resultdict[case] = casedict
-            del pred, gt, cmat 
+            del pred, gt, cmat
 
         for label in self.labels:
             meandict[label] = {
