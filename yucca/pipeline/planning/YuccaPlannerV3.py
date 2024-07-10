@@ -10,7 +10,7 @@ class YuccaPlannerV3(YuccaPlanner):
 
     def determine_norm_op_per_modality(self):
         self.norm_op_per_modality = [
-            "ct" if "ct" in mod.lower() else "standardize" for mod in self.dataset_properties["modalities"]
+            "ct" if "ct" in mod.lower() else "standardize" for mod in self.dataset_properties["modalities"].values()
         ]
 
     def determine_transpose(self):

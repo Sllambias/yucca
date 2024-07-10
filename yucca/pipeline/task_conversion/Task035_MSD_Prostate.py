@@ -3,6 +3,7 @@ from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkd
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data, yucca_source
 from yucca.functional.testing.data.nifti import verify_spacing_is_equal, verify_orientation_is_equal
+from yucca.functional.testing.data.array import verify_shape_is_equal
 
 
 def convert(path: str = yucca_source, subdir: str = "decathlon", subsubdir: str = "Task05_Prostate"):
@@ -49,6 +50,7 @@ def convert(path: str = yucca_source, subdir: str = "decathlon", subsubdir: str 
 
         assert verify_spacing_is_equal(t2, label), "spacing"
         assert verify_orientation_is_equal(t2, label), "orientation"
+        assert verify_shape_is_equal(t2.shape, label.shape)
 
         nib.save(t2, f"{target_imagesTr}/{sTr}_000.nii.gz")
         nib.save(adc, f"{target_imagesTr}/{sTr}_001.nii.gz")
@@ -64,8 +66,8 @@ def convert(path: str = yucca_source, subdir: str = "decathlon", subsubdir: str 
         t2 = image.slicer[:, :, :, 0]
         adc = image.slicer[:, :, :, 1]
 
-        nib.save(t2, f"{target_imagesTr}/{sTr}_000.nii.gz")
-        nib.save(adc, f"{target_imagesTr}/{sTr}_001.nii.gz")
+        nib.save(t2, f"{target_imagesTr}/{sTs}_000.nii.gz")
+        nib.save(adc, f"{target_imagesTr}/{sTs}_001.nii.gz")
 
     generate_dataset_json(
         join(target_base, "dataset.json"),

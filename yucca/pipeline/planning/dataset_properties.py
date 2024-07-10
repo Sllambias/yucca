@@ -187,9 +187,8 @@ def process(subject: str, background_pixel_value: int = 0):
         mean = np.mean(image_msk)
         std = np.std(image_msk)
 
-        min = np.min(image_msk)
-        max = np.max(image_msk)
-
+        mn = np.min(image_msk)
+        mx = np.max(image_msk)
         percentile_00_5, percentile_99_5 = np.percentile(image_msk, np.array((0.5, 99.5)))
 
     except Exception as err:
@@ -200,8 +199,8 @@ def process(subject: str, background_pixel_value: int = 0):
     return {
         "size": size,
         "spacing": spacing,
-        "min": min,
-        "max": max,
+        "min": mn,
+        "max": mx,
         "mean": mean,
         "std": std,
         "percentile_00_5": percentile_00_5,
