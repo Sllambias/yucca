@@ -1,12 +1,9 @@
 import os
 from typing import Literal, Optional
 import numpy as np
-import nibabel as nib
 import json
-import sys
 import wandb
 from batchgenerators.utilities.file_and_folder_operations import subfiles, join, load_json, isfile
-from sklearn.metrics import confusion_matrix
 from yucca.functional.evaluation.metrics import (
     dice,
     jaccard,
@@ -19,13 +16,13 @@ from yucca.functional.evaluation.metrics import (
     total_pos_pred,
     volume_similarity,
     accuracy,
-    auroc,
 )
-from yucca.functional.evaluation.obj_metrics import get_obj_stats_for_label
-from yucca.functional.evaluation.surface_metrics import get_surface_metrics_for_label
-from yucca.functional.evaluation.evaluate_folder import evaluate_multilabel_folder_segm
+from yucca.functional.evaluation.evaluate_folder import (
+    evaluate_multilabel_folder_segm,
+    evaluate_folder_segm,
+    evaluate_folder_cls,
+)
 from yucca.paths import yucca_raw_data
-from tqdm import tqdm
 
 
 class YuccaEvaluator(object):
@@ -196,7 +193,13 @@ class YuccaEvaluator(object):
 
     def evaluate_folder(self):
         if self.task_type == "classification":
-            return self._evaluate_folder_cls()
+            return evaluate_folder_cls(
+                labels=self.labelarr,
+                metrics=self.metrics,
+                subjects=self.pred_subjects,
+                folder_with_predictions=self.folder_with_predictions,
+                folder_with_ground_truth=self.folder_with_ground_truth,
+            )
         elif self.task_type == "segmentation":
             if self.label_regions is not None:
                 return evaluate_multilabel_folder_segm(
@@ -211,162 +214,21 @@ class YuccaEvaluator(object):
                     surface_metrics=self.surface_metrics,
                 )
             else:
-                return self._evaluate_folder_segm()
+                return evaluate_folder_segm(
+                    labels=self.labelarr,
+                    metrics=self.metrics,
+                    subjects=self.pred_subjects,
+                    folder_with_predictions=self.folder_with_predictions,
+                    folder_with_ground_truth=self.folder_with_ground_truth,
+                    as_binary=self.as_binary,
+                    obj_metrics=self.obj_metrics,
+                    surface_metrics=self.surface_metrics,
+                )
         else:
             raise NotImplementedError("Invalid task type")
 
-    def _evaluate_folder_cls(self):
-        """
-        Evaluate classification results
-        """
-        sys.stdout.flush()
-        resultdict = {}
-
-        predictions = []
-        prediction_probs = []
-        ground_truths = []
-
-        # Flag to check if we have prediction probabilities to calculate AUROC
-        use_probs = False
-
-        # load predictions and ground truths
-        for case in tqdm(self.pred_subjects, desc="Evaluating"):
-            predpath = join(self.folder_with_predictions, case)
-            gtpath = join(self.folder_with_ground_truth, case)
-
-            pred: int = np.loadtxt(predpath)
-            gt: int = np.loadtxt(gtpath)
-
-            try:
-                if len(prediction_probs) == 0:
-                    print("Prediction probabilities found. Will use them for evaluation.")
-                    use_probs = True
-
-                pred_probs = np.load(predpath.replace(".txt", ".npz"))["data"]  # contains output probabilities
-                prediction_probs.append(pred_probs)
-            except FileNotFoundError:
-                pred_probs = None
-
-            predictions.append(pred)
-            ground_truths.append(gt)
-
-        predictions = np.array(predictions)
-        ground_truths = np.array(ground_truths)
-
-        if use_probs:
-            prediction_probs = np.array(prediction_probs)
-            assert len(predictions) == len(prediction_probs), (
-                "Number of predicted labels and prediction probabilities do not match."
-                "This likely means that the prediction probability file is missing for some of the predictions."
-            )
-
-            # add AUROC to streamtable metrics
-            self.metrics_included_in_streamtable.append("AUROC")
-
-        # calculate per-class metrics
-        cmat = confusion_matrix(ground_truths, predictions, labels=self.labelarr)
-
-        resultdict["per_class"] = {}
-
-        for label in self.labelarr:
-            tp = cmat[label, label]
-            fp = sum(cmat[:, label]) - tp
-            fn = sum(cmat[label, :]) - tp
-            tn = np.sum(cmat) - tp - fp - fn
-
-            labeldict = {}
-
-            for k, v in self.metrics.items():
-                labeldict[k] = round(v(tp, fp, tn, fn), 4)
-
-            resultdict["per_class"][str(label)] = labeldict
-
-        # calculate AUROC
-        if use_probs:
-            auroc_per_class: list[float] = auroc(ground_truths, prediction_probs)
-            for label, score in zip(self.labelarr, auroc_per_class):
-                resultdict["per_class"][str(label)]["AUROC"] = round(score, 4)
-
-        # caclulate global (mean) metrics
-        resultdict["mean"] = {}
-        for k, _ in resultdict["per_class"][str(self.labelarr[0])].items():
-            resultdict["mean"][k] = sum([resultdict["per_class"][str(label)][k] for label in self.labelarr])
-            resultdict["mean"][k] = round(resultdict["mean"][k] / len(self.labelarr), 4)
-
-        return resultdict
-
-    def _evaluate_folder_segm(self):
-        sys.stdout.flush()
-        resultdict = {}
-        meandict = {}
-
-        for label in self.labels:
-            meandict[label] = {k: [] for k in list(self.metrics.keys()) + self.obj_metrics + self.surface_metrics}
-
-        for case in tqdm(self.pred_subjects, desc="Evaluating"):
-            casedict = {}
-            predpath = join(self.folder_with_predictions, case)
-            gtpath = join(self.folder_with_ground_truth, case)
-
-            pred = nib.load(predpath)
-            spacing = get_nib_spacing(pred)
-            pred = pred.get_fdata()
-            gt = nib.load(gtpath).get_fdata()
-
-            if self.as_binary:
-                cmat = confusion_matrix(
-                    np.around(gt.flatten()).astype(bool).astype(np.uint8),
-                    np.around(pred.flatten()).astype(bool).astype(np.uint8),
-                    labels=self.labelarr,
-                )
-            else:
-                cmat = confusion_matrix(
-                    np.around(gt.flatten()).astype(np.uint8),
-                    np.around(pred.flatten()).astype(np.uint8),
-                    labels=self.labelarr,
-                )
-
-            for label in self.labelarr:
-                labeldict = {}
-
-                tp = cmat[label, label]
-                fp = sum(cmat[:, label]) - tp
-                fn = sum(cmat[label, :]) - tp
-                tn = np.sum(cmat) - tp - fp - fn  # often a redundant and meaningless metric
-                for k, v in self.metrics.items():
-                    labeldict[k] = round(v(tp, fp, tn, fn), 4)
-                    meandict[str(label)][k].append(labeldict[k])
-
-                if self.obj_metrics:
-                    # now for the object metrics
-                    obj_labeldict = get_obj_stats_for_label(gt, pred, label, spacing=spacing, as_binary=self.as_binary)
-                    for k, v in obj_labeldict.items():
-                        labeldict[k] = round(v, 4)
-                        meandict[str(label)][k].append(labeldict[k])
-
-                if self.surface_metrics:
-                    surface_labeldict = get_surface_metrics_for_label(
-                        gt, pred, label, spacing=spacing, as_binary=self.as_binary
-                    )
-                    for k, v in surface_labeldict.items():
-                        labeldict[k] = round(v, 4)
-                        meandict[str(label)][k].append(labeldict[k])
-                casedict[str(label)] = labeldict
-            casedict["Prediction:"] = predpath
-            casedict["Ground Truth:"] = gtpath
-
-            resultdict[case] = casedict
-            del pred, gt, cmat
-
-        for label in self.labels:
-            meandict[label] = {
-                k: round(np.nanmean(v), 4) if not np.all(np.isnan(v)) else 0 for k, v in meandict[label].items()
-            }
-        resultdict["mean"] = meandict
-        return resultdict
-
     def save_as_json(self, dict):
-        print(f"Saving results.json" "\n" "\n" f"########################################################################")
+        print("Saving results.json \n \n ########################################################################")
         with open(self.outpath, "w") as f:
             json.dump(dict, f, default=float, indent=4)
 
