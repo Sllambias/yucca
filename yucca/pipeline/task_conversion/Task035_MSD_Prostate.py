@@ -66,8 +66,8 @@ def convert(path: str = yucca_source, subdir: str = "decathlon", subsubdir: str 
         t2 = image.slicer[:, :, :, 0]
         adc = image.slicer[:, :, :, 1]
 
-        nib.save(t2, f"{target_imagesTr}/{sTs}_000.nii.gz")
-        nib.save(adc, f"{target_imagesTr}/{sTs}_001.nii.gz")
+        nib.save(t2, f"{target_imagesTs}/{sTs}_000.nii.gz")
+        nib.save(adc, f"{target_imagesTs}/{sTs}_001.nii.gz")
 
     generate_dataset_json(
         join(target_base, "dataset.json"),
