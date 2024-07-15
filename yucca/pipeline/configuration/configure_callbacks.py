@@ -42,6 +42,7 @@ def get_callback_config(
     profile: bool = False,
     project: str = "Yucca",
     save_softmax: bool = False,
+    save_multilabel_predictions: bool = False,
     steps_per_epoch: int = 250,
     store_best_ckpt: bool = True,
     wandb_log_model: Union[str, bool] = True,
@@ -58,6 +59,7 @@ def get_callback_config(
         latest_ckpt_epochs,
         prediction_output_dir,
         save_softmax,
+        save_multilabel_predictions,
         write_predictions,
         store_best_ckpt,
         log_lr,
@@ -139,6 +141,7 @@ def get_callbacks(
     last_ckpt_every_n_epochs: int,
     prediction_output_dir: str,
     save_softmax: bool,
+    save_multilabel_predictions: bool,
     write_predictions: bool,
     store_best_ckpt: bool,
     log_lr: bool,
@@ -163,7 +166,10 @@ def get_callbacks(
 
     if write_predictions:
         pred_writer = WritePredictionFromLogits(
-            output_dir=prediction_output_dir, save_softmax=save_softmax, write_interval="batch"
+            output_dir=prediction_output_dir,
+            save_softmax=save_softmax,
+            multilabel=save_multilabel_predictions,
+            write_interval="batch",
         )
         callbacks.append(pred_writer)
 

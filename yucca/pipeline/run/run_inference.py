@@ -288,6 +288,7 @@ def main():
             folder_with_predictions=outpath,
             folder_with_ground_truth=ground_truth,
             overwrite=overwrite,
+            label_regions=manager.plan_config.regions_in_order if manager.plan_config.use_label_regions else None,
             task_type=task_type,
             use_wandb=use_wandb,
             strict=strict,

@@ -4,10 +4,9 @@ from yucca.functional.utils.nib_utils import get_nib_spacing
 from yucca.functional.evaluation.metrics import sensitivity, precision, f1
 
 
-def get_obj_stats_for_label(gt, pred, label, as_binary=False):
-    spacing = get_nib_spacing(gt)
-    gt = np.around(gt.get_fdata())
-    pred = np.around(pred.get_fdata())
+def get_obj_stats_for_label(gt, pred, label, spacing, as_binary=False):
+    gt = np.around(gt)
+    pred = np.around(pred)
     if as_binary:
         gt = gt.astype(bool).astype(int)
         pred = pred.astype(bool).astype(int)

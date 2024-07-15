@@ -1,5 +1,5 @@
 import os
-from typing import Literal
+from typing import Literal, Optional
 import numpy as np
 import nibabel as nib
 import json
@@ -23,6 +23,7 @@ from yucca.functional.evaluation.metrics import (
 )
 from yucca.functional.evaluation.obj_metrics import get_obj_stats_for_label
 from yucca.functional.evaluation.surface_metrics import get_surface_metrics_for_label
+from yucca.functional.evaluation.evaluate_folder import evaluate_multilabel_folder_segm
 from yucca.paths import yucca_raw_data
 from tqdm import tqdm
 
@@ -37,12 +38,14 @@ class YuccaEvaluator(object):
         as_binary=False,
         do_object_eval=False,
         do_surface_eval=False,
+        label_regions: Optional[list] = None,
         overwrite: bool = False,
         task_type: Literal["segmentation", "classification", "regression"] = "segmentation",
         strict: bool = True,
     ):
         self.name = "results"
 
+        self.label_regions = label_regions
         self.overwrite = overwrite
         self.use_wandb = use_wandb
         self.task_type = task_type
@@ -195,7 +198,20 @@ class YuccaEvaluator(object):
         if self.task_type == "classification":
             return self._evaluate_folder_cls()
         elif self.task_type == "segmentation":
-            return self._evaluate_folder_segm()
+            if self.label_regions is not None:
+                return evaluate_multilabel_folder_segm(
+                    labels=self.labelarr,
+                    metrics=self.metrics,
+                    subjects=self.pred_subjects,
+                    folder_with_predictions=self.folder_with_predictions,
+                    folder_with_ground_truth=self.folder_with_ground_truth,
+                    as_binary=self.as_binary,
+                    obj_metrics=self.obj_metrics,
+                    regions=self.label_regions,
+                    surface_metrics=self.surface_metrics,
+                )
+            else:
+                return self._evaluate_folder_segm()
         else:
             raise NotImplementedError("Invalid task type")
 
@@ -293,18 +309,20 @@ class YuccaEvaluator(object):
             gtpath = join(self.folder_with_ground_truth, case)
 
             pred = nib.load(predpath)
-            gt = nib.load(gtpath)
+            spacing = get_nib_spacing(pred)
+            pred = pred.get_fdata()
+            gt = nib.load(gtpath).get_fdata()
 
             if self.as_binary:
                 cmat = confusion_matrix(
-                    np.around(gt.get_fdata().flatten()).astype(bool).astype(np.uint8),
-                    np.around(pred.get_fdata().flatten()).astype(bool).astype(np.uint8),
+                    np.around(gt.flatten()).astype(bool).astype(np.uint8),
+                    np.around(pred.flatten()).astype(bool).astype(np.uint8),
                     labels=self.labelarr,
                 )
             else:
                 cmat = confusion_matrix(
-                    np.around(gt.get_fdata().flatten()).astype(np.uint8),
-                    np.around(pred.get_fdata().flatten()).astype(np.uint8),
+                    np.around(gt.flatten()).astype(np.uint8),
+                    np.around(pred.flatten()).astype(np.uint8),
                     labels=self.labelarr,
                 )
 
@@ -321,13 +339,15 @@ class YuccaEvaluator(object):
 
                 if self.obj_metrics:
                     # now for the object metrics
-                    obj_labeldict = get_obj_stats_for_label(gt, pred, label, as_binary=self.as_binary)
+                    obj_labeldict = get_obj_stats_for_label(gt, pred, label, spacing=spacing, as_binary=self.as_binary)
                     for k, v in obj_labeldict.items():
                         labeldict[k] = round(v, 4)
                         meandict[str(label)][k].append(labeldict[k])
 
                 if self.surface_metrics:
-                    surface_labeldict = get_surface_metrics_for_label(gt, pred, label, as_binary=self.as_binary)
+                    surface_labeldict = get_surface_metrics_for_label(
+                        gt, pred, label, spacing=spacing, as_binary=self.as_binary
+                    )
                     for k, v in surface_labeldict.items():
                         labeldict[k] = round(v, 4)
                         meandict[str(label)][k].append(labeldict[k])

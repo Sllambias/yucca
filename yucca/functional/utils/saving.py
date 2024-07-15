@@ -53,6 +53,15 @@ def save_prediction_from_logits(logits, outpath, properties, save_softmax=False,
         save_nifti_from_numpy(pred, outpath, properties, compression=compression)
 
 
+def save_multilabel_prediction_from_logits(logits, outpath, properties, compression=9):
+    # here we use a sigmoid instead of the softmax/argmax functions to keep the multiple channels
+    # of predicted classes. This means predictions from this are stored as (c, h, w, d) rather than (h, w, d)
+    pred = 1.0 / (1.0 + np.exp(-logits))
+    pred = (pred > 0.5).astype(np.uint8)
+    pred = np.squeeze(pred)
+    save_nifti_from_numpy(pred, outpath, properties, compression=compression)
+
+
 def merge_softmax_from_folders(folders: list, outpath, method="sum"):
     maybe_mkdir_p(outpath)
     cases = subfiles(folders[0], suffix=".npz", join=False)

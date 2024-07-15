@@ -174,7 +174,7 @@ class YuccaManager:
 
         seed_config = seed_everything_and_get_seed_config(ckpt_seed=self.ckpt_config.ckpt_seed)
 
-        plan_config = self.get_plan_config(
+        self.plan_config = self.get_plan_config(
             ckpt_plans=self.ckpt_config.ckpt_plans,
             plans_path=path_config.plans_path,
             stage=stage,
@@ -193,6 +193,7 @@ class YuccaManager:
             prediction_output_dir=prediction_output_dir,
             profile=self.profile,
             save_softmax=save_softmax,
+            save_multilabel_predictions=self.use_label_regions,
             wandb_log_model=self.wandb_log_model,
         )
 
@@ -202,9 +203,9 @@ class YuccaManager:
             splits_config = SplitConfig()
 
         input_dims_config = get_input_dims_config(
-            plan=plan_config.plans,
+            plan=self.plan_config.plans,
             model_dimensions=task_config.model_dimensions,
-            num_classes=plan_config.num_classes,
+            num_classes=self.plan_config.num_classes,
             ckpt_patch_size=self.ckpt_config.ckpt_patch_size,
             model_name=task_config.model_name,
             max_vram=self.max_vram,
@@ -218,8 +219,8 @@ class YuccaManager:
             patch_size=input_dims_config.patch_size,
             is_2D=True if self.model_dimensions == "2D" else False,
             parameter_dict=self.augmentation_params,
-            task_type_preset=plan_config.task_type,
-            label_regions=plan_config.regions_in_order if plan_config.use_label_regions else None,
+            task_type_preset=self.plan_config.task_type,
+            label_regions=self.plan_config.regions_in_order if self.plan_config.use_label_regions else None,
         )
 
         self.model_module = self.lightning_module(
@@ -228,7 +229,7 @@ class YuccaManager:
             | self.ckpt_config.lm_hparams()
             | seed_config.lm_hparams()
             | splits_config.lm_hparams()
-            | plan_config.lm_hparams()
+            | self.plan_config.lm_hparams()
             | input_dims_config.lm_hparams()
             | callback_config.lm_hparams()
             | augmenter.lm_hparams(),
@@ -244,11 +245,11 @@ class YuccaManager:
         )
 
         self.data_module = self.data_module_class(
-            allow_missing_modalities=plan_config.allow_missing_modalities,
+            allow_missing_modalities=self.plan_config.allow_missing_modalities,
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
             pred_include_cases=pred_include_cases,
-            image_extension=plan_config.image_extension,
+            image_extension=self.plan_config.image_extension,
             input_dims_config=input_dims_config,
             overwrite_predictions=overwrite_predictions,
             num_workers=self.num_workers,
@@ -258,7 +259,7 @@ class YuccaManager:
             p_oversample_foreground=self.p_oversample_foreground,
             splits_config=splits_config,
             split_idx=task_config.split_idx,
-            task_type=plan_config.task_type,
+            task_type=self.plan_config.task_type,
             test_dataset_class=self.test_dataset_class,
             train_data_dir=path_config.train_data_dir,
             train_dataset_class=self.train_dataset_class,
