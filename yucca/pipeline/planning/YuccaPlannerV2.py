@@ -1,4 +1,5 @@
 from yucca.pipeline.planning.YuccaPlanner import YuccaPlanner
+import numpy as np
 
 
 class YuccaPlannerV2(YuccaPlanner):
