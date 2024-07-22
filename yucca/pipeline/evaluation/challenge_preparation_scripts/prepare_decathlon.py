@@ -1,6 +1,5 @@
 # %%
-from batchgenerators.utilities.file_and_folder_operations import subfiles, join, maybe_mkdir_p
-import shutil
+from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p
 
 """
 Task031_MSD_BrainTumour
@@ -97,11 +96,9 @@ expected = [
 ]
 
 from SimpleITK import ReadImage
-from batchgenerators.utilities.file_and_folder_operations import subdirs
 import glob
 import os
 import logging
-from yucca.paths import yucca_raw_data
 import SimpleITK as sitk
 
 
