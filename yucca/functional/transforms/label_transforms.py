@@ -10,7 +10,6 @@ def batch_convert_labels_to_regions(data, regions):
     region_canvas = np.zeros((b, len(regions), *shape))
     for channel, region in enumerate(regions):
         region_canvas[:, channel] = np.isin(data[:, 0], region)
-        print(channel, region_canvas[:, channel].sum())
     region_canvas = region_canvas.astype(np.uint8)
     return region_canvas
 
