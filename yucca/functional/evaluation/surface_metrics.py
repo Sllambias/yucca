@@ -1,5 +1,4 @@
 import numpy as np
-from yucca.functional.utils.nib_utils import get_nib_spacing
 from yucca.functional.evaluation.deepmind_surface_distance import metrics
 
 

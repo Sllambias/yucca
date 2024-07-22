@@ -1,6 +1,5 @@
 # %%
 from batchgenerators.utilities.file_and_folder_operations import subfiles, join, maybe_mkdir_p
-from yucca.paths import yucca_results
 import shutil
 
 """
@@ -73,54 +72,61 @@ exclude = [
 savepath = "/home/zcr545/decathlon_submission"
 maybe_mkdir_p(savepath)
 
-for i in range(10):
-    for seg_path in subfiles(folders[i], join=False):
-        new_path = join(expected[i], seg_path)
-        if new_path in exclude:
-            print("blocking: ", new_path)
-            continue
-        maybe_mkdir_p(join(savepath, expected[i]))
-
-        shutil.copy2(join(folders[i], seg_path), f"{savepath}/{expected[i]}/{seg_path}")
+# for i in range(10):
+#    for seg_path in subfiles(folders[i], join=False):
+#        new_path = join(expected[i], seg_path)
+#        if new_path in exclude:
+#            print("blocking: ", new_path)
+#            continue
+#        maybe_mkdir_p(join(savepath, expected[i]))
+#        shutil.copy2(join(folders[i], seg_path), f"{savepath}/{expected[i]}/{seg_path}")
 
 # %%
 
-# expected = [
-#    "Task01_BrainTumour",
-#    "Task02_Heart",
-#    "Task03_Liver",
-#    "Task04_Hippocampus",
-#    "Task05_Prostate",
-#    "Task06_Lung",
-#    "Task07_Pancreas",
-#    "Task08_HepaticVessel",
-#    "Task09_Spleen",
-#    "Task10_Colon",
-# ]
-#
-# from SimpleITK import ReadImage
-# from batchgenerators.utilities.file_and_folder_operations import subdirs
-# import glob
-# import os
-# import logging
-# from yucca.paths import yucca_raw_data
-#
-# logger = logging.getLogger()
-# sub_dir = "/home/zcr545/decathlon_submission"
-# gt_dir = "/home/zcr545/data/data/public_datasets/decathlon"
-## the path to your submit file
-## for d in subdirs(submit_file):
-# for i in range(10):
-#    if i in [0, 2, 7]:
-#        continue
-#    img_list = [x for x in glob.glob(os.path.join(gt_dir, expected[i], "imagesTs", "*.nii.gz"))]
-#    for path in img_list:
-#        img = ReadImage(path)
-#        name = os.path.split(path)[-1]
-#        gtpath = os.path.join(sub_dir, expected[i], name)
-#        gt = ReadImage(gtpath)
-#        if not img.GetOrigin() == gt.GetOrigin():
-#            print(path, img.GetOrigin(), gt.GetOrigin())
-#        if not img.GetSpacing() == gt.GetSpacing():
-#            print(path, img.GetSpacing(), gt.GetSpacing())
+expected = [
+    "Task01_BrainTumour",
+    "Task02_Heart",
+    "Task03_Liver",
+    "Task04_Hippocampus",
+    "Task05_Prostate",
+    "Task06_Lung",
+    "Task07_Pancreas",
+    "Task08_HepaticVessel",
+    "Task09_Spleen",
+    "Task10_Colon",
+]
+
+from SimpleITK import ReadImage
+from batchgenerators.utilities.file_and_folder_operations import subdirs
+import glob
+import os
+import logging
+from yucca.paths import yucca_raw_data
+import SimpleITK as sitk
+
+
+def copy_geometry(image: sitk.Image, ref: sitk.Image):
+    if ref.GetDimension() == 4:
+        ref = ref[:, :, :, 0]
+    print(image.GetSize(), ref.GetSize(), ref.GetDimension())
+    image.SetOrigin(ref.GetOrigin())
+    image.SetDirection(ref.GetDirection())
+    image.SetSpacing(ref.GetSpacing())
+    return image
+
+
+logger = logging.getLogger()
+sub_dir = "/home/zcr545/decathlon_submission"
+gt_dir = "/home/zcr545/data/data/public_datasets/decathlon"
+
+
+for i in range(10):
+    img_list = [x for x in glob.glob(os.path.join(sub_dir, expected[i], "*.nii.gz"))]
+    for predpath in img_list:
+        pred = ReadImage(predpath)
+        name = os.path.split(predpath)[-1]
+        gtpath = os.path.join(gt_dir, expected[i], "imagesTs", name)
+        gt = ReadImage(gtpath)
+        print(predpath, gtpath)
+        copy_geometry(pred, gt)
 # %%
