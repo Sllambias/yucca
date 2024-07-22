@@ -35,18 +35,21 @@ class YuccaEvaluator(object):
         as_binary=False,
         do_object_eval=False,
         do_surface_eval=False,
-        label_regions: Optional[list] = None,
+        regions_in_order: Optional[list] = None,
+        regions_labeled: Optional[list] = None,
         overwrite: bool = False,
         task_type: Literal["segmentation", "classification", "regression"] = "segmentation",
         strict: bool = True,
     ):
         self.name = "results"
 
-        self.label_regions = label_regions
+        self.regions_in_order = regions_in_order
+        self.regions_labeled = regions_labeled
         self.overwrite = overwrite
         self.use_wandb = use_wandb
         self.task_type = task_type
         self.strict = strict
+        self.as_binary = as_binary
 
         self.metrics = {
             "Dice": dice,
@@ -138,7 +141,7 @@ class YuccaEvaluator(object):
             self.labels = [str(i) for i in range(labels)]
         else:
             self.labels = labels
-        self.as_binary = as_binary
+
         if self.as_binary:
             self.labels = ["0", "1"]
             self.name += "_BINARY"
@@ -161,7 +164,6 @@ class YuccaEvaluator(object):
             f"STARTING EVALUATION \n"
             f"Folder with predictions: {self.folder_with_predictions}\n"
             f"Folder with ground truth: {self.folder_with_ground_truth}\n"
-            f"Evaluating performance on labels: {self.labels}"
         )
 
     def sanity_checks(self):
@@ -201,16 +203,16 @@ class YuccaEvaluator(object):
                 folder_with_ground_truth=self.folder_with_ground_truth,
             )
         elif self.task_type == "segmentation":
-            if self.label_regions is not None:
+            if self.regions_in_order is not None:
                 return evaluate_multilabel_folder_segm(
-                    labels=self.labelarr,
+                    labels=self.regions_labeled,
                     metrics=self.metrics,
                     subjects=self.pred_subjects,
                     folder_with_predictions=self.folder_with_predictions,
                     folder_with_ground_truth=self.folder_with_ground_truth,
                     as_binary=self.as_binary,
                     obj_metrics=self.obj_metrics,
-                    regions=self.label_regions,
+                    regions=self.regions_in_order,
                     surface_metrics=self.surface_metrics,
                 )
             else:
