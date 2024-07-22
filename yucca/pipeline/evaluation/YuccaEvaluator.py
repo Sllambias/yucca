@@ -205,7 +205,7 @@ class YuccaEvaluator(object):
         elif self.task_type == "segmentation":
             if self.regions_in_order is not None:
                 return evaluate_multilabel_folder_segm(
-                    labels=self.regions_labeled,
+                    labels=[0] + self.regions_labeled,
                     metrics=self.metrics,
                     subjects=self.pred_subjects,
                     folder_with_predictions=self.folder_with_predictions,

@@ -6,10 +6,11 @@ def batch_convert_labels_to_regions(data, regions):
     b, c, *shape = data.shape
     assert (
         c == 1
-    ), f"# Channels is not 1. Make sure the input to this function is a segmentation map of dims (b,c,h,w[,d]), found shape: {data.shape}"
+    ), f"# Channels is not 1. Make sure the input to this function is a segmentation map of dims (b,1,h,w[,d]), found shape: {data.shape}"
     region_canvas = np.zeros((b, len(regions), *shape))
     for channel, region in enumerate(regions):
         region_canvas[:, channel] = np.isin(data[:, 0], region)
+        print(channel, region_canvas[:, channel].sum())
     region_canvas = region_canvas.astype(np.uint8)
     return region_canvas
 

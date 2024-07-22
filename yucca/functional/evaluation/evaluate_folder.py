@@ -42,8 +42,9 @@ def evaluate_multilabel_folder_segm(
         gtpath = join(folder_with_ground_truth, case)
 
         pred = nib.load(predpath)
-        spacing = get_nib_spacing(pred)
+        spacing = get_nib_spacing(pred)[:3]
         pred = pred.get_fdata()
+        pred = pred.transpose([3, 0, 1, 2])
         gt = nib.load(gtpath).get_fdata()
 
         if len(pred.shape) == len(gt.shape) + 1:
@@ -52,10 +53,9 @@ def evaluate_multilabel_folder_segm(
                 regions is not None
             ), "Regions must be supplied if ground truth is not already multilabel (i.e. multiple channels)"
             gt = convert_labels_to_regions(gt[np.newaxis], regions)
-            for i in range(len(labels)):
+            for i in range(len(labels) - 1):
                 pred[i] *= 1 + i
                 gt[i] *= 1 + i
-
         if as_binary:
             cmat = confusion_matrix(
                 np.around(gt.flatten()).astype(bool).astype(np.uint8),
@@ -68,13 +68,12 @@ def evaluate_multilabel_folder_segm(
                 np.around(pred.flatten()).astype(np.uint8),
                 labels=labels,
             )
-
-        for i, label in enumerate(labels):
+        for label in labels:
             labeldict = {}
 
-            tp = cmat[i, i]
-            fp = sum(cmat[:, i]) - tp
-            fn = sum(cmat[i, :]) - tp
+            tp = cmat[label, label]
+            fp = sum(cmat[:, label]) - tp
+            fn = sum(cmat[label, :]) - tp
             tn = np.sum(cmat) - tp - fp - fn  # often a redundant and meaningless metric
             for k, v in metrics.items():
                 labeldict[k] = round(v(tp, fp, tn, fn), 4)
