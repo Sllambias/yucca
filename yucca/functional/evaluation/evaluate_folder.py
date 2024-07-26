@@ -80,14 +80,22 @@ def evaluate_multilabel_folder_segm(
                 meandict[str(label)][k].append(labeldict[k])
 
             if obj_metrics:
+                raise NotImplementedError
                 # now for the object metrics
-                obj_labeldict = get_obj_stats_for_label(gt, pred, label, spacing=spacing, as_binary=as_binary)
-                for k, v in obj_labeldict.items():
-                    labeldict[k] = round(v, 4)
-                    meandict[str(label)][k].append(labeldict[k])
+                # obj_labeldict = get_obj_stats_for_label(gt, pred, label, spacing=spacing, as_binary=as_binary)
+                # for k, v in obj_labeldict.items():
+                #    labeldict[k] = round(v, 4)
+                #    meandict[str(label)][k].append(labeldict[k])
 
             if surface_metrics:
-                surface_labeldict = get_surface_metrics_for_label(gt, pred, label, spacing=spacing, as_binary=as_binary)
+                if label == 0:
+                    surface_labeldict = get_surface_metrics_for_label(
+                        gt[label], pred[label], 0, spacing=spacing, as_binary=as_binary
+                    )
+                else:
+                    surface_labeldict = get_surface_metrics_for_label(
+                        gt[label - 1], pred[label - 1], 1, spacing=spacing, as_binary=as_binary
+                    )
                 for k, v in surface_labeldict.items():
                     labeldict[k] = round(v, 4)
                     meandict[str(label)][k].append(labeldict[k])
