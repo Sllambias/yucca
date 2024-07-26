@@ -36,6 +36,7 @@ class YuccaLightningModule(L.LightningModule):
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler = torch.optim.lr_scheduler.CosineAnnealingLR,
         momentum: float = 0.9,
         optimizer: torch.optim.Optimizer = torch.optim.SGD,
+        optim_kwargs: dict = None,
         sliding_window_overlap: float = 0.5,
         step_logging: bool = False,
         test_time_augmentation: bool = False,
@@ -62,6 +63,7 @@ class YuccaLightningModule(L.LightningModule):
 
         self.momentum = momentum
         self.optim = optimizer
+        self.optim_kwargs = optim_kwargs
         self.lr_scheduler = lr_scheduler
 
         # Evaluation and logging
@@ -250,7 +252,9 @@ class YuccaLightningModule(L.LightningModule):
             patch_size=self.patch_size,
             sliding_window_prediction=self.sliding_window_prediction,
         )
-        logits, case_properties = self.preprocessor.reverse_preprocessing(logits, case_properties)
+        logits, case_properties = self.preprocessor.reverse_preprocessing(
+            logits, case_properties, num_classes=self.num_classes
+        )
         return {"logits": logits, "properties": case_properties, "case_id": case_id[0]}
 
     def compute_metrics(self, metrics, output, target, ignore_index: int = 0):
@@ -295,14 +299,19 @@ class YuccaLightningModule(L.LightningModule):
         # Initialize and configure the optimizer(s) here.
         # optim_kwargs holds args for any scheduler class,
         # but using filtering we only pass arguments relevant to the selected class.
-        optim_kwargs = {
-            # all
-            "lr": self.lr,
-            # SGD
-            "momentum": self.momentum,
-            "eps": 1e-4,
-            "weight_decay": 3e-5,
-        }
+        if self.optim_kwargs is not None:
+            optim_kwargs = self.optim_kwargs
+        else:
+            optim_kwargs = {
+                # all
+                "lr": self.lr,
+                # SGD
+                "momentum": self.momentum,
+                "eps": 1e-4,
+                "weight_decay": 3e-5,
+                # AdamW
+                "betas": (0.9, 0.99),
+            }
 
         optim_kwargs = filter_kwargs(self.optim, optim_kwargs)
 
@@ -315,6 +324,11 @@ class YuccaLightningModule(L.LightningModule):
             # Cosine Annealing
             "T_max": self.trainer.max_epochs,
             "eta_min": 1e-9,
+            # Warm restarts
+            "T_0": 10,
+            "T_mult": 10,
+            # Exponential
+            "gamma": 0.9975,
         }
 
         lr_scheduler_kwargs = filter_kwargs(self.lr_scheduler, lr_scheduler_kwargs)

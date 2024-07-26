@@ -2,7 +2,7 @@ from yucca.pipeline.planning.YuccaPlanner import YuccaPlanner
 import numpy as np
 
 
-class YuccaPlannerV2(YuccaPlanner):
+class YuccaPlannerV3(YuccaPlanner):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = str(self.__class__.__name__)

@@ -12,7 +12,7 @@ from yucca.pipeline.configuration.configure_seed import seed_everything_and_get_
 from yucca.pipeline.configuration.configure_paths import get_path_config
 from yucca.pipeline.configuration.configure_plans import get_plan_config
 from yucca.pipeline.configuration.configure_input_dims import get_input_dims_config
-from yucca.data.data_modules.YuccaDataModule import YuccaDataModule
+from yucca.data.data_modules import YuccaDataModule
 from yucca.data.datasets.YuccaDataset import YuccaTrainDataset, YuccaTestDataset
 from yucca.data.samplers import InfiniteRandomSampler
 from yucca.lightning_modules.YuccaLightningModule import YuccaLightningModule
@@ -65,11 +65,15 @@ class YuccaManager:
         model_name: str = "TinyUNet",
         momentum: float = 0.9,
         num_workers: Optional[int] = None,
+        optimizer: torch.optim.Optimizer = torch.optim.SGD,
+        optim_kwargs: dict = None,
         patch_based_training: bool = True,
         patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
         planner: str = "YuccaPlanner",
         precision: str = "bf16-mixed",
         profile: bool = False,
+        p_oversample_foreground: Optional[float] = 0.33,
+        scheduler=torch.optim.lr_scheduler.CosineAnnealingLR,
         split_idx: int = 0,
         split_data_method: str = "kfold",
         split_data_param: int = 5,
@@ -78,6 +82,7 @@ class YuccaManager:
         train_batches_per_step: int = 250,
         use_label_regions: bool = False,
         val_batches_per_step: int = 50,
+        wandb_log_model=False,
         **kwargs,
     ):
         self.ckpt_path = ckpt_path
@@ -96,11 +101,15 @@ class YuccaManager:
         self.num_workers = num_workers
         self.augmentation_params = augmentation_params
         self.batch_size = batch_size
+        self.optimizer = optimizer
+        self.optim_kwargs = optim_kwargs
         self.patch_based_training = patch_based_training
         self.patch_size = patch_size
         self.planner = planner
         self.precision = precision
         self.profile = profile
+        self.p_oversample_foreground = p_oversample_foreground
+        self.scheduler = scheduler
         self.split_idx = split_idx
         self.split_data_method = split_data_method
         self.split_data_param = split_data_param
@@ -109,6 +118,7 @@ class YuccaManager:
         self.train_batches_per_step = train_batches_per_step
         self.use_label_regions = use_label_regions
         self.val_batches_per_step = val_batches_per_step
+        self.wandb_log_model = wandb_log_model
         self.kwargs = kwargs
 
         # Automatically changes bfloat training if we're running on a GPU
@@ -131,7 +141,7 @@ class YuccaManager:
         self,
         stage: Literal["fit", "test", "predict"],
         disable_tta: bool = False,
-        exclude_cases_not_in_list: list = None,
+        pred_include_cases: list = None,
         overwrite_predictions: bool = False,
         pred_data_dir: str = None,
         save_softmax: bool = False,
@@ -164,7 +174,7 @@ class YuccaManager:
 
         seed_config = seed_everything_and_get_seed_config(ckpt_seed=self.ckpt_config.ckpt_seed)
 
-        plan_config = self.get_plan_config(
+        self.plan_config = self.get_plan_config(
             ckpt_plans=self.ckpt_config.ckpt_plans,
             plans_path=path_config.plans_path,
             stage=stage,
@@ -183,6 +193,8 @@ class YuccaManager:
             prediction_output_dir=prediction_output_dir,
             profile=self.profile,
             save_softmax=save_softmax,
+            save_multilabel_predictions=self.use_label_regions,
+            wandb_log_model=self.wandb_log_model,
         )
 
         if stage == "fit":
@@ -191,9 +203,9 @@ class YuccaManager:
             splits_config = SplitConfig()
 
         input_dims_config = get_input_dims_config(
-            plan=plan_config.plans,
+            plan=self.plan_config.plans,
             model_dimensions=task_config.model_dimensions,
-            num_classes=plan_config.num_classes,
+            num_classes=self.plan_config.num_classes,
             ckpt_patch_size=self.ckpt_config.ckpt_patch_size,
             model_name=task_config.model_name,
             max_vram=self.max_vram,
@@ -207,8 +219,8 @@ class YuccaManager:
             patch_size=input_dims_config.patch_size,
             is_2D=True if self.model_dimensions == "2D" else False,
             parameter_dict=self.augmentation_params,
-            task_type_preset=plan_config.task_type,
-            label_regions=plan_config.regions_in_order if plan_config.use_label_regions else None,
+            task_type_preset=self.plan_config.task_type,
+            label_regions=self.plan_config.regions_in_order if self.plan_config.use_label_regions else None,
         )
 
         self.model_module = self.lightning_module(
@@ -217,33 +229,37 @@ class YuccaManager:
             | self.ckpt_config.lm_hparams()
             | seed_config.lm_hparams()
             | splits_config.lm_hparams()
-            | plan_config.lm_hparams()
+            | self.plan_config.lm_hparams()
             | input_dims_config.lm_hparams()
             | callback_config.lm_hparams()
             | augmenter.lm_hparams(),
             deep_supervision=self.deep_supervision,
             learning_rate=self.learning_rate,
             loss_fn=self.loss,
+            lr_scheduler=self.scheduler,
             momentum=self.momentum,
+            optimizer=self.optimizer,
+            optim_kwargs=self.optim_kwargs,
             step_logging=self.step_logging,
             test_time_augmentation=not disable_tta if disable_tta is True else augmenter.mirror_p_per_sample > 0,
         )
 
         self.data_module = self.data_module_class(
-            allow_missing_modalities=plan_config.allow_missing_modalities,
+            allow_missing_modalities=self.plan_config.allow_missing_modalities,
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
-            exclude_cases_not_in_list=exclude_cases_not_in_list,
-            image_extension=plan_config.image_extension,
+            pred_include_cases=pred_include_cases,
+            image_extension=self.plan_config.image_extension,
             input_dims_config=input_dims_config,
             overwrite_predictions=overwrite_predictions,
             num_workers=self.num_workers,
             pred_data_dir=pred_data_dir,
             pred_save_dir=prediction_output_dir,
             pre_aug_patch_size=augmenter.pre_aug_patch_size,
+            p_oversample_foreground=self.p_oversample_foreground,
             splits_config=splits_config,
             split_idx=task_config.split_idx,
-            task_type=plan_config.task_type,
+            task_type=self.plan_config.task_type,
             test_dataset_class=self.test_dataset_class,
             train_data_dir=path_config.train_data_dir,
             train_dataset_class=self.train_dataset_class,
@@ -263,6 +279,7 @@ class YuccaManager:
             profiler=callback_config.profiler,
             enable_progress_bar=not self.enable_logging,
             max_epochs=self.max_epochs,
+            devices=1,
             **self.kwargs,
         )
 
@@ -292,14 +309,14 @@ class YuccaManager:
         disable_tta: bool = False,
         overwrite_predictions: bool = False,
         output_folder: str = yucca_results,
-        exclude_cases_not_in_list: list = None,
+        pred_include_cases: list = None,
         save_softmax=False,
     ):
         self.batch_size = 1
         self.initialize(
             stage="predict",
             disable_tta=disable_tta,
-            exclude_cases_not_in_list=exclude_cases_not_in_list,
+            pred_include_cases=pred_include_cases,
             overwrite_predictions=overwrite_predictions,
             pred_data_dir=input_folder,
             prediction_output_dir=output_folder,

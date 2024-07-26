@@ -18,6 +18,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         composed_transforms=None,
         task_type: Literal["classification", "segmentation", "self-supervised", "contrastive"] = "segmentation",
         allow_missing_modalities=False,
+        p_oversample_foreground=0.33,
     ):
         self.all_cases = samples
         self.composed_transforms = composed_transforms
@@ -27,7 +28,6 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
         self.supervised = self.task_type in ["classification", "segmentation"]
         self.label_dtype = label_dtype
         self.allow_missing_modalities = allow_missing_modalities
-
         self.already_loaded_cases = {}
 
         # for segmentation and classification we override the default None
@@ -36,7 +36,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
             if self.supervised:
                 self.label_dtype = torch.int32
 
-        self.croppad = CropPad(patch_size=self.patch_size, p_oversample_foreground=0.33)
+        self.croppad = CropPad(patch_size=self.patch_size, p_oversample_foreground=p_oversample_foreground)
         self.to_torch = NumpyToTorch(label_dtype=self.label_dtype)
 
         self._keep_in_ram = keep_in_ram

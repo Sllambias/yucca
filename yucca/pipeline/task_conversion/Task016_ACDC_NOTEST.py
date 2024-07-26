@@ -10,8 +10,8 @@ def convert(path: str = yucca_source, subdir: str = "ACDC"):
     file_suffix = ".nii.gz"
 
     """ OUTPUT DATA - Define the task name and prefix """
-    task_name = "Task016_ACDC"
-    task_prefix = "ACDC"
+    task_name = "Task016_ACDC_NOTEST"
+    task_prefix = "ACDC_NOTEST"
 
     """ Access the input data. If images are not split into train/test, and you wish to randomly 
     split the data, uncomment and adapt the following lines to fit your local path. """
@@ -69,8 +69,8 @@ def convert(path: str = yucca_source, subdir: str = "ACDC"):
             case_id = sTs[: -len(file_suffix)]
             src_image_file_path = join(images_dir_ts, patient, case_id + file_suffix)
             src_label_file_path = join(labels_dir_ts, patient, case_id + "_gt" + file_suffix)
-            dst_image_file_path = f"{target_imagesTs}/{task_prefix}_{case_id}_000.nii.gz"
-            dst_label_file_path = f"{target_labelsTs}/{task_prefix}_{case_id}.nii.gz"
+            dst_image_file_path = f"{target_imagesTr}/{task_prefix}_{case_id}_000.nii.gz"
+            dst_label_file_path = f"{target_labelsTr}/{task_prefix}_{case_id}.nii.gz"
 
             image = nib.load(src_image_file_path)
             label = nib.load(src_label_file_path)

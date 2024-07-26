@@ -1,14 +1,10 @@
 import numpy as np
-from yucca.functional.utils.nib_utils import get_nib_spacing
 from yucca.functional.evaluation.deepmind_surface_distance import metrics
 
 
-def get_surface_metrics_for_label(gt, pred, label, as_binary: bool = False):
-    spacing = get_nib_spacing(pred)
-    pred = pred.get_fdata()
-    gt = gt.get_fdata()
+def get_surface_metrics_for_label(gt, pred, label, spacing, as_binary: bool = False):
     labeldict = {}
-
+    print(np.unique(pred), np.unique(gt), label)
     if label == 0:
         labeldict["Average Surface Distance"] = 0
         return labeldict
