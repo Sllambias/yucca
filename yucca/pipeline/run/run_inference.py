@@ -60,6 +60,7 @@ def main():
         help="Specify the parameter for the selected split method. For KFold use an int, for simple_split use a float between 0.0-1.0.",
         default=5,
     )
+    parser.add_argument("--surface_eval", help="enable surface evaluation", action="store_true", default=None, required=False)
     parser.add_argument(
         "--task_type",
         default="segmentation",
@@ -154,6 +155,7 @@ def main():
     split_idx = args.split_idx
     split_data_method = args.split_data_method
     split_data_param = args.split_data_param
+    surface_eval = args.surface_eval
     task_type = args.task_type
     version = args.version
 
@@ -287,6 +289,7 @@ def main():
             manager.model_module.num_classes,
             folder_with_predictions=outpath,
             folder_with_ground_truth=ground_truth,
+            do_surface_eval=surface_eval,
             overwrite=overwrite,
             regions_in_order=manager.plan_config.regions_in_order if manager.plan_config.use_label_regions else None,
             regions_labeled=manager.plan_config.regions_labeled if manager.plan_config.use_label_regions else None,
