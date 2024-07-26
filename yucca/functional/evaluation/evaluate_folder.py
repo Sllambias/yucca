@@ -43,7 +43,7 @@ def evaluate_multilabel_folder_segm(
 
         pred = nib.load(predpath)
         spacing = get_nib_spacing(pred)[:3]
-        pred = pred.get_fdata()
+        pred = pred.get_fdata().astype(np.uint8)
         pred = pred.transpose([3, 0, 1, 2])
         gt = nib.load(gtpath).get_fdata()
 
