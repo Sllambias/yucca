@@ -24,7 +24,6 @@ from yucca.functional.evaluation.metrics import (
 from yucca.functional.evaluation.obj_metrics import get_obj_stats_for_label
 from yucca.functional.evaluation.surface_metrics import get_surface_metrics_for_label
 from yucca.paths import yucca_raw_data
-from weave.monitoring import StreamTable
 from tqdm import tqdm
 
 
@@ -356,6 +355,8 @@ class YuccaEvaluator(object):
 
         :param results_dict: dictionary with evaluation results
         """
+        from weave.monitoring import StreamTable
+
         task = self.outpath.split(os.path.sep)[-5]
         target = self.outpath.split(os.path.sep)[-6]
         model_name = "/".join(self.outpath.split(os.path.sep)[-4:])
