@@ -94,7 +94,7 @@ def evaluate_multilabel_folder_segm(
                     )
                 else:
                     surface_labeldict = get_surface_metrics_for_label(
-                        gt[label - 1], pred[label - 1], 1, spacing=spacing, as_binary=as_binary
+                        gt[label - 1], pred[label - 1], label, spacing=spacing, as_binary=as_binary
                     )
                 for k, v in surface_labeldict.items():
                     labeldict[k] = round(v, 4)
