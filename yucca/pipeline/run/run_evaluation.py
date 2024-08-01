@@ -84,6 +84,9 @@ def main():
         default=5,
     )
     parser.add_argument("--surface_eval", help="enable surface evaluation", action="store_true", default=None, required=False)
+    parser.add_argument(
+        "--surface_tol", help="controls the tolerance (in mm) of the surface_evaluation", default=1, required=False
+    )
 
     parser.add_argument(
         "--version", "-v", help="version number of the model. Defaults to 0.", default=0, type=int, required=False
@@ -111,6 +114,7 @@ def main():
     split_data_method = args.split_data_method
     split_data_param = args.split_data_param
     surface_eval = args.surface_eval
+    surface_tol = args.surface_tol
     assert (predpath and gtpath) or source_task, "Either supply BOTH paths or the source task"
 
     if not predpath:
@@ -139,6 +143,7 @@ def main():
         do_surface_eval=surface_eval,
         overwrite=overwrite,
         as_binary=as_binary,
+        surface_tol=surface_tol,
         task_type=task_type,
         use_wandb=use_wandb,
     )

@@ -2,7 +2,7 @@ import numpy as np
 from yucca.functional.evaluation.deepmind_surface_distance import metrics
 
 
-def get_surface_metrics_for_label(gt, pred, label, spacing, as_binary: bool = False):
+def get_surface_metrics_for_label(gt, pred, label, spacing, tol=1, as_binary: bool = False):
     labeldict = {}
     print(np.unique(pred), np.unique(gt), label)
     if label == 0:
@@ -22,6 +22,6 @@ def get_surface_metrics_for_label(gt, pred, label, spacing, as_binary: bool = Fa
     )
 
     labeldict["Average Surface Distance"] = metrics.compute_surface_dice_at_tolerance(
-        surface_distances=surface_distances, tolerance_mm=1
+        surface_distances=surface_distances, tolerance_mm=tol
     )
     return labeldict

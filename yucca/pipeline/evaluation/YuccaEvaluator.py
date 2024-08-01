@@ -38,6 +38,7 @@ class YuccaEvaluator(object):
         regions_in_order: Optional[list] = None,
         regions_labeled: Optional[list] = None,
         overwrite: bool = False,
+        surface_tol: int = 1,
         task_type: Literal["segmentation", "classification", "regression"] = "segmentation",
         strict: bool = True,
     ):
@@ -50,6 +51,7 @@ class YuccaEvaluator(object):
         self.task_type = task_type
         self.strict = strict
         self.as_binary = as_binary
+        self.surface_tol = surface_tol
 
         self.metrics = {
             "Dice": dice,
@@ -96,7 +98,7 @@ class YuccaEvaluator(object):
                 ]
 
             if do_surface_eval:
-                self.name += "_SURFACE"
+                self.name += f"_SURFACE{self.surface_tol}"
                 self.surface_metrics = [
                     "Average Surface Distance",
                 ]
@@ -214,6 +216,7 @@ class YuccaEvaluator(object):
                     obj_metrics=self.obj_metrics,
                     regions=self.regions_in_order,
                     surface_metrics=self.surface_metrics,
+                    surface_tol=self.surface_tol,
                 )
             else:
                 return evaluate_folder_segm(
@@ -225,6 +228,7 @@ class YuccaEvaluator(object):
                     as_binary=self.as_binary,
                     obj_metrics=self.obj_metrics,
                     surface_metrics=self.surface_metrics,
+                    surface_tol=self.surface_tol,
                 )
         else:
             raise NotImplementedError("Invalid task type")

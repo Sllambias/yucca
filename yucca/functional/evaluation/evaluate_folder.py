@@ -23,6 +23,7 @@ def evaluate_multilabel_folder_segm(
     obj_metrics: Optional[bool] = False,
     regions: Optional[list] = None,
     surface_metrics: Optional[bool] = False,
+    surface_tol=1,
 ):
     # predictions are multilabel at this point (c, h, w, d)
     # ground truth MAY be converted, but may also be (h, w, d) in which case we use the label_regions
@@ -90,11 +91,11 @@ def evaluate_multilabel_folder_segm(
             if surface_metrics:
                 if label == 0:
                     surface_labeldict = get_surface_metrics_for_label(
-                        gt[label], pred[label], 0, spacing=spacing, as_binary=as_binary
+                        gt[label], pred[label], 0, spacing=spacing, tol=surface_tol, as_binary=as_binary
                     )
                 else:
                     surface_labeldict = get_surface_metrics_for_label(
-                        gt[label - 1], pred[label - 1], label, spacing=spacing, as_binary=as_binary
+                        gt[label - 1], pred[label - 1], label, spacing=spacing, tol=surface_tol, as_binary=as_binary
                     )
                 for k, v in surface_labeldict.items():
                     labeldict[k] = round(v, 4)
@@ -123,6 +124,7 @@ def evaluate_folder_segm(
     as_binary: Optional[bool] = False,
     obj_metrics: Optional[bool] = False,
     surface_metrics: Optional[bool] = False,
+    surface_tol=1,
 ):
     logging.info(f"segmentation evaluation with labels: {labels}")
 
@@ -175,7 +177,9 @@ def evaluate_folder_segm(
                     meandict[str(label)][k].append(labeldict[k])
 
             if surface_metrics:
-                surface_labeldict = get_surface_metrics_for_label(gt, pred, label, spacing=spacing, as_binary=as_binary)
+                surface_labeldict = get_surface_metrics_for_label(
+                    gt, pred, label, spacing=spacing, tol=surface_tol, as_binary=as_binary
+                )
                 for k, v in surface_labeldict.items():
                     labeldict[k] = round(v, 4)
                     meandict[str(label)][k].append(labeldict[k])
