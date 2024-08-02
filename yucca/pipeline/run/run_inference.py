@@ -62,7 +62,7 @@ def main():
     )
     parser.add_argument("--surface_eval", help="enable surface evaluation", action="store_true", default=None, required=False)
     parser.add_argument(
-        "--surface_tol", type=int, help="controls the tolerance (in mm) of the surface_evaluation", default=1, required=False
+        "--surface_tol", type=int, help="controls the tolerance (in mm) of the surface_evaluation", default=2, required=False
     )
     parser.add_argument(
         "--task_type",
