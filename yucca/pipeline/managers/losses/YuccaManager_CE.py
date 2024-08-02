@@ -16,4 +16,4 @@ class YuccaManager_CE(YuccaManager):
         continue_training: bool = False,
     ):
         super().__init__(model, model_dimensions, task, folds, plan_id, starting_lr, loss_fn, momentum, continue_training)
-        self._DEFAULT_LOSS = CE
+        self.loss = CE
