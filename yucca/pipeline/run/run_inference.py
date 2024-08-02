@@ -62,6 +62,9 @@ def main():
     )
     parser.add_argument("--surface_eval", help="enable surface evaluation", action="store_true", default=None, required=False)
     parser.add_argument(
+        "--surface_tol", type=int, help="controls the tolerance (in mm) of the surface_evaluation", default=1, required=False
+    )
+    parser.add_argument(
         "--task_type",
         default="segmentation",
         type=str,
@@ -156,6 +159,7 @@ def main():
     split_data_method = args.split_data_method
     split_data_param = args.split_data_param
     surface_eval = args.surface_eval
+    surface_tol = args.surface_tol
     task_type = args.task_type
     version = args.version
 
@@ -293,6 +297,7 @@ def main():
             overwrite=overwrite,
             regions_in_order=manager.plan_config.regions_in_order if manager.plan_config.use_label_regions else None,
             regions_labeled=manager.plan_config.regions_labeled if manager.plan_config.use_label_regions else None,
+            surface_tol=surface_tol,
             task_type=task_type,
             use_wandb=use_wandb,
             strict=strict,
