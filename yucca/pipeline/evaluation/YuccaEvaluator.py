@@ -24,7 +24,6 @@ from yucca.functional.evaluation.metrics import (
 from yucca.functional.evaluation.obj_metrics import get_obj_stats_for_label
 from yucca.functional.evaluation.surface_metrics import get_surface_metrics_for_label
 from yucca.paths import yucca_raw_data
-from weave.monitoring import StreamTable
 from tqdm import tqdm
 
 
@@ -40,12 +39,14 @@ class YuccaEvaluator(object):
         do_surface_eval=False,
         overwrite: bool = False,
         task_type: Literal["segmentation", "classification", "regression"] = "segmentation",
+        strict: bool = True,
     ):
         self.name = "results"
 
         self.overwrite = overwrite
         self.use_wandb = use_wandb
         self.task_type = task_type
+        self.strict = strict
 
         self.metrics = {
             "Dice": dice,
@@ -183,7 +184,8 @@ class YuccaEvaluator(object):
         if isfile(self.outpath) and not self.overwrite:
             print(f"Evaluation file already present in {self.outpath}. Skipping.")
         else:
-            self.sanity_checks()
+            if self.strict:
+                self.sanity_checks()
             results_dict = self.evaluate_folder()
             self.save_as_json(results_dict)
             if self.use_wandb:
@@ -353,6 +355,8 @@ class YuccaEvaluator(object):
 
         :param results_dict: dictionary with evaluation results
         """
+        from weave.monitoring import StreamTable
+
         task = self.outpath.split(os.path.sep)[-5]
         target = self.outpath.split(os.path.sep)[-6]
         model_name = "/".join(self.outpath.split(os.path.sep)[-4:])

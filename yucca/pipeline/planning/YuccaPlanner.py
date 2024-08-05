@@ -47,10 +47,12 @@ class YuccaPlanner(object):
 
         # Planner Specific settings
         self.name = str(self.__class__.__name__) + str(view or "")
+        self.compress = False
         self.target_coordinate_system = "RAS"
         self.crop_to_nonzero = True
         self.norm_op = "standardize"
         self.allow_missing_modalities = False
+        self.get_foreground_locations_per_label = False
 
         # This is only relevant for planners with fixed sizes.
         self.keep_aspect_ratio_when_using_target_size = True
@@ -149,6 +151,8 @@ class YuccaPlanner(object):
             threads=self.threads,
             disable_sanity_checks=self.disable_sanity_checks,
             allow_missing_modalities=self.allow_missing_modalities,
+            compress=self.compress,
+            get_foreground_locs_per_label=self.get_foreground_locations_per_label,
         )
         preprocessor.run()
         self.postprocess()

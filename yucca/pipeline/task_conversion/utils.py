@@ -52,6 +52,11 @@ def should_use_volume(vol: nib.Nifti1Image):
     return not (np.any(np.array(vol.shape) < 15) or len(vol.shape) != 3 or np.array(vol.dataobj).min() < 0)
 
 
+def remove_punctuation_and_spaces(data: str):
+    data = data.replace(" ", "-").replace(",", "-").replace(".", "-")
+    return data
+
+
 def generate_dataset_json(
     output_file: str,
     imagesTr_dir: str,
@@ -60,6 +65,8 @@ def generate_dataset_json(
     labels: dict,
     dataset_name: str,
     label_hierarchy: dict = {},
+    regions_in_order=[],  # We do not want to do these as dicts, as its sensitive to order and they easily become sorted by mistake
+    regions_labeled=[],
     tasks: list = [],
     license: str = "hands off!",
     dataset_description: str = "",
@@ -103,6 +110,8 @@ def generate_dataset_json(
     json_dict["modality"] = {str(i): modalities[i] for i in range(len(modalities))}
     json_dict["labels"] = {str(i): labels[i] for i in labels.keys()} if labels is not None else None
     json_dict["label_hierarchy"] = label_hierarchy
+    json_dict["regions_in_order"] = regions_in_order
+    json_dict["regions_labeled"] = regions_labeled
     json_dict["tasks"] = tasks
     json_dict["numTraining"] = len(train_identifiers)
     json_dict["numTest"] = len(test_identifiers)

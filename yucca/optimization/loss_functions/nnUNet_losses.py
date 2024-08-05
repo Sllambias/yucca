@@ -45,7 +45,6 @@ def get_tp_fp_fn_tn(net_output, gt, axes=None, mask=None, square=False):
 
     shp_x = net_output.shape
     shp_y = gt.shape
-
     with torch.no_grad():
         if len(shp_x) != len(shp_y):
             gt = gt.view((shp_y[0], 1, *shp_y[1:]))

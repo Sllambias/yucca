@@ -53,7 +53,7 @@ def convert(path: str, subdir: str = "brats21/training_data"):
         labelarr = label.get_fdata()
         labelarr[labelarr == 4.0] = 3.0
         assert np.all(np.isin(np.unique(labelarr), np.array([0, 1, 2, 3])))
-        labelnew = nib.Nifti1Image(labelarr, label.affine, label.header)
+        labelnew = nib.Nifti1Image(labelarr, label.affine, label.header, dtype=np.float32)
         nib.save(labelnew, dst_label_path)
 
         shutil.copy2(src_image_file_path1, dst_image_file_path1)
@@ -76,7 +76,7 @@ def convert(path: str, subdir: str = "brats21/training_data"):
         labelarr = label.get_fdata()
         labelarr[labelarr == 4.0] = 3.0
         assert np.all(np.isin(np.unique(labelarr), np.array([0, 1, 2, 3])))
-        labelnew = nib.Nifti1Image(labelarr, label.affine, label.header)
+        labelnew = nib.Nifti1Image(labelarr, label.affine, label.header, dtype=np.float32)
         nib.save(labelnew, dst_label_path)
 
         shutil.copy2(src_image_file_path1, dst_image_file_path1)
@@ -90,6 +90,8 @@ def convert(path: str, subdir: str = "brats21/training_data"):
         target_imagesTs,
         ("FLAIR", "T1", "T1CE", "T2"),
         labels={0: "background", 1: "necrotic tumor core", 2: "peritumoral edematous/invaded tissue", 3: "GD-enhancing tumor"},
+        regions_in_order=[[1, 2, 3], [2, 3], [3]],
+        regions_labeled=[1, 2, 3],
         dataset_name=task_name,
         license="hands off!",
         dataset_description="BraTS21",

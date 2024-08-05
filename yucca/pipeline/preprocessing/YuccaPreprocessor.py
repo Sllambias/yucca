@@ -67,6 +67,8 @@ class YuccaPreprocessor(object):
         disable_sanity_checks=False,
         enable_cc_analysis=False,
         allow_missing_modalities=False,
+        compress=False,
+        get_foreground_locs_per_label=False,
     ):
         self.name = str(self.__class__.__name__)
         self.task = task
@@ -76,6 +78,8 @@ class YuccaPreprocessor(object):
         self.disable_sanity_checks = disable_sanity_checks
         self.enable_cc_analysis = enable_cc_analysis
         self.allow_missing_modalities = allow_missing_modalities
+        self.compress = compress
+        self.get_foreground_locs_per_label = get_foreground_locs_per_label
 
         # lists for information we would like to attain
         self.transpose_forward = []
@@ -104,6 +108,11 @@ class YuccaPreprocessor(object):
         self.intensities = self.dataset_properties["intensities"]
         self.image_extension = self.dataset_properties.get("image_extension") or "nii.gz"
 
+        if self.dataset_properties.get("background_pixel_values") is not None:
+            self.background_value_for_first_modality = self.dataset_properties.get("background_pixel_values")[0]
+        else:
+            self.background_value_for_first_modality = 0
+
         # op values
         self.transpose_forward = np.array(self.plans["transpose_forward"], dtype=int)
         self.transpose_backward = np.array(self.plans["transpose_backward"], dtype=int)
@@ -116,6 +125,7 @@ class YuccaPreprocessor(object):
         self.initialize_properties()
         self.initialize_paths()
         maybe_mkdir_p(self.target_dir)
+        self.verify_compression_level(self.target_dir, self.compress)
 
         logging.info(
             f"{'Preprocessing Task:':25.25} {self.task} \n"
@@ -171,7 +181,10 @@ class YuccaPreprocessor(object):
         Print the path where the preprocessed data is saved.
         """
         subject_id = subject_id.split(os.extsep, 1)[0]
-        arraypath = join(self.target_dir, subject_id + ".npy")
+        if self.compress:
+            arraypath = join(self.target_dir, subject_id + ".npz")
+        else:
+            arraypath = join(self.target_dir, subject_id + ".npy")
         picklepath = join(self.target_dir, subject_id + ".pkl")
         if isfile(arraypath) and isfile(picklepath):
             logging.info(f"Case: {subject_id} already exists. Skipping.")
@@ -185,7 +198,10 @@ class YuccaPreprocessor(object):
         images = self.cast_to_numpy_array(images=images, label=label, classification=self.classification)
 
         # save the image
-        np.save(arraypath, images)
+        if self.compress:
+            np.savez_compressed(arraypath, data=images)
+        else:
+            np.save(arraypath, images)
 
         # save metadata as .pkl
         save_pickle(image_props, picklepath)
@@ -201,6 +217,7 @@ class YuccaPreprocessor(object):
             f"Saving {subject_id} in {arraypath} \n"
             f"Time elapsed: {round(end_time-start_time, 4)} \n"
         )
+        del images, label, image_props
 
     def _preprocess_train_subject(self, subject_id, label_exists: bool, preprocess_label: bool):
         image_props = {}
@@ -254,7 +271,9 @@ class YuccaPreprocessor(object):
                 label=label,
                 normalization_operation=self.plans["normalization_scheme"],
                 allow_missing_modalities=self.allow_missing_modalities,
+                background_pixel_value=self.background_value_for_first_modality,
                 enable_cc_analysis=self.enable_cc_analysis,
+                foreground_locs_per_label=self.get_foreground_locs_per_label,
                 missing_modality_idxs=missing_modalities,
                 crop_to_nonzero=self.plans["crop_to_nonzero"],
                 keep_aspect_ratio_when_using_target_size=self.plans["keep_aspect_ratio_when_using_target_size"],
@@ -272,6 +291,7 @@ class YuccaPreprocessor(object):
                 images=images,
                 normalization_operation=self.plans["normalization_scheme"],
                 allow_missing_modalities=self.allow_missing_modalities,
+                background_pixel_value=self.background_value_for_first_modality,
                 missing_modality_idxs=missing_modalities,
                 crop_to_nonzero=self.plans["crop_to_nonzero"],
                 keep_aspect_ratio_when_using_target_size=self.plans["keep_aspect_ratio_when_using_target_size"],
@@ -407,3 +427,14 @@ class YuccaPreprocessor(object):
         expected_labels = np.array(self.plans["dataset_properties"]["classes"], dtype=np.float32)
         actual_labels = np.unique(label).astype(np.float32)
         verify_labels_are_equal(expected_labels=expected_labels, actual_labels=actual_labels, id=subject_id)
+
+    @staticmethod
+    def verify_compression_level(directory: str, compress: bool):
+        if compress:
+            assert (
+                len(subfiles(directory, suffix=".npy")) == 0
+            ), "detected uncompressed images in folder while compression is enabled. Please delete uncompressed images first to avoid duplicates"
+        else:
+            assert (
+                len(subfiles(directory, suffix=".npz")) == 0
+            ), "detected compressed images in folder while compression is disabled. Please delete compressed images first to avoid duplicates"

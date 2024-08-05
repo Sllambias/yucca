@@ -18,7 +18,9 @@ class DeepSupervisionLoss(nn.Module):
         if self.weights is None:
             weights = np.array([1 / (2**i) for i in range(len(list_of_logits))])
             self.weights = weights / np.sum(weights)
+
         loss = self.loss(list_of_logits[0], list_of_segs[0]) * self.weights[0]
+
         for i in range(1, len(list_of_logits)):
             loss += self.loss(list_of_logits[i], list_of_segs[i]) * self.weights[i]
         return loss

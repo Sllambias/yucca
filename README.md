@@ -7,7 +7,7 @@
 # Yucca
 End-to-end modular machine learning framework for classification, segmentation and unsupervised learning. Yucca is designed to be plug-and-play while still allowing for effortless customization. This allows users to employ the basic Yucca models as solid baselines, but it also allows users to change and experiment with exact features in a robust and thoroughly tested research environment. The Yucca project is inspired by Fabien Isensee's [nnUNet](https://github.com/MIC-DKFZ/nnUNet).
 
-![alt text](yucca/documentation/illustrations/end_to_end_diagram.svg?raw=true)
+![alt text](yucca/documentation/illustrations/yucca_diagram.svg?raw=true)
 
 # Table of Contents
 - [Guides](#guides)

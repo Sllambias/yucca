@@ -50,10 +50,13 @@ class YuccaManager:
 
     def __init__(
         self,
+        augmentation_params: dict = {},
+        batch_size: Union[int, Literal["tiny"]] = None,
         ckpt_path: str = None,
         continue_from_most_recent: bool = True,
         deep_supervision: bool = False,
         enable_logging: bool = True,
+        experiment: str = "default",
         learning_rate: float = 1e-3,
         loss: str = None,
         max_epochs: int = 1000,
@@ -62,10 +65,8 @@ class YuccaManager:
         model_name: str = "TinyUNet",
         momentum: float = 0.9,
         num_workers: Optional[int] = None,
-        batch_size: Union[int, Literal["tiny"]] = None,
         patch_based_training: bool = True,
         patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
-        augmentation_params: dict = {},
         planner: str = "YuccaPlanner",
         precision: str = "bf16-mixed",
         profile: bool = False,
@@ -74,8 +75,8 @@ class YuccaManager:
         split_data_param: int = 5,
         step_logging: bool = False,
         task: str = None,
-        experiment: str = "default",
         train_batches_per_step: int = 250,
+        use_label_regions: bool = False,
         val_batches_per_step: int = 50,
         **kwargs,
     ):
@@ -106,6 +107,7 @@ class YuccaManager:
         self.step_logging = step_logging
         self.task = task
         self.train_batches_per_step = train_batches_per_step
+        self.use_label_regions = use_label_regions
         self.val_batches_per_step = val_batches_per_step
         self.kwargs = kwargs
 
@@ -119,6 +121,8 @@ class YuccaManager:
             self.setup_fast_dev_run()
 
         # defaults
+        self.data_module_class = YuccaDataModule
+        self.lightning_module = YuccaLightningModule
         self.trainer = L.Trainer
         self.train_dataset_class = YuccaTrainDataset
         self.test_dataset_class = YuccaTestDataset
@@ -127,6 +131,7 @@ class YuccaManager:
         self,
         stage: Literal["fit", "test", "predict"],
         disable_tta: bool = False,
+        pred_include_cases: list = None,
         overwrite_predictions: bool = False,
         pred_data_dir: str = None,
         save_softmax: bool = False,
@@ -163,6 +168,7 @@ class YuccaManager:
             ckpt_plans=self.ckpt_config.ckpt_plans,
             plans_path=path_config.plans_path,
             stage=stage,
+            use_label_regions=self.use_label_regions,
         )
 
         callback_config = get_callback_config(
@@ -202,9 +208,10 @@ class YuccaManager:
             is_2D=True if self.model_dimensions == "2D" else False,
             parameter_dict=self.augmentation_params,
             task_type_preset=plan_config.task_type,
+            label_regions=plan_config.regions_in_order if plan_config.use_label_regions else None,
         )
 
-        self.model_module = YuccaLightningModule(
+        self.model_module = self.lightning_module(
             config=task_config.lm_hparams()
             | path_config.lm_hparams()
             | self.ckpt_config.lm_hparams()
@@ -222,10 +229,11 @@ class YuccaManager:
             test_time_augmentation=not disable_tta if disable_tta is True else augmenter.mirror_p_per_sample > 0,
         )
 
-        self.data_module = YuccaDataModule(
+        self.data_module = self.data_module_class(
             allow_missing_modalities=plan_config.allow_missing_modalities,
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
+            pred_include_cases=pred_include_cases,
             image_extension=plan_config.image_extension,
             input_dims_config=input_dims_config,
             overwrite_predictions=overwrite_predictions,
@@ -284,12 +292,14 @@ class YuccaManager:
         disable_tta: bool = False,
         overwrite_predictions: bool = False,
         output_folder: str = yucca_results,
+        pred_include_cases: list = None,
         save_softmax=False,
     ):
         self.batch_size = 1
         self.initialize(
             stage="predict",
             disable_tta=disable_tta,
+            pred_include_cases=pred_include_cases,
             overwrite_predictions=overwrite_predictions,
             pred_data_dir=input_folder,
             prediction_output_dir=output_folder,
@@ -305,10 +315,11 @@ class YuccaManager:
         self.finish()
 
     @staticmethod
-    def get_plan_config(ckpt_plans, plans_path, stage):
+    def get_plan_config(ckpt_plans, plans_path, stage, use_label_regions):
         plan_config = get_plan_config(
             ckpt_plans=ckpt_plans,
             plans_path=plans_path,
+            use_label_regions=use_label_regions,
             stage=stage,
         )
         return plan_config

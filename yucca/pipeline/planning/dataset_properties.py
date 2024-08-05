@@ -20,6 +20,8 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
     dataset_json = load_json(join(data_dir, "dataset.json"))
 
     image_extension = dataset_json.get("image_extension") or suffix[1:]
+    regions_in_order = dataset_json.get("regions_in_order") or []
+    regions_labeled = dataset_json.get("regions_labeled") or []
 
     properties = {
         "image_extension": image_extension,
@@ -27,6 +29,8 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
         "tasks": {task: [] for task in dataset_json["tasks"]},
         "label_hierarchy": dataset_json["label_hierarchy"],
         "modalities": dataset_json["modality"],
+        "regions_in_order": regions_in_order,
+        "regions_labeled": regions_labeled,
     }
 
     if len(dataset_json["tasks"]) > 0:
@@ -36,7 +40,7 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
     intensities = []
     sizes = []
     spacings = []
-
+    background_pixel_values = []
     modalities = properties["modalities"].items()
     mod_ids = list(list(zip(*modalities))[0])
     assert sorted(mod_ids) == mod_ids
@@ -68,6 +72,7 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
             background_pixel_value = -1000
         else:
             background_pixel_value = 0
+        background_pixel_values.append(background_pixel_value)
 
         chunksize = 50 if len(subjects) > 1000 else 1
 
@@ -98,6 +103,7 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
     dims = [len(size) for size in sizes]
     assert all([dim == dims[0] for dim in dims]), f"not all volumes have the same number of dimensions. Sizes were: {dims}"
 
+    properties["background_pixel_values"] = background_pixel_values
     properties["data_dimensions"] = int(len(sizes[0]))
     properties["original_sizes"] = sizes
     properties["original_spacings"] = spacings

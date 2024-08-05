@@ -18,7 +18,7 @@ def get_train_fig_with_inp_out_tar(input, output, target, fig_title, task_type: 
             foreground_locations = target[0].nonzero()
             slice_to_visualize = foreground_locations[0][np.random.randint(0, len(foreground_locations[0]))]
         else:
-            slice_to_visualize = np.random.randint(0, input.shape[2])
+            slice_to_visualize = np.random.randint(0, input.shape[1])
 
         input = input[:, slice_to_visualize]
         if len(target.shape) == 4:
