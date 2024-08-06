@@ -64,6 +64,7 @@ generic = {
     "mask_image_for_reconstruction": False,
     "clip_to_input_range": False,  # ensures no augmentations go beyond the input range of the image/patch
     "normalize": False,
+    "skeleton":False,
     # label/segmentation transforms
     "skip_label": False,
     "label_dtype": int,
