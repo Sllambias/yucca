@@ -90,7 +90,3 @@ generic = {
     "simulate_lowres_p_per_axis": 0.33,
     # default augmentation values
 }
-
-
-skeleton = all_always.copy()
-skeleton["skeleton"] = True
