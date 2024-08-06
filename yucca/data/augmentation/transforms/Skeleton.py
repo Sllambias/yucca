@@ -10,6 +10,7 @@ class SkeletonTransform(YuccaTransform):
         self.label_key = label_key
         self.do_tube = do_tube
 
+
     @staticmethod
     def get_params():
         # No parameters to retrieve

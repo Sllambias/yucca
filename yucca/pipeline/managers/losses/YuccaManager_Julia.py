@@ -1,6 +1,7 @@
 from yucca.pipeline.managers.YuccaManager import YuccaManager
 from yucca.data.augmentation.augmentation_presets import skeleton
 
+
 class YuccaManager_Julia(YuccaManager):
     def __init__(
         self,

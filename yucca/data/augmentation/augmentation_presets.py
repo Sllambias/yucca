@@ -90,5 +90,6 @@ generic = {
     # default augmentation values
 }
 
+
 skeleton = all_always.copy()
 skeleton["skeleton"] = True
