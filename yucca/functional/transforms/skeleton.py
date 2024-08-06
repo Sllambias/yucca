@@ -18,4 +18,5 @@ def skeleton(label, do_tube: bool = True):
         skel *= label_copy.astype(np.int16)
         seg_all_skel = skel
 
+
     return seg_all_skel
