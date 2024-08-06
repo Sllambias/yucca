@@ -60,11 +60,9 @@ class SoftSkeletonRecallLoss(nn.Module):
         """ if self.batch_dice:
             inter_rec = sum_tensor(inter_rec,0)
             sum_gt = sum_tensor(sum_gt,0) """
-        print(np.shape(sum_gt + self.smooth))
         rec = (inter_rec + self.smooth) / (sum_gt + self.smooth)
 
         rec = rec.mean()
-        print(rec)
         return -rec
 
 
@@ -72,7 +70,7 @@ class DC_SkelREC_and_CE_loss(nn.Module):
     def __init__(
         self,
         soft_dice_kwargs={},
-        soft_skelrec_kwargs=[],
+        soft_skelrec_kwargs={},
         ce_kwargs={},
         weight_ce=1,
         weight_dice=1,
@@ -137,15 +135,19 @@ class DC_SkelREC_and_CE_loss(nn.Module):
         return result
 #%%
 
-A = np.random.randint(20, size=(16,16))
-B = np.random.randint(20, size=(16,16))
+A = torch.rand(16,16)
+B = torch.rand(16,16)
 
-AA = SoftDiceLoss(A)
-AA.forward(A, B)
+#AA = SoftDiceLoss()
+#AA.forward(A, B)
+#
+#BB = DiceCE()
+#BB.forward(A, B)
+from yucca.functional.transforms.skeleton import skeleton
 
-BB = DiceCE(A)
-BB.forward(A, B)
+C= skeleton(B.numpy())
+C = torch.from_numpy(C)
 
-AAA = DC_SkelREC_and_CE_loss(A)
-AAA.forward(A, B)
+AAA = DC_SkelREC_and_CE_loss()
+AAA.forward(A, B, C)
 # %%

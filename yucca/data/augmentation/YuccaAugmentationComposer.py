@@ -19,6 +19,7 @@ from yucca.data.augmentation.transforms import (
     RemoveBatchDimension,
     SimulateLowres,
     Spatial,
+    Skeleton,
 )
 
 

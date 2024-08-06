@@ -6,7 +6,7 @@ import numpy as np
 
 
 class SkeletonTransform(YuccaTransform):
-    def __init__(self, label_key="label", do_tube=True):
+    def __init__(self, skeleton=False, label_key="label", do_tube=True):
         self.label_key = label_key
         self.do_tube = do_tube
 
