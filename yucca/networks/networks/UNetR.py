@@ -49,7 +49,7 @@ class UNetR(YuccaNet):
         hidden_size = 768
         mlp_dim = 3072
         num_heads = 12
-        pos_embed = "perceptron"
+        pos_embed = "conv"
         norm_name = "instance"
         conv_block = False
         res_block = True
