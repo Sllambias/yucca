@@ -259,17 +259,6 @@ def main():
         split = split[str(split_data_method)][split_data_param][split_idx]["val"]
         strict = False
 
-    modelfile = join(
-        yucca_models,
-        source_task,
-        model + "__" + dimensions,
-        manager_name + "__" + planner,
-        experiment,
-        f"{split_data_method}_{split_data_param}_fold_{split_idx}",
-        f"version_{version}",
-        "checkpoints",
-        checkpoint + ".ckpt",
-    )
     maybe_mkdir_p(outpath)
 
     manager.predict_folder(

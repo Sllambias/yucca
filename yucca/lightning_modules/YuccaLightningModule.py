@@ -7,7 +7,7 @@ import logging
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from batchgenerators.utilities.file_and_folder_operations import join
+from batchgenerators.utilities.file_and_folder_operations import join, load_pickle
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Dice
 from torchmetrics.regression import MeanAbsoluteError
@@ -16,6 +16,7 @@ from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from yucca.functional.utils.kwargs import filter_kwargs
 from yucca.metrics.training_metrics import Accuracy, AUROC, F1
 from yucca.functional.visualization import get_train_fig_with_inp_out_tar
+from yucca.functional.preprocessing import reverse_preprocessing
 
 
 class YuccaLightningModule(L.LightningModule):
@@ -31,6 +32,7 @@ class YuccaLightningModule(L.LightningModule):
         self,
         config: dict,
         deep_supervision: bool = False,
+        disable_inference_preprocessing: bool = False,
         learning_rate: float = 1e-3,
         loss_fn: str = None,
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler = torch.optim.lr_scheduler.CosineAnnealingLR,
@@ -57,6 +59,7 @@ class YuccaLightningModule(L.LightningModule):
 
         # Loss, optimizer and scheduler parameters
         self.deep_supervision = deep_supervision
+        self.disable_inference_preprocessing = disable_inference_preprocessing
         self.lr = learning_rate
         self.loss_fn = loss_fn
 
@@ -229,29 +232,61 @@ class YuccaLightningModule(L.LightningModule):
             )
 
     def on_predict_start(self):
-        preprocessor_class = recursive_find_python_class(
-            folder=[join(yucca.__path__[0], "pipeline", "preprocessing")],
-            class_name=self.plans["preprocessor"],
-            current_module="yucca.pipeline.preprocessing",
-        )
-        self.preprocessor = preprocessor_class(join(self.version_dir, "hparams.yaml"))
+        if self.disable_inference_preprocessing:
+            self.predict = self.predict_without_preprocessing
+        else:
+            preprocessor_class = recursive_find_python_class(
+                folder=[join(yucca.__path__[0], "pipeline", "preprocessing")],
+                class_name=self.plans["preprocessor"],
+                current_module="yucca.pipeline.preprocessing",
+            )
+            self.preprocessor = preprocessor_class(self.hparams_path)
+            self.predict = self.predict_with_preprocessing
 
     def predict_step(self, batch, _batch_idx, _dataloader_idx=0):
         case, case_id = batch
+        logits, case_properties = self.predict(case)
+        return {"logits": logits, "properties": case_properties, "case_id": case_id[0]}
+
+    def predict_with_preprocessing(self, case):
         (
             case_preprocessed,
             case_properties,
         ) = self.preprocessor.preprocess_case_for_inference(case, self.patch_size, self.sliding_window_prediction)
+        logits = self._predict(case)
+
+        logits, case_properties = self.preprocessor.reverse_preprocessing(logits, case_properties)
+        return logits, case_properties
+
+    def predict_without_preprocessing(self, case):
+        # First split the list into case and case_properties
+        case, case_properties = case
+        # Load and unpack from tuple if wrapped (as will be the case by standard DataLoaders)
+        case = torch.load(case[0]) if isinstance(case, tuple) else torch.load(case, "r")
+        case_properties = (
+            load_pickle(case_properties[0]) if isinstance(case_properties, tuple) else load_pickle(case_properties)
+        )
+        logits = self._predict(case)
+        logits, case_properties = reverse_preprocessing(
+            crop_to_nonzero=self.plans["crop_to_nonzero"],
+            images=logits,
+            image_properties=case_properties,
+            n_classes=self.plans["num_classes"],
+            transpose_forward=self.plans["transpose_forward"],
+            transpose_backward=self.plans["transpose_backward"],
+        )
+        return logits, case_properties
+
+    def _predict(self, case):
         logits = self.model.predict(
-            data=case_preprocessed,
+            data=case,
             mode=self.model_dimensions,
             mirror=self.test_time_augmentation,
             overlap=self.sliding_window_overlap,
             patch_size=self.patch_size,
             sliding_window_prediction=self.sliding_window_prediction,
         )
-        logits, case_properties = self.preprocessor.reverse_preprocessing(logits, case_properties)
-        return {"logits": logits, "properties": case_properties, "case_id": case_id[0]}
+        return logits
 
     def compute_metrics(self, metrics, output, target, ignore_index: int = 0):
         metrics = metrics(output, target)
