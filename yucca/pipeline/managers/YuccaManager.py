@@ -13,7 +13,7 @@ from yucca.pipeline.configuration.configure_paths import get_path_config
 from yucca.pipeline.configuration.configure_plans import get_plan_config
 from yucca.pipeline.configuration.configure_input_dims import get_input_dims_config
 from yucca.data.data_modules.YuccaDataModule import YuccaDataModule
-from yucca.data.datasets.YuccaDataset import YuccaTrainDataset, YuccaTestDataset
+from yucca.data.datasets.YuccaDataset import YuccaTrainDataset, YuccaTestDataset, YuccaTestPreprocessedDataset
 from yucca.data.samplers import InfiniteRandomSampler
 from yucca.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from yucca.paths import yucca_results
@@ -131,6 +131,7 @@ class YuccaManager:
         self,
         stage: Literal["fit", "test", "predict"],
         disable_tta: bool = False,
+        disable_inference_preprocessing: bool = False,
         pred_include_cases: list = None,
         overwrite_predictions: bool = False,
         pred_data_dir: str = None,
@@ -222,6 +223,7 @@ class YuccaManager:
             | callback_config.lm_hparams()
             | augmenter.lm_hparams(),
             deep_supervision=self.deep_supervision,
+            disable_inference_preprocessing=disable_inference_preprocessing,
             learning_rate=self.learning_rate,
             loss_fn=self.loss,
             momentum=self.momentum,
@@ -290,6 +292,7 @@ class YuccaManager:
         self,
         input_folder,
         disable_tta: bool = False,
+        disable_inference_preprocessing: bool = False,
         overwrite_predictions: bool = False,
         output_folder: str = yucca_results,
         pred_include_cases: list = None,
@@ -299,6 +302,7 @@ class YuccaManager:
         self.initialize(
             stage="predict",
             disable_tta=disable_tta,
+            disable_inference_preprocessing=disable_inference_preprocessing,
             pred_include_cases=pred_include_cases,
             overwrite_predictions=overwrite_predictions,
             pred_data_dir=input_folder,
@@ -313,6 +317,26 @@ class YuccaManager:
             return_predictions=False,
         )
         self.finish()
+
+    def predict_preprocessed_folder(
+        self,
+        input_folder,
+        disable_tta: bool = False,
+        overwrite_predictions: bool = False,
+        output_folder: str = yucca_results,
+        pred_include_cases: list = None,
+        save_softmax=False,
+    ):
+        self.test_dataset_class = YuccaTestPreprocessedDataset
+        self.predict_folder(
+            input_folder=input_folder,
+            disable_tta=disable_tta,
+            disable_inference_preprocessing=True,
+            overwrite_predictions=overwrite_predictions,
+            output_folder=output_folder,
+            pred_include_cases=pred_include_cases,
+            save_softmax=save_softmax,
+        )
 
     @staticmethod
     def get_plan_config(ckpt_plans, plans_path, stage, use_label_regions):

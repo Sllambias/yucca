@@ -49,7 +49,7 @@ class TinyUNet(YuccaNet):
         self.weightInitializer = weightInitializer
         self.basic_block = basic_block
         self.deep_supervision = deep_supervision
-
+        assert self.deep_supervision is False, "deep supervision is not implemented for TinyUNet"
         # Dimensions
         if self.conv_op == nn.Conv2d:
             self.pool_op = torch.nn.MaxPool2d
