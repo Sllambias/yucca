@@ -19,6 +19,7 @@ from yucca.data.augmentation.transforms import (
     RemoveBatchDimension,
     SimulateLowres,
     Spatial,
+    Skeleton,
 )
 
 
@@ -307,6 +308,7 @@ class YuccaAugmentationComposer:
             }
         }
         return hparams
+
 
 
 if __name__ == "__main__":
