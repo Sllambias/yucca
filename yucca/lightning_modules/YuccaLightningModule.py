@@ -31,7 +31,7 @@ class YuccaLightningModule(BaseLightningModule):
         config: dict,
         deep_supervision: bool = False,
         disable_inference_preprocessing: bool = False,
-        loss_fn: str = None,
+        loss_fn: str = "DiceCE",
         loss_kwargs: dict = {
             "soft_dice_kwargs": {"apply_softmax": True},
         },
