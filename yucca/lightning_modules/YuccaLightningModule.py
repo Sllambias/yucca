@@ -130,9 +130,8 @@ class YuccaLightningModule(BaseLightningModule):
         # If we are training we save params and then start training
         # Do not overwrite parameters during inference.
         self.save_hyperparameters(ignore=["lr_scheduler", "optimizer"])
-        self.load_model()
 
-    def load_model(self):
+    def setup(self):
         logging.info(f"Loading Model: {self.model_dimensions} {self.model.__class__.__name__}")
         if self.model_dimensions == "3D":
             conv_op = torch.nn.Conv3d
