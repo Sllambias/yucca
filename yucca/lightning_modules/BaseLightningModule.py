@@ -30,7 +30,6 @@ class BaseLightningModule(L.LightningModule):
         },
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler = torch.optim.lr_scheduler.CosineAnnealingLR,
         lr_scheduler_kwargs: dict = {
-            # Cosine Annealing
             "T_max": 1000,
             "eta_min": 1e-9,
         },

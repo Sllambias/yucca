@@ -22,8 +22,6 @@ class YuccaLightningModule(BaseLightningModule):
     The YuccaLightningModule class is an implementation of the PyTorch Lightning module designed for the Yucca project.
     It extends the LightningModule class and encapsulates the neural network model, loss functions, and optimization logic.
     This class is responsible for handling training, validation, and inference steps within the Yucca machine learning pipeline.
-
-
     """
 
     def __init__(
@@ -31,7 +29,7 @@ class YuccaLightningModule(BaseLightningModule):
         config: dict,
         deep_supervision: bool = False,
         disable_inference_preprocessing: bool = False,
-        loss_fn: str = "DiceCE",
+        loss_fn: str = None,
         loss_kwargs: dict = {
             "soft_dice_kwargs": {"apply_softmax": True},
         },
@@ -62,7 +60,7 @@ class YuccaLightningModule(BaseLightningModule):
         )
         loss_fn = recursive_find_python_class(
             folder=[join(yucca.__path__[0], "optimization", "loss_functions")],
-            class_name=loss_fn,
+            class_name=loss_fn if loss_fn is not None else "DiceCE",
             current_module="yucca.optimization.loss_functions",
         )
         super().__init__(
