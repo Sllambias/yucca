@@ -58,7 +58,7 @@ class YuccaManager:
         enable_logging: bool = True,
         experiment: str = "default",
         learning_rate: float = 1e-3,
-        loss: str = None,
+        loss: str = "DiceCE",
         max_epochs: int = 1000,
         max_vram: int = 12,
         model_dimensions: str = "3D",
