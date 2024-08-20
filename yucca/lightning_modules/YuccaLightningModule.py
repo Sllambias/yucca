@@ -31,52 +31,66 @@ class YuccaLightningModule(BaseLightningModule):
         config: dict,
         deep_supervision: bool = False,
         disable_inference_preprocessing: bool = False,
-        learning_rate: float = 1e-3,
         loss_fn: str = None,
+        loss_kwargs: dict = {
+            "soft_dice_kwargs": {"apply_softmax": True},
+        },
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler = torch.optim.lr_scheduler.CosineAnnealingLR,
-        momentum: float = 0.9,
+        lr_scheduler_kwargs: dict = {
+            "eta_min": 1e-9,
+        },
+        model_kwargs: dict = {},
         optimizer: torch.optim.Optimizer = torch.optim.SGD,
+        optimizer_kwargs={
+            "lr": 1e-3,
+        },
         sliding_window_overlap: float = 0.5,
         step_logging: bool = False,
         test_time_augmentation: bool = False,
         progress_bar: bool = False,
         log_image_every_n_epochs: int = None,
     ):
-        super().__init__()
-        # Extract parameters from the configurator
-        self.num_classes = config["num_classes"]
-        self.num_modalities = config["num_modalities"]
-        self.version_dir = config["version_dir"]
-        self.plans = config["plans"]
-        self.plans_path = config["plans_path"]
-        self.model_name = config["model_name"]
-        self.model_dimensions = config["model_dimensions"]
-        self.patch_size = config["patch_size"]
+        model = recursive_find_python_class(
+            folder=[join(yucca.__path__[0], "networks")],
+            class_name=config["model_name"],
+            current_module="yucca.networks",
+        )
+        preprocessor = recursive_find_python_class(
+            folder=[join(yucca.__path__[0], "pipeline", "preprocessing")],
+            class_name=config["plans"]["preprocessor"],
+            current_module="yucca.pipeline.preprocessing",
+        )
+        loss_fn = recursive_find_python_class(
+            folder=[join(yucca.__path__[0], "optimization", "loss_functions")],
+            class_name=loss_fn,
+            current_module="yucca.optimization.loss_functions",
+        )
+        super().__init__(
+            model=model,
+            model_dimensions=config["model_dimensions"],
+            num_classes=config["num_classes"],
+            num_modalities=config["num_modalities"],
+            patch_size=config["patch_size"],
+            plans=config["plans"],
+            deep_supervision=deep_supervision,
+            disable_inference_preprocessing=disable_inference_preprocessing,
+            hparams_path=config["plans_path"],
+            loss_fn=loss_fn,
+            loss_kwargs=loss_kwargs,
+            lr_scheduler=lr_scheduler,
+            lr_scheduler_kwargs=lr_scheduler_kwargs,
+            model_kwargs=model_kwargs,
+            optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            preprocessor=preprocessor,
+            progress_bar=progress_bar,
+            sliding_window_overlap=sliding_window_overlap,
+            sliding_window_prediction=config["patch_based_training"],
+            step_logging=step_logging,
+            test_time_augmentation=test_time_augmentation,
+        )
         self.task_type = config["task_type"]
-        self.sliding_window_prediction = config["patch_based_training"]
-
-        # Loss, optimizer and scheduler parameters
-        self.deep_supervision = deep_supervision
-        self.disable_inference_preprocessing = disable_inference_preprocessing
-        self.lr = learning_rate
-        self.loss_fn = loss_fn
-
-        self.momentum = momentum
-        self.optim = optimizer
-        self.lr_scheduler = lr_scheduler
-
-        # Evaluation and logging
-        if step_logging is True:  # Blame PyTorch lightning for this war crime
-            self.step_logging = None
-            self.epoch_logging = None
-        else:
-            self.step_logging = False
-            self.epoch_logging = True
-
-        self.progress_bar = progress_bar
-
-        logging.info(f"{self.__class__.__name__} initialized with the following config: {config}")
-        logging.info(f"Deep Supervision Enabled: {self.deep_supervision}")
+        self.log_image_every_n_epochs = log_image_every_n_epochs
 
         if self.task_type == "classification":
             tmetrics_task = "multiclass" if self.num_classes > 2 else "binary"
@@ -93,7 +107,6 @@ class YuccaLightningModule(BaseLightningModule):
                     "val/roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
                 }
             )
-            _default_loss = "CE"
 
         if self.task_type == "segmentation":
             self.train_metrics = MetricCollection(
@@ -111,34 +124,18 @@ class YuccaLightningModule(BaseLightningModule):
                     "val/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
                 },
             )
-            _default_loss = "DiceCE"
 
         if self.task_type == "self-supervised":
             self.train_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
             self.val_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
-            _default_loss = "MSE"
-
-        if self.loss_fn is None:
-            self.loss_fn = _default_loss
-
-        self.log_image_every_n_epochs = log_image_every_n_epochs
-
-        # Inference
-        self.sliding_window_overlap = sliding_window_overlap
-        self.test_time_augmentation = test_time_augmentation
 
         # If we are training we save params and then start training
         # Do not overwrite parameters during inference.
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=["lr_scheduler", "optimizer"])
         self.load_model()
 
     def load_model(self):
         logging.info(f"Loading Model: {self.model_dimensions} {self.model_name}")
-        self.model = recursive_find_python_class(
-            folder=[join(yucca.__path__[0], "networks")],
-            class_name=self.model_name,
-            current_module="yucca.networks",
-        )
         if self.model_dimensions == "3D":
             conv_op = torch.nn.Conv3d
             norm_op = torch.nn.InstanceNorm3d
@@ -147,9 +144,6 @@ class YuccaLightningModule(BaseLightningModule):
             norm_op = torch.nn.BatchNorm2d
 
         model_kwargs = {
-            # Applies to all models
-            "input_channels": self.num_modalities,
-            "num_classes": self.num_classes,
             # Applies to most CNN-based architectures
             "conv_op": conv_op,
             "deep_supervision": self.deep_supervision,
@@ -159,11 +153,9 @@ class YuccaLightningModule(BaseLightningModule):
             # MedNeXt
             "checkpoint_style": "outside_block",
         }
+        model_kwargs.update(self.model_kwargs)
         model_kwargs = filter_kwargs(self.model, model_kwargs)
-        self.model = self.model(**model_kwargs)
-
-    def forward(self, inputs):
-        return self.model(inputs)
+        self.model = self.model(input_channels=self.num_modalities, num_classes=self.num_classes, **self.model_kwargs)
 
     def on_train_start(self):
         if self.log_image_every_n_epochs is None:
@@ -229,69 +221,30 @@ class YuccaLightningModule(BaseLightningModule):
                 task_type=self.task_type,
             )
 
-    def on_predict_start(self):
-        if self.disable_inference_preprocessing:
-            self.predict = self.predict_without_preprocessing
-        else:
-            preprocessor_class = recursive_find_python_class(
-                folder=[join(yucca.__path__[0], "pipeline", "preprocessing")],
-                class_name=self.plans["preprocessor"],
-                current_module="yucca.pipeline.preprocessing",
-            )
-            self.preprocessor = preprocessor_class(self.hparams_path)
-            self.predict = self.predict_with_preprocessing
-
     def configure_optimizers(self):
-        # Initialize and configure the loss(es) here.
-        # loss_kwargs holds args for any scheduler class,
-        # but using filtering we only pass arguments relevant to the selected class.
-        self.loss_fn = recursive_find_python_class(
-            folder=[join(yucca.__path__[0], "optimization", "loss_functions")],
-            class_name=self.loss_fn,
-            current_module="yucca.optimization.loss_functions",
-        )
-        loss_kwargs = {
-            # DCE
-            "soft_dice_kwargs": {"apply_softmax": True},
-        }
-
-        loss_kwargs = filter_kwargs(self.loss_fn, loss_kwargs)
-
+        # Configure the loss function
+        loss_kwargs = filter_kwargs(self.loss_fn, self.loss_kwargs)
         self.loss_fn_train = self.loss_fn(**loss_kwargs)
         self.loss_fn_val = self.loss_fn(**loss_kwargs)
-
-        # If deep_supervision is enabled we wrap our training loss (and potentially specify weights)
-        # We leave the validation loss as is, as deep_supervision is not used for validation.
         if self.deep_supervision:
             self.loss_fn_train = DeepSupervisionLoss(self.loss_fn_train, weights=None)
 
-        # Initialize and configure the optimizer(s) here.
-        # optim_kwargs holds args for any scheduler class,
-        # but using filtering we only pass arguments relevant to the selected class.
+        # Configure the optimizer
         optim_kwargs = {
-            # all
-            "lr": self.lr,
-            # SGD
-            "momentum": self.momentum,
+            "momentum": 0.9,
             "eps": 1e-4,
             "weight_decay": 3e-5,
         }
-
+        optim_kwargs.update(self.optim_kwargs)
         optim_kwargs = filter_kwargs(self.optim, optim_kwargs)
-
         self.optim = self.optim(self.model.parameters(), **optim_kwargs)
 
-        # Initialize and configure LR scheduler(s) here
-        # lr_scheduler_kwargs holds args for any scheduler class,
-        # but using filtering we only pass arguments relevant to the selected class.
+        # Configure the lr scheduler
         lr_scheduler_kwargs = {
-            # Cosine Annealing
             "T_max": self.trainer.max_epochs,
-            "eta_min": 1e-9,
         }
-
+        lr_scheduler_kwargs.update(self.lr_scheduler_kwargs)
         lr_scheduler_kwargs = filter_kwargs(self.lr_scheduler, lr_scheduler_kwargs)
-
         self.lr_scheduler = self.lr_scheduler(self.optim, **lr_scheduler_kwargs)
 
         # Finally return the optimizer and scheduler - the loss is not returned.
