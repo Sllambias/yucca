@@ -31,8 +31,3 @@ def reorient_to_RAS(image: nib.Nifti1Image, strict=True):
         assert verify_nifti_header_is_valid(image)
     current_orientation = get_nib_orientation(image)
     return reorient_nib_image(image, original_orientation=current_orientation, target_orientation="RAS")
-
-
-def get_case_properties(image: nib.Nifti1Image):
-    image_properties["image_extension"] = ext
-    image_properties["original_shape"] = np.array(images[0].shape)

@@ -250,7 +250,6 @@ class YuccaManager:
         )
 
         self.verify_modules_are_valid()
-        self.visualize_model_with_FLOPs(self.model_module, input_dims_config)
 
         self.trainer = L.Trainer(
             callbacks=callback_config.callbacks,
