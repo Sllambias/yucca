@@ -1,3 +1,4 @@
+# %%
 import torch
 import yucca
 import wandb
@@ -135,7 +136,7 @@ class YuccaLightningModule(BaseLightningModule):
         self.save_hyperparameters(ignore=["lr_scheduler", "optimizer"])
 
     def setup(self, stage):  # noqa: U100
-        logging.info(f"Loading Model: {self.model_dimensions} {self.model.__class__.__name__}")
+        logging.info(f"Loading Model: {self.model_dimensions} {self.model.__name__}")
         if self.model_dimensions == "3D":
             conv_op = torch.nn.Conv3d
             norm_op = torch.nn.InstanceNorm3d
@@ -155,7 +156,7 @@ class YuccaLightningModule(BaseLightningModule):
         }
         model_kwargs.update(self.model_kwargs)
         model_kwargs = filter_kwargs(self.model, model_kwargs)
-        self.model = self.model(input_channels=self.num_modalities, num_classes=self.num_classes, **self.model_kwargs)
+        self.model = self.model(input_channels=self.num_modalities, num_classes=self.num_classes, **model_kwargs)
 
     def visualize_model_with_FLOPs(self):
         try:
@@ -287,3 +288,24 @@ class YuccaLightningModule(BaseLightningModule):
         second_half = final_epoch - np.logspace(0, 5, 10, base=4, endpoint=False)[::-1]
         indices = sorted(np.concatenate((first_half, second_half)).astype(int))
         return indices
+
+
+if __name__ == "__main__":
+    f = YuccaLightningModule(
+        config={
+            "model_name": "TinyUNet",
+            "plans": {"preprocessor": "YuccaPreprocessor"},
+            "model_dimensions": "3D",
+            "num_classes": 2,
+            "num_modalities": 1,
+            "patch_size": (32, 32, 32),
+            "plans_path": "",
+            "patch_based_training": True,
+            "task_type": "segmentation",
+        },
+    )
+    data = torch.randn((2, 1, *(32, 32, 32)))
+    f.setup(stage="test")
+    f.forward(data)
+
+# %%

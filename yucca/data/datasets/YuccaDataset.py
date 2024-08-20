@@ -197,7 +197,7 @@ class YuccaTestPreprocessedDataset(torch.utils.data.Dataset):
         preprocessed_data_dir: str,
         pred_save_dir: str,
         overwrite_predictions: bool = False,
-        suffix: str = None,  # not used
+        suffix: str = None,  # noqa U100
         pred_include_cases: list = None,
     ):
         self.data_path = preprocessed_data_dir
