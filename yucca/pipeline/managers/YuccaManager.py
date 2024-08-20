@@ -364,10 +364,13 @@ class YuccaManager:
             )
 
     def visualize_model_with_FLOPs(self, lightning_module, input_dims_config):
-        flops = self.get_flops(
-            lightning_module, input_dims_config.batch_size, input_dims_config.num_modalities, input_dims_config.patch_size
-        )
-        logging.info("\n" + flop_count_table(flops))
+        try:
+            flops = self.get_flops(
+                lightning_module, input_dims_config.batch_size, input_dims_config.num_modalities, input_dims_config.patch_size
+            )
+            logging.info("\n" + flop_count_table(flops))
+        except RuntimeError:
+            logging.info("\n Model architecture could not be visualized.")
 
     @staticmethod
     def get_flops(lightning_module, batch_size, modalities, patch_size):
