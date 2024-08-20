@@ -17,8 +17,6 @@ from yucca.data.datasets.YuccaDataset import YuccaTrainDataset, YuccaTestDataset
 from yucca.data.samplers import InfiniteRandomSampler
 from yucca.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from yucca.paths import yucca_results
-from yucca.functional.utils.torch_utils import measure_FLOPs
-from fvcore.nn import flop_count_table
 
 
 class YuccaManager:
@@ -362,21 +360,6 @@ class YuccaManager:
             logging.info(
                 "Warning: you are limiting the amount of batches pr. step, but not sampling using InfiniteRandomSampler."
             )
-
-    def visualize_model_with_FLOPs(self, lightning_module, input_dims_config):
-        try:
-            flops = self.get_flops(
-                lightning_module, input_dims_config.batch_size, input_dims_config.num_modalities, input_dims_config.patch_size
-            )
-            logging.info("\n" + flop_count_table(flops))
-        except RuntimeError:
-            logging.info("\n Model architecture could not be visualized.")
-
-    @staticmethod
-    def get_flops(lightning_module, batch_size, modalities, patch_size):
-        data = torch.randn((batch_size, modalities, *patch_size))
-        flops = measure_FLOPs(lightning_module.model, data)
-        return flops
 
     def setup_fast_dev_run(self):
         self.batch_size = 2

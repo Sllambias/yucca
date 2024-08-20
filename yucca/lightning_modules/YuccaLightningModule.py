@@ -15,6 +15,8 @@ from yucca.functional.utils.kwargs import filter_kwargs
 from yucca.metrics.training_metrics import Accuracy, AUROC, F1
 from yucca.functional.visualization import get_train_fig_with_inp_out_tar
 from yucca.lightning_modules.BaseLightningModule import BaseLightningModule
+from yucca.functional.utils.torch_utils import measure_FLOPs
+from fvcore.nn import flop_count_table
 
 
 class YuccaLightningModule(BaseLightningModule):
@@ -87,6 +89,7 @@ class YuccaLightningModule(BaseLightningModule):
             step_logging=step_logging,
             test_time_augmentation=test_time_augmentation,
         )
+        self.config = config
         self.task_type = config["task_type"]
         self.log_image_every_n_epochs = log_image_every_n_epochs
 
@@ -154,9 +157,19 @@ class YuccaLightningModule(BaseLightningModule):
         model_kwargs = filter_kwargs(self.model, model_kwargs)
         self.model = self.model(input_channels=self.num_modalities, num_classes=self.num_classes, **self.model_kwargs)
 
+    def visualize_model_with_FLOPs(self):
+        try:
+            data = torch.randn((self.config["batch_size"], self.config["modalities"], *self.config["patch_size"]))
+            flops = measure_FLOPs(self.model, data)
+            del data
+            logging.info("\n" + flop_count_table(flops))
+        except RuntimeError:
+            logging.info("\n Model architecture could not be visualized.")
+
     def on_train_start(self):
         if self.log_image_every_n_epochs is None:
             self.log_image_every_n_epochs = self.get_image_logging_epochs(self.trainer.max_epochs)
+        self.visualize_model_with_FLOPs()
 
     def training_step(self, batch, batch_idx):
         inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
