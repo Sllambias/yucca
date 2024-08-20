@@ -135,7 +135,7 @@ class YuccaLightningModule(BaseLightningModule):
         self.load_model()
 
     def load_model(self):
-        logging.info(f"Loading Model: {self.model_dimensions} {self.model_name}")
+        logging.info(f"Loading Model: {self.model_dimensions} {self.model.__class__.__name__}")
         if self.model_dimensions == "3D":
             conv_op = torch.nn.Conv3d
             norm_op = torch.nn.InstanceNorm3d
