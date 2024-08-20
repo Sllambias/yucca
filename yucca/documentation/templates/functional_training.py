@@ -6,7 +6,7 @@ from yucca.pipeline.configuration.split_data import get_split_config
 from yucca.pipeline.configuration.configure_input_dims import InputDimensionsConfig
 from yucca.data.augmentation.YuccaAugmentationComposer import YuccaAugmentationComposer
 from yucca.data.augmentation.augmentation_presets import generic
-from yucca.lightning_modules.YuccaThinLightningModule import YuccaThinLightningModule
+from repos.yucca.yucca.lightning_modules.BaseLightningModule import YuccaThinLightningModule
 from yucca.data.data_modules.YuccaDataModule import YuccaDataModule
 from yucca.networks.networks import TinyUNet
 from yucca.optimization.loss_functions.nnUNet_losses import DiceCE

@@ -1,13 +1,11 @@
-import lightning as L
 import torch
 import yucca
 import wandb
-import copy
 import logging
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from batchgenerators.utilities.file_and_folder_operations import join, load_pickle
+from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Dice
 from torchmetrics.regression import MeanAbsoluteError
@@ -16,10 +14,10 @@ from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from yucca.functional.utils.kwargs import filter_kwargs
 from yucca.metrics.training_metrics import Accuracy, AUROC, F1
 from yucca.functional.visualization import get_train_fig_with_inp_out_tar
-from yucca.functional.preprocessing import reverse_preprocessing
+from yucca.lightning_modules.BaseLightningModule import BaseLightningModule
 
 
-class YuccaLightningModule(L.LightningModule):
+class YuccaLightningModule(BaseLightningModule):
     """
     The YuccaLightningModule class is an implementation of the PyTorch Lightning module designed for the Yucca project.
     It extends the LightningModule class and encapsulates the neural network model, loss functions, and optimization logic.
@@ -243,66 +241,6 @@ class YuccaLightningModule(L.LightningModule):
             self.preprocessor = preprocessor_class(self.hparams_path)
             self.predict = self.predict_with_preprocessing
 
-    def predict_step(self, batch, _batch_idx, _dataloader_idx=0):
-        case, case_id = batch
-        logits, case_properties = self.predict(case)
-        return {"logits": logits, "properties": case_properties, "case_id": case_id[0]}
-
-    def predict_with_preprocessing(self, case):
-        (
-            case_preprocessed,
-            case_properties,
-        ) = self.preprocessor.preprocess_case_for_inference(case, self.patch_size, self.sliding_window_prediction)
-        logits = self._predict(case)
-
-        logits, case_properties = self.preprocessor.reverse_preprocessing(logits, case_properties)
-        return logits, case_properties
-
-    def predict_without_preprocessing(self, case):
-        # First split the list into case and case_properties
-        case, case_properties = case
-        # Load and unpack from tuple if wrapped (as will be the case by standard DataLoaders)
-        case = torch.load(case[0]) if isinstance(case, tuple) else torch.load(case, "r")
-        case_properties = (
-            load_pickle(case_properties[0]) if isinstance(case_properties, tuple) else load_pickle(case_properties)
-        )
-        logits = self._predict(case)
-        logits, case_properties = reverse_preprocessing(
-            crop_to_nonzero=self.plans["crop_to_nonzero"],
-            images=logits,
-            image_properties=case_properties,
-            n_classes=self.plans["num_classes"],
-            transpose_forward=self.plans["transpose_forward"],
-            transpose_backward=self.plans["transpose_backward"],
-        )
-        return logits, case_properties
-
-    def _predict(self, case):
-        logits = self.model.predict(
-            data=case,
-            mode=self.model_dimensions,
-            mirror=self.test_time_augmentation,
-            overlap=self.sliding_window_overlap,
-            patch_size=self.patch_size,
-            sliding_window_prediction=self.sliding_window_prediction,
-        )
-        return logits
-
-    def compute_metrics(self, metrics, output, target, ignore_index: int = 0):
-        metrics = metrics(output, target)
-        tmp = {}
-        to_drop = []
-        for key in metrics.keys():
-            if metrics[key].numel() > 1:
-                to_drop.append(key)
-                for i, val in enumerate(metrics[key]):
-                    if not i == ignore_index:
-                        tmp[key + "_" + str(i)] = val
-        for k in to_drop:
-            metrics.pop(k)
-        metrics.update(tmp)
-        return metrics
-
     def configure_optimizers(self):
         # Initialize and configure the loss(es) here.
         # loss_kwargs holds args for any scheduler class,
@@ -358,46 +296,6 @@ class YuccaLightningModule(L.LightningModule):
 
         # Finally return the optimizer and scheduler - the loss is not returned.
         return {"optimizer": self.optim, "lr_scheduler": self.lr_scheduler}
-
-    def load_state_dict(self, state_dict, *args, **kwargs):
-        # First we filter out layers that have changed in size
-        # This is often the case in the output layer.
-        # If we are finetuning on a task with a different number of classes
-        # than the pretraining task, the # output channels will have changed.
-        old_params = copy.deepcopy(self.state_dict())
-        state_dict = {
-            k: v for k, v in state_dict.items() if (k in old_params) and (old_params[k].shape == state_dict[k].shape)
-        }
-        rejected_keys_new = [k for k in state_dict.keys() if k not in old_params]
-        rejected_keys_shape = [k for k in state_dict.keys() if old_params[k].shape != state_dict[k].shape]
-        rejected_keys_data = []
-
-        # Here there's also potential to implement custom loading functions.
-        # E.g. to load 2D pretrained models into 3D by repeating or something like that.
-
-        # Now keep track of the # of layers with succesful weight transfers
-        successful = 0
-        unsuccessful = 0
-        super().load_state_dict(state_dict, *args, **kwargs)
-        new_params = self.state_dict()
-        for param_name, p1, p2 in zip(old_params.keys(), old_params.values(), new_params.values()):
-            # If more than one param in layer is NE (not equal) to the original weights we've successfully loaded new weights.
-            if p1.data.ne(p2.data).sum() > 0:
-                successful += 1
-            else:
-                unsuccessful += 1
-                if param_name not in rejected_keys_new and param_name not in rejected_keys_shape:
-                    rejected_keys_data.append(param_name)
-
-        logging.warn(f"Succesfully transferred weights for {successful}/{successful+unsuccessful} layers")
-        logging.warn(
-            f"Rejected the following keys:\n"
-            f"Not in old dict: {rejected_keys_new}.\n"
-            f"Wrong shape: {rejected_keys_shape}.\n"
-            f"Post check not succesful: {rejected_keys_data}."
-        )
-
-        return successful
 
     def _log_dict_of_images_to_wandb(self, imagedict: {}, log_key: str, task_type: str = "segmentation"):
         batch_idx = np.random.randint(0, imagedict["input"].shape[0])
