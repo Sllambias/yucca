@@ -106,7 +106,7 @@ class BaseLightningModule(L.LightningModule):
         # Do not overwrite parameters during inference.
         self.save_hyperparameters(ignore=["model", "loss_fn", "lr_scheduler", "optimizer", "preprocessor"])
 
-    def setup(self):
+    def setup(self, stage):
         logging.info(f"Loading Model: {self.model_dimensions} {self.model.__class__.__name__}")
         self.model = self.model(input_channels=self.num_modalities, num_classes=self.num_classes, **self.model_kwargs)
 
