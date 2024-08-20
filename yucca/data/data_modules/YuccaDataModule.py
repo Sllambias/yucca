@@ -69,7 +69,6 @@ class YuccaDataModule(pl.LightningDataModule):
     ):
         super().__init__()
 
-        # extract parameters
         self.batch_size = batch_size
         self.patch_size = patch_size
         self.image_extension = image_extension
@@ -79,7 +78,6 @@ class YuccaDataModule(pl.LightningDataModule):
         self.splits_config = splits_config
         self.train_data_dir = train_data_dir
 
-        # Set by initialize()
         self.allow_missing_modalities = allow_missing_modalities
         self.composed_train_transforms = composed_train_transforms
         self.composed_val_transforms = composed_val_transforms

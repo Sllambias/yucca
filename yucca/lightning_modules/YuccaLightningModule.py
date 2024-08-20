@@ -131,7 +131,7 @@ class YuccaLightningModule(BaseLightningModule):
         # Do not overwrite parameters during inference.
         self.save_hyperparameters(ignore=["lr_scheduler", "optimizer"])
 
-    def setup(self, stage):
+    def setup(self, stage):  # noqa: U100
         logging.info(f"Loading Model: {self.model_dimensions} {self.model.__class__.__name__}")
         if self.model_dimensions == "3D":
             conv_op = torch.nn.Conv3d

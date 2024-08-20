@@ -106,7 +106,7 @@ class BaseLightningModule(L.LightningModule):
         # Do not overwrite parameters during inference.
         self.save_hyperparameters(ignore=["model", "loss_fn", "lr_scheduler", "optimizer", "preprocessor"])
 
-    def setup(self, stage):
+    def setup(self, stage):  # noqa: U100
         logging.info(f"Loading Model: {self.model_dimensions} {self.model.__class__.__name__}")
         self.model = self.model(input_channels=self.num_modalities, num_classes=self.num_classes, **self.model_kwargs)
 
@@ -188,7 +188,7 @@ class BaseLightningModule(L.LightningModule):
             self.preprocessor = self.preprocessor(self.hparams_path)
             self.predict = self.predict_with_preprocessing
 
-    def predict_step(self, batch, _batch_idx, _dataloader_idx=0):
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):  # noqa: U100
         case, case_id = batch
         logits, case_properties = self.predict(case)
         return {"logits": logits, "properties": case_properties, "case_id": case_id[0]}
@@ -233,7 +233,7 @@ class BaseLightningModule(L.LightningModule):
         )
         return logits
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch, batch_idx):  # noqa: U100
         inputs, target = batch["image"], batch["label"]
         output = self(inputs)
         loss = self.loss_fn_train(output, target)
@@ -255,7 +255,7 @@ class BaseLightningModule(L.LightningModule):
 
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch, batch_idx):  # noqa: U100
         inputs, target = batch["image"], batch["label"]
         output = self(inputs)
         loss = self.loss_fn_val(output, target)

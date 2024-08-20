@@ -14,7 +14,8 @@ class YuccaLightningModule_onehot_labels(YuccaLightningModule):
         **kwargs,
     ):
         super().__init__(
-            config,
+            config=config,
+            loss_fn="SigmoidDiceBCE",
             *args,
             **kwargs,
         )
@@ -33,8 +34,6 @@ class YuccaLightningModule_onehot_labels(YuccaLightningModule):
                 "val/F1": MulticlassF1Score(num_classes=self.num_classes),
             },
         )
-
-        self.loss_fn = "SigmoidDiceBCE"
 
     def training_step(self, batch, batch_idx):
         inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]

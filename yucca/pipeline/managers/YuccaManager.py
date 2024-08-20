@@ -231,12 +231,13 @@ class YuccaManager:
         )
 
         self.data_module = self.data_module_class(
+            batch_size=input_dims_config.batch_size,
+            patch_size=input_dims_config.patch_size,
             allow_missing_modalities=plan_config.allow_missing_modalities,
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
             pred_include_cases=pred_include_cases,
             image_extension=plan_config.image_extension,
-            input_dims_config=input_dims_config,
             overwrite_predictions=overwrite_predictions,
             num_workers=self.num_workers,
             pred_data_dir=pred_data_dir,
