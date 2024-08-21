@@ -54,7 +54,7 @@ class YuccaLightningModule(BaseLightningModule):
         model = recursive_find_python_class(
             folder=[join(yucca.__path__[0], "networks")],
             class_name=config["model_name"],
-            current_module="yucca.networks",
+            current_module="yucca.modules.networks",
         )
         preprocessor = recursive_find_python_class(
             folder=[join(yucca.__path__[0], "pipeline", "preprocessing")],
@@ -64,7 +64,7 @@ class YuccaLightningModule(BaseLightningModule):
         loss_fn = recursive_find_python_class(
             folder=[join(yucca.__path__[0], "optimization", "loss_functions")],
             class_name=loss_fn if loss_fn is not None else "DiceCE",
-            current_module="yucca.optimization.loss_functions",
+            current_module="yucca.modules.optimization.loss_functions",
         )
         super().__init__(
             model=model,

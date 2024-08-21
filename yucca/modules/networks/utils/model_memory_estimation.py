@@ -152,7 +152,7 @@ def find_optimal_tensor_dims(
     model = recursive_find_python_class(
         folder=[join(yucca.__path__[0], "networks")],
         class_name=model_name,
-        current_module="yucca.networks",
+        current_module="yucca.modules.networks",
     )
     model_kwargs = {
         "input_channels": modalities,
