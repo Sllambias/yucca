@@ -198,7 +198,7 @@ class BaseLightningModule(L.LightningModule):
             case_preprocessed,
             case_properties,
         ) = self.preprocessor.preprocess_case_for_inference(case, self.patch_size, self.sliding_window_prediction)
-        logits = self._predict(case)
+        logits = self._predict(case_preprocessed)
 
         logits, case_properties = self.preprocessor.reverse_preprocessing(logits, case_properties)
         return logits, case_properties
