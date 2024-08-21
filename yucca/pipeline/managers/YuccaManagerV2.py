@@ -1,5 +1,5 @@
 from yucca.pipeline.managers.YuccaManager import YuccaManager
-from yucca.data.augmentation.augmentation_presets import generic
+from yucca.modules.data.augmentation.augmentation_presets import generic
 
 
 class YuccaManagerV2(YuccaManager):

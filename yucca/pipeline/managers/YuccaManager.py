@@ -3,7 +3,7 @@ import torch
 import wandb
 import logging
 from typing import Literal, Union, Optional
-from yucca.data.augmentation.YuccaAugmentationComposer import YuccaAugmentationComposer
+from yucca.modules.data.augmentation.YuccaAugmentationComposer import YuccaAugmentationComposer
 from yucca.pipeline.configuration.split_data import get_split_config, SplitConfig
 from yucca.pipeline.configuration.configure_task import get_task_config
 from yucca.pipeline.configuration.configure_callbacks import get_callback_config
@@ -12,10 +12,10 @@ from yucca.pipeline.configuration.configure_seed import seed_everything_and_get_
 from yucca.pipeline.configuration.configure_paths import get_path_config
 from yucca.pipeline.configuration.configure_plans import get_plan_config
 from yucca.pipeline.configuration.configure_input_dims import get_input_dims_config
-from yucca.data.data_modules.YuccaDataModule import YuccaDataModule
-from yucca.data.datasets.YuccaDataset import YuccaTrainDataset, YuccaTestDataset, YuccaTestPreprocessedDataset
-from yucca.data.samplers import InfiniteRandomSampler
-from yucca.lightning_modules.YuccaLightningModule import YuccaLightningModule
+from yucca.modules.data.data_modules.YuccaDataModule import YuccaDataModule
+from yucca.modules.data.datasets.YuccaDataset import YuccaTrainDataset, YuccaTestDataset, YuccaTestPreprocessedDataset
+from yucca.modules.data.samplers import InfiniteRandomSampler
+from yucca.modules.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from yucca.paths import yucca_results
 
 

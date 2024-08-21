@@ -1,5 +1,5 @@
 from yucca.pipeline.managers.YuccaManager import YuccaManager
-from yucca.data.datasets.alternative_datasets.YuccaDataset_1modality import YuccaTrainDataset_1modality
+from yucca.modules.data.datasets.alternative_datasets.YuccaDataset_1modality import YuccaTrainDataset_1modality
 
 
 class YuccaManager_Only1Modality(YuccaManager):

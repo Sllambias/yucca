@@ -1,6 +1,6 @@
 def test_2D_networks_work():
     import torch
-    from yucca.networks.networks import MedNeXt, UNet, UNetR, UXNet, MultiResUNet
+    from yucca.modules.networks.networks import MedNeXt, UNet, UNetR, UXNet, MultiResUNet
     from yucca.functional.utils.kwargs import filter_kwargs
 
     n_modalities = torch.randint(low=1, high=5, size=(1,))
@@ -27,7 +27,7 @@ def test_2D_networks_work():
 
 def test_3D_networks_work():
     import torch
-    from yucca.networks.networks import MedNeXt, UNet, UNetR, UXNet, MultiResUNet
+    from yucca.modules.networks.networks import MedNeXt, UNet, UNetR, UXNet, MultiResUNet
     from yucca.functional.utils.kwargs import filter_kwargs
 
     n_modalities = torch.randint(low=1, high=5, size=(1,))
