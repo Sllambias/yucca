@@ -119,6 +119,7 @@ class YuccaLightningModule(BaseLightningModule):
         model_kwargs.update(self.model_kwargs)
         model_kwargs = filter_kwargs(self.model, model_kwargs)
         self.model = self.model(input_channels=self.num_modalities, num_classes=self.num_classes, **model_kwargs)
+        self.visualize_model_with_FLOPs()
 
     def visualize_model_with_FLOPs(self):
         try:
@@ -129,7 +130,7 @@ class YuccaLightningModule(BaseLightningModule):
         except RuntimeError:
             logging.info("\n Model architecture could not be visualized.")
 
-    def on_train_start(self):
+    def on_fit_start(self):
         if self.task_type == "classification":
             tmetrics_task = "multiclass" if self.num_classes > 2 else "binary"
             # can we get per-class?
@@ -169,8 +170,6 @@ class YuccaLightningModule(BaseLightningModule):
 
         if self.log_image_every_n_epochs is None:
             self.log_image_every_n_epochs = self.get_image_logging_epochs(self.trainer.max_epochs)
-
-        self.visualize_model_with_FLOPs()
 
     def training_step(self, batch, batch_idx):
         inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]

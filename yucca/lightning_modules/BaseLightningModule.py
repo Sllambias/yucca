@@ -167,7 +167,7 @@ class BaseLightningModule(L.LightningModule):
 
         return successful
 
-    def on_train_start(self):
+    def on_fit_start(self):
         self.train_metrics = MetricCollection(
             {
                 "train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
