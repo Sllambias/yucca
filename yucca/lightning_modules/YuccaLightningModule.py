@@ -93,44 +93,6 @@ class YuccaLightningModule(BaseLightningModule):
         self.config = config
         self.task_type = config["task_type"]
         self.log_image_every_n_epochs = log_image_every_n_epochs
-
-        if self.task_type == "classification":
-            tmetrics_task = "multiclass" if self.num_classes > 2 else "binary"
-            # can we get per-class?
-            self.train_metrics = MetricCollection(
-                {
-                    "train/acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
-                    "train/roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
-                }
-            )
-            self.val_metrics = MetricCollection(
-                {
-                    "val/acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
-                    "val/roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
-                }
-            )
-
-        if self.task_type == "segmentation":
-            self.train_metrics = MetricCollection(
-                {
-                    "train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
-                    "train/F1": F1(
-                        num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None
-                    ),
-                },
-            )
-
-            self.val_metrics = MetricCollection(
-                {
-                    "val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
-                    "val/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
-                },
-            )
-
-        if self.task_type == "self-supervised":
-            self.train_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
-            self.val_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
-
         # If we are training we save params and then start training
         # Do not overwrite parameters during inference.
         self.save_hyperparameters(ignore=["lr_scheduler", "optimizer"])
@@ -168,8 +130,46 @@ class YuccaLightningModule(BaseLightningModule):
             logging.info("\n Model architecture could not be visualized.")
 
     def on_train_start(self):
+        if self.task_type == "classification":
+            tmetrics_task = "multiclass" if self.num_classes > 2 else "binary"
+            # can we get per-class?
+            self.train_metrics = MetricCollection(
+                {
+                    "train/acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
+                    "train/roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
+                }
+            )
+            self.val_metrics = MetricCollection(
+                {
+                    "val/acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
+                    "val/roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
+                }
+            )
+
+        if self.task_type == "segmentation":
+            self.train_metrics = MetricCollection(
+                {
+                    "train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
+                    "train/F1": F1(
+                        num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None
+                    ),
+                },
+            )
+
+            self.val_metrics = MetricCollection(
+                {
+                    "val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
+                    "val/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
+                },
+            )
+
+        if self.task_type == "self-supervised":
+            self.train_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
+            self.val_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
+
         if self.log_image_every_n_epochs is None:
             self.log_image_every_n_epochs = self.get_image_logging_epochs(self.trainer.max_epochs)
+
         self.visualize_model_with_FLOPs()
 
     def training_step(self, batch, batch_idx):

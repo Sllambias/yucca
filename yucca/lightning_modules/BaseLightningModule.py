@@ -88,20 +88,6 @@ class BaseLightningModule(L.LightningModule):
         logging.info(f"{self.__class__.__name__} initialized")
         logging.info(f"Deep Supervision Enabled: {self.deep_supervision}")
 
-        self.train_metrics = MetricCollection(
-            {
-                "train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
-                "train/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
-            },
-        )
-
-        self.val_metrics = MetricCollection(
-            {
-                "val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
-                "val/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
-            },
-        )
-
         # If we are training we save params and then start training
         # Do not overwrite parameters during inference.
         self.save_hyperparameters(ignore=["model", "loss_fn", "lr_scheduler", "optimizer", "preprocessor"])
@@ -180,6 +166,20 @@ class BaseLightningModule(L.LightningModule):
         )
 
         return successful
+
+    def on_train_start(self):
+        self.train_metrics = MetricCollection(
+            {
+                "train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
+                "train/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
+            },
+        )
+        self.val_metrics = MetricCollection(
+            {
+                "val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
+                "val/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
+            },
+        )
 
     def on_predict_start(self):
         if self.disable_inference_preprocessing:
