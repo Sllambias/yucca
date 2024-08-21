@@ -160,7 +160,7 @@ class YuccaLightningModule(BaseLightningModule):
 
     def visualize_model_with_FLOPs(self):
         try:
-            data = torch.randn((self.config["batch_size"], self.config["modalities"], *self.config["patch_size"]))
+            data = torch.randn((self.config["batch_size"], self.config["num_modalities"], *self.config["patch_size"]))
             flops = measure_FLOPs(self.model, data)
             del data
             logging.info("\n" + flop_count_table(flops))
