@@ -101,7 +101,7 @@ def test_finetune():
             "2D",
             "-pl",
             "UnsupervisedPlanner",
-            "-loss",
+            "--loss",
             "MSE",
             "--lr",
             "0.0006",
