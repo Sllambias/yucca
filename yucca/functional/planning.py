@@ -12,7 +12,7 @@ def make_plans_file(
     plans_name: str,
     dataset_properties: Optional[dict] = {},
     keep_aspect_ratio_when_using_target_size: bool = True,
-    preprocessor: Optional[str] = "",
+    preprocessor: Optional[str] = None,
     task_type: str = "segmentation",
     target_coordinate_system: str = "RAS",
     target_spacing: list = [1.0, 1.0, 1.0],

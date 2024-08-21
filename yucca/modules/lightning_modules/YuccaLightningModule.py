@@ -52,20 +52,16 @@ class YuccaLightningModule(BaseLightningModule):
         log_image_every_n_epochs: int = None,
     ):
         model = recursive_find_python_class(
-            folder=[join(yucca.__path__[0], "networks")],
+            folder=[join(yucca.__path__[0], "modules", "networks")],
             class_name=config["model_name"],
             current_module="yucca.modules.networks",
         )
-        preprocessor = recursive_find_python_class(
-            folder=[join(yucca.__path__[0], "pipeline", "preprocessing")],
-            class_name=config["plans"]["preprocessor"],
-            current_module="yucca.pipeline.preprocessing",
-        )
         loss_fn = recursive_find_python_class(
-            folder=[join(yucca.__path__[0], "optimization", "loss_functions")],
+            folder=[join(yucca.__path__[0], "modules", "optimization", "loss_functions")],
             class_name=loss_fn if loss_fn is not None else "DiceCE",
             current_module="yucca.modules.optimization.loss_functions",
         )
+        preprocessor = self.get_preprocessor(config)
         super().__init__(
             model=model,
             model_dimensions=config["model_dimensions"],
@@ -273,6 +269,17 @@ class YuccaLightningModule(BaseLightningModule):
         )
         wandb.log({log_key: wandb.Image(fig)}, commit=False)
         plt.close(fig)
+
+    @staticmethod
+    def get_preprocessor(config):
+        preprocessor = None
+        if config.get("plans") and config["plans"].get("preprocessor"):
+            preprocessor = recursive_find_python_class(
+                folder=[join(yucca.__path__[0], "pipeline", "preprocessing")],
+                class_name=config["plans"]["preprocessor"],
+                current_module="yucca.pipeline.preprocessing",
+            )
+        return preprocessor
 
     @property
     def log_image_this_epoch(self):

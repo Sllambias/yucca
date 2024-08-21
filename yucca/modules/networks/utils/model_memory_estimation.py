@@ -150,7 +150,7 @@ def find_optimal_tensor_dims(
         model_name = "UNet"
 
     model = recursive_find_python_class(
-        folder=[join(yucca.__path__[0], "networks")],
+        folder=[join(yucca.__path__[0], "modules", "networks")],
         class_name=model_name,
         current_module="yucca.modules.networks",
     )
