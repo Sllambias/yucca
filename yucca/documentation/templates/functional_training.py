@@ -72,12 +72,12 @@ if __name__ == "__main__":
     trainer = L.Trainer(
         callbacks=callback_config.callbacks,
         default_root_dir=path_config.save_dir,
-        limit_train_batches=100,
-        limit_val_batches=20,
+        limit_train_batches=2,
+        limit_val_batches=2,
         logger=callback_config.loggers,
         precision="16",
         enable_progress_bar=True,
-        max_epochs=10,
+        max_epochs=config["max_epochs"],
         accelerator="cpu",
     )
 

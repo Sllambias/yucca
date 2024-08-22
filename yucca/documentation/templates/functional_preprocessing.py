@@ -31,12 +31,10 @@ if __name__ == "__main__":
         task_type=config["task_type"],
     )
 
+    # Preprocess the training data
     subjects = [file[: -len(config["extension"])] for file in subfiles(raw_labels_dir, join=False) if not file.startswith(".")]
 
     for sub in subjects:
-        # we'll just do the first 5 images in this demo
-        # this still assumes raw images are stored in the yucca format images are saved as:
-        # sub_XXX.ext where XXX is the modality encoding (e.g 000 and 001 if two modalities are present per subject)
         images = [
             image_path
             for image_path in subfiles(raw_images_dir)
@@ -47,10 +45,10 @@ if __name__ == "__main__":
         images, label, image_props = preprocess_case_for_training_with_label(
             images=images,
             label=label,
-            normalization_operation=["volume_wise_znorm"],
+            normalization_operation=plans["norm_op"],
             allow_missing_modalities=False,
             enable_cc_analysis=False,
-            crop_to_nonzero=True,
+            crop_to_nonzero=plans["crop_to_nonzero"],
         )
         images = np.vstack((np.array(images), np.array(label)[np.newaxis]), dtype=np.float32)
 
@@ -61,6 +59,7 @@ if __name__ == "__main__":
     plans = add_stats_to_plans_post_preprocessing(plans=plans, directory=target_dir)
     save_json(plans, join(target_dir, config["plans_name"] + "_plans.json"), sort_keys=False)
 
+    # Preprocess the test data
     subjects = [
         file[: -len("_000" + config["extension"])]
         for file in subfiles(test_raw_images_dir, join=False)
@@ -68,9 +67,6 @@ if __name__ == "__main__":
     ]
 
     for sub in subjects:
-        # we'll just do the first 5 images in this demo
-        # this still assumes raw images are stored in the yucca format images are saved as:
-        # sub_XXX.ext where XXX is the modality encoding (e.g 000 and 001 if two modalities are present per subject)
         images = [
             image_path
             for image_path in subfiles(test_raw_images_dir)
@@ -88,7 +84,6 @@ if __name__ == "__main__":
             target_orientation=plans["target_coordinate_system"],
             transpose_forward=plans["transpose_forward"],
         )
-        # add channel dimension so they're stacked as (b, h, w, d) rather than (h * 2, w, d)
         save_path = join(test_target_dir, sub)
         torch.save(images, save_path + ".pt")
         save_pickle(image_props, save_path + ".pkl")
