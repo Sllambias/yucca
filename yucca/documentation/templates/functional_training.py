@@ -7,7 +7,7 @@ if __name__ == "__main__":
     from yucca.pipeline.configuration.configure_callbacks import get_callback_config
     from yucca.pipeline.configuration.split_data import get_split_config
     from yucca.modules.data.augmentation.YuccaAugmentationComposer import YuccaAugmentationComposer
-    from yucca.modules.data.augmentation.augmentation_presets import generic
+    from yucca.modules.data.augmentation.augmentation_presets import no_aug
     from yucca.modules.lightning_modules.YuccaLightningModule import YuccaLightningModule
     from yucca.modules.data.data_modules.YuccaDataModule import YuccaDataModule
     from yucca.documentation.templates.template_config import config
@@ -40,13 +40,14 @@ if __name__ == "__main__":
         experiment=task_config.experiment,
         version=path_config.version,
         enable_logging=False,
+        store_best_ckpt=False,
     )
 
     augmenter = YuccaAugmentationComposer(
         deep_supervision=config.get("deep_supervision"),
         patch_size=config.get("patch_size"),
         is_2D=True if config.get("dims") == "2D" else False,
-        parameter_dict=generic,
+        parameter_dict=no_aug,
         task_type_preset=config.get("task_type"),
     )
 
@@ -71,14 +72,13 @@ if __name__ == "__main__":
     trainer = L.Trainer(
         callbacks=callback_config.callbacks,
         default_root_dir=path_config.save_dir,
-        limit_train_batches=2,
-        limit_val_batches=2,
-        log_every_n_steps=2,
+        limit_train_batches=100,
+        limit_val_batches=20,
         logger=callback_config.loggers,
         precision="16",
-        profiler=callback_config.profiler,
         enable_progress_bar=True,
-        max_epochs=2,
+        max_epochs=10,
+        accelerator="cpu",
     )
 
     trainer.fit(

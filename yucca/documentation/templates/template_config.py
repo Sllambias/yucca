@@ -20,6 +20,6 @@ config = {
     "split_idx": 0,
     "split_method": "kfold",
     "split_param": 5,
-    "task": "TASK000_TEST_SEGMENTATION",
+    "task": "Task001_OASIS",
     "task_type": "segmentation",
 }
