@@ -1,11 +1,9 @@
-#%%
 import torch
 from torch import nn
 from yucca.optimization.loss_functions.CE import CE
 from yucca.optimization.loss_functions.nnUNet_losses import SoftDiceLoss, sum_tensor, DiceCE
 import torch.nn.functional as F
 import numpy as np 
-from yucca.optimization.loss_functions.nnUNet_losses import SoftDiceLoss
 
 class SoftSkeletonRecallLoss(nn.Module):
     def __init__(self, apply_softmax=True, batch_dice=False, do_bg=True, smooth=1.0):
@@ -22,6 +20,10 @@ class SoftSkeletonRecallLoss(nn.Module):
     def forward(self, x, y, loss_mask=None):
         shp_x, shp_y = x.shape, y.shape
 
+        if self.batch_dice:
+            axes = [0] + list(range(2, len(shp_x)))
+        else:
+            axes = list(range(2, len(shp_x)))
 
         if self.apply_softmax is True:
             x = F.softmax(x)
@@ -29,7 +31,7 @@ class SoftSkeletonRecallLoss(nn.Module):
         x = x[:, 1:]
 
         # make everything shape (b, c)
-        axes = list(range(2, len(shp_x)))
+        #axes = list(range(2, len(shp_x)))
 
         with torch.no_grad():
             if len(shp_x) != len(shp_y):
@@ -47,8 +49,6 @@ class SoftSkeletonRecallLoss(nn.Module):
             #sum_gt = y_onehot.sum(axes) if loss_mask is None else (y_onehot * loss_mask).sum(axes)
             sum_gt = sum_tensor(y_onehot, axes) if loss_mask is None else sum_tensor(y_onehot * loss_mask, axes)
             
-
-
         #inter_rec = (x * y_onehot).sum(axes) if loss_mask is None else (x * y_onehot * loss_mask).sum(axes)
         inter_rec = sum_tensor((x * y_onehot),axes) if loss_mask is None else sum_tensor(x * y_onehot * loss_mask,axes)
 
@@ -101,7 +101,6 @@ class DC_SkelREC_and_CE_loss(nn.Module):
         self.ignore_label = ignore_label
 
         self.ce = CE()
-        print(**soft_dice_kwargs)
         self.dc = SoftDiceLoss(**soft_dice_kwargs)
         self.srec = SoftSkeletonRecallLoss(**soft_skelrec_kwargs)
 
@@ -117,6 +116,7 @@ class DC_SkelREC_and_CE_loss(nn.Module):
             mask = target != self.ignore_label
             target[~mask] = 0
             mask = mask.float()
+            
         else:
             mask = None
 
@@ -130,25 +130,7 @@ class DC_SkelREC_and_CE_loss(nn.Module):
             ce_loss *= mask[:, 0]
             ce_loss = ce_loss.sum() / mask.sum()
 
-        srec_loss = self.srec(net_output, skel) if self.weight_srec != 0 else 0
+        srec_loss = self.srec(net_output, skel[:, 0].long()) if self.weight_srec != 0 else 0
 
         result = self.weight_ce * ce_loss + self.weight_dice * dc_loss + self.weight_srec * srec_loss
         return result
-#%%
-
-A = torch.rand(16,16)
-B = torch.rand(16,16)
-
-#AA = SoftDiceLoss()
-#AA.forward(A, B)
-#
-#BB = DiceCE()
-#BB.forward(A, B)
-from yucca.functional.transforms.skeleton import skeleton
-
-C= skeleton(B.numpy())
-C = torch.from_numpy(C)
-
-AAA = DC_SkelREC_and_CE_loss()
-AAA.forward(A, B, C)
-# %%

@@ -20,3 +20,4 @@ from yucca.data.augmentation.transforms.Ringing import GibbsRinging
 from yucca.data.augmentation.transforms.sampling import DownsampleSegForDS
 from yucca.data.augmentation.transforms.SimulateLowres import SimulateLowres
 from yucca.data.augmentation.transforms.Spatial import Spatial
+from yucca.data.augmentation.transforms.Skeleton import Skeleton

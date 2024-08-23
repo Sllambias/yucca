@@ -7,3 +7,4 @@ from yucca.functional.transforms.ringing import gibbs_ringing
 from yucca.functional.transforms.sampling import downsample_label, simulate_lowres
 from yucca.functional.transforms.masking import mask_batch
 from yucca.functional.transforms.spatial import spatial
+from yucca.functional.transforms.skeleton import skeleton
