@@ -169,9 +169,9 @@ class YuccaLightningModule(L.LightningModule):
             self.log_image_every_n_epochs = self.get_image_logging_epochs(self.trainer.max_epochs)
 
     def training_step(self, batch, batch_idx):
-        inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
+        inputs, target, file_path, skel = batch["image"], batch["label"], batch["file_path"], batch["skel"]
         output = self(inputs)
-        loss = self.loss_fn_train(output, target)
+        loss = self.loss_fn_train(output, target, skel)
 
         if self.deep_supervision:
             # If deep_supervision is enabled output and target will be a list of (downsampled) tensors.
@@ -203,9 +203,9 @@ class YuccaLightningModule(L.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
+        inputs, target, file_path, skel = batch["image"], batch["label"], batch["file_path"], batch['skel']
         output = self(inputs)
-        loss = self.loss_fn_val(output, target)
+        loss = self.loss_fn_val(output, target, skel)
 
         metrics = self.compute_metrics(self.val_metrics, output, target)
         self.log_dict(

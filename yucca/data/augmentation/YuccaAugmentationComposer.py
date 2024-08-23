@@ -127,6 +127,10 @@ class YuccaAugmentationComposer:
         self.scale_factor = (0.9, 1.1)
 
         self.simulate_lowres_zoom_range = (0.5, 1.0)
+        self.do_tube = False
+        self.skeleton = False
+
+
 
     @property
     def pre_aug_patch_size(self):
@@ -157,7 +161,7 @@ class YuccaAugmentationComposer:
             [
                 CollectMetadata(),
                 AddBatchDimension(),
-                # augmentations
+                # augmentationsń
                 Spatial(
                     patch_size=self.patch_size,
                     crop=True,
@@ -187,6 +191,10 @@ class YuccaAugmentationComposer:
                     p_per_channel=self.blurring_p_per_channel,
                     sigma=self.blurring_sigma,
                     clip_to_input_range=self.clip_to_input_range,
+                ),
+                Skeleton(
+                     skeleton = self.skeleton,
+                     do_tube = self.do_tube,
                 ),
                 MultiplicativeNoise(
                     p_per_sample=self.multiplicative_noise_p_per_sample,
@@ -246,6 +254,10 @@ class YuccaAugmentationComposer:
         val_transforms = transforms.Compose(
             [
                 AddBatchDimension(),
+                Skeleton(
+                     skeleton = self.skeleton,
+                     do_tube = self.do_tube,
+                ),
                 ConvertLabelsToRegions(convert_labels_to_regions=self.convert_labels_to_regions, regions=self.label_regions),
                 CopyImageToLabel(copy=self.copy_image_to_label),
                 Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.cval, ratio=self.mask_ratio),
@@ -305,10 +317,11 @@ class YuccaAugmentationComposer:
                 "simulate_lowres_p_per_channel": self.simulate_lowres_p_per_channel,
                 "simulate_lowres_p_per_axis": self.simulate_lowres_p_per_axis,
                 "simulate_lowres_zoom_range": self.simulate_lowres_zoom_range,
+                "skeleton": self.skeleton, 
+                "do_tube": self.do_tube,
             }
         }
         return hparams
-
 
 
 if __name__ == "__main__":
