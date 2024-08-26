@@ -45,7 +45,7 @@ if __name__ == "__main__":
         images, label, image_props = preprocess_case_for_training_with_label(
             images=images,
             label=label,
-            normalization_operation=plans["norm_op"],
+            normalization_operation=plans["normalization_scheme"],
             allow_missing_modalities=False,
             enable_cc_analysis=False,
             crop_to_nonzero=plans["crop_to_nonzero"],
