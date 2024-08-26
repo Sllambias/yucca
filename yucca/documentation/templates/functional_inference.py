@@ -20,7 +20,7 @@ if __name__ == "__main__":
         "kfold_5_fold_0",
         "version_0",
         "checkpoints",
-        "best.ckpt",
+        "last.ckpt",
     )
 
     gt_path = os.path.join(yucca_raw_data, config["task"], "labelsTs")
