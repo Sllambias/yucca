@@ -22,7 +22,7 @@ if __name__ == "__main__":
     maybe_mkdir_p(test_target_dir)
 
     plans = make_plans_file(
-        allow_missing_modalities=config["allow_missing_modalities"],
+        allow_missing_modalities=False,
         crop_to_nonzero=config["crop_to_nonzero"],
         norm_op=config["norm_op"],
         classes=[0, 1, 2],
