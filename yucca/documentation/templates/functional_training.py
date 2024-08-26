@@ -41,6 +41,7 @@ if __name__ == "__main__":
         version_dir=path_config.version_dir,
         experiment=task_config.experiment,
         version=path_config.version,
+        latest_ckpt_epochs=1,
         enable_logging=False,
         store_best_ckpt=False,
     )
