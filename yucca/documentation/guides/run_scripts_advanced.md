@@ -11,14 +11,14 @@ options:
   -d SUBDIR, --subdir SUBDIR
                         Directory of data inside source data
 
-The -t flag must point to the name of a previously created task conversion script, such as the [OASIS script](/yucca/task_conversion/Task001_OASIS.py). The -p flag points to the parent directory of the dataset folder. If left empty this defaults to [`yucca_source`](/yucca/documentation/guides/environment_variables.md). The -d flag points to the specific dataset directory inside the parent directory. 
+The -t flag must point to the name of a previously created task conversion script, such as the [OASIS script](/yucca/pipeline/task_conversion/Task001_OASIS.py). The -p flag points to the parent directory of the dataset folder. If left empty this defaults to [`yucca_source`](/yucca/documentation/guides/environment_variables.md). The -d flag points to the specific dataset directory inside the parent directory. 
 
 If the OASIS dataset was located in /path/to/all/my/datasets/specific_dataset123 the command should be:
 `yucca_convert_task -t Task001_OASIS -p /path/to/all/my/datasets -d specific_dataset123`
 
 # Preprocessing
 
-The `yucca_preprocess` CLI invokes the [`run_preprocessing.py`](/yucca/run/run_preprocessing.py) script.
+The `yucca_preprocess` CLI invokes the [`run_preprocessing.py`](/yucca/pipeline/run/run_preprocessing.py) script.
 For help and all the available arguments see the output of the `-h` flag below.
 
 ```console
@@ -42,13 +42,13 @@ options:
 **--disable_sanity_checks**: should only be used if you are aware something will violate sanity checks, but you want to still continue.
 
 Internally, the `yucca_preprocess` command calls a planner and preprocessor class.
-Initially, the appropriate planner is called. This is by default the [`YuccaPlanner`](/yucca/planning/YuccaPlanner.py). The planner first collects dataset statistics can be used during preprocessing. These are saved in a `dataset_properties.pkl` file. Then, it specifies _what_ will happen during preprocessing. This includes the normalization operation, target spacing or size/resolution and orientation.
+Initially, the appropriate planner is called. This is by default the [`YuccaPlanner`](/yucca/pipeline/planning/YuccaPlanner.py). The planner first collects dataset statistics can be used during preprocessing. These are saved in a `dataset_properties.pkl` file. Then, it specifies _what_ will happen during preprocessing. This includes the normalization operation, target spacing or size/resolution and orientation.
 
-Afterwards, the preprocessor is called. This is by default the [`YuccaPreprocessor`](/yucca/preprocessing/YuccaPreprocessor.py). This preprocesses training data according to the operations and values supplied by planner. As such the preprocessor should very rarely be changed, while the planner will often be changed to employ alternative preprocessing schemes.
+Afterwards, the preprocessor is called. This is by default the [`YuccaPreprocessor`](/yucca/pipeline/preprocessing/YuccaPreprocessor.py). This preprocesses training data according to the operations and values supplied by planner. As such the preprocessor should very rarely be changed, while the planner will often be changed to employ alternative preprocessing schemes.
 
 # Training
 
-The `yucca_train` CLI invokes the [`run_training.py`](/yucca/run/run_training.py) script.
+The `yucca_train` CLI invokes the [`run_training.py`](/yucca/pipeline/run/run_training.py) script.
 For help and all the available arguments see the output of the `-h` flag below.
 
 ```console
@@ -149,7 +149,7 @@ An example of training on a task called `Task002_NotBrains`, using a 2D `MultiRe
 # Inference
 
 
-The `yucca_inference` CLI invokes the [`run_inference.py`](/yucca/run/run_inference.py) script.
+The `yucca_inference` CLI invokes the [`run_inference.py`](/yucca/pipeline/run/run_inference.py) script.
 For help and all the available arguments see the output of the `-h` flag below.
 
 ```console

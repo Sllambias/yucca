@@ -55,7 +55,7 @@ raw_data/
 ```
 
 ### Task Conversion Scripts
-Task conversion can be performed by running the [`run_task_conversion.py`](/yucca/run/run_task_conversion.py) which executes a task conversion according to one of the files in `yucca/yucca/task_conversion`. For some tasks a task conversion file already exists (e.g. [`Task001_OASIS`](/yucca/task_conversion/Task001_OASIS.py)) but otherwise a task conversion file must be created. A template for task conversion files can be found [here](/yucca/task_conversion/template.py).
+Task conversion can be performed by running the [`run_task_conversion.py`](/yucca/pipeline/run/run_task_conversion.py) which executes a task conversion according to one of the files in `yucca/yucca/task_conversion`. For some tasks a task conversion file already exists (e.g. [`Task001_OASIS`](/yucca/pipeline/task_conversion/Task001_OASIS.py)) but otherwise a task conversion file must be created. A template for task conversion files can be found [here](/yucca/pipeline/task_conversion/template.py).
 
 # Preprocessing
 

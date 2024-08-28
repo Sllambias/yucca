@@ -1,5 +1,5 @@
 from yucca.pipeline.managers.YuccaManager import YuccaManager
-from yucca.data.datasets.YuccaCompressedDataset import YuccaCompressedTrainDataset
+from yucca.modules.data.datasets.YuccaCompressedDataset import YuccaCompressedTrainDataset
 
 
 class YuccaManager_Compress(YuccaManager):
