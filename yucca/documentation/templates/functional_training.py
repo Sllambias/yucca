@@ -15,7 +15,7 @@ if __name__ == "__main__":
     from yucca.documentation.templates.template_config import config
 
     config["plans"] = load_json(
-        os.path.join(yucca_preprocessed_data, config["task"], config["plans_name"], config["plans_name"] + "_plans.json")
+        os.path.join(yucca_preprocessed_data(), config["task"], config["plans_name"], config["plans_name"] + "_plans.json")
     )
 
     task_config = TaskConfig(

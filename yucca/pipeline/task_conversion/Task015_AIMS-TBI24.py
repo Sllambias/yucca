@@ -6,7 +6,7 @@ from yucca.pipeline.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data, yucca_source
 
 
-def convert(path: str = yucca_source, subdir: str = "AIMS-TBI24"):
+def convert(path: str = yucca_source(), subdir: str = "AIMS-TBI24"):
     # INPUT DATA
     path = f"{path}/{subdir}"
 
@@ -21,7 +21,7 @@ def convert(path: str = yucca_source, subdir: str = "AIMS-TBI24"):
     task_prefix = "TBI24"
 
     # Target paths
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(yucca_raw_data(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")

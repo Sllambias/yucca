@@ -39,7 +39,7 @@ def convert(path: str, subdir: str = "PPMI"):
     task_prefix = "PPMI"
 
     subjects_dir = join(path, "DATA")
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(yucca_raw_data(), task_name)
     target_imagesTr = join(target_base, "imagesTr")
 
     maybe_mkdir_p(target_imagesTr)

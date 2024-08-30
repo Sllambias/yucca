@@ -177,7 +177,7 @@ def main():
     split = None
 
     path_to_versions = join(
-        yucca_models,
+        yucca_models(),
         source_task,
         model + "__" + dimensions,
         manager_name + "__" + planner,
@@ -192,7 +192,7 @@ def main():
         checkpoint = "last"
 
     modelfile = join(
-        yucca_models,
+        yucca_models(),
         source_task,
         model + "__" + dimensions,
         manager_name + "__" + planner,
@@ -232,11 +232,11 @@ def main():
     )
 
     # Setting up input paths and output paths
-    inpath = join(yucca_raw_data, target_task, "imagesTs") if not predpath else predpath
-    ground_truth = join(yucca_raw_data, target_task, "labelsTs") if not gtpath else gtpath
+    inpath = join(yucca_raw_data(), target_task, "imagesTs") if not predpath else predpath
+    ground_truth = join(yucca_raw_data(), target_task, "labelsTs") if not gtpath else gtpath
 
     outpath = join(
-        yucca_results,
+        yucca_results(),
         target_task,
         source_task,
         model + "__" + dimensions,
@@ -248,14 +248,14 @@ def main():
     )
 
     if predict_train:
-        inpath = join(yucca_raw_data, target_task, "imagesTr")
-        ground_truth = join(yucca_raw_data, target_task, "labelsTr")
+        inpath = join(yucca_raw_data(), target_task, "imagesTr")
+        ground_truth = join(yucca_raw_data(), target_task, "labelsTr")
         outpath += "Tr"
     elif predict_val:
-        inpath = join(yucca_raw_data, target_task, "imagesTr")
-        ground_truth = join(yucca_raw_data, target_task, "labelsTr")
+        inpath = join(yucca_raw_data(), target_task, "imagesTr")
+        ground_truth = join(yucca_raw_data(), target_task, "labelsTr")
         outpath += "Val"
-        split = load_pickle(join(yucca_preprocessed_data, source_task, "splits.pkl"))
+        split = load_pickle(join(yucca_preprocessed_data(), source_task, "splits.pkl"))
         split = split[str(split_data_method)][split_data_param][split_idx]["val"]
         strict = False
 

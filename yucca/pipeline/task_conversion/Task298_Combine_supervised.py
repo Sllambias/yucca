@@ -11,7 +11,7 @@ def convert(_path: str, _subdir: str = None):
     # The individual task_conversion scripts must be run prior to executing this, as the script will look for the data in the yucca_raw_data folder.
     tasks_to_combine = ["Task001_OASIS", "Task003_Hammers"]
 
-    target_base = os.path.join(yucca_raw_data, task_name)
+    target_base = os.path.join(yucca_raw_data(), task_name)
     os.makedirs(target_base, exist_ok=True)
 
     combine_images_from_tasks(tasks=tasks_to_combine, target_base=target_base, run_type="supervised")

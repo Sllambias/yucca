@@ -20,7 +20,7 @@ def convert(path: str, subdir: str = "decathlon/Task04_Hippocampus"):
     split the data, uncomment and adapt the following lines to fit your local path. """
 
     subjects_dir = join(path, "imagesTr")
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(yucca_raw_data(), task_name)
     target_imagesTr = join(target_base, "imagesTr")
 
     maybe_mkdir_p(target_imagesTr)

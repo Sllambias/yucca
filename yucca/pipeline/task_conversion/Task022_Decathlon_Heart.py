@@ -18,7 +18,7 @@ task_name = "Task022_Heart"
 task_prefix = "Heart"
 
 # Set target paths
-target_base = join(yucca_raw_data, task_name)
+target_base = join(yucca_raw_data(), task_name)
 target_imagesTr = join(target_base, "imagesTr")
 target_labelsTr = join(target_base, "labelsTr")
 target_imagesTs = join(target_base, "imagesTs")

@@ -27,7 +27,7 @@ def convert(path: str, subdir: str = "dataset_test0_classification"):
     task_prefix = "TEST_CLASSIFICATION"
 
     # Target paths
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(yucca_raw_data(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")

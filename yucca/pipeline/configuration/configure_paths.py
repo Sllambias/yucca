@@ -25,10 +25,10 @@ class PathConfig:
 
 
 def get_path_config(task_config: TaskConfig):
-    task_dir = join(yucca_preprocessed_data, task_config.task)
+    task_dir = join(yucca_preprocessed_data(), task_config.task)
     train_data_dir = join(task_dir, task_config.planner_name)
     save_dir = join(
-        yucca_models,
+        yucca_models(),
         task_config.task,
         task_config.model_name + "__" + task_config.model_dimensions,
         task_config.manager_name + "__" + task_config.planner_name,

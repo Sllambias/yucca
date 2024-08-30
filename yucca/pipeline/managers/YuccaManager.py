@@ -291,7 +291,7 @@ class YuccaManager:
         disable_tta: bool = False,
         disable_inference_preprocessing: bool = False,
         overwrite_predictions: bool = False,
-        output_folder: str = yucca_results,
+        output_folder: str = yucca_results(),
         pred_include_cases: list = None,
         save_softmax=False,
     ):
@@ -320,7 +320,7 @@ class YuccaManager:
         input_folder,
         disable_tta: bool = False,
         overwrite_predictions: bool = False,
-        output_folder: str = yucca_results,
+        output_folder: str = yucca_results(),
         pred_include_cases: list = None,
         save_softmax=False,
     ):

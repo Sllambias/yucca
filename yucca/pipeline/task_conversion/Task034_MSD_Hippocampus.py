@@ -17,7 +17,7 @@ task_name = "Task034_MSD_Hippocampus"
 task_prefix = ""
 
 # Set target paths
-target_base = join(yucca_raw_data, task_name)
+target_base = join(yucca_raw_data(), task_name)
 target_imagesTr = join(target_base, "imagesTr")
 target_labelsTr = join(target_base, "labelsTr")
 target_imagesTs = join(target_base, "imagesTs")

@@ -5,7 +5,7 @@ from yucca.pipeline.task_conversion.utils import generate_dataset_json
 from yucca.paths import yucca_raw_data, yucca_source
 
 
-def convert(path: str = yucca_source, subdir: str = "LITS"):
+def convert(path: str = yucca_source(), subdir: str = "LITS"):
     """INPUT DATA - Define input path and suffixes"""
     path = join(path, subdir)
     file_suffix = ".nii"
@@ -14,13 +14,13 @@ def convert(path: str = yucca_source, subdir: str = "LITS"):
     task_name = "Task019_LITS"
     task_prefix = "LITS"
 
-    """ Access the input data. If images are not split into train/test, and you wish to randomly 
+    """ Access the input data. If images are not split into train/test, and you wish to randomly
     split the data, uncomment and adapt the following lines to fit your local path. """
 
     training_batches = [join(path, "Training Batch 1"), join(path, "Training Batch 2")]
 
     """ Then define target paths """
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(yucca_raw_data(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")

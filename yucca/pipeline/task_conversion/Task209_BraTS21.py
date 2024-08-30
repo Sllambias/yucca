@@ -14,8 +14,8 @@ def convert(_path: str):
     sup_task_name = "Task012_BraTS21"
     ssl_task_name = "Task209_BraTS21"
 
-    source_folder = join(yucca_raw_data, sup_task_name, "imagesTr")
-    target_base = join(yucca_raw_data, ssl_task_name)
+    source_folder = join(yucca_raw_data(), sup_task_name, "imagesTr")
+    target_base = join(yucca_raw_data(), ssl_task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     maybe_mkdir_p(target_imagesTr)

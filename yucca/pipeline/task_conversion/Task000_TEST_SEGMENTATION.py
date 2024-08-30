@@ -20,7 +20,7 @@ from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 
 
-def convert(path: str = yucca_source, subdir: str = "dataset_test0"):
+def convert(path: str = yucca_source(), subdir: str = "dataset_test0"):
     # INPUT DATA
     path = join(path, subdir)
     suffix = ".nii.gz"
@@ -37,7 +37,7 @@ def convert(path: str = yucca_source, subdir: str = "dataset_test0"):
     task_prefix = "TEST_SEGMENTATION"
 
     # Target paths
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(yucca_raw_data(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")

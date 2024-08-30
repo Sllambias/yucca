@@ -175,7 +175,7 @@ class YuccaEvaluator(object):
         gt_is_task = [i for i in self.folder_with_ground_truth.split(os.sep) if "Task" in i]
         if gt_is_task:
             gt_task = gt_is_task[0]
-            dataset_json = join(yucca_raw_data, gt_task, "dataset.json")
+            dataset_json = join(yucca_raw_data(), gt_task, "dataset.json")
             if isfile(dataset_json):
                 dataset_json = load_json(dataset_json)
                 print(f"Labels found in dataset.json: {list(dataset_json['labels'].keys())}")

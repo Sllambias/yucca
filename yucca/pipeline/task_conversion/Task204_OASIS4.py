@@ -26,7 +26,7 @@ def convert(path: str, subdir: str = "OASIS4"):
     task_prefix = "OASIS4"
 
     subjects_dir = join(path, "OASIS4_images")
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(yucca_raw_data(), task_name)
     target_imagesTr = join(target_base, "imagesTr")
 
     maybe_mkdir_p(target_imagesTr)

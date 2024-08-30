@@ -40,7 +40,7 @@ def convert(path: str, txt_file_prefix: str = "data"):
     prefix = "SONAI"
 
     # Target paths
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(yucca_raw_data(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_imagesTs = join(target_base, "imagesTs")

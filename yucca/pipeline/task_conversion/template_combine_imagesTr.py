@@ -18,8 +18,8 @@ tasks_to_combine = []
 
 ### In most cases the remaining can be left untouched ###
 # Setting the paths to save the new task and making the directories
-target_base = os.path.join(yucca_raw_data, task_name)
-target_imagesTr = os.path.join(yucca_raw_data, task_name, "imagesTr")
+target_base = os.path.join(yucca_raw_data(), task_name)
+target_imagesTr = os.path.join(yucca_raw_data(), task_name, "imagesTr")
 target_imagesTs = None
 os.makedirs(target_imagesTr, exist_ok=True)
 

@@ -183,8 +183,8 @@ class YuccaPlanner(object):
 
     def set_paths(self):
         # Setting up paths
-        self.in_dir = join(yucca_raw_data, self.task)
-        self.target_dir = join(yucca_preprocessed_data, self.task)
+        self.in_dir = join(yucca_raw_data(), self.task)
+        self.target_dir = join(yucca_preprocessed_data(), self.task)
         self.plans_folder = join(self.target_dir, self.name)
         self.plans_path = join(self.plans_folder, self.name + "_plans.json")
         maybe_mkdir_p(join(self.target_dir, self.name))

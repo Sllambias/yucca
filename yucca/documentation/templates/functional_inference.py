@@ -12,7 +12,7 @@ if __name__ == "__main__":
     from yucca.documentation.templates.template_config import config
 
     ckpt_path = os.path.join(
-        yucca_models,
+        yucca_models(),
         config["task"],
         config["model_name"] + "__" + config["dims"],
         "__" + config["plans_name"],
@@ -23,11 +23,11 @@ if __name__ == "__main__":
         "last.ckpt",
     )
 
-    gt_path = os.path.join(yucca_raw_data, config["task"], "labelsTs")
-    target_data_path = os.path.join(yucca_preprocessed_data, config["task"] + "_test", "demo")
+    gt_path = os.path.join(yucca_raw_data(), config["task"], "labelsTs")
+    target_data_path = os.path.join(yucca_preprocessed_data(), config["task"] + "_test", "demo")
 
     save_path = os.path.join(
-        yucca_results,
+        yucca_results(),
         config["task"],
         config["task"],
         config["model_name"] + "__" + config["dims"],

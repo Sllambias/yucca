@@ -11,7 +11,7 @@ def convert(path: str, subdir: str = "MSSEG1_2016"):
 
     ###OUTPUT DATA
     # Target paths
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(yucca_raw_data(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")

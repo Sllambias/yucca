@@ -7,7 +7,7 @@ from yucca.paths import yucca_raw_data, yucca_source
 from yucca.functional.utils.nib_utils import get_nib_orientation, get_nib_spacing
 
 
-def convert(path: str = yucca_source, subdir: str = "decathlon", subsubdir: str = "Task01_BrainTumour"):
+def convert(path: str = yucca_source(), subdir: str = "decathlon", subsubdir: str = "Task01_BrainTumour"):
     # INPUT DATA
     path = f"{path}/{subdir}/{subsubdir}"
 
@@ -24,7 +24,7 @@ def convert(path: str = yucca_source, subdir: str = "decathlon", subsubdir: str 
     task_prefix = "Decathlon_BrainTumour"
 
     # Target paths
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(yucca_raw_data(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")

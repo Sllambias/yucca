@@ -46,8 +46,8 @@ def setup_preprocessed_segmentation_data(request):
     subprocess.run(["yucca_preprocess", "-t", "Task000_TEST_SEGMENTATION"], check=True)
 
     def finalizer():
-        shutil.rmtree(yucca_raw_data)
-        shutil.rmtree(yucca_preprocessed_data)
+        shutil.rmtree(yucca_raw_data())
+        shutil.rmtree(yucca_preprocessed_data())
 
     request.addfinalizer(finalizer)
 

@@ -24,7 +24,7 @@ def convert(path: str, subdir: str = "decathlon", subsubdir: str = "Task08_Hepat
     task_prefix = "Decathlon_HepaticVessel"
 
     # Target paths
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(yucca_raw_data(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")

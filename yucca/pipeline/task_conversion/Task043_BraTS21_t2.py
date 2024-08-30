@@ -15,7 +15,7 @@ def convert(path: str, subdir: str = "brats21/training_data"):
 
     ###OUTPUT DATA
     # Target paths
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(yucca_raw_data(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")

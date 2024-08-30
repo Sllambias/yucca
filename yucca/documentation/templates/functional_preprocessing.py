@@ -11,12 +11,12 @@ if __name__ == "__main__":
     from yucca.functional.utils.loading import read_file_to_nifti_or_np
     from yucca.functional.planning import make_plans_file, add_stats_to_plans_post_preprocessing
 
-    raw_images_dir = join(yucca_raw_data, config["task"], "imagesTr")
-    raw_labels_dir = join(yucca_raw_data, config["task"], "labelsTr")
-    test_raw_images_dir = join(yucca_raw_data, config["task"], "imagesTs")
+    raw_images_dir = join(yucca_raw_data(), config["task"], "imagesTr")
+    raw_labels_dir = join(yucca_raw_data(), config["task"], "labelsTr")
+    test_raw_images_dir = join(yucca_raw_data(), config["task"], "imagesTs")
 
-    target_dir = join(yucca_preprocessed_data, config["task"], config["plans_name"])
-    test_target_dir = join(yucca_preprocessed_data, config["task"] + "_test", config["plans_name"])
+    target_dir = join(yucca_preprocessed_data(), config["task"], config["plans_name"])
+    test_target_dir = join(yucca_preprocessed_data(), config["task"] + "_test", config["plans_name"])
 
     maybe_mkdir_p(target_dir)
     maybe_mkdir_p(test_target_dir)

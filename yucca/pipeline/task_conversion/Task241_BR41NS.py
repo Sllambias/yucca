@@ -22,7 +22,7 @@ def convert(_path: str, _subdir: str = None):
         "Task208_WMH",
     ]
 
-    target_base = os.path.join(yucca_raw_data, task_name)
+    target_base = os.path.join(yucca_raw_data(), task_name)
     os.makedirs(target_base, exist_ok=True)
 
     combine_images_from_tasks(tasks=tasks_to_combine, target_base=target_base, run_type="unsupervised")

@@ -118,7 +118,7 @@ def main():
             target_task = source_task
 
         predpath = join(  # TODO: Extract this into a function
-            yucca_results,
+            yucca_results(),
             target_task,
             source_task,
             model + "__" + dimensions,
@@ -128,8 +128,8 @@ def main():
             "version_" + str(num_version),
             checkpoint,
         )
-        gtpath = join(yucca_raw_data, target_task, "labelsTs")
-        classes = list(load_json(join(yucca_raw_data, target_task, "dataset.json"))["labels"].keys())
+        gtpath = join(yucca_raw_data(), target_task, "labelsTs")
+        classes = list(load_json(join(yucca_raw_data(), target_task, "dataset.json"))["labels"].keys())
 
     evaluator = YuccaEvaluator(
         classes,
