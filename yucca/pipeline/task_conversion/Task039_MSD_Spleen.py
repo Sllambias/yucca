@@ -2,7 +2,7 @@ import nibabel as nib
 import shutil
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
-from yucca.paths import yucca_raw_data
+from yucca.paths import get_yucca_raw_data
 from yucca.functional.testing.data.nifti import verify_spacing_is_equal, verify_orientation_is_equal
 
 # INPUT DATA
@@ -17,7 +17,7 @@ task_name = "Task039_MSD_Spleen"
 task_prefix = ""
 
 # Set target paths
-target_base = join(yucca_raw_data(), task_name)
+target_base = join(get_yucca_raw_data(), task_name)
 target_imagesTr = join(target_base, "imagesTr")
 target_labelsTr = join(target_base, "labelsTr")
 target_imagesTs = join(target_base, "imagesTs")

@@ -1,6 +1,6 @@
 import re
 from yucca.pipeline.preprocessing.YuccaPreprocessor import YuccaPreprocessor
-from yucca.paths import yucca_preprocessed_data, yucca_raw_data
+from yucca.paths import get_yucca_preprocessed_data, get_yucca_raw_data
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     subfiles,
@@ -18,8 +18,8 @@ class UnsupervisedPreprocessor(YuccaPreprocessor):
     def initialize_paths(self):
         # Have to overwrite how we get the subject_ids as there's no labelsTr to get them from.
         # Therefore we use the imagesTr folder and remove the modality suffix.
-        self.target_dir = join(yucca_preprocessed_data(), self.task, self.plans["plans_name"])
-        self.input_dir = join(yucca_raw_data(), self.task)
+        self.target_dir = join(get_yucca_preprocessed_data(), self.task, self.plans["plans_name"])
+        self.input_dir = join(get_yucca_raw_data(), self.task)
         self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
 
         subject_ids = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension, join=False)

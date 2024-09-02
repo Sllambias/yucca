@@ -3,7 +3,7 @@ if __name__ == "__main__":
     import os
     import torch
     from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p
-    from yucca.paths import yucca_models, yucca_results, yucca_preprocessed_data, yucca_raw_data
+    from yucca.paths import get_yucca_models, get_yucca_results, get_yucca_preprocessed_data, get_yucca_raw_data
     from yucca.modules.callbacks.prediction_writer import WritePredictionFromLogits
     from yucca.modules.lightning_modules.YuccaLightningModule import YuccaLightningModule
     from yucca.modules.data.data_modules.YuccaDataModule import YuccaDataModule
@@ -12,7 +12,7 @@ if __name__ == "__main__":
     from yucca.documentation.templates.template_config import config
 
     ckpt_path = os.path.join(
-        yucca_models(),
+        get_yucca_models(),
         config["task"],
         config["model_name"] + "__" + config["dims"],
         "__" + config["plans_name"],
@@ -23,11 +23,11 @@ if __name__ == "__main__":
         "last.ckpt",
     )
 
-    gt_path = os.path.join(yucca_raw_data(), config["task"], "labelsTs")
-    target_data_path = os.path.join(yucca_preprocessed_data(), config["task"] + "_test", "demo")
+    gt_path = os.path.join(get_yucca_raw_data(), config["task"], "labelsTs")
+    target_data_path = os.path.join(get_yucca_preprocessed_data(), config["task"] + "_test", "demo")
 
     save_path = os.path.join(
-        yucca_results(),
+        get_yucca_results(),
         config["task"],
         config["task"],
         config["model_name"] + "__" + config["dims"],

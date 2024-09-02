@@ -15,12 +15,12 @@ for i in range(7):
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 import shutil
-from yucca.paths import yucca_raw_data, yucca_source
+from yucca.paths import get_yucca_raw_data, get_yucca_source
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 
 
-def convert(path: str = yucca_source(), subdir: str = "dataset_test0"):
+def convert(path: str = get_yucca_source(), subdir: str = "dataset_test0"):
     # INPUT DATA
     path = join(path, subdir)
     suffix = ".nii.gz"
@@ -37,7 +37,7 @@ def convert(path: str = yucca_source(), subdir: str = "dataset_test0"):
     task_prefix = "TEST_SEGMENTATION"
 
     # Target paths
-    target_base = join(yucca_raw_data(), task_name)
+    target_base = join(get_yucca_raw_data(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")

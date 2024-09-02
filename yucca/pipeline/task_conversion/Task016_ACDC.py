@@ -1,10 +1,10 @@
 import shutil
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles, subdirs
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
-from yucca.paths import yucca_raw_data, yucca_source
+from yucca.paths import get_yucca_raw_data, get_yucca_source
 
 
-def convert(path: str = yucca_source(), subdir: str = "ACDC"):
+def convert(path: str = get_yucca_source(), subdir: str = "ACDC"):
     """INPUT DATA - Define input path and suffixes"""
     path = join(path, subdir)
     file_suffix = ".nii.gz"
@@ -23,7 +23,7 @@ def convert(path: str = yucca_source(), subdir: str = "ACDC"):
     test_samples = subdirs(images_dir_ts, join=False)
 
     """ Then define target paths """
-    target_base = join(yucca_raw_data(), task_name)
+    target_base = join(get_yucca_raw_data(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")

@@ -1,7 +1,7 @@
 import argparse
 import yucca
 from yucca.pipeline.task_conversion.utils import maybe_get_task_from_task_id
-from yucca.paths import yucca_raw_data, yucca_results, yucca_models, yucca_preprocessed_data
+from yucca.paths import get_yucca_raw_data, get_yucca_results, get_yucca_models, get_yucca_preprocessed_data
 from yucca.pipeline.evaluation.YuccaEvaluator import YuccaEvaluator
 from yucca.pipeline.managers.YuccaManager import YuccaManager
 from yucca.functional.utils.files_and_folders import recursive_find_python_class
@@ -177,7 +177,7 @@ def main():
     split = None
 
     path_to_versions = join(
-        yucca_models(),
+        get_yucca_models(),
         source_task,
         model + "__" + dimensions,
         manager_name + "__" + planner,
@@ -192,7 +192,7 @@ def main():
         checkpoint = "last"
 
     modelfile = join(
-        yucca_models(),
+        get_yucca_models(),
         source_task,
         model + "__" + dimensions,
         manager_name + "__" + planner,
@@ -232,11 +232,11 @@ def main():
     )
 
     # Setting up input paths and output paths
-    inpath = join(yucca_raw_data(), target_task, "imagesTs") if not predpath else predpath
-    ground_truth = join(yucca_raw_data(), target_task, "labelsTs") if not gtpath else gtpath
+    inpath = join(get_yucca_raw_data(), target_task, "imagesTs") if not predpath else predpath
+    ground_truth = join(get_yucca_raw_data(), target_task, "labelsTs") if not gtpath else gtpath
 
     outpath = join(
-        yucca_results(),
+        get_yucca_results(),
         target_task,
         source_task,
         model + "__" + dimensions,
@@ -248,14 +248,14 @@ def main():
     )
 
     if predict_train:
-        inpath = join(yucca_raw_data(), target_task, "imagesTr")
-        ground_truth = join(yucca_raw_data(), target_task, "labelsTr")
+        inpath = join(get_yucca_raw_data(), target_task, "imagesTr")
+        ground_truth = join(get_yucca_raw_data(), target_task, "labelsTr")
         outpath += "Tr"
     elif predict_val:
-        inpath = join(yucca_raw_data(), target_task, "imagesTr")
-        ground_truth = join(yucca_raw_data(), target_task, "labelsTr")
+        inpath = join(get_yucca_raw_data(), target_task, "imagesTr")
+        ground_truth = join(get_yucca_raw_data(), target_task, "labelsTr")
         outpath += "Val"
-        split = load_pickle(join(yucca_preprocessed_data(), source_task, "splits.pkl"))
+        split = load_pickle(join(get_yucca_preprocessed_data(), source_task, "splits.pkl"))
         split = split[str(split_data_method)][split_data_param][split_idx]["val"]
         strict = False
 

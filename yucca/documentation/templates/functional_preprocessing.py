@@ -5,18 +5,18 @@ if __name__ == "__main__":
     import numpy as np
     import torch
     from batchgenerators.utilities.file_and_folder_operations import subfiles, join, save_pickle, maybe_mkdir_p, save_json
-    from yucca.paths import yucca_raw_data, yucca_preprocessed_data
+    from yucca.paths import get_yucca_raw_data, get_yucca_preprocessed_data
     from yucca.documentation.templates.template_config import config
     from yucca.functional.preprocessing import preprocess_case_for_training_with_label, preprocess_case_for_inference
     from yucca.functional.utils.loading import read_file_to_nifti_or_np
     from yucca.functional.planning import make_plans_file, add_stats_to_plans_post_preprocessing
 
-    raw_images_dir = join(yucca_raw_data(), config["task"], "imagesTr")
-    raw_labels_dir = join(yucca_raw_data(), config["task"], "labelsTr")
-    test_raw_images_dir = join(yucca_raw_data(), config["task"], "imagesTs")
+    raw_images_dir = join(get_yucca_raw_data(), config["task"], "imagesTr")
+    raw_labels_dir = join(get_yucca_raw_data(), config["task"], "labelsTr")
+    test_raw_images_dir = join(get_yucca_raw_data(), config["task"], "imagesTs")
 
-    target_dir = join(yucca_preprocessed_data(), config["task"], config["plans_name"])
-    test_target_dir = join(yucca_preprocessed_data(), config["task"] + "_test", config["plans_name"])
+    target_dir = join(get_yucca_preprocessed_data(), config["task"], config["plans_name"])
+    test_target_dir = join(get_yucca_preprocessed_data(), config["task"] + "_test", config["plans_name"])
 
     maybe_mkdir_p(target_dir)
     maybe_mkdir_p(test_target_dir)

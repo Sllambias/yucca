@@ -12,7 +12,7 @@ import argparse
 from batchgenerators.utilities.file_and_folder_operations import load_json, join
 from yucca.pipeline.evaluation.YuccaEvaluator import YuccaEvaluator
 from yucca.pipeline.task_conversion.utils import maybe_get_task_from_task_id
-from yucca.paths import yucca_raw_data, yucca_results
+from yucca.paths import get_yucca_raw_data, get_yucca_results
 
 
 def main():
@@ -118,7 +118,7 @@ def main():
             target_task = source_task
 
         predpath = join(  # TODO: Extract this into a function
-            yucca_results(),
+            get_yucca_results(),
             target_task,
             source_task,
             model + "__" + dimensions,
@@ -128,8 +128,8 @@ def main():
             "version_" + str(num_version),
             checkpoint,
         )
-        gtpath = join(yucca_raw_data(), target_task, "labelsTs")
-        classes = list(load_json(join(yucca_raw_data(), target_task, "dataset.json"))["labels"].keys())
+        gtpath = join(get_yucca_raw_data(), target_task, "labelsTs")
+        classes = list(load_json(join(get_yucca_raw_data(), target_task, "dataset.json"))["labels"].keys())
 
     evaluator = YuccaEvaluator(
         classes,

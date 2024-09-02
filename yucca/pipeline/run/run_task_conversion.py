@@ -1,5 +1,5 @@
 import argparse
-from yucca.paths import yucca_source
+from yucca.paths import get_yucca_source
 import importlib
 import re
 
@@ -20,7 +20,7 @@ def main():
     parser.add_argument(
         "-t", "--task", help="Name of the task to preprocess. " "Should be of format: TaskXXX_MYTASK", required=True
     )
-    parser.add_argument("-p", "--path", help="Path to source data", default=yucca_source())
+    parser.add_argument("-p", "--path", help="Path to source data", default=get_yucca_source())
     parser.add_argument("-d", "--subdir", help="Directory of data inside source data")
 
     args = parser.parse_args()

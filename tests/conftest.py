@@ -40,14 +40,14 @@ def set_env():
 
 @pytest.fixture
 def setup_preprocessed_segmentation_data(request):
-    from yucca.paths import yucca_raw_data, yucca_preprocessed_data
+    from yucca.paths import get_yucca_raw_data, get_yucca_preprocessed_data
 
     subprocess.run(["yucca_convert_task", "-t", "Task000_TEST_SEGMENTATION"], check=True)
     subprocess.run(["yucca_preprocess", "-t", "Task000_TEST_SEGMENTATION"], check=True)
 
     def finalizer():
-        shutil.rmtree(yucca_raw_data())
-        shutil.rmtree(yucca_preprocessed_data())
+        shutil.rmtree(get_yucca_raw_data())
+        shutil.rmtree(get_yucca_preprocessed_data())
 
     request.addfinalizer(finalizer)
 

@@ -7,7 +7,7 @@ Task_conversion file for the SONAI data, without labels and with 2D jpg images (
 import shutil
 from tqdm import tqdm
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p
-from yucca.paths import yucca_raw_data
+from yucca.paths import get_yucca_raw_data
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 
 
@@ -40,7 +40,7 @@ def convert(path: str, txt_file_prefix: str = "data"):
     prefix = "SONAI"
 
     # Target paths
-    target_base = join(yucca_raw_data(), task_name)
+    target_base = join(get_yucca_raw_data(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_imagesTs = join(target_base, "imagesTs")

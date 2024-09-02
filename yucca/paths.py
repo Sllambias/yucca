@@ -22,25 +22,25 @@ def get_environment_variable(var):
     return path
 
 
-def yucca_source():
+def get_yucca_source():
     return get_environment_variable("YUCCA_SOURCE")
 
 
-def yucca_raw_data():
+def get_yucca_raw_data():
     return get_environment_variable("YUCCA_RAW_DATA")
 
 
-def yucca_preprocessed_data():
+def get_yucca_preprocessed_data():
     return get_environment_variable("YUCCA_PREPROCESSED_DATA")
 
 
-def yucca_models():
+def get_yucca_models():
     return get_environment_variable("YUCCA_MODELS")
 
 
-def yucca_results():
+def get_yucca_results():
     return get_environment_variable("YUCCA_RESULTS")
 
 
-def yucca_wandb_entity():
+def get_yucca_wandb_entity():
     return os.getenv("YUCCA_WANDB_ENTITY")

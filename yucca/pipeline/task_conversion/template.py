@@ -3,7 +3,7 @@ import gzip
 from sklearn.model_selection import train_test_split
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
-from yucca.paths import yucca_raw_data
+from yucca.paths import get_yucca_raw_data
 
 
 def convert(path: str, subdir: str = "MyDataset"):
@@ -39,7 +39,7 @@ def convert(path: str, subdir: str = "MyDataset"):
     # test_samples = subfiles(labels_dir_ts, join=False, suffix=file_suffix)
 
     """ Then define target paths """
-    target_base = join(yucca_raw_data(), task_name)
+    target_base = join(get_yucca_raw_data(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")

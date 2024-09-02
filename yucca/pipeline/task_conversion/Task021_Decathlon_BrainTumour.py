@@ -3,11 +3,11 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
-from yucca.paths import yucca_raw_data, yucca_source
+from yucca.paths import get_yucca_raw_data, get_yucca_source
 from yucca.functional.utils.nib_utils import get_nib_orientation, get_nib_spacing
 
 
-def convert(path: str = yucca_source(), subdir: str = "decathlon", subsubdir: str = "Task01_BrainTumour"):
+def convert(path: str = get_yucca_source(), subdir: str = "decathlon", subsubdir: str = "Task01_BrainTumour"):
     # INPUT DATA
     path = f"{path}/{subdir}/{subsubdir}"
 
@@ -24,7 +24,7 @@ def convert(path: str = yucca_source(), subdir: str = "decathlon", subsubdir: st
     task_prefix = "Decathlon_BrainTumour"
 
     # Target paths
-    target_base = join(yucca_raw_data(), task_name)
+    target_base = join(get_yucca_raw_data(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")

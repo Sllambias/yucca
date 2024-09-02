@@ -1,6 +1,6 @@
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json, dirs_in_dir, should_use_volume
-from yucca.paths import yucca_raw_data
+from yucca.paths import get_yucca_raw_data
 from datetime import datetime
 from tqdm import tqdm
 import nibabel as nib
@@ -39,7 +39,7 @@ def convert(path: str, subdir: str = "PPMI"):
     task_prefix = "PPMI"
 
     subjects_dir = join(path, "DATA")
-    target_base = join(yucca_raw_data(), task_name)
+    target_base = join(get_yucca_raw_data(), task_name)
     target_imagesTr = join(target_base, "imagesTr")
 
     maybe_mkdir_p(target_imagesTr)
