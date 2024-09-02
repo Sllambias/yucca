@@ -1,4 +1,4 @@
-from batchgenerators.utilities.file_and_folder_operations import join, isdir, subdirs, maybe_mkdir_p
+from batchgenerators.utilities.file_and_folder_operations import join, isdir, subdirs, maybe_mkdir_p as ensure_dir_exists
 from dataclasses import dataclass
 from typing import Union
 from yucca.paths import get_models_path, get_preprocessed_data_path
