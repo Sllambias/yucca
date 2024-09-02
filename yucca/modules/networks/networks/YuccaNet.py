@@ -32,7 +32,7 @@ class YuccaNet(nn.Module):
         super().load_state_dict(target_state_dict, *args, **kwargs)
 
     def predict(self, mode, data, patch_size, overlap, sliding_window_prediction=True, mirror=False):
-        data = data.to(torch.device(get_available_device()))
+        # data = data.to(torch.device(get_available_device()))
 
         if not sliding_window_prediction:
             return self._full_image_predict(data)
