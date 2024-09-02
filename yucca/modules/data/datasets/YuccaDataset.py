@@ -234,11 +234,11 @@ class YuccaTestPreprocessedDataset(torch.utils.data.Dataset):
 
 if __name__ == "__main__":
     import torch
-    from yucca.paths import yucca_preprocessed_data
+    from yucca.paths import get_preprocessed_data_path
     from batchgenerators.utilities.file_and_folder_operations import join
     from yucca.modules.data.samplers import InfiniteRandomSampler
 
-    files = subfiles(join(yucca_preprocessed_data, "Task001_OASIS/YuccaPlanner"), suffix="npy")
+    files = subfiles(join(get_preprocessed_data_path(), "Task001_OASIS/YuccaPlanner"), suffix="npy")
     ds = YuccaTrainDataset(files, patch_size=(12, 12, 12))
     sampler = InfiniteRandomSampler(ds)
     dl = torch.utils.data.DataLoader(ds, num_workers=2, batch_size=2, sampler=sampler)

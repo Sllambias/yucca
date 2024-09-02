@@ -1,11 +1,11 @@
 import nibabel as nib
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subdirs
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
-from yucca.paths import yucca_raw_data, yucca_source
+from yucca.paths import get_raw_data_path, get_source_path
 from yucca.functional.utils.nib_utils import reorient_to_RAS
 
 
-def convert(path: str = yucca_source, subdir: str = "kits23"):
+def convert(path: str = get_source_path(), subdir: str = "kits23"):
     """INPUT DATA - Define input path and suffixes"""
     path = join(path, subdir)
     file_suffix = ".nii.gz"
@@ -14,13 +14,13 @@ def convert(path: str = yucca_source, subdir: str = "kits23"):
     task_name = "Task018_KITS23"
     task_prefix = "KITS23"
 
-    """ Access the input data. If images are not split into train/test, and you wish to randomly 
+    """ Access the input data. If images are not split into train/test, and you wish to randomly
     split the data, uncomment and adapt the following lines to fit your local path. """
 
     images_dir_tr = labels_dir_tr = join(path, "dataset")
 
     """ Then define target paths """
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(get_raw_data_path(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")

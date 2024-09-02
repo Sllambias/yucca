@@ -3,7 +3,7 @@ What's the purpose of this?
 
 To the maximum extent possible we don't want hardcoded paths. It is simply bad practice and completely lacks scalability. Using environment variables allows us to limit hardcoded paths to the Task Conversion scripts.
 
-## Yucca installed locally using git clone 
+## Yucca installed locally using git clone
 To setup environment variables add the following `.env` file to the root Yucca folder:
 
 ```
@@ -20,7 +20,7 @@ As an example `<path-to-yucca-data-diretory>` could be substituted by `/data/yuc
 ## Yucca installed as a package with conda environments
 From the official conda [guide](#https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#macos-and-linux):
 
-1. Create the following directories and files 
+1. Create the following directories and files
 ```
 conda activate YOUR_YUCCA_ENV_HERE
 cd $CONDA_PREFIX
@@ -61,7 +61,7 @@ YUCCA_PREPROCESSED_DATA=<path-to-yucca-data-diretory>/preprocessed_data
 YUCCA_MODELS=<path-to-yucca-data-diretory>/models
 YUCCA_RESULTS=<path-to-yucca-data-diretory>/results
 ```
-2. 
+2.
 2a. Add the poetry dotenv plugin
 ```
 poetry self add poetry-plugin-dotenv
