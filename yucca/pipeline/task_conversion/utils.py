@@ -2,7 +2,7 @@ import numpy as np
 import os
 import shutil
 import nibabel as nib
-from yucca.paths import get_raw_data_path
+from yucca.paths import get_preprocessed_data_path, get_raw_data_path
 from typing import Literal
 from batchgenerators.utilities.file_and_folder_operations import save_json, subfiles, join, subdirs
 from tqdm import tqdm
@@ -126,9 +126,12 @@ def generate_dataset_json(
     save_json(json_dict, os.path.join(output_file))
 
 
-def maybe_get_task_from_task_id(task_id: str | int):
+def get_task_from_task_id(task_id: str | int, stage: str):
+    assert stage in ["raw", "preprocessed"], stage
     task_id = str(task_id)
-    tasks = subdirs(get_raw_data_path(), join=False)
+
+    stage_path = get_raw_data_path() if stage == "raw" else get_preprocessed_data_path()
+    tasks = subdirs(stage_path, join=False)
 
     # Check if name is already complete
     if task_id in tasks:
@@ -140,8 +143,4 @@ def maybe_get_task_from_task_id(task_id: str | int):
         if task_id.lower() in task.lower():
             return task
 
-    # If we can't find anything we just return the original, on the offchance that the task does not exist in Raw Data while existing in e.g. Preprocessed
-    print(
-        f"Couldn't find a task called: {task_id} in the raw data folder: {get_raw_data_path()}. If your task only exists in e.g. the Preprocessed folder things might still work."
-    )
-    return task_id
+    raise LookupError(f"Task {task_id} not found in {stage_path}.")

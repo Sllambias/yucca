@@ -1,6 +1,6 @@
 import argparse
 import yucca
-from yucca.pipeline.task_conversion.utils import maybe_get_task_from_task_id
+from yucca.pipeline.task_conversion.utils import get_task_from_task_id
 from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from batchgenerators.utilities.file_and_folder_operations import join
 
@@ -102,7 +102,7 @@ def main():
     args = parser.parse_args()
 
     # Required
-    task = maybe_get_task_from_task_id(args.task)
+    task = get_task_from_task_id(args.task, stage="preprocessed")
 
     # Optionals (frequently changed)
     dimensions = args.d

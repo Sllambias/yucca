@@ -1,6 +1,6 @@
 import argparse
 import yucca
-from yucca.pipeline.task_conversion.utils import maybe_get_task_from_task_id
+from yucca.pipeline.task_conversion.utils import get_task_from_task_id
 from yucca.paths import (
     get_raw_data_path,
     get_results_path,
@@ -147,8 +147,8 @@ def main():
     args = parser.parse_args()
 
     # Required
-    source_task = maybe_get_task_from_task_id(args.s)
-    target_task = maybe_get_task_from_task_id(args.t)
+    source_task = get_task_from_task_id(args.s, stage="preprocessed")
+    target_task = get_task_from_task_id(args.t, stage="raw")
 
     # Optionals (frequently changed)
     checkpoint = args.checkpoint
