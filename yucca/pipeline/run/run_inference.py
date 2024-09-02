@@ -13,7 +13,7 @@ from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     isfile,
-    maybe_mkdir_p,
+    maybe_mkdir_p as ensure_dir_exists,
     isdir,
     subdirs,
     load_pickle,
@@ -264,7 +264,7 @@ def main():
         split = split[str(split_data_method)][split_data_param][split_idx]["val"]
         strict = False
 
-    maybe_mkdir_p(outpath)
+    ensure_dir_exists(outpath)
 
     manager.predict_folder(
         inpath,

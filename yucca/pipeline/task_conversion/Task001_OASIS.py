@@ -24,13 +24,13 @@ Task_conversion file for a dataset with 1 modality.
 
   It should be saved in the yucca_preprocessing_dir:
 
-    from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, save_pickle
+    from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p as ensure_dir_exists, save_pickle
 
-    maybe_mkdir_p(join(yucca_preprocessing_dir, task_name))
+    ensure_dir_exists(join(yucca_preprocessing_dir, task_name))
     save_pickle(splits, join(yucca_preprocessing_dir, task_name, 'splits.pkl'))
 """
 
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p as ensure_dir_exists, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 import shutil
 import gzip
@@ -66,10 +66,10 @@ def convert(path: str, subdir: str = "OASIS"):
     target_imagesTs = join(target_base, "imagesTs")
     target_labelsTs = join(target_base, "labelsTs")
 
-    maybe_mkdir_p(target_imagesTr)
-    maybe_mkdir_p(target_labelsTs)
-    maybe_mkdir_p(target_imagesTs)
-    maybe_mkdir_p(target_labelsTr)
+    ensure_dir_exists(target_imagesTr)
+    ensure_dir_exists(target_labelsTs)
+    ensure_dir_exists(target_imagesTs)
+    ensure_dir_exists(target_labelsTr)
 
     ###Populate Target Directory###
     # This is likely also the place to apply any re-orientation, resampling and/or label correction.
