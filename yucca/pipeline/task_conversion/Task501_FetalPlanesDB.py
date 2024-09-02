@@ -11,7 +11,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p
-from yucca.paths import get_yucca_raw_data
+from yucca.paths import get_raw_data_path
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 
 
@@ -30,7 +30,7 @@ def convert(path: str, subdir: str = "FETAL_PLANES_DB"):
     prefix = "FetalPlanesDB"
 
     # Target paths
-    target_base = join(get_yucca_raw_data(), task_name)
+    target_base = join(get_raw_data_path(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")

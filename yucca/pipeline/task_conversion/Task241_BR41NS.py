@@ -1,6 +1,6 @@
 import os
 from yucca.pipeline.task_conversion.utils import combine_images_from_tasks, generate_dataset_json
-from yucca.paths import get_yucca_raw_data
+from yucca.paths import get_raw_data_path
 
 
 def convert(_path: str, _subdir: str = None):
@@ -22,7 +22,7 @@ def convert(_path: str, _subdir: str = None):
         "Task208_WMH",
     ]
 
-    target_base = os.path.join(get_yucca_raw_data(), task_name)
+    target_base = os.path.join(get_raw_data_path(), task_name)
     os.makedirs(target_base, exist_ok=True)
 
     combine_images_from_tasks(tasks=tasks_to_combine, target_base=target_base, run_type="unsupervised")

@@ -22,23 +22,23 @@ def get_environment_variable(var):
     return path
 
 
-def get_yucca_source():
+def get_source_path():
     return get_environment_variable("YUCCA_SOURCE")
 
 
-def get_yucca_raw_data():
+def get_raw_data_path():
     return get_environment_variable("YUCCA_RAW_DATA")
 
 
-def get_yucca_preprocessed_data():
+def get_preprocessed_data_path():
     return get_environment_variable("YUCCA_PREPROCESSED_DATA")
 
 
-def get_yucca_models():
+def get_models_path():
     return get_environment_variable("YUCCA_MODELS")
 
 
-def get_yucca_results():
+def get_results_path():
     return get_environment_variable("YUCCA_RESULTS")
 
 

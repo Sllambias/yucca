@@ -16,7 +16,7 @@ from yucca.modules.data.data_modules.YuccaDataModule import YuccaDataModule
 from yucca.modules.data.datasets.YuccaDataset import YuccaTrainDataset, YuccaTestDataset, YuccaTestPreprocessedDataset
 from yucca.modules.data.samplers import InfiniteRandomSampler
 from yucca.modules.lightning_modules.YuccaLightningModule import YuccaLightningModule
-from yucca.paths import get_yucca_results
+from yucca.paths import get_results_path
 
 
 class YuccaManager:
@@ -291,7 +291,7 @@ class YuccaManager:
         disable_tta: bool = False,
         disable_inference_preprocessing: bool = False,
         overwrite_predictions: bool = False,
-        output_folder: str = get_yucca_results(),
+        output_folder: str = get_results_path(),
         pred_include_cases: list = None,
         save_softmax=False,
     ):
@@ -320,7 +320,7 @@ class YuccaManager:
         input_folder,
         disable_tta: bool = False,
         overwrite_predictions: bool = False,
-        output_folder: str = get_yucca_results(),
+        output_folder: str = get_results_path(),
         pred_include_cases: list = None,
         save_softmax=False,
     ):

@@ -17,7 +17,7 @@ from yucca.functional.preprocessing import (
     reverse_preprocessing,
 )
 from yucca.functional.utils.loading import load_yaml, read_file_to_nifti_or_np
-from yucca.paths import get_yucca_preprocessed_data, get_yucca_raw_data
+from yucca.paths import get_preprocessed_data_path, get_raw_data_path
 from multiprocessing import Pool
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
@@ -92,8 +92,8 @@ class YuccaPreprocessor(object):
         self.preprocess_label = True
 
     def initialize_paths(self):
-        self.target_dir = join(get_yucca_preprocessed_data(), self.task, self.plans["plans_name"])
-        self.input_dir = join(get_yucca_raw_data(), self.task)
+        self.target_dir = join(get_preprocessed_data_path(), self.task, self.plans["plans_name"])
+        self.input_dir = join(get_raw_data_path(), self.task)
         self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
         self.subject_ids = [
             file for file in subfiles(join(self.input_dir, "labelsTr"), join=False) if not file.startswith(".")

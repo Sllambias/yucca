@@ -2,7 +2,7 @@ import numpy as np
 import os
 import shutil
 import nibabel as nib
-from yucca.paths import get_yucca_raw_data
+from yucca.paths import get_raw_data_path
 from typing import Literal
 from batchgenerators.utilities.file_and_folder_operations import save_json, subfiles, join, subdirs
 from tqdm import tqdm
@@ -14,7 +14,7 @@ def combine_images_from_tasks(tasks: list, target_base: str, run_type: Literal["
     for task in tqdm(tasks):
         folders = ["imagesTr", "imagesTs", "labelsTr", "labelsTs"] if run_type == "supervised" else ["imagesTr"]
         for folder in folders:
-            source = os.path.join(get_yucca_raw_data(), task, folder)
+            source = os.path.join(get_raw_data_path(), task, folder)
             target = os.path.join(target_base, folder)
             print("Copying ", source, target)
             copy_files_from_to(source, target)
@@ -128,7 +128,7 @@ def generate_dataset_json(
 
 def maybe_get_task_from_task_id(task_id: str | int):
     task_id = str(task_id)
-    tasks = subdirs(get_yucca_raw_data(), join=False)
+    tasks = subdirs(get_raw_data_path(), join=False)
 
     # Check if name is already complete
     if task_id in tasks:
@@ -142,6 +142,6 @@ def maybe_get_task_from_task_id(task_id: str | int):
 
     # If we can't find anything we just return the original, on the offchance that the task does not exist in Raw Data while existing in e.g. Preprocessed
     print(
-        f"Couldn't find a task called: {task_id} in the raw data folder: {get_yucca_raw_data()}. If your task only exists in e.g. the Preprocessed folder things might still work."
+        f"Couldn't find a task called: {task_id} in the raw data folder: {get_raw_data_path()}. If your task only exists in e.g. the Preprocessed folder things might still work."
     )
     return task_id

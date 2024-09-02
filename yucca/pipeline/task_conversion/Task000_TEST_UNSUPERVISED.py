@@ -15,7 +15,7 @@ for i in range(7):
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 import shutil
-from yucca.paths import get_yucca_raw_data
+from yucca.paths import get_raw_data_path
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 
@@ -37,7 +37,7 @@ def convert(path: str, subdir: str = "dataset_test0"):
     task_prefix = "TEST_UNSUPERVISED"
 
     # Target paths
-    target_base = join(get_yucca_raw_data(), task_name)
+    target_base = join(get_raw_data_path(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
 

@@ -3,7 +3,7 @@ if __name__ == "__main__":
     import lightning as L
     import os
     from batchgenerators.utilities.file_and_folder_operations import load_json
-    from yucca.paths import get_yucca_preprocessed_data
+    from yucca.paths import get_preprocessed_data_path
     from yucca.pipeline.configuration.configure_task import TaskConfig
     from yucca.pipeline.configuration.configure_paths import get_path_config
     from yucca.pipeline.configuration.configure_callbacks import get_callback_config
@@ -15,7 +15,7 @@ if __name__ == "__main__":
     from yucca.documentation.templates.template_config import config
 
     config["plans"] = load_json(
-        os.path.join(get_yucca_preprocessed_data(), config["task"], config["plans_name"], config["plans_name"] + "_plans.json")
+        os.path.join(get_preprocessed_data_path(), config["task"], config["plans_name"], config["plans_name"] + "_plans.json")
     )
 
     task_config = TaskConfig(

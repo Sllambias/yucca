@@ -1,10 +1,10 @@
 import nibabel as nib
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
-from yucca.paths import get_yucca_raw_data, get_yucca_source
+from yucca.paths import get_raw_data_path, get_source_path
 
 
-def convert(path: str = get_yucca_source(), subdir: str = "decathlon", subsubdir: str = "Task01_BrainTumour"):
+def convert(path: str = get_source_path(), subdir: str = "decathlon", subsubdir: str = "Task01_BrainTumour"):
     # INPUT DATA
     path = f"{path}/{subdir}/{subsubdir}"
 
@@ -20,7 +20,7 @@ def convert(path: str = get_yucca_source(), subdir: str = "decathlon", subsubdir
     task_name = "Task031_MSD_BrainTumour"
 
     # Target paths
-    target_base = join(get_yucca_raw_data(), task_name)
+    target_base = join(get_raw_data_path(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")
