@@ -5,7 +5,7 @@ PLEASE READ YUCCA/DOCUMENTATION/TUTORIALS/ENVIRONMENT_VARIABLES.MD FOR INFORMATI
 import os
 from dotenv import load_dotenv
 
-from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p as ensure_dir_exists as ensure_dir_exists
+from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p as ensure_dir_exists
 
 
 def var_is_set(var):
