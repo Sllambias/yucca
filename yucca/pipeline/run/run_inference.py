@@ -147,7 +147,7 @@ def main():
     args = parser.parse_args()
 
     # Required
-    source_task = get_task_from_task_id(args.s, stage="preprocessed")
+    source_task = get_task_from_task_id(args.s, stage="models")
     target_task = get_task_from_task_id(args.t, stage="raw")
 
     # Optionals (frequently changed)

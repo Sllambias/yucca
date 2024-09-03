@@ -2,7 +2,7 @@ import numpy as np
 import os
 import shutil
 import nibabel as nib
-from yucca.paths import get_preprocessed_data_path, get_raw_data_path
+from yucca.paths import get_models_path, get_preprocessed_data_path, get_raw_data_path
 from typing import Literal
 from batchgenerators.utilities.file_and_folder_operations import save_json, subfiles, join, subdirs
 from tqdm import tqdm
@@ -127,10 +127,16 @@ def generate_dataset_json(
 
 
 def get_task_from_task_id(task_id: str | int, stage: str):
-    assert stage in ["raw", "preprocessed"], stage
+    assert stage in ["raw", "preprocessed", "models"], stage
     task_id = str(task_id)
 
-    stage_path = get_raw_data_path() if stage == "raw" else get_preprocessed_data_path()
+    if stage == "raw":
+        stage_path = get_raw_data_path()
+    elif stage == "preprocessed":
+        stage_path = get_preprocessed_data_path()
+    elif stage == "models":
+        stage_path = get_models_path()
+
     tasks = subdirs(stage_path, join=False)
 
     # Check if name is already complete
