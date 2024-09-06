@@ -142,6 +142,7 @@ def main():
         "UNet",
         "UNetR",
         "UNetRE",
+        "UNetS",
         "UXNet",
         "ResNet50",
         "TinyUNet",
