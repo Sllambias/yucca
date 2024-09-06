@@ -58,7 +58,7 @@ CT = {}
 CT["gibbs_ringing_p_per_sample"] = 0.0
 CT["motion_ghosting_p_per_sample"] = 0.0
 CT["biasfield_p_per_sample"] = 0.0
-<<<<<<< Updated upstream
+CT["gamma_p_per_sample"] = 0.0
 
 generic = {
     "random_crop": True,
@@ -121,6 +121,3 @@ genericV2 = {
     "simulate_lowres_p_per_axis": 0.66,
     # default augmentation values
 }
-=======
-CT["gamma_p_per_sample"] = 0.0
->>>>>>> Stashed changes
