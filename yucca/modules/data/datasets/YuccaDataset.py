@@ -228,7 +228,7 @@ class YuccaTestPreprocessedDataset(torch.utils.data.Dataset):
         # will convert them to a list of tuples of strings and a tuple of a string.
         # i.e. ['path1', 'path2'] -> [('path1',), ('path2',)]
         case_id = self.unique_cases[idx]
-        data = torch.load(os.path.join(self.data_path, case_id + self.suffix), "r")
+        data = torch.load(os.path.join(self.data_path, case_id + self.suffix))
         data_properties = load_pickle(os.path.join(self.data_path, case_id + ".pkl"))
         return {"data": data, "data_properties": data_properties, "case_id": case_id}
 
