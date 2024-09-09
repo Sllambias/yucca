@@ -174,17 +174,6 @@ class YuccaDataModule(pl.LightningDataModule):
             sampler=sampler,
         )
 
-    def on_before_batch_transfer(self, batch, dataloader_idx):
-        if self.trainer.predicting is True:
-            if self.disable_inference_preprocessing is False:
-                batch["data"], batch["data_properties"] = self.preprocessor.preprocess_case_for_inference(
-                    images=batch["data_paths"],
-                    patch_size=self.patch_size,
-                    ext=batch["extension"],
-                    sliding_window_prediction=self.sliding_window_prediction,
-                )
-        return super().on_before_batch_transfer(batch, dataloader_idx)
-
     def test_dataloader(self):
         return None
 

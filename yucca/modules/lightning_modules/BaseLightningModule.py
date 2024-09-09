@@ -200,7 +200,6 @@ class BaseLightningModule(L.LightningModule):
         return super().on_before_batch_transfer(batch, dataloader_idx)
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):  # noqa: U100
-        print(batch["data"].shape)
         logits = self.model.predict(
             data=batch["data"],
             mode=self.model_dimensions,
