@@ -2,7 +2,7 @@ if __name__ == "__main__":
     import lightning as L
     import os
     import torch
-    from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p
+    from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p as ensure_dir_exists
     from yucca.paths import (
         get_models_path,
         get_results_path,
@@ -41,7 +41,7 @@ if __name__ == "__main__":
         "version_0",
         "best",
     )
-    maybe_mkdir_p(save_path)
+    ensure_dir_exists(save_path)
 
     ckpt = torch.load(ckpt_path, map_location="cpu")
     config = ckpt["hyper_parameters"]["config"]

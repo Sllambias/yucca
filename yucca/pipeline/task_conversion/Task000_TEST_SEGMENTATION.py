@@ -12,7 +12,7 @@ for i in range(7):
 
 """
 
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p as ensure_dir_exists, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 import shutil
 from yucca.paths import get_raw_data_path, get_source_path
@@ -45,10 +45,10 @@ def convert(path: str = get_source_path(), subdir: str = "dataset_test0"):
     target_imagesTs = join(target_base, "imagesTs")
     target_labelsTs = join(target_base, "labelsTs")
 
-    maybe_mkdir_p(target_imagesTr)
-    maybe_mkdir_p(target_labelsTs)
-    maybe_mkdir_p(target_imagesTs)
-    maybe_mkdir_p(target_labelsTr)
+    ensure_dir_exists(target_imagesTr)
+    ensure_dir_exists(target_labelsTs)
+    ensure_dir_exists(target_imagesTs)
+    ensure_dir_exists(target_labelsTr)
 
     for sTr in tqdm(training_samples, desc="Train"):
         sTr = sTr[: -len(suffix)]

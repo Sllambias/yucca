@@ -1,6 +1,6 @@
 import argparse
 import yucca
-from yucca.pipeline.task_conversion.utils import maybe_get_task_from_task_id
+from yucca.pipeline.task_conversion.utils import get_task_from_task_id
 from yucca.paths import (
     get_raw_data_path,
     get_results_path,
@@ -13,7 +13,7 @@ from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     isfile,
-    maybe_mkdir_p,
+    maybe_mkdir_p as ensure_dir_exists,
     isdir,
     subdirs,
     load_pickle,
@@ -147,8 +147,8 @@ def main():
     args = parser.parse_args()
 
     # Required
-    source_task = maybe_get_task_from_task_id(args.s)
-    target_task = maybe_get_task_from_task_id(args.t)
+    source_task = get_task_from_task_id(args.s, stage="models")
+    target_task = get_task_from_task_id(args.t, stage="raw")
 
     # Optionals (frequently changed)
     checkpoint = args.checkpoint
@@ -264,7 +264,7 @@ def main():
         split = split[str(split_data_method)][split_data_param][split_idx]["val"]
         strict = False
 
-    maybe_mkdir_p(outpath)
+    ensure_dir_exists(outpath)
 
     manager.predict_folder(
         inpath,

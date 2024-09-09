@@ -1,7 +1,7 @@
 import nibabel as nib
 import numpy as np
 from sklearn.model_selection import train_test_split
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p as ensure_dir_exists, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 from yucca.paths import get_raw_data_path, get_source_path
 from yucca.functional.utils.nib_utils import get_nib_orientation, get_nib_spacing
@@ -32,10 +32,10 @@ def convert(path: str = get_source_path(), subdir: str = "decathlon", subsubdir:
     target_imagesTs = join(target_base, "imagesTs")
     target_labelsTs = join(target_base, "labelsTs")
 
-    maybe_mkdir_p(target_imagesTr)
-    maybe_mkdir_p(target_labelsTs)
-    maybe_mkdir_p(target_imagesTs)
-    maybe_mkdir_p(target_labelsTr)
+    ensure_dir_exists(target_imagesTr)
+    ensure_dir_exists(target_labelsTs)
+    ensure_dir_exists(target_imagesTs)
+    ensure_dir_exists(target_labelsTr)
 
     images_dir_tr = images_dir_ts = images_dir
     labels_dir_tr = labels_dir_ts = labels_dir
