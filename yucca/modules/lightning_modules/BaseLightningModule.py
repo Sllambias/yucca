@@ -21,7 +21,6 @@ class BaseLightningModule(L.LightningModule):
         num_modalities: int,
         patch_size: tuple,
         plans: dict,
-        accelerator=get_available_device(),
         deep_supervision: bool = False,
         disable_inference_preprocessing: bool = False,
         hparams_path: str = None,
@@ -51,7 +50,6 @@ class BaseLightningModule(L.LightningModule):
     ):
         super().__init__()
         # Extract parameters from the configurator
-        self.accelerator = accelerator
         self.num_classes = num_classes
         self.num_modalities = num_modalities
         self.hparams_path = hparams_path
@@ -206,7 +204,6 @@ class BaseLightningModule(L.LightningModule):
         data, data_properties, case_id = batch["data"], batch["data_properties"], batch["case_id"]
         logits = self.model.predict(
             data=data,
-            device=self.accelerator,
             mode=self.model_dimensions,
             mirror=self.test_time_augmentation,
             overlap=self.sliding_window_overlap,

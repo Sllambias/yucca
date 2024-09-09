@@ -174,7 +174,7 @@ def apply_nifti_preprocessing_and_return_numpy(
             if label is not None and isinstance(label, nib.Nifti1Image):
                 label = reorient_nib_image(label, metadata["original_orientation"], metadata["final_direction"])
         if include_header:
-            metadata["header"] = images[0].header
+            metadata["header"] = images[0].header.binaryblock
         metadata["original_spacing"] = get_nib_spacing(images[0]).tolist()
         metadata["affine"] = images[0].affine
 

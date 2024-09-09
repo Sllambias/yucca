@@ -1,6 +1,5 @@
 import torch
 from torch import nn
-from yucca.functional.utils.torch_utils import get_available_device
 from yucca.modules.networks.utils.get_steps_for_sliding_window import (
     get_steps_for_sliding_window,
 )
@@ -31,10 +30,7 @@ class YuccaNet(nn.Module):
         }
         super().load_state_dict(target_state_dict, *args, **kwargs)
 
-    def predict(
-        self, mode, data, patch_size, overlap, sliding_window_prediction=True, mirror=False, device=get_available_device()
-    ):
-
+    def predict(self, mode, data, patch_size, overlap, sliding_window_prediction=True, mirror=False):
         if not sliding_window_prediction:
             return self._full_image_predict(data)
 
@@ -45,18 +41,18 @@ class YuccaNet(nn.Module):
         elif mode == "2D":
             predict_fn = self._sliding_window_predict2D
 
-        pred = predict_fn(data, patch_size, overlap, device=device)
+        pred = predict_fn(data, patch_size, overlap)
         if mirror:
-            pred += torch.flip(predict_fn(torch.flip(data, (2,)), patch_size, overlap, device=device), (2,))
-            pred += torch.flip(predict_fn(torch.flip(data, (3,)), patch_size, overlap, device=device), (3,))
-            pred += torch.flip(predict_fn(torch.flip(data, (2, 3)), patch_size, overlap, device=device), (2, 3))
+            pred += torch.flip(predict_fn(torch.flip(data, (2,)), patch_size, overlap), (2,))
+            pred += torch.flip(predict_fn(torch.flip(data, (3,)), patch_size, overlap), (3,))
+            pred += torch.flip(predict_fn(torch.flip(data, (2, 3)), patch_size, overlap), (2, 3))
             div = 4
             if mode == "3D":
-                pred += torch.flip(predict_fn(torch.flip(data, (4,)), patch_size, overlap, device=device), (4,))
-                pred += torch.flip(predict_fn(torch.flip(data, (2, 4)), patch_size, overlap, device=device), (2, 4))
-                pred += torch.flip(predict_fn(torch.flip(data, (3, 4)), patch_size, overlap, device=device), (3, 4))
+                pred += torch.flip(predict_fn(torch.flip(data, (4,)), patch_size, overlap), (4,))
+                pred += torch.flip(predict_fn(torch.flip(data, (2, 4)), patch_size, overlap), (2, 4))
+                pred += torch.flip(predict_fn(torch.flip(data, (3, 4)), patch_size, overlap), (3, 4))
                 pred += torch.flip(
-                    predict_fn(torch.flip(data, (2, 3, 4)), patch_size, overlap, device=device),
+                    predict_fn(torch.flip(data, (2, 3, 4)), patch_size, overlap),
                     (2, 3, 4),
                 )
                 div += 4
@@ -71,13 +67,13 @@ class YuccaNet(nn.Module):
         """
         return self.forward(data)
 
-    def _sliding_window_predict3D(self, data, patch_size, overlap, device):
+    def _sliding_window_predict3D(self, data, patch_size, overlap):
         """
         Sliding window prediction implementation
         """
         canvas = torch.zeros(
             (1, self.num_classes, *data.shape[2:]),
-            device=device,
+            device=data.device,
         )
 
         x_steps, y_steps, z_steps = get_steps_for_sliding_window(data.shape[2:], patch_size, overlap)
@@ -91,13 +87,13 @@ class YuccaNet(nn.Module):
                     canvas[:, :, xs : xs + px, ys : ys + py, zs : zs + pz] += out
         return canvas
 
-    def _sliding_window_predict2D(self, data, patch_size, overlap, device):
+    def _sliding_window_predict2D(self, data, patch_size, overlap):
         """
         Sliding window prediction implementation
         """
         canvas = torch.zeros(
             (1, self.num_classes, *data.shape[2:]),
-            device=device,
+            device=data.device,
         )
 
         px, py = patch_size
