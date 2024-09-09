@@ -219,7 +219,7 @@ class BaseLightningModule(L.LightningModule):
             )
         else:
             logits, data_properties = self.preprocessor.reverse_preprocessing(logits, batch["data_properties"])
-        return {"logits": logits, "properties": data_properties, "case_id": batch["case_id"][0]}
+        return {"logits": logits, "properties": data_properties, "case_id": batch["case_id"]}
 
     def training_step(self, batch, batch_idx):  # noqa: U100
         inputs, target = batch["image"], batch["label"]
