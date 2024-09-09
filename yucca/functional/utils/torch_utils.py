@@ -2,7 +2,7 @@ import torch
 from fvcore.nn import FlopCountAnalysis
 
 
-def maybe_to_gpu(data):
+def move_to_available_device(data):
     device = get_available_device()
 
     if isinstance(data, list):

@@ -9,7 +9,7 @@ from lightning_fabric.utilities.logger import _convert_params
 from time import localtime, strftime, time
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
-    maybe_mkdir_p,
+    maybe_mkdir_p as ensure_dir_exists,
     isdir,
 )
 from typing import Any, Dict, Optional, Union
@@ -64,12 +64,12 @@ class YuccaLogger(Logger):
             version = self.version if isinstance(self.version, str) else f"version_{self.version}"
             log_dir = join(log_dir, version)
         if not isdir(log_dir):
-            maybe_mkdir_p(log_dir)
+            ensure_dir_exists(log_dir)
         return log_dir
 
     @rank_zero_only
     def create_logfile(self):
-        maybe_mkdir_p(self.log_dir)
+        ensure_dir_exists(self.log_dir)
         self.log_file = join(
             self.log_dir,
             "training_log.txt",

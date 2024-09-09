@@ -1,5 +1,5 @@
 import gzip
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p as ensure_dir_exists, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json, dirs_in_dir, should_use_volume
 from yucca.paths import get_raw_data_path
 from tqdm import tqdm
@@ -27,7 +27,7 @@ def convert(path: str, subdir: str = "ADNI_NIFTI"):
     target_base = join(get_raw_data_path(), task_name)
     target_imagesTr = join(target_base, "imagesTr")
 
-    maybe_mkdir_p(target_imagesTr)
+    ensure_dir_exists(target_imagesTr)
 
     """Populate Target Directory
     This is also the place to apply any re-orientation, resampling and/or label correction."""

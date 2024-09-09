@@ -24,7 +24,7 @@ from batchgenerators.utilities.file_and_folder_operations import (
     load_json,
     subfiles,
     save_pickle,
-    maybe_mkdir_p,
+    maybe_mkdir_p as ensure_dir_exists,
     isfile,
 )
 
@@ -124,7 +124,7 @@ class YuccaPreprocessor(object):
     def run(self):
         self.initialize_properties()
         self.initialize_paths()
-        maybe_mkdir_p(self.target_dir)
+        ensure_dir_exists(self.target_dir)
         self.verify_compression_level(self.target_dir, self.compress)
 
         logging.info(

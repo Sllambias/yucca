@@ -1,5 +1,5 @@
 import nibabel as nib
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subdirs
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p as ensure_dir_exists, subdirs
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 from yucca.paths import get_raw_data_path, get_source_path
 from yucca.functional.utils.nib_utils import reorient_to_RAS
@@ -28,10 +28,10 @@ def convert(path: str = get_source_path(), subdir: str = "kits23"):
     target_imagesTs = join(target_base, "imagesTs")
     target_labelsTs = join(target_base, "labelsTs")
 
-    maybe_mkdir_p(target_imagesTr)
-    maybe_mkdir_p(target_labelsTs)
-    maybe_mkdir_p(target_imagesTs)
-    maybe_mkdir_p(target_labelsTr)
+    ensure_dir_exists(target_imagesTr)
+    ensure_dir_exists(target_labelsTs)
+    ensure_dir_exists(target_imagesTs)
+    ensure_dir_exists(target_labelsTr)
 
     """Populate Target Directory
     This is also the place to apply any re-orientation, resampling and/or label correction."""

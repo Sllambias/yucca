@@ -1,6 +1,6 @@
 import nibabel as nib
 import shutil
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p as ensure_dir_exists, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 from yucca.paths import get_raw_data_path
 from yucca.functional.testing.data.nifti import verify_spacing_is_equal, verify_orientation_is_equal
@@ -23,10 +23,10 @@ target_labelsTr = join(target_base, "labelsTr")
 target_imagesTs = join(target_base, "imagesTs")
 target_labelsTs = join(target_base, "labelsTs")
 
-maybe_mkdir_p(target_imagesTr)
-maybe_mkdir_p(target_labelsTs)
-maybe_mkdir_p(target_imagesTs)
-maybe_mkdir_p(target_labelsTr)
+ensure_dir_exists(target_imagesTr)
+ensure_dir_exists(target_labelsTs)
+ensure_dir_exists(target_imagesTs)
+ensure_dir_exists(target_labelsTr)
 
 # Split data
 images_dir_tr = join(folder_with_images, "imagesTr")

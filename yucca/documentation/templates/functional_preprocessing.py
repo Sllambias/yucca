@@ -4,7 +4,13 @@ if __name__ == "__main__":
     import os
     import numpy as np
     import torch
-    from batchgenerators.utilities.file_and_folder_operations import subfiles, join, save_pickle, maybe_mkdir_p, save_json
+    from batchgenerators.utilities.file_and_folder_operations import (
+        subfiles,
+        join,
+        save_pickle,
+        maybe_mkdir_p as ensure_dir_exists,
+        save_json,
+    )
     from yucca.paths import get_raw_data_path, get_preprocessed_data_path
     from yucca.documentation.templates.template_config import config
     from yucca.functional.preprocessing import preprocess_case_for_training_with_label, preprocess_case_for_inference
@@ -18,8 +24,8 @@ if __name__ == "__main__":
     target_dir = join(get_preprocessed_data_path(), config["task"], config["plans_name"])
     test_target_dir = join(get_preprocessed_data_path(), config["task"] + "_test", config["plans_name"])
 
-    maybe_mkdir_p(target_dir)
-    maybe_mkdir_p(test_target_dir)
+    ensure_dir_exists(target_dir)
+    ensure_dir_exists(test_target_dir)
 
     plans = make_plans_file(
         allow_missing_modalities=False,
