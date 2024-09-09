@@ -304,7 +304,9 @@ class YuccaPreprocessor(object):
             )
         return images, label, image_props
 
-    def preprocess_case_for_inference(self, images: list | tuple, patch_size: tuple, sliding_window_prediction: bool = True):
+    def preprocess_case_for_inference(
+        self, images: list | tuple, patch_size: tuple, ext: str = ".nii.gz", sliding_window_prediction: bool = True
+    ):
         """
         Will reorient ONLY if we have valid qform or sform codes.
         with coded=True the methods will return {affine or None} and {0 or 1}.
@@ -323,12 +325,18 @@ class YuccaPreprocessor(object):
         if sliding_window_prediction is False:
             self.target_size = patch_size
 
+        images = [
+            read_file_to_nifti_or_np(image[0]) if isinstance(image, tuple) else read_file_to_nifti_or_np(image)
+            for image in images
+        ]
+
         images, image_properties = preprocess_case_for_inference(
             crop_to_nonzero=self.plans["crop_to_nonzero"],
             keep_aspect_ratio=self.plans["keep_aspect_ratio_when_using_target_size"],
             images=images,
             intensities=self.intensities,
             normalization_scheme=self.plans["normalization_scheme"],
+            ext=ext,
             patch_size=patch_size,
             target_size=self.target_size,
             target_spacing=self.target_spacing,
@@ -336,7 +344,6 @@ class YuccaPreprocessor(object):
             transpose_forward=self.transpose_forward,
             allow_missing_modalities=self.allow_missing_modalities,
         )
-
         return images, image_properties
 
     def reverse_preprocessing(self, images: torch.Tensor, image_properties: dict):

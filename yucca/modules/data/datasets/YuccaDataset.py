@@ -183,12 +183,12 @@ class YuccaTestDataset(torch.utils.data.Dataset):
         # will convert them to a list of tuples of strings and a tuple of a string.
         # i.e. ['path1', 'path2'] -> [('path1',), ('path2',)]
         case_id = self.unique_cases[idx]
-        case = [
+        image_paths = [
             impath
             for impath in subfiles(self.data_path, suffix=self.suffix)
             if os.path.split(impath)[-1][: -len("_000." + self.suffix)] == case_id
         ]
-        return case, case_id
+        return {"data_paths": image_paths, "extension": self.suffix, "case_id": case_id}
 
 
 class YuccaTestPreprocessedDataset(torch.utils.data.Dataset):
@@ -228,8 +228,9 @@ class YuccaTestPreprocessedDataset(torch.utils.data.Dataset):
         # will convert them to a list of tuples of strings and a tuple of a string.
         # i.e. ['path1', 'path2'] -> [('path1',), ('path2',)]
         case_id = self.unique_cases[idx]
-        case = [os.path.join(self.data_path, case_id + self.suffix), os.path.join(self.data_path, case_id + ".pkl")]
-        return case, case_id
+        data = torch.load(os.path.join(self.data_path, case_id + self.suffix), "r")
+        data_properties = load_pickle(os.path.join(self.data_path, case_id + ".pkl"))
+        return {"data": data, "data_properties": data_properties, "case_id": case_id}
 
 
 if __name__ == "__main__":

@@ -8,7 +8,6 @@ from yucca.pipeline.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yucca.modules.optimization.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.modules.metrics.training_metrics import F1
 from yucca.modules.optimization.loss_functions.nnUNet_losses import DiceCE
-from batchgenerators.utilities.file_and_folder_operations import load_pickle
 from yucca.functional.preprocessing import reverse_preprocessing
 from yucca.functional.utils.torch_utils import get_available_device
 
@@ -189,49 +188,24 @@ class BaseLightningModule(L.LightningModule):
         )
 
     def on_predict_start(self):
-        if self.disable_inference_preprocessing:
-            self.predict = self.predict_without_preprocessing
-        else:
+        if self.disable_inference_preprocessing is False:
             self.preprocessor = self.preprocessor(self.hparams_path)
-            self.predict = self.predict_with_preprocessing
+
+    def on_before_batch_transfer(self, batch, dataloader_idx):
+        if self.trainer.predicting is True:
+            if self.disable_inference_preprocessing is False:
+                batch["data"], batch["data_properties"] = self.preprocessor.preprocess_case_for_inference(
+                    images=batch["data_paths"],
+                    patch_size=self.patch_size,
+                    ext=batch["extension"],
+                    sliding_window_prediction=self.sliding_window_prediction,
+                )
+        return super().on_before_batch_transfer(batch, dataloader_idx)
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):  # noqa: U100
-        case, case_id = batch
-        logits, case_properties = self.predict(case)
-        return {"logits": logits, "properties": case_properties, "case_id": case_id[0]}
-
-    def predict_with_preprocessing(self, case):
-        (
-            case_preprocessed,
-            case_properties,
-        ) = self.preprocessor.preprocess_case_for_inference(case, self.patch_size, self.sliding_window_prediction)
-        logits = self._predict(case_preprocessed)
-
-        logits, case_properties = self.preprocessor.reverse_preprocessing(logits, case_properties)
-        return logits, case_properties
-
-    def predict_without_preprocessing(self, case):
-        # First split the list into case and case_properties
-        case, case_properties = case
-        # Load and unpack from tuple if wrapped (as will be the case by standard DataLoaders)
-        case = torch.load(case[0]) if isinstance(case, tuple) else torch.load(case, "r")
-        case_properties = (
-            load_pickle(case_properties[0]) if isinstance(case_properties, tuple) else load_pickle(case_properties)
-        )
-        logits = self._predict(case)
-        logits, case_properties = reverse_preprocessing(
-            crop_to_nonzero=self.plans["crop_to_nonzero"],
-            images=logits,
-            image_properties=case_properties,
-            n_classes=self.num_classes,
-            transpose_forward=self.plans["transpose_forward"],
-            transpose_backward=self.plans["transpose_backward"],
-        )
-        return logits, case_properties
-
-    def _predict(self, case):
+        data, data_properties, case_id = batch["data"], batch["data_properties"], batch["case_id"]
         logits = self.model.predict(
-            data=case,
+            data=data,
             device=self.accelerator,
             mode=self.model_dimensions,
             mirror=self.test_time_augmentation,
@@ -239,7 +213,18 @@ class BaseLightningModule(L.LightningModule):
             patch_size=self.patch_size,
             sliding_window_prediction=self.sliding_window_prediction,
         )
-        return logits
+        if self.disable_inference_preprocessing:
+            logits, data_properties = reverse_preprocessing(
+                crop_to_nonzero=self.plans["crop_to_nonzero"],
+                images=logits,
+                image_properties=data_properties,
+                n_classes=self.num_classes,
+                transpose_forward=self.plans["transpose_forward"],
+                transpose_backward=self.plans["transpose_backward"],
+            )
+        else:
+            logits, data_properties = self.preprocessor.reverse_preprocessing(logits, data_properties)
+        return {"logits": logits, "properties": data_properties, "case_id": case_id[0]}
 
     def training_step(self, batch, batch_idx):  # noqa: U100
         inputs, target = batch["image"], batch["label"]
@@ -260,14 +245,7 @@ class BaseLightningModule(L.LightningModule):
             prog_bar=self.progress_bar,
             logger=True,
         )
-
         return loss
-
-
-def transfer_batch_to_device(self, batch, device, dataloader_idx):  # noqa: U100
-    if isinstance(batch, dict):
-        batch["image"] = batch["image"].to(device)
-        batch["label"] = batch["label"].to(device)
 
     def validation_step(self, batch, batch_idx):  # noqa: U100
         inputs, target = batch["image"], batch["label"]

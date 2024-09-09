@@ -2,7 +2,6 @@ import numpy as np
 import logging
 import math
 import nibabel as nib
-import os
 import torch
 import torch.nn.functional as F
 import cc3d
@@ -21,7 +20,6 @@ from yucca.functional.utils.nib_utils import (
     reorient_nib_image,
 )
 from yucca.functional.utils.type_conversions import nifti_or_np_to_np
-from yucca.functional.utils.loading import read_file_to_nifti_or_np
 
 
 def analyze_label(label, enable_connected_components_analysis: bool = False, spacing: list = [], per_class=False):
@@ -404,17 +402,13 @@ def preprocess_case_for_inference(
     target_size,
     target_spacing,
     target_orientation,
+    ext=".nii.gz",
     transpose_forward=[0, 1, 2],
     allow_missing_modalities: bool = False,
 ) -> torch.Tensor:
     assert isinstance(images, (list, tuple)), "image(s) should be a list or tuple, even if only one image is passed"
 
     image_properties = {}
-    ext = images[0][0].split(os.extsep, 1)[1] if isinstance(images[0], tuple) else images[0].split(os.extsep, 1)[1]
-    images = [
-        read_file_to_nifti_or_np(image[0]) if isinstance(image, tuple) else read_file_to_nifti_or_np(image) for image in images
-    ]
-
     image_properties["image_extension"] = ext
     image_properties["original_shape"] = np.array(images[0].shape)
 
