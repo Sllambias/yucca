@@ -263,6 +263,12 @@ class BaseLightningModule(L.LightningModule):
 
         return loss
 
+
+def transfer_batch_to_device(self, batch, device, dataloader_idx):  # noqa: U100
+    if isinstance(batch, dict):
+        batch["image"] = batch["image"].to(device)
+        batch["label"] = batch["label"].to(device)
+
     def validation_step(self, batch, batch_idx):  # noqa: U100
         inputs, target = batch["image"], batch["label"]
         output = self(inputs)
