@@ -9,7 +9,6 @@ from yucca.modules.optimization.loss_functions.deep_supervision import DeepSuper
 from yucca.modules.metrics.training_metrics import F1
 from yucca.modules.optimization.loss_functions.nnUNet_losses import DiceCE
 from yucca.functional.preprocessing import reverse_preprocessing
-from yucca.functional.utils.torch_utils import get_available_device
 
 
 class BaseLightningModule(L.LightningModule):
@@ -201,9 +200,9 @@ class BaseLightningModule(L.LightningModule):
         return super().on_before_batch_transfer(batch, dataloader_idx)
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):  # noqa: U100
-        data, data_properties, case_id = batch["data"], batch["data_properties"], batch["case_id"]
+        print(batch["data"].shape)
         logits = self.model.predict(
-            data=data,
+            data=batch["data"],
             mode=self.model_dimensions,
             mirror=self.test_time_augmentation,
             overlap=self.sliding_window_overlap,
@@ -214,14 +213,14 @@ class BaseLightningModule(L.LightningModule):
             logits, data_properties = reverse_preprocessing(
                 crop_to_nonzero=self.plans["crop_to_nonzero"],
                 images=logits,
-                image_properties=data_properties,
+                image_properties=batch["data_properties"],
                 n_classes=self.num_classes,
                 transpose_forward=self.plans["transpose_forward"],
                 transpose_backward=self.plans["transpose_backward"],
             )
         else:
-            logits, data_properties = self.preprocessor.reverse_preprocessing(logits, data_properties)
-        return {"logits": logits, "properties": data_properties, "case_id": case_id[0]}
+            logits, data_properties = self.preprocessor.reverse_preprocessing(logits, batch["data_properties"])
+        return {"logits": logits, "properties": data_properties, "case_id": batch["case_id"][0]}
 
     def training_step(self, batch, batch_idx):  # noqa: U100
         inputs, target = batch["image"], batch["label"]
