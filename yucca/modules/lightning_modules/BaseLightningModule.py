@@ -10,6 +10,7 @@ from yucca.modules.metrics.training_metrics import F1
 from yucca.modules.optimization.loss_functions.nnUNet_losses import DiceCE
 from batchgenerators.utilities.file_and_folder_operations import load_pickle
 from yucca.functional.preprocessing import reverse_preprocessing
+from yucca.functional.utils.torch_utils import get_available_device
 
 
 class BaseLightningModule(L.LightningModule):
@@ -21,6 +22,7 @@ class BaseLightningModule(L.LightningModule):
         num_modalities: int,
         patch_size: tuple,
         plans: dict,
+        accelerator=get_available_device(),
         deep_supervision: bool = False,
         disable_inference_preprocessing: bool = False,
         hparams_path: str = None,
@@ -50,6 +52,7 @@ class BaseLightningModule(L.LightningModule):
     ):
         super().__init__()
         # Extract parameters from the configurator
+        self.accelerator = accelerator
         self.num_classes = num_classes
         self.num_modalities = num_modalities
         self.hparams_path = hparams_path
@@ -93,8 +96,12 @@ class BaseLightningModule(L.LightningModule):
         self.save_hyperparameters(ignore=["model", "loss_fn", "lr_scheduler", "optimizer", "preprocessor"])
 
     def setup(self, stage):  # noqa: U100
-        logging.info(f"Loading Model: {self.model_dimensions} {self.model.__class__.__name__}")
-        self.model = self.model(input_channels=self.num_modalities, num_classes=self.num_classes, **self.model_kwargs)
+        self.model = self.model(
+            input_channels=self.num_modalities,
+            num_classes=self.num_classes,
+            **self.model_kwargs,
+        )
+        logging.info(f"Loading Model: {self.model.__class__.__name__} with kwargs: {self.model_kwargs}")
 
     def compute_metrics(self, metrics, output, target, ignore_index: int = 0):
         metrics = metrics(output, target)
@@ -216,7 +223,7 @@ class BaseLightningModule(L.LightningModule):
             crop_to_nonzero=self.plans["crop_to_nonzero"],
             images=logits,
             image_properties=case_properties,
-            n_classes=self.plans["num_classes"],
+            n_classes=self.num_classes,
             transpose_forward=self.plans["transpose_forward"],
             transpose_backward=self.plans["transpose_backward"],
         )
@@ -225,6 +232,7 @@ class BaseLightningModule(L.LightningModule):
     def _predict(self, case):
         logits = self.model.predict(
             data=case,
+            device=self.accelerator,
             mode=self.model_dimensions,
             mirror=self.test_time_augmentation,
             overlap=self.sliding_window_overlap,

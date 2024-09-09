@@ -404,7 +404,7 @@ def preprocess_case_for_inference(
     target_size,
     target_spacing,
     target_orientation,
-    transpose_forward,
+    transpose_forward=[0, 1, 2],
     allow_missing_modalities: bool = False,
 ) -> torch.Tensor:
     assert isinstance(images, (list, tuple)), "image(s) should be a list or tuple, even if only one image is passed"

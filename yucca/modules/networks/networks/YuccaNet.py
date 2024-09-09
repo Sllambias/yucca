@@ -34,7 +34,6 @@ class YuccaNet(nn.Module):
     def predict(
         self, mode, data, patch_size, overlap, sliding_window_prediction=True, mirror=False, device=get_available_device()
     ):
-        data = data.to(device)
 
         if not sliding_window_prediction:
             return self._full_image_predict(data)
