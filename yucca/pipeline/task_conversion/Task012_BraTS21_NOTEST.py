@@ -62,7 +62,7 @@ def convert(path: str, subdir: str = "brats21/training_data"):
         target_imagesTs,
         ("FLAIR", "T1", "T1CE", "T2"),
         labels={0: "background", 1: "necrotic tumor core", 2: "peritumoral edematous/invaded tissue", 3: "GD-enhancing tumor"},
-        regions_in_order=[[1, 2, 3], [2, 3], [3]],
+        regions_in_order=[[1, 2, 3], [1, 3], [3]],
         regions_labeled=[1, 2, 3],
         dataset_name=task_name,
         license="hands off!",
