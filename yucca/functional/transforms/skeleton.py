@@ -4,7 +4,6 @@ from skimage.morphology import skeletonize, dilation
 
 def skeleton(label, do_tube: bool = True):
     # Add tubed skeleton GT
-    # print(np.shape(label))
     label_copy = label
     bin_seg = label_copy > 0
     seg_all_skel = np.zeros_like(bin_seg, dtype=np.int16)
@@ -16,5 +15,4 @@ def skeleton(label, do_tube: bool = True):
         if do_tube:
             skel = dilation(dilation(skel))
         skel *= label_copy.astype(np.int16)
-        seg_all_skel = skel
     return seg_all_skel

@@ -3,7 +3,7 @@ from torch import nn
 from yucca.optimization.loss_functions.CE import CE
 from yucca.optimization.loss_functions.nnUNet_losses import SoftDiceLoss, sum_tensor, DiceCE
 import torch.nn.functional as F
-import numpy as np 
+
 
 class SoftSkeletonRecallLoss(nn.Module):
     def __init__(self, apply_softmax=True, batch_dice=False, do_bg=True, smooth=1.0):
@@ -30,15 +30,11 @@ class SoftSkeletonRecallLoss(nn.Module):
 
         x = x[:, 1:]
 
-        # make everything shape (b, c)
-        #axes = list(range(2, len(shp_x)))
-
         with torch.no_grad():
             if len(shp_x) != len(shp_y):
                 y = y.view((shp_y[0], 1, *shp_y[1:]))
 
             if all([i == j for i, j in zip(shp_x, shp_y)]):
-                # if this is the case then gt is probably already a one hot encoding
                 y_onehot = y[:, 1:]
             else:
                 gt = y.long()
@@ -46,11 +42,9 @@ class SoftSkeletonRecallLoss(nn.Module):
                 y_onehot.scatter_(1, gt, 1)
                 y_onehot = y_onehot[:, 1:]
 
-            #sum_gt = y_onehot.sum(axes) if loss_mask is None else (y_onehot * loss_mask).sum(axes)
             sum_gt = sum_tensor(y_onehot, axes) if loss_mask is None else sum_tensor(y_onehot * loss_mask, axes)
-            
-        #inter_rec = (x * y_onehot).sum(axes) if loss_mask is None else (x * y_onehot * loss_mask).sum(axes)
-        inter_rec = sum_tensor((x * y_onehot),axes) if loss_mask is None else sum_tensor(x * y_onehot * loss_mask,axes)
+
+        inter_rec = sum_tensor((x * y_onehot), axes) if loss_mask is None else sum_tensor(x * y_onehot * loss_mask, axes)
 
         """  
         if self.batch_dice:
@@ -64,7 +58,6 @@ class SoftSkeletonRecallLoss(nn.Module):
 
         rec = rec.mean()
         return -rec
-
 
 
 class DC_SkelREC_and_CE_loss(nn.Module):
@@ -116,7 +109,7 @@ class DC_SkelREC_and_CE_loss(nn.Module):
             mask = target != self.ignore_label
             target[~mask] = 0
             mask = mask.float()
-            
+
         else:
             mask = None
 
@@ -130,7 +123,7 @@ class DC_SkelREC_and_CE_loss(nn.Module):
             ce_loss *= mask[:, 0]
             ce_loss = ce_loss.sum() / mask.sum()
 
-        srec_loss = self.srec(net_output, skel[:, 0].long()) if self.weight_srec != 0 else 0
+        srec_loss = self.srec(net_output, skel.squeeze()) if self.weight_srec != 0 else 0
 
         result = self.weight_ce * ce_loss + self.weight_dice * dc_loss + self.weight_srec * srec_loss
         return result

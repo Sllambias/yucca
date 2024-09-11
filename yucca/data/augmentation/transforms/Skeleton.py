@@ -1,7 +1,5 @@
 from yucca.data.augmentation.transforms.YuccaTransform import YuccaTransform
-from typing import Tuple
 from yucca.functional.transforms import skeleton
-import numpy as np
 
 
 class Skeleton(YuccaTransform):
@@ -9,7 +7,6 @@ class Skeleton(YuccaTransform):
         self.label_key = label_key
         self.skeleton = skeleton
         self.do_tube = do_tube
-
 
     @staticmethod
     def get_params():
@@ -21,7 +18,7 @@ class Skeleton(YuccaTransform):
 
         for b in range(array_new.shape[0]):
             for c in range(array_new.shape[1]):
-                array_new[b,c] = skeleton(array[b,c])
+                array_new[b, c] = skeleton(array[b, c])
         return array_new
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
