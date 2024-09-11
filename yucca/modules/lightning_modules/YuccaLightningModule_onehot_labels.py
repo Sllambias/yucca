@@ -22,18 +22,17 @@ class YuccaLightningModule_onehot_labels(YuccaLightningModule):
         # self.regions_labeled = config["regions_labeled"] currently not used, but can be used during inference to go from regions -> labels
         self.loss_fn = SigmoidDiceBCE
 
-        assert self.num_classes > 1, self.num_classes
-
+    def on_fit_start(self):
         self.train_metrics = MetricCollection(
             {
-                "train/dice": GeneralizedDiceScore(num_classes=self.num_classes),
+                "train/dice": GeneralizedDiceScore(num_classes=self.num_classes, per_class=True),
                 "train/F1": MulticlassF1Score(num_classes=self.num_classes),
             },
         )
 
         self.val_metrics = MetricCollection(
             {
-                "val/dice": GeneralizedDiceScore(num_classes=self.num_classes),
+                "val/dice": GeneralizedDiceScore(num_classes=self.num_classes, per_class=True),
                 "val/F1": MulticlassF1Score(num_classes=self.num_classes),
             },
         )
