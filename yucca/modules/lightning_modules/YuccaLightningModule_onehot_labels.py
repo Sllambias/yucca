@@ -25,14 +25,14 @@ class YuccaLightningModule_onehot_labels(YuccaLightningModule):
     def on_fit_start(self):
         self.train_metrics = MetricCollection(
             {
-                "train/dice": GeneralizedDiceScore(num_classes=self.num_classes, per_class=True),
+                "train/dice": GeneralizedDiceScore(num_classes=self.num_classes),
                 "train/F1": MulticlassF1Score(num_classes=self.num_classes),
             },
         )
 
         self.val_metrics = MetricCollection(
             {
-                "val/dice": GeneralizedDiceScore(num_classes=self.num_classes, per_class=True),
+                "val/dice": GeneralizedDiceScore(num_classes=self.num_classes),
                 "val/F1": MulticlassF1Score(num_classes=self.num_classes),
             },
         )
