@@ -4,7 +4,13 @@ import numpy as np
 from yucca.paths import get_preprocessed_data_path, get_raw_data_path
 from yucca.pipeline.planning.dataset_properties import create_dataset_properties
 from yucca.functional.utils.files_and_folders import recursive_find_python_class
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, isfile, load_pickle, save_json
+from batchgenerators.utilities.file_and_folder_operations import (
+    join,
+    maybe_mkdir_p as ensure_dir_exists,
+    isfile,
+    load_pickle,
+    save_json,
+)
 from yucca.functional.planning import make_plans_file, add_stats_to_plans_post_preprocessing
 from yucca.pipeline.preprocessing import UnsupervisedPreprocessor
 
@@ -187,7 +193,7 @@ class YuccaPlanner(object):
         self.target_dir = join(get_preprocessed_data_path(), self.task)
         self.plans_folder = join(self.target_dir, self.name)
         self.plans_path = join(self.plans_folder, self.name + "_plans.json")
-        maybe_mkdir_p(join(self.target_dir, self.name))
+        ensure_dir_exists(join(self.target_dir, self.name))
 
     def determine_task_type(self):
         preprocessor_class = recursive_find_python_class(

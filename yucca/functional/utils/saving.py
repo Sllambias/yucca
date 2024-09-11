@@ -6,7 +6,7 @@ from PIL import Image
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     subfiles,
-    maybe_mkdir_p,
+    maybe_mkdir_p as ensure_dir_exists,
 )
 
 
@@ -54,7 +54,7 @@ def save_prediction_from_logits(logits, outpath, properties, save_softmax=False,
 
 
 def merge_softmax_from_folders(folders: list, outpath, method="sum"):
-    maybe_mkdir_p(outpath)
+    ensure_dir_exists(outpath)
     cases = subfiles(folders[0], suffix=".npz", join=False)
     for folder in folders:
         assert cases == subfiles(folder, suffix=".npz", join=False), (

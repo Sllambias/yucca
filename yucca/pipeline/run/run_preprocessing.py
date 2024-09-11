@@ -1,6 +1,6 @@
 import argparse
 import yucca
-from yucca.pipeline.task_conversion.utils import maybe_get_task_from_task_id
+from yucca.pipeline.task_conversion.utils import get_task_from_task_id
 from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from batchgenerators.utilities.file_and_folder_operations import join
 
@@ -35,7 +35,7 @@ def main():
     parser.add_argument("--threads", help="Used to specify the number of processes to use for preprocessing", default=2)
     args = parser.parse_args()
 
-    task = maybe_get_task_from_task_id(args.task)
+    task = get_task_from_task_id(args.task, stage="raw")
     planner_name = args.pl
     preprocessor_name = args.pr
     view = args.v

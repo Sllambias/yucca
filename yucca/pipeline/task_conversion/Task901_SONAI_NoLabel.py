@@ -6,7 +6,7 @@ Task_conversion file for the SONAI data, without labels and with 2D jpg images (
 
 import shutil
 from tqdm import tqdm
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p as ensure_dir_exists
 from yucca.paths import get_raw_data_path
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 
@@ -45,8 +45,8 @@ def convert(path: str, txt_file_prefix: str = "data"):
     target_imagesTr = join(target_base, "imagesTr")
     target_imagesTs = join(target_base, "imagesTs")
 
-    maybe_mkdir_p(target_imagesTr)
-    maybe_mkdir_p(target_imagesTs)
+    ensure_dir_exists(target_imagesTr)
+    ensure_dir_exists(target_imagesTs)
 
     # Populate Target Directory
 
