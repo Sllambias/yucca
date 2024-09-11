@@ -65,8 +65,7 @@ def generate_dataset_json(
     labels: dict,
     dataset_name: str,
     label_hierarchy: dict = {},
-    regions_in_order=[],  # We do not want to do these as dicts, as its sensitive to order and they easily become sorted by mistake
-    regions_labeled=[],
+    regions: dict = {},
     tasks: list = [],
     license: str = "hands off!",
     dataset_description: str = "",
@@ -99,6 +98,30 @@ def generate_dataset_json(
     else:
         test_identifiers = []
 
+    labels = {str(i): labels[i] for i in labels.keys()} if labels is not None else None
+
+    # Sanity check regions
+    if regions is not None:
+        assert labels is not None
+        assert isinstance(regions, dict), "Regions must be specified using a dict mapping regions to labels"
+        priorities = []
+        for region, region_dict in regions.items():
+            assert "priority" in region_dict.keys(), f"Region {region} must have a priority specifier"
+            priorities.append(region_dict["priority"])
+            assert "labels" in region_dict.keys(), f"Region {region} must have labels"
+            assert isinstance(region_dict["labels"], list), f"Region {region} labels must be a list"
+            for label in region_dict["labels"]:
+                assert isinstance(
+                    label, str
+                ), f"Labels must be strings, corresponding to the keys in the label dict: {labels.keys()}"
+                assert label in labels.keys()
+            assert region_dict.keys() == 2
+
+        # check that the priorities in the dict contains all numbers between 1 and max(priorities):
+        assert set(priorities) == set(
+            range(1, len(regions) + 1)
+        ), f"The regions dict must contain all priorities between 1 and len(regions), but instead got priorities: {priorities}"
+
     json_dict = {}
     json_dict["name"] = dataset_name
     json_dict["description"] = dataset_description
@@ -108,10 +131,9 @@ def generate_dataset_json(
     json_dict["release"] = dataset_release
     json_dict["image_extension"] = im_ext
     json_dict["modality"] = {str(i): modalities[i] for i in range(len(modalities))}
-    json_dict["labels"] = {str(i): labels[i] for i in labels.keys()} if labels is not None else None
+    json_dict["labels"] = labels
     json_dict["label_hierarchy"] = label_hierarchy
-    json_dict["regions_in_order"] = regions_in_order
-    json_dict["regions_labeled"] = regions_labeled
+    json_dict["regions"] = regions
     json_dict["tasks"] = tasks
     json_dict["numTraining"] = len(train_identifiers)
     json_dict["numTest"] = len(test_identifiers)

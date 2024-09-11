@@ -30,11 +30,13 @@ class YuccaAugmentationComposer:
         is_2D: bool = False,
         parameter_dict: dict = {},
         task_type_preset: str = "segmentation",
-        label_regions: list = None,
+        labels: dict = None,
+        regions: dict[str, dict] = None,
     ):
         self._pre_aug_patch_size = None
         self.deep_supervision = deep_supervision
-        self.label_regions = label_regions
+        self.labels = (labels,)
+        self.regions = regions
         self.setup_default_params(is_2D, patch_size)
         self.apply_task_type_specific_preset(task_type_preset)
         self.overwrite_params(parameter_dict)
@@ -231,7 +233,9 @@ class YuccaAugmentationComposer:
                 ),
                 Normalize(normalize=self.normalize, scheme=self.normalization_scheme),
                 # seg
-                ConvertLabelsToRegions(convert_labels_to_regions=self.convert_labels_to_regions, regions=self.label_regions),
+                ConvertLabelsToRegions(
+                    convert_labels_to_regions=self.convert_labels_to_regions, labels=self.labels, regions=self.regions
+                ),
                 CopyImageToLabel(copy=self.copy_image_to_label),
                 DownsampleSegForDS(deep_supervision=self.deep_supervision),
                 # mae

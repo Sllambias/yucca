@@ -163,7 +163,7 @@ class YuccaManager:
 
         seed_config = seed_everything_and_get_seed_config(ckpt_seed=self.ckpt_config.ckpt_seed)
 
-        plan_config = self.get_plan_config(
+        plan_config = get_plan_config(
             ckpt_plans=self.ckpt_config.ckpt_plans,
             plans_path=path_config.plans_path,
             stage=stage,
@@ -207,7 +207,8 @@ class YuccaManager:
             is_2D=True if self.model_dimensions == "2D" else False,
             parameter_dict=self.augmentation_params,
             task_type_preset=plan_config.task_type,
-            label_regions=plan_config.regions_in_order if plan_config.use_label_regions else None,
+            labels=plan_config.labels if plan_config.use_label_regions else None,
+            regions=plan_config.regions if plan_config.use_label_regions else None,
         )
 
         self.model_module = self.lightning_module(
@@ -252,6 +253,7 @@ class YuccaManager:
         self.verify_modules_are_valid()
 
         self.trainer = L.Trainer(
+            accelerator="cpu" if torch.backends.mps.is_available() else "auto",
             callbacks=callback_config.callbacks,
             default_root_dir=path_config.save_dir,
             limit_train_batches=self.train_batches_per_step,
@@ -334,16 +336,6 @@ class YuccaManager:
             pred_include_cases=pred_include_cases,
             save_softmax=save_softmax,
         )
-
-    @staticmethod
-    def get_plan_config(ckpt_plans, plans_path, stage, use_label_regions):
-        plan_config = get_plan_config(
-            ckpt_plans=ckpt_plans,
-            plans_path=plans_path,
-            use_label_regions=use_label_regions,
-            stage=stage,
-        )
-        return plan_config
 
     def finish(self):
         wandb.finish()
