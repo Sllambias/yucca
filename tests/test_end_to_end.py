@@ -4,12 +4,14 @@ import subprocess
 
 def test_task_convert():
     subprocess.run(["yucca_convert_task", "-t", "Task000_TEST_SEGMENTATION"], check=True)
+    subprocess.run(["yucca_convert_task", "-t", "Task000_TEST_SEGMENTATION_REGION"], check=True)
     subprocess.run(["yucca_convert_task", "-t", "Task000_TEST_CLASSIFICATION"], check=True)
     subprocess.run(["yucca_convert_task", "-t", "Task000_TEST_UNSUPERVISED"], check=True)
 
 
 def test_preprocessing():
     subprocess.run(["yucca_preprocess", "-t", "Task000_TEST_SEGMENTATION"], check=True)
+    subprocess.run(["yucca_preprocess", "-t", "Task000_TEST_SEGMENTATION_REGION"], check=True)
     subprocess.run(["yucca_preprocess", "-t", "Task000_TEST_UNSUPERVISED", "-pl", "UnsupervisedPlanner"], check=True)
     subprocess.run(
         [
@@ -47,7 +49,28 @@ def test_training():
         check=True,
     )
 
-    # First: a very basic short training
+    # Then: a very basic short training with regions
+    subprocess.run(
+        [
+            "yucca_train",
+            "-t",
+            "Task000_TEST_SEGMENTATION_REGION",
+            "-m",
+            "TinyUNet",
+            "--epochs",
+            "1",
+            "--batch_size",
+            "2",
+            "--disable_logging",
+            "--train_batches_per_step",
+            "3",
+            "--val_batches_per_step",
+            "3",
+        ],
+        check=True,
+    )
+
+    # Then: a less basic short training
     subprocess.run(
         [
             "yucca_train",
