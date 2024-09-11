@@ -5,12 +5,19 @@ from yucca.modules.data.augmentation.transforms.YuccaTransform import YuccaTrans
 
 
 class ConvertLabelsToRegions(YuccaTransform):
-    def __init__(self, convert_labels_to_regions=False, label_key="label", labels=None, regions: dict[str, dict] = None):
+    def __init__(
+        self,
+        convert_labels_to_regions=False,
+        label_key="label",
+        labels: dict[str, str] = None,
+        regions: dict[str, dict] = None,
+    ):
         self.convert_labels_to_regions = convert_labels_to_regions
         self.label_key = label_key
 
         if self.convert_labels_to_regions:
             assert regions is not None, "you cannot enable convert_labels_to_regions while not supplying any regions"
+            assert labels is not None, "you cannot enable convert_labels_to_regions while not supplying labels"
             # regions stores region labels in str format for readability,
             # but here we need the actual label integer from the label map
             # so we translate it to integers
@@ -21,8 +28,8 @@ class ConvertLabelsToRegions(YuccaTransform):
         # No parameters to retrieve
         pass
 
-    def __convert__(self, label: np.ndarray, regions: List[List[int]], labels: dict[str, str]):
-        return convert_labels_to_regions(label, regions, labels)
+    def __convert__(self, label: np.ndarray, regions: List[List[int]]):
+        return convert_labels_to_regions(label, regions)
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict

@@ -201,6 +201,10 @@ class YuccaManager:
             patch_size=self.patch_size,
         )
 
+        if plan_config.use_label_regions:
+            assert plan_config.labels is not None
+            assert plan_config.regions is not None
+
         augmenter = YuccaAugmentationComposer(
             deep_supervision=self.deep_supervision,
             patch_size=input_dims_config.patch_size,

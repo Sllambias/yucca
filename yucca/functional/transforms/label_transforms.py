@@ -1,13 +1,16 @@
 import numpy as np
 
 
-def translate_region_labels(regions_str: dict, labels: dict) -> dict:
+def translate_region_labels(regions: dict, labels: dict) -> dict:
     str_label_to_int = {v: int(k) for k, v in labels.items()}
-    regions_int = {}
-    for region, region_dict in regions_str.items():
-        region_dict["labels"] = [str_label_to_int[label] for label in region_dict["labels"]]
-        regions_int[region] = region_dict
-    return regions_int
+
+    regions_with_int_labels = {}
+    for region, region_dict in regions.items():
+        regions_with_int_labels[region] = {
+            "priority": region_dict["priority"],
+            "labels": [str_label_to_int[label] for label in region_dict["labels"]],
+        }
+    return regions_with_int_labels
 
 
 def convert_labels_to_regions(label, regions):

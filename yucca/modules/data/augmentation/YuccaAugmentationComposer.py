@@ -37,6 +37,7 @@ class YuccaAugmentationComposer:
         self.deep_supervision = deep_supervision
         self.labels = labels
         self.regions = regions
+
         self.setup_default_params(is_2D, patch_size)
         self.apply_task_type_specific_preset(task_type_preset)
         self.overwrite_params(parameter_dict)
@@ -249,7 +250,9 @@ class YuccaAugmentationComposer:
         val_transforms = transforms.Compose(
             [
                 AddBatchDimension(),
-                ConvertLabelsToRegions(convert_labels_to_regions=self.convert_labels_to_regions, regions=self.regions),
+                ConvertLabelsToRegions(
+                    convert_labels_to_regions=self.convert_labels_to_regions, regions=self.regions, labels=self.labels
+                ),
                 CopyImageToLabel(copy=self.copy_image_to_label),
                 Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.cval, ratio=self.mask_ratio),
                 RemoveBatchDimension(),
