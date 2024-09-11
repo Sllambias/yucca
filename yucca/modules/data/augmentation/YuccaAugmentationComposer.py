@@ -138,7 +138,7 @@ class YuccaAugmentationComposer:
 
     def apply_task_type_specific_preset(self, preset):
         if preset == "segmentation":
-            if self.label_regions is not None:
+            if self.regions is not None:
                 self.convert_labels_to_regions = True
         elif preset == "classification":
             self.skip_label = True
@@ -249,7 +249,7 @@ class YuccaAugmentationComposer:
         val_transforms = transforms.Compose(
             [
                 AddBatchDimension(),
-                ConvertLabelsToRegions(convert_labels_to_regions=self.convert_labels_to_regions, regions=self.label_regions),
+                ConvertLabelsToRegions(convert_labels_to_regions=self.convert_labels_to_regions, regions=self.regions),
                 CopyImageToLabel(copy=self.copy_image_to_label),
                 Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.cval, ratio=self.mask_ratio),
                 RemoveBatchDimension(),

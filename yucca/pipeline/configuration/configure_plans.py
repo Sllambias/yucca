@@ -17,8 +17,7 @@ class PlanConfig:
     plans: dict
     task_type: str
     use_label_regions: bool = False
-    regions_in_order: list = None
-    regions_labeled: list = None
+    regions: list = None
 
     def lm_hparams(self, without: [] = []):
         hparams = {
@@ -27,8 +26,7 @@ class PlanConfig:
             "num_classes": self.num_classes,
             "plans": self.plans,
             "task_type": self.task_type,
-            "regions_in_order": self.regions_in_order,
-            "regions_labeled": self.regions_labeled,
+            "regions": self.regions,
             "use_label_regions": self.use_label_regions,
         }
         return without_keys(hparams, without)
@@ -52,16 +50,14 @@ def get_plan_config(
         assert ckpt_plans is not None
         plans = ckpt_plans
 
-    regions_in_order = None
-    regions_labeled = None
+    regions = None
 
     task_type = setup_task_type(plans)
     if task_type == "self-supervised":
         num_classes = max(1, plans.get("num_modalities") or len(plans["dataset_properties"]["modalities"]))
     elif use_label_regions:
-        regions_in_order = plans["dataset_properties"]["regions_in_order"]
-        regions_labeled = plans["dataset_properties"]["regions_labeled"]
-        num_classes = len(regions_in_order)
+        regions = plans["dataset_properties"]["regions"]
+        num_classes = len(regions)
     else:
         num_classes = max(1, plans.get("num_classes") or len(plans["dataset_properties"]["classes"]))
     image_extension = plans.get("image_extension") or plans["dataset_properties"].get("image_extension") or "nii.gz"
@@ -74,8 +70,7 @@ def get_plan_config(
         plans=plans,
         task_type=task_type,
         use_label_regions=use_label_regions,
-        regions_in_order=regions_in_order,
-        regions_labeled=regions_labeled,
+        regions=regions,
     )
 
 

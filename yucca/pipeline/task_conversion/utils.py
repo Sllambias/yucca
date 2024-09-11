@@ -82,6 +82,20 @@ def generate_dataset_json(
     corresponds to _000.nii.gz, etc). Example: ('T1', 'T2', 'FLAIR').
     :param labels: dict with int->str (key->value) mapping the label IDs to label names. Note that 0 is always
     supposed to be background! Example: {0: 'background', 1: 'left hippocampus', 2: 'right hippocampus'}
+    :param regions: dict with str -> dict where inner dict contains specification of each region
+                    The dict must have the following form:
+                    ```
+                    {
+                        'REGION_NAME': {
+                            'priority': 1, # LOWER IS MORE IMPORTANT
+                            'labels': ['LABEL1', 'LABEL2']
+                        }
+                        ...
+                    }
+                    where
+                        priority specifies how regions are collapsed during prediction
+                        labels specify which labels to be included into a region.
+                               each label must be a key in the labels dict above.
     :param dataset_name: The name of the dataset. Can be anything you want
     :param license:
     :param dataset_description:
