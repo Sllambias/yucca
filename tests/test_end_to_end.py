@@ -80,7 +80,7 @@ def test_training():
             "-m",
             "TinyUNet",
             "--manager",
-            "YuccaManagerV2_labelregions",
+            "YuccaManager_labelregions",
             "--epochs",
             "2",
             "--batch_size",
