@@ -125,11 +125,11 @@ def generate_dataset_json(
             assert "labels" in region_dict.keys(), f"Region {region} must have labels"
             assert isinstance(region_dict["labels"], list), f"Region {region} labels must be a list"
             for label in region_dict["labels"]:
-                assert isinstance(
-                    label, str
-                ), f"Labels must be strings, corresponding to the keys in the label dict: {labels.keys()}"
-                assert label in labels.keys()
-            assert region_dict.keys() == 2
+                assert isinstance(label, str), f"label must be of type str not {type(label)}"
+                assert (
+                    label in labels.values()
+                ), f"Labels must be strings, corresponding to the values in the label dict: {labels.values()}"
+                assert len(region_dict.keys()) == 2, region_dict.keys()
 
         # check that the priorities in the dict contains all numbers between 1 and max(priorities):
         assert set(priorities) == set(

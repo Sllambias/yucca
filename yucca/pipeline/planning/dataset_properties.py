@@ -20,7 +20,8 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
     dataset_json = load_json(join(data_dir, "dataset.json"))
 
     image_extension = dataset_json.get("image_extension") or suffix[1:]
-    regions = dataset_json.get("regions") or []
+    regions = dataset_json.get("regions") or None
+    labels = dataset_json.get("labels") or None
 
     properties = {
         "image_extension": image_extension,
@@ -28,6 +29,7 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
         "tasks": {task: [] for task in dataset_json["tasks"]},
         "label_hierarchy": dataset_json["label_hierarchy"],
         "modalities": dataset_json["modality"],
+        "labels": labels,
         "regions": regions,
     }
 

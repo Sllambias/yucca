@@ -33,6 +33,7 @@ def main():
     )
     parser.add_argument(
         "-man",
+        "--manager",
         help="Manager Class to be used. " "Defaults to the basic YuccaManager",
         default="YuccaManager",
     )
@@ -107,7 +108,7 @@ def main():
     # Optionals (frequently changed)
     dimensions = args.d
     model_name = args.m
-    manager_name = args.man
+    manager_name = args.manager
     planner = args.pl
 
     # Optionals (occasionally changed)

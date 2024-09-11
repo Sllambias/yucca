@@ -207,7 +207,7 @@ class YuccaManager:
             is_2D=True if self.model_dimensions == "2D" else False,
             parameter_dict=self.augmentation_params,
             task_type_preset=plan_config.task_type,
-            labels=plan_config.labels if plan_config.use_label_regions else None,
+            labels=plan_config.labels,
             regions=plan_config.regions if plan_config.use_label_regions else None,
         )
 
@@ -253,7 +253,7 @@ class YuccaManager:
         self.verify_modules_are_valid()
 
         self.trainer = L.Trainer(
-            accelerator="cpu" if torch.backends.mps.is_available() else "auto",
+            accelerator="cpu",
             callbacks=callback_config.callbacks,
             default_root_dir=path_config.save_dir,
             limit_train_batches=self.train_batches_per_step,
