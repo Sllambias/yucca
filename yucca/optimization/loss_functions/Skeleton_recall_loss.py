@@ -4,7 +4,6 @@ from yucca.optimization.loss_functions.CE import CE
 from yucca.optimization.loss_functions.nnUNet_losses import SoftDiceLoss, sum_tensor, DiceCE
 import torch.nn.functional as F
 
-
 class SoftSkeletonRecallLoss(nn.Module):
     def __init__(self, apply_softmax=True, batch_dice=False, do_bg=True, smooth=1.0):
         """
@@ -109,7 +108,6 @@ class DC_SkelREC_and_CE_loss(nn.Module):
             mask = target != self.ignore_label
             target[~mask] = 0
             mask = mask.float()
-
         else:
             mask = None
 
