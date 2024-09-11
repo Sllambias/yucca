@@ -35,7 +35,7 @@ class YuccaAugmentationComposer:
     ):
         self._pre_aug_patch_size = None
         self.deep_supervision = deep_supervision
-        self.labels = (labels,)
+        self.labels = labels
         self.regions = regions
         self.setup_default_params(is_2D, patch_size)
         self.apply_task_type_specific_preset(task_type_preset)
