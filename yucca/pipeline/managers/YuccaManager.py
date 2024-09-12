@@ -100,7 +100,7 @@ class YuccaManager:
         self.augmentation_params = augmentation_params
         self.batch_size = batch_size
         self.optimizer = optimizer
-        self.optim_kwargs = optim_kwargs
+        self.optim_kwargs = optim_kwargs.update({"lr": self.learning_rate, "momentum": self.momentum})
         self.patch_based_training = patch_based_training
         self.patch_size = patch_size
         self.planner = planner
@@ -242,8 +242,7 @@ class YuccaManager:
             loss_fn=self.loss,
             lr_scheduler=self.scheduler,
             optimizer=self.optimizer,
-            optim_kwargs=self.optim_kwargs,
-            optimizer_kwargs={"lr": self.learning_rate, "momentum": self.momentum},
+            optimizer_kwargs=self.optim_kwargs,
             step_logging=self.step_logging,
             test_time_augmentation=not disable_tta if disable_tta is True else augmenter.mirror_p_per_sample > 0,
         )
