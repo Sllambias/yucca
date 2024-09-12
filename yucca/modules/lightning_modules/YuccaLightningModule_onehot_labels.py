@@ -4,6 +4,7 @@ from torchmetrics import MetricCollection
 from torchmetrics.segmentation import GeneralizedDiceScore
 from torchmetrics.classification import MulticlassF1Score
 from yucca.modules.lightning_modules.YuccaLightningModule import YuccaLightningModule
+from yucca.modules.optimization.loss_functions.combined_losses import SigmoidDiceBCE
 
 
 class YuccaLightningModule_onehot_labels(YuccaLightningModule):
@@ -15,12 +16,13 @@ class YuccaLightningModule_onehot_labels(YuccaLightningModule):
     ):
         super().__init__(
             config=config,
-            loss_fn="SigmoidDiceBCE",
             *args,
             **kwargs,
         )
         # self.regions_labeled = config["regions_labeled"] currently not used, but can be used during inference to go from regions -> labels
+        self.loss_fn = SigmoidDiceBCE
 
+    def on_fit_start(self):
         self.train_metrics = MetricCollection(
             {
                 "train/dice": GeneralizedDiceScore(num_classes=self.num_classes),
@@ -74,6 +76,7 @@ class YuccaLightningModule_onehot_labels(YuccaLightningModule):
     def validation_step(self, batch, batch_idx):
         inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
         output = self(inputs)
+
         loss = self.loss_fn_val(output, target)
 
         output = (torch.sigmoid(output) > 0.5).long()

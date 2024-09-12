@@ -1,16 +1,27 @@
 import numpy as np
 from typing import List
-from yucca.functional.transforms.label_transforms import convert_labels_to_regions
+from yucca.functional.transforms.label_transforms import convert_labels_to_regions, translate_region_labels
 from yucca.modules.data.augmentation.transforms.YuccaTransform import YuccaTransform
 
 
 class ConvertLabelsToRegions(YuccaTransform):
-    def __init__(self, convert_labels_to_regions=False, label_key="label", regions: List[List[int]] = None):
+    def __init__(
+        self,
+        convert_labels_to_regions=False,
+        label_key="label",
+        labels: dict[str, str] = None,
+        regions: dict[str, dict] = None,
+    ):
         self.convert_labels_to_regions = convert_labels_to_regions
         self.label_key = label_key
-        self.regions = regions
+
         if self.convert_labels_to_regions:
-            assert self.regions is not None, "you cannot enable convert_labels_to_regions while not supplying any regions"
+            assert regions is not None, "you cannot enable convert_labels_to_regions while not supplying any regions"
+            assert labels is not None, "you cannot enable convert_labels_to_regions while not supplying labels"
+            # regions stores region labels in str format for readability,
+            # but here we need the actual label integer from the label map
+            # so we translate it to integers
+            self.regions = translate_region_labels(regions, labels)
 
     @staticmethod
     def get_params():

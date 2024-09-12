@@ -201,13 +201,18 @@ class YuccaManager:
             patch_size=self.patch_size,
         )
 
+        if plan_config.use_label_regions:
+            assert plan_config.labels is not None
+            assert plan_config.regions is not None
+
         augmenter = YuccaAugmentationComposer(
             deep_supervision=self.deep_supervision,
             patch_size=input_dims_config.patch_size,
             is_2D=True if self.model_dimensions == "2D" else False,
             parameter_dict=self.augmentation_params,
             task_type_preset=plan_config.task_type,
-            label_regions=plan_config.regions_in_order if plan_config.use_label_regions else None,
+            labels=plan_config.labels,
+            regions=plan_config.regions if plan_config.use_label_regions else None,
         )
 
         self.model_module = self.lightning_module(
@@ -252,6 +257,7 @@ class YuccaManager:
         self.verify_modules_are_valid()
 
         self.trainer = L.Trainer(
+            accelerator="cpu" if torch.backends.mps.is_available() and self.model_dimensions == "3D" else "auto",
             callbacks=callback_config.callbacks,
             default_root_dir=path_config.save_dir,
             limit_train_batches=self.train_batches_per_step,
@@ -335,16 +341,6 @@ class YuccaManager:
             save_softmax=save_softmax,
         )
 
-    @staticmethod
-    def get_plan_config(ckpt_plans, plans_path, stage, use_label_regions):
-        plan_config = get_plan_config(
-            ckpt_plans=ckpt_plans,
-            plans_path=plans_path,
-            use_label_regions=use_label_regions,
-            stage=stage,
-        )
-        return plan_config
-
     def finish(self):
         wandb.finish()
 
@@ -369,6 +365,16 @@ class YuccaManager:
         self.kwargs["accelerator"] = "cpu"
         self.train_batches_per_step = 10
         self.val_batches_per_step = 5
+
+    @staticmethod
+    def get_plan_config(ckpt_plans, plans_path, stage, use_label_regions):
+        plan_config = get_plan_config(
+            ckpt_plans=ckpt_plans,
+            plans_path=plans_path,
+            use_label_regions=use_label_regions,
+            stage=stage,
+        )
+        return plan_config
 
 
 if __name__ == "__main__":
