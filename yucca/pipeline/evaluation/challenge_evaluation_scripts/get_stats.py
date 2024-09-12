@@ -1,8 +1,5 @@
-# %%
 from batchgenerators.utilities.file_and_folder_operations import load_json
 import argparse
-
-path = "/zhome/af/0/210164/yucca_data/results/Task017_BTCV/Task017_BTCV/UNet__3D/YuccaManagerV11__YuccaPlannerV3/default/kfold_5_fold_0/version_0/lastVal/results_SURFACE2.json"
 
 
 def get_dice_and_nsd(path):
@@ -21,9 +18,6 @@ def get_dice_and_nsd(path):
     print(f"=AVERAGE{tuple(nsd_vals)} \n")
 
 
-# get_dice_and_nsd(path)
-
-
 def main():
     parser = argparse.ArgumentParser()
 
@@ -36,4 +30,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-# %%
