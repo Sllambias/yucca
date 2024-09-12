@@ -14,7 +14,10 @@ def save_nifti_from_numpy(pred, outpath, properties, compression=9):
     # slight hacky, but it is what it is
     nib.openers.Opener.default_compresslevel = compression
     pred = nib.Nifti1Image(
-        pred, properties["nifti_metadata"]["affine"], header=properties["nifti_metadata"]["header"], dtype=np.uint8
+        pred,
+        properties["nifti_metadata"]["affine"],
+        header=nib.Nifti1Header(properties["nifti_metadata"]["header"]),
+        dtype=np.uint8,
     )
     if properties["nifti_metadata"]["reoriented"]:
         pred = reorient_nib_image(

@@ -80,10 +80,12 @@ def convert(path: str = get_source_path(), subdir: str = "dataset_test0"):
         target_imagesTs,
         ("TestModality",),
         labels={0: "background", 1: "FakeLabel1"},
+        regions={
+            "FakeRegion0": {"priority": 1, "labels": ["FakeLabel1"]},
+            "FakeRegion1": {"priority": 2, "labels": ["FakeLabel1"]},
+            "FakeRegion2": {"priority": 3, "labels": ["background", "FakeLabel1"]},
+        },
         dataset_name=task_name,
         dataset_description="Test Dataset",
         dataset_reference="",
     )
-
-
-# %%

@@ -8,6 +8,7 @@ from batchgenerators.utilities.file_and_folder_operations import join
 from yucca.pipeline.configuration.split_data import SplitConfig
 from yucca.modules.data.datasets.YuccaDataset import YuccaTestDataset, YuccaTrainDataset
 from yucca.modules.data.samplers import InfiniteRandomSampler
+from yucca.functional.array_operations.collate import single_case_collate
 
 
 class YuccaDataModule(pl.LightningDataModule):
@@ -183,4 +184,4 @@ class YuccaDataModule(pl.LightningDataModule):
 
     def predict_dataloader(self):
         logging.info("Starting inference")
-        return DataLoader(self.pred_dataset, num_workers=self.num_workers, batch_size=1)
+        return DataLoader(self.pred_dataset, num_workers=self.num_workers, batch_size=1, collate_fn=single_case_collate)

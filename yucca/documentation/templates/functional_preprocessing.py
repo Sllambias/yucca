@@ -78,6 +78,7 @@ if __name__ == "__main__":
             for image_path in subfiles(test_raw_images_dir)
             if re.search(re.escape(sub) + "_" + r"\d{3}" + ".", os.path.split(image_path)[-1])
         ]
+        images = [read_file_to_nifti_or_np(image) for image in images]
         images, image_props = preprocess_case_for_inference(
             crop_to_nonzero=plans["crop_to_nonzero"],
             keep_aspect_ratio=plans["keep_aspect_ratio_when_using_target_size"],

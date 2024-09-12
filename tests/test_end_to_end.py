@@ -47,7 +47,7 @@ def test_training():
         check=True,
     )
 
-    # First: a very basic short training
+    # Then: a less basic short training
     subprocess.run(
         [
             "yucca_train",
@@ -68,6 +68,28 @@ def test_training():
             "1",
             "--val_batches_per_step",
             "1",
+        ],
+        check=True,
+    )
+
+    subprocess.run(
+        [
+            "yucca_train",
+            "-t",
+            "Task000_TEST_SEGMENTATION",
+            "-m",
+            "TinyUNet",
+            "--manager",
+            "YuccaManager_labelregions",
+            "--epochs",
+            "2",
+            "--batch_size",
+            "2",
+            "--disable_logging",
+            "--train_batches_per_step",
+            "3",
+            "--val_batches_per_step",
+            "3",
         ],
         check=True,
     )
