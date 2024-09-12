@@ -64,7 +64,7 @@ class YuccaManager:
         momentum: float = 0.9,
         num_workers: Optional[int] = None,
         optimizer: torch.optim.Optimizer = torch.optim.SGD,
-        optim_kwargs: dict = None,
+        optim_kwargs: dict = {},
         patch_based_training: bool = True,
         patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
         planner: str = "YuccaPlanner",
