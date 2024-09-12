@@ -1,7 +1,7 @@
-from batchgenerators.utilities.file_and_folder_operations import join, isdir, subdirs, maybe_mkdir_p
+from batchgenerators.utilities.file_and_folder_operations import join, isdir, subdirs, maybe_mkdir_p as ensure_dir_exists
 from dataclasses import dataclass
 from typing import Union
-from yucca.paths import yucca_models, yucca_preprocessed_data
+from yucca.paths import get_models_path, get_preprocessed_data_path
 from yucca.pipeline.configuration.configure_task import TaskConfig
 
 
@@ -25,10 +25,10 @@ class PathConfig:
 
 
 def get_path_config(task_config: TaskConfig):
-    task_dir = join(yucca_preprocessed_data, task_config.task)
+    task_dir = join(get_preprocessed_data_path(), task_config.task)
     train_data_dir = join(task_dir, task_config.planner_name)
     save_dir = join(
-        yucca_models,
+        get_models_path(),
         task_config.task,
         task_config.model_name + "__" + task_config.model_dimensions,
         task_config.manager_name + "__" + task_config.planner_name,
@@ -38,7 +38,7 @@ def get_path_config(task_config: TaskConfig):
 
     version = detect_version(save_dir, task_config.continue_from_most_recent)
     version_dir = join(save_dir, f"version_{version}")
-    maybe_mkdir_p(version_dir)
+    ensure_dir_exists(version_dir)
     plans_path = join(task_dir, task_config.planner_name, task_config.planner_name + "_plans.json")
 
     return PathConfig(

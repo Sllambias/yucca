@@ -1,6 +1,6 @@
 import numpy as np
 import logging
-from yucca.data.augmentation.transforms.YuccaTransform import YuccaTransform
+from yucca.modules.data.augmentation.transforms.YuccaTransform import YuccaTransform
 from typing import Union, Iterable
 from yucca.functional.transforms import mask_batch
 

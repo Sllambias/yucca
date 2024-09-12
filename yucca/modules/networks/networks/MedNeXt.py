@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.utils.checkpoint as checkpoint
-from yucca.networks.blocks_and_layers.conv_blocks import (
+from yucca.modules.networks.blocks_and_layers.conv_blocks import (
     MedNeXtBlock,
     MedNeXtDownBlock,
     MedNeXtUpBlock,
     OutBlock,
 )
-from yucca.networks.networks.YuccaNet import YuccaNet
+from yucca.modules.networks.networks.YuccaNet import YuccaNet
 
 
 class MedNeXt(YuccaNet):

@@ -1,6 +1,6 @@
 import numpy as np
 from batchgenerators.utilities.file_and_folder_operations import isfile
-from yucca.data.datasets.YuccaDataset import YuccaTrainDataset
+from yucca.modules.data.datasets.YuccaDataset import YuccaTrainDataset
 
 
 class YuccaCompressedTrainDataset(YuccaTrainDataset):

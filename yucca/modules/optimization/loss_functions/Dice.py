@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from yucca.optimization.loss_functions.nnUNet_losses import get_tp_fp_fn_tn
+from yucca.modules.optimization.loss_functions.nnUNet_losses import get_tp_fp_fn_tn
 
 
 class SoftSigmoidDiceLoss(nn.Module):

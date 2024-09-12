@@ -1,6 +1,6 @@
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p as ensure_dir_exists, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
-from yucca.paths import yucca_raw_data
+from yucca.paths import get_raw_data_path
 import shutil
 from tqdm import tqdm
 from os.path import basename
@@ -14,11 +14,11 @@ def convert(_path: str):
     sup_task_name = "Task012_BraTS21"
     ssl_task_name = "Task209_BraTS21"
 
-    source_folder = join(yucca_raw_data, sup_task_name, "imagesTr")
-    target_base = join(yucca_raw_data, ssl_task_name)
+    source_folder = join(get_raw_data_path(), sup_task_name, "imagesTr")
+    target_base = join(get_raw_data_path(), ssl_task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
-    maybe_mkdir_p(target_imagesTr)
+    ensure_dir_exists(target_imagesTr)
 
     suffix = ".nii.gz"
     training_samples = subfiles(source_folder, suffix=suffix)

@@ -4,8 +4,8 @@ import os
 import logging
 from typing import Union, Literal, Optional
 from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle, isfile
-from yucca.data.augmentation.transforms.cropping_and_padding import CropPad
-from yucca.data.augmentation.transforms.formatting import NumpyToTorch
+from yucca.modules.data.augmentation.transforms.cropping_and_padding import CropPad
+from yucca.modules.data.augmentation.transforms.formatting import NumpyToTorch
 
 
 class YuccaTrainDataset(torch.utils.data.Dataset):
@@ -191,13 +191,54 @@ class YuccaTestDataset(torch.utils.data.Dataset):
         return case, case_id
 
 
+class YuccaTestPreprocessedDataset(torch.utils.data.Dataset):
+    def __init__(
+        self,
+        preprocessed_data_dir: str,
+        pred_save_dir: str,
+        overwrite_predictions: bool = False,
+        suffix: str = None,  # noqa U100
+        pred_include_cases: list = None,
+    ):
+        self.data_path = preprocessed_data_dir
+        self.pred_save_dir = pred_save_dir
+        self.overwrite = overwrite_predictions
+        self.suffix = ".pt"
+        self.pred_include_cases = pred_include_cases
+        self.unique_cases = np.unique(
+            [i[: -len(self.suffix)] for i in subfiles(self.data_path, suffix=self.suffix, join=False)]
+        )
+        assert len(self.unique_cases) > 0, f"No cases found in {self.data_path}. Looking for files with suffix: {self.suffix}"
+
+        self.cases_already_predicted = np.unique(
+            [i[: -len(self.suffix)] for i in subfiles(self.pred_save_dir, suffix=self.suffix, join=False)]
+        )
+        logging.info(f"Found {len(self.cases_already_predicted)} already predicted cases. Overwrite: {self.overwrite}")
+        if not self.overwrite:
+            self.unique_cases = [i for i in self.unique_cases if i not in self.cases_already_predicted]
+        if self.pred_include_cases is not None:
+            self.unique_cases = [i for i in self.unique_cases if i in self.pred_include_cases]
+
+    def __len__(self):
+        return len(self.unique_cases)
+
+    def __getitem__(self, idx):
+        # Here we generate the paths to the cases along with their ID which they will be saved as.
+        # we pass "case" as a list of strings and case_id as a string to the dataloader which
+        # will convert them to a list of tuples of strings and a tuple of a string.
+        # i.e. ['path1', 'path2'] -> [('path1',), ('path2',)]
+        case_id = self.unique_cases[idx]
+        case = [os.path.join(self.data_path, case_id + self.suffix), os.path.join(self.data_path, case_id + ".pkl")]
+        return case, case_id
+
+
 if __name__ == "__main__":
     import torch
-    from yucca.paths import yucca_preprocessed_data
+    from yucca.paths import get_preprocessed_data_path
     from batchgenerators.utilities.file_and_folder_operations import join
-    from yucca.data.samplers import InfiniteRandomSampler
+    from yucca.modules.data.samplers import InfiniteRandomSampler
 
-    files = subfiles(join(yucca_preprocessed_data, "Task001_OASIS/YuccaPlanner"), suffix="npy")
+    files = subfiles(join(get_preprocessed_data_path(), "Task001_OASIS/YuccaPlanner"), suffix="npy")
     ds = YuccaTrainDataset(files, patch_size=(12, 12, 12))
     sampler = InfiniteRandomSampler(ds)
     dl = torch.utils.data.DataLoader(ds, num_workers=2, batch_size=2, sampler=sampler)

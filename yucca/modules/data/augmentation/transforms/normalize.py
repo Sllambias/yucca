@@ -1,4 +1,4 @@
-from yucca.data.augmentation.transforms.YuccaTransform import YuccaTransform
+from yucca.modules.data.augmentation.transforms.YuccaTransform import YuccaTransform
 from yucca.functional.array_operations.normalization import normalizer
 
 

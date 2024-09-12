@@ -1,14 +1,19 @@
 import argparse
 import yucca
-from yucca.pipeline.task_conversion.utils import maybe_get_task_from_task_id
-from yucca.paths import yucca_raw_data, yucca_results, yucca_models, yucca_preprocessed_data
+from yucca.pipeline.task_conversion.utils import get_task_from_task_id
+from yucca.paths import (
+    get_raw_data_path,
+    get_results_path,
+    get_models_path,
+    get_preprocessed_data_path,
+)
 from yucca.pipeline.evaluation.YuccaEvaluator import YuccaEvaluator
 from yucca.pipeline.managers.YuccaManager import YuccaManager
 from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     isfile,
-    maybe_mkdir_p,
+    maybe_mkdir_p as ensure_dir_exists,
     isdir,
     subdirs,
     load_pickle,
@@ -146,8 +151,8 @@ def main():
     args = parser.parse_args()
 
     # Required
-    source_task = maybe_get_task_from_task_id(args.s)
-    target_task = maybe_get_task_from_task_id(args.t)
+    source_task = get_task_from_task_id(args.s, stage="models")
+    target_task = get_task_from_task_id(args.t, stage="raw")
 
     # Optionals (frequently changed)
     checkpoint = args.checkpoint
@@ -183,7 +188,7 @@ def main():
     split = None
 
     path_to_versions = join(
-        yucca_models,
+        get_models_path(),
         source_task,
         model + "__" + dimensions,
         manager_name + "__" + planner,
@@ -198,7 +203,7 @@ def main():
         checkpoint = "last"
 
     modelfile = join(
-        yucca_models,
+        get_models_path(),
         source_task,
         model + "__" + dimensions,
         manager_name + "__" + planner,
@@ -238,11 +243,11 @@ def main():
     )
 
     # Setting up input paths and output paths
-    inpath = join(yucca_raw_data, target_task, "imagesTs") if not predpath else predpath
-    ground_truth = join(yucca_raw_data, target_task, "labelsTs") if not gtpath else gtpath
+    inpath = join(get_raw_data_path(), target_task, "imagesTs") if not predpath else predpath
+    ground_truth = join(get_raw_data_path(), target_task, "labelsTs") if not gtpath else gtpath
 
     outpath = join(
-        yucca_results,
+        get_results_path(),
         target_task,
         source_task,
         model + "__" + dimensions,
@@ -254,29 +259,18 @@ def main():
     )
 
     if predict_train:
-        inpath = join(yucca_raw_data, target_task, "imagesTr")
-        ground_truth = join(yucca_raw_data, target_task, "labelsTr")
+        inpath = join(get_raw_data_path(), target_task, "imagesTr")
+        ground_truth = join(get_raw_data_path(), target_task, "labelsTr")
         outpath += "Tr"
     elif predict_val:
-        inpath = join(yucca_raw_data, target_task, "imagesTr")
-        ground_truth = join(yucca_raw_data, target_task, "labelsTr")
+        inpath = join(get_raw_data_path(), target_task, "imagesTr")
+        ground_truth = join(get_raw_data_path(), target_task, "labelsTr")
         outpath += "Val"
-        split = load_pickle(join(yucca_preprocessed_data, source_task, "splits.pkl"))
+        split = load_pickle(join(get_preprocessed_data_path(), source_task, "splits.pkl"))
         split = split[str(split_data_method)][split_data_param][split_idx]["val"]
         strict = False
 
-    modelfile = join(
-        yucca_models,
-        source_task,
-        model + "__" + dimensions,
-        manager_name + "__" + planner,
-        experiment,
-        f"{split_data_method}_{split_data_param}_fold_{split_idx}",
-        f"version_{version}",
-        "checkpoints",
-        checkpoint + ".ckpt",
-    )
-    maybe_mkdir_p(outpath)
+    ensure_dir_exists(outpath)
 
     manager.predict_folder(
         inpath,

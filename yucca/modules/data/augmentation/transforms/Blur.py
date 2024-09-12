@@ -1,4 +1,4 @@
-from yucca.data.augmentation.transforms.YuccaTransform import YuccaTransform
+from yucca.modules.data.augmentation.transforms.YuccaTransform import YuccaTransform
 import numpy as np
 from typing import Tuple
 from yucca.functional.transforms import blur

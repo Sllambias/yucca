@@ -18,14 +18,14 @@ from yucca.functional.preprocessing import (
     reverse_preprocessing,
 )
 from yucca.functional.utils.loading import load_yaml, read_file_to_nifti_or_np
-from yucca.paths import yucca_preprocessed_data, yucca_raw_data
+from yucca.paths import get_preprocessed_data_path, get_raw_data_path
 from multiprocessing import Pool
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     load_json,
     subfiles,
     save_pickle,
-    maybe_mkdir_p,
+    maybe_mkdir_p as ensure_dir_exists,
     isfile,
 )
 
@@ -93,8 +93,8 @@ class YuccaPreprocessor(object):
         self.preprocess_label = True
 
     def initialize_paths(self):
-        self.target_dir = join(yucca_preprocessed_data, self.task, self.plans["plans_name"])
-        self.input_dir = join(yucca_raw_data, self.task)
+        self.target_dir = join(get_preprocessed_data_path(), self.task, self.plans["plans_name"])
+        self.input_dir = join(get_raw_data_path(), self.task)
         self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
         self.subject_ids = [
             file for file in subfiles(join(self.input_dir, "labelsTr"), join=False) if not file.startswith(".")
@@ -125,7 +125,7 @@ class YuccaPreprocessor(object):
     def run(self):
         self.initialize_properties()
         self.initialize_paths()
-        maybe_mkdir_p(self.target_dir)
+        ensure_dir_exists(self.target_dir)
         self.verify_compression_level(self.target_dir, self.compress)
 
         logging.info(

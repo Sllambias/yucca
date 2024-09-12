@@ -96,7 +96,7 @@ def get_checkpoint_config_from_ckpt(ckpt_path: str):
 
 def find_checkpoint_path(ckpt_path: Union[str, None], continue_from_most_recent: bool, version: int, version_dir: str):
     if ckpt_path:
-        assert isfile(ckpt_path)
+        assert isfile(ckpt_path), f"Checkpoint was not found. Looked in: {ckpt_path}"
         logging.info(f"Using ckpt file: {ckpt_path}")
         return ckpt_path
     elif version is not None and continue_from_most_recent and isfile(join(version_dir, "checkpoints", "last.ckpt")):

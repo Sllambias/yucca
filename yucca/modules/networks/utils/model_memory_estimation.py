@@ -144,10 +144,15 @@ def find_optimal_tensor_dims(
         if fixed_batch_size:  # In this case we just instantly return after dims are fixed
             return batch_size, tuple(patch_size)
 
+    if (
+        model_name == "UNetR"
+    ):  # ViT needs to be reinstantiated each time patch_size is changed so we use the normal UNet for proxy.
+        model_name = "UNet"
+
     model = recursive_find_python_class(
-        folder=[join(yucca.__path__[0], "networks")],
+        folder=[join(yucca.__path__[0], "modules", "networks")],
         class_name=model_name,
-        current_module="yucca.networks",
+        current_module="yucca.modules.networks",
     )
     model_kwargs = {
         "input_channels": modalities,

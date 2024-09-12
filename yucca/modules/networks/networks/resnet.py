@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from yucca.networks.networks.YuccaNet import YuccaNet
-from yucca.networks.blocks_and_layers.conv_blocks import Bottleneck
+from yucca.modules.networks.networks.YuccaNet import YuccaNet
+from yucca.modules.networks.blocks_and_layers.conv_blocks import Bottleneck
 from torch import Tensor
 
 

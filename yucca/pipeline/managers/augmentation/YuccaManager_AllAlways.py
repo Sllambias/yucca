@@ -1,5 +1,5 @@
 from yucca.pipeline.managers.YuccaManager import YuccaManager
-from yucca.data.augmentation.augmentation_presets import all_always
+from yucca.modules.data.augmentation.augmentation_presets import all_always
 
 
 class YuccaManager_AllAlways(YuccaManager):

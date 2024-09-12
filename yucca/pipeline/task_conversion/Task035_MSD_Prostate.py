@@ -1,12 +1,12 @@
 import nibabel as nib
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
-from yucca.paths import yucca_raw_data, yucca_source
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p as ensure_dir_exists, subfiles
+from yucca.paths import get_raw_data_path, get_source_path
 from yucca.functional.testing.data.nifti import verify_spacing_is_equal, verify_orientation_is_equal
 from yucca.functional.testing.data.array import verify_shape_is_equal
 
 
-def convert(path: str = yucca_source, subdir: str = "decathlon", subsubdir: str = "Task05_Prostate"):
+def convert(path: str = get_source_path(), subdir: str = "decathlon", subsubdir: str = "Task05_Prostate"):
     # INPUT DATA
     path = f"{path}/{subdir}/{subsubdir}"
     file_suffix = ".nii.gz"
@@ -16,16 +16,16 @@ def convert(path: str = yucca_source, subdir: str = "decathlon", subsubdir: str 
     task_name = "Task035_MSD_Prostate"
 
     # Set target paths
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(get_raw_data_path(), task_name)
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")
     target_imagesTs = join(target_base, "imagesTs")
     target_labelsTs = join(target_base, "labelsTs")
 
-    maybe_mkdir_p(target_imagesTr)
-    maybe_mkdir_p(target_labelsTs)
-    maybe_mkdir_p(target_imagesTs)
-    maybe_mkdir_p(target_labelsTr)
+    ensure_dir_exists(target_imagesTr)
+    ensure_dir_exists(target_labelsTs)
+    ensure_dir_exists(target_imagesTs)
+    ensure_dir_exists(target_labelsTr)
 
     # Split data
     images_dir_tr = join(path, "imagesTr")

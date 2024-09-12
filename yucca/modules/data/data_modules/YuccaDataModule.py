@@ -5,10 +5,9 @@ import torch
 from typing import Literal, Optional, Union
 from torch.utils.data import DataLoader, Sampler
 from batchgenerators.utilities.file_and_folder_operations import join
-from yucca.pipeline.configuration.configure_input_dims import InputDimensionsConfig
 from yucca.pipeline.configuration.split_data import SplitConfig
-from yucca.data.datasets.YuccaDataset import YuccaTestDataset, YuccaTrainDataset
-from yucca.data.samplers import InfiniteRandomSampler
+from yucca.modules.data.datasets.YuccaDataset import YuccaTestDataset, YuccaTrainDataset
+from yucca.modules.data.samplers import InfiniteRandomSampler
 
 
 class YuccaDataModule(pl.LightningDataModule):
@@ -47,7 +46,8 @@ class YuccaDataModule(pl.LightningDataModule):
 
     def __init__(
         self,
-        input_dims_config: InputDimensionsConfig,
+        batch_size: int,
+        patch_size: tuple,
         allow_missing_modalities: Optional[bool] = False,
         image_extension: Optional[str] = None,
         composed_train_transforms: Optional[torchvision.transforms.Compose] = None,
@@ -70,9 +70,8 @@ class YuccaDataModule(pl.LightningDataModule):
     ):
         super().__init__()
 
-        # extract parameters
-        self.batch_size = input_dims_config.batch_size
-        self.patch_size = input_dims_config.patch_size
+        self.batch_size = batch_size
+        self.patch_size = patch_size
         self.image_extension = image_extension
         self.task_type = task_type
 
@@ -80,7 +79,6 @@ class YuccaDataModule(pl.LightningDataModule):
         self.splits_config = splits_config
         self.train_data_dir = train_data_dir
 
-        # Set by initialize()
         self.allow_missing_modalities = allow_missing_modalities
         self.composed_train_transforms = composed_train_transforms
         self.composed_val_transforms = composed_val_transforms

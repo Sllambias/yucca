@@ -1,4 +1,4 @@
-from yucca.data.datasets.YuccaDataset import YuccaTrainDataset
+from yucca.modules.data.datasets.YuccaDataset import YuccaTrainDataset
 import numpy as np
 
 

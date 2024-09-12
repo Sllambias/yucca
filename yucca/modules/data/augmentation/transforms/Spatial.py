@@ -4,7 +4,7 @@ From: https://stackoverflow.com/questions/59738230/apply-rotation-defined-by-eul
 """
 
 import numpy as np
-from yucca.data.augmentation.transforms.YuccaTransform import YuccaTransform
+from yucca.modules.data.augmentation.transforms.YuccaTransform import YuccaTransform
 from typing import Tuple
 from yucca.functional.transforms import spatial
 

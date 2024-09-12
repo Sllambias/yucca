@@ -1,5 +1,5 @@
-# %%
-from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p
+from batchgenerators.utilities.file_and_folder_operations import subfiles, join, maybe_mkdir_p as ensure_dir_exists
+import shutil
 
 """
 Task031_MSD_BrainTumour
@@ -69,16 +69,16 @@ exclude = [
 ]
 
 savepath = "/home/zcr545/decathlon_submission"
-maybe_mkdir_p(savepath)
+ensure_dir_exists(savepath)
 
-# for i in range(10):
-#    for seg_path in subfiles(folders[i], join=False):
-#        new_path = join(expected[i], seg_path)
-#        if new_path in exclude:
-#            print("blocking: ", new_path)
-#            continue
-#        maybe_mkdir_p(join(savepath, expected[i]))
-#        shutil.copy2(join(folders[i], seg_path), f"{savepath}/{expected[i]}/{seg_path}")
+for i in range(10):
+    for seg_path in subfiles(folders[i], join=False):
+        new_filename = seg_path[len(prefixes[i]) :]
+        new_path = join(expected[i], new_filename)
+        if new_path in blacklist:
+            print("blocking: ", new_path)
+            continue
+        ensure_dir_exists(join(savepath, expected[i]))
 
 # %%
 

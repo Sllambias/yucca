@@ -1,7 +1,7 @@
 import numpy as np
 from typing import List
 from yucca.functional.transforms.label_transforms import batch_convert_labels_to_regions
-from yucca.data.augmentation.transforms.YuccaTransform import YuccaTransform
+from yucca.modules.data.augmentation.transforms.YuccaTransform import YuccaTransform
 
 
 class ConvertLabelsToRegions(YuccaTransform):

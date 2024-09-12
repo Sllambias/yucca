@@ -1,6 +1,6 @@
 import torch
 from yucca.pipeline.managers.YuccaManager import YuccaManager
-from yucca.data.augmentation.augmentation_presets import genericV2
+from yucca.modules.data.augmentation.augmentation_presets import genericV2
 
 
 class YuccaManagerV2(YuccaManager):

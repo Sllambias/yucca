@@ -74,10 +74,10 @@ def test_training():
 
 
 def test_finetune():
-    from yucca.paths import yucca_models
+    from yucca.paths import get_models_path
 
     chk = os.path.join(
-        yucca_models,
+        get_models_path(),
         "Task000_TEST_SEGMENTATION",
         "TinyUNet__3D",
         "YuccaManager__YuccaPlanner",
@@ -101,6 +101,8 @@ def test_finetune():
             "2D",
             "-pl",
             "UnsupervisedPlanner",
+            "--loss",
+            "MSE",
             "--lr",
             "0.0006",
             "--mom",

@@ -11,8 +11,8 @@ from the same task as the one the model is trained on.
 import argparse
 from batchgenerators.utilities.file_and_folder_operations import load_json, join
 from yucca.pipeline.evaluation.YuccaEvaluator import YuccaEvaluator
-from yucca.pipeline.task_conversion.utils import maybe_get_task_from_task_id
-from yucca.paths import yucca_raw_data, yucca_results
+from yucca.pipeline.task_conversion.utils import get_task_from_task_id
+from yucca.paths import get_raw_data_path, get_results_path
 
 
 def main():
@@ -93,8 +93,8 @@ def main():
     )
     args = parser.parse_args()
 
-    source_task = maybe_get_task_from_task_id(args.s)
-    target_task = maybe_get_task_from_task_id(args.t)
+    source_task = get_task_from_task_id(args.s, stage="raw")
+    target_task = get_task_from_task_id(args.t, stage="raw")
     manager_name = args.man
     model = args.m
     dimensions = args.d
@@ -122,7 +122,7 @@ def main():
             target_task = source_task
 
         predpath = join(  # TODO: Extract this into a function
-            yucca_results,
+            get_results_path(),
             target_task,
             source_task,
             model + "__" + dimensions,
@@ -132,8 +132,8 @@ def main():
             "version_" + str(num_version),
             checkpoint,
         )
-        gtpath = join(yucca_raw_data, target_task, "labelsTs")
-        classes = list(load_json(join(yucca_raw_data, target_task, "dataset.json"))["labels"].keys())
+        gtpath = join(get_raw_data_path(), target_task, "labelsTs")
+        classes = list(load_json(join(get_raw_data_path(), target_task, "dataset.json"))["labels"].keys())
 
     evaluator = YuccaEvaluator(
         classes,

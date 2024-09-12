@@ -11,7 +11,7 @@ Implementation by:
 import torch
 import numpy as np
 from torch import nn
-from yucca.optimization.loss_functions.CE import CE
+from yucca.modules.optimization.loss_functions.CE import CE
 import torch.nn.functional as F
 
 

@@ -1,6 +1,6 @@
 from torchvision import transforms
 from yucca.functional.array_operations.matrix_ops import get_max_rotated_size
-from yucca.data.augmentation.transforms import (
+from yucca.modules.data.augmentation.transforms import (
     AddBatchDimension,
     AdditiveNoise,
     BiasField,
@@ -310,7 +310,7 @@ class YuccaAugmentationComposer:
 
 
 if __name__ == "__main__":
-    from yucca.data.augmentation.augmentation_presets import all_always
+    from yucca.modules.data.augmentation.augmentation_presets import all_always
     import numpy as np
 
     print("NO CLIPPING")

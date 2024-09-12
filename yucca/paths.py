@@ -3,35 +3,44 @@ PLEASE READ YUCCA/DOCUMENTATION/TUTORIALS/ENVIRONMENT_VARIABLES.MD FOR INFORMATI
 """
 
 import os
-import warnings
 from dotenv import load_dotenv
 
-from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p
+from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p as ensure_dir_exists
 
-load_dotenv()
 
-vars = ["YUCCA_RAW_DATA", "YUCCA_PREPROCESSED_DATA", "YUCCA_MODELS", "YUCCA_RESULTS"]
-vals = {}
+def var_is_set(var):
+    return var in os.environ.keys()
 
-for var in vars:
-    if var in os.environ.keys():
-        vals[var] = os.environ[var]
-        maybe_mkdir_p(vals[var])
-    else:
-        warnings.warn(f"Missing environment variable {var}.")
-        vals[var] = None
 
-yucca_raw_data = vals["YUCCA_RAW_DATA"]
-yucca_preprocessed_data = vals["YUCCA_PREPROCESSED_DATA"]
-yucca_models = vals["YUCCA_MODELS"]
-yucca_results = vals["YUCCA_RESULTS"]
+def get_environment_variable(var):
+    load_dotenv()
+    if not var_is_set(var):
+        raise ValueError("Missing required environment variable {YUCCA_SOURCE}.")
 
-if "YUCCA_SOURCE" in os.environ.keys():
-    yucca_source = os.environ["YUCCA_SOURCE"]
-else:
-    yucca_source = None
+    path = os.environ[var]
+    ensure_dir_exists(path)
+    return path
 
-if "YUCCA_WANDB_ENTITY" in os.environ.keys():
-    yucca_wandb_entity = os.environ["YUCCA_WANDB_ENTITY"]
-else:
-    yucca_wandb_entity = None
+
+def get_source_path():
+    return get_environment_variable("YUCCA_SOURCE")
+
+
+def get_raw_data_path():
+    return get_environment_variable("YUCCA_RAW_DATA")
+
+
+def get_preprocessed_data_path():
+    return get_environment_variable("YUCCA_PREPROCESSED_DATA")
+
+
+def get_models_path():
+    return get_environment_variable("YUCCA_MODELS")
+
+
+def get_results_path():
+    return get_environment_variable("YUCCA_RESULTS")
+
+
+def get_yucca_wandb_entity():
+    return os.getenv("YUCCA_WANDB_ENTITY")

@@ -8,7 +8,7 @@ import torch
 from monai.networks.blocks import UnetrBasicBlock, UnetrPrUpBlock, UnetrUpBlock
 from monai.networks.blocks.dynunet_block import UnetOutBlock
 from monai.networks.nets import ViT
-from yucca.networks.networks.YuccaNet import YuccaNet
+from yucca.modules.networks.networks.YuccaNet import YuccaNet
 
 
 class UNetR(YuccaNet):
@@ -49,7 +49,7 @@ class UNetR(YuccaNet):
         hidden_size = 768
         mlp_dim = 3072
         num_heads = 12
-        pos_embed = "perceptron"
+        pos_embed = "conv"
         norm_name = "instance"
         conv_block = False
         res_block = True

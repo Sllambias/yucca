@@ -1,5 +1,5 @@
 import numpy as np
-from yucca.data.augmentation.transforms.YuccaTransform import YuccaTransform
+from yucca.modules.data.augmentation.transforms.YuccaTransform import YuccaTransform
 from yucca.functional.transforms.croppad import croppad
 from typing import Literal, Union
 

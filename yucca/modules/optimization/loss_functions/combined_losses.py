@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from yucca.optimization.loss_functions.CE import BCEWithLogitsLoss
-from yucca.optimization.loss_functions.Dice import SoftSigmoidDiceLoss
+from yucca.modules.optimization.loss_functions.CE import BCEWithLogitsLoss
+from yucca.modules.optimization.loss_functions.Dice import SoftSigmoidDiceLoss
 
 
 class SigmoidDiceBCE(nn.Module):
