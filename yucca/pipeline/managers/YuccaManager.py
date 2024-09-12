@@ -257,7 +257,7 @@ class YuccaManager:
         self.verify_modules_are_valid()
 
         self.trainer = L.Trainer(
-            accelerator="cpu",
+            accelerator="cpu" if torch.backends.mps.is_available() and self.model_dimensions == "3D" else "auto",
             callbacks=callback_config.callbacks,
             default_root_dir=path_config.save_dir,
             limit_train_batches=self.train_batches_per_step,
