@@ -1,5 +1,10 @@
 from batchgenerators.utilities.file_and_folder_operations import subfiles, join, maybe_mkdir_p as ensure_dir_exists
-import shutil
+from SimpleITK import ReadImage
+import glob
+import os
+import logging
+import SimpleITK as sitk
+
 
 """
 Task031_MSD_BrainTumour
@@ -71,35 +76,28 @@ exclude = [
 savepath = "/home/zcr545/decathlon_submission"
 ensure_dir_exists(savepath)
 
+blacklist = [
+    "Task03_Liver/liver_141.nii.gz",
+    "Task03_Liver/liver_156.nii.gz",
+    "Task03_Liver/liver_160.nii.gz",
+    "Task03_Liver/liver_161.nii.gz",
+    "Task03_Liver/liver_162.nii.gz",
+    "Task03_Liver/liver_164.nii.gz",
+    "Task03_Liver/liver_167.nii.gz",
+    "Task03_Liver/liver_182.nii.gz",
+    "Task03_Liver/liver_189.nii.gz",
+    "Task03_Liver/liver_190.nii.gz",
+    "Task08_HepaticVessel/hepaticvessel_247.nii.gz",
+]
+
 for i in range(10):
     for seg_path in subfiles(folders[i], join=False):
-        new_filename = seg_path[len(prefixes[i]) :]
+        new_filename = seg_path[len(current[i]) :]
         new_path = join(expected[i], new_filename)
         if new_path in blacklist:
             print("blocking: ", new_path)
             continue
         ensure_dir_exists(join(savepath, expected[i]))
-
-# %%
-
-expected = [
-    "Task01_BrainTumour",
-    "Task02_Heart",
-    "Task03_Liver",
-    "Task04_Hippocampus",
-    "Task05_Prostate",
-    "Task06_Lung",
-    "Task07_Pancreas",
-    "Task08_HepaticVessel",
-    "Task09_Spleen",
-    "Task10_Colon",
-]
-
-from SimpleITK import ReadImage
-import glob
-import os
-import logging
-import SimpleITK as sitk
 
 
 def copy_geometry(image: sitk.Image, ref: sitk.Image):
@@ -124,6 +122,5 @@ for i in range(10):
         name = os.path.split(predpath)[-1]
         gtpath = os.path.join(gt_dir, expected[i], "imagesTs", name)
         gt = ReadImage(gtpath)
-        print(predpath, gtpath)
         copy_geometry(pred, gt)
 # %%

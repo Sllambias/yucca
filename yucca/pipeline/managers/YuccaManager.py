@@ -12,8 +12,6 @@ from yucca.pipeline.configuration.configure_seed import seed_everything_and_get_
 from yucca.pipeline.configuration.configure_paths import get_path_config
 from yucca.pipeline.configuration.configure_plans import get_plan_config
 from yucca.pipeline.configuration.configure_input_dims import get_input_dims_config
-from yucca.functional.utils.torch_utils import measure_FLOPs
-from fvcore.nn import flop_count_table
 from yucca.modules.data.data_modules.YuccaDataModule import YuccaDataModule
 from yucca.modules.data.datasets.YuccaDataset import YuccaTrainDataset, YuccaTestDataset, YuccaTestPreprocessedDataset
 from yucca.modules.data.samplers import InfiniteRandomSampler
@@ -175,7 +173,7 @@ class YuccaManager:
 
         seed_config = seed_everything_and_get_seed_config(ckpt_seed=self.ckpt_config.ckpt_seed)
 
-        self.plan_config = self.get_plan_config(
+        plan_config = self.get_plan_config(
             ckpt_plans=self.ckpt_config.ckpt_plans,
             plans_path=path_config.plans_path,
             stage=stage,
@@ -204,9 +202,9 @@ class YuccaManager:
             splits_config = SplitConfig()
 
         input_dims_config = get_input_dims_config(
-            plan=self.plan_config.plans,
+            plan=plan_config.plans,
             model_dimensions=task_config.model_dimensions,
-            num_classes=self.plan_config.num_classes,
+            num_classes=plan_config.num_classes,
             ckpt_patch_size=self.ckpt_config.ckpt_patch_size,
             model_name=task_config.model_name,
             max_vram=self.max_vram,
@@ -220,8 +218,8 @@ class YuccaManager:
             patch_size=input_dims_config.patch_size,
             is_2D=True if self.model_dimensions == "2D" else False,
             parameter_dict=self.augmentation_params,
-            task_type_preset=self.plan_config.task_type,
-            label_regions=self.plan_config.regions_in_order if self.plan_config.use_label_regions else None,
+            task_type_preset=plan_config.task_type,
+            label_regions=plan_config.regions_in_order if plan_config.use_label_regions else None,
         )
 
         self.model_module = self.lightning_module(
@@ -230,7 +228,7 @@ class YuccaManager:
             | self.ckpt_config.lm_hparams()
             | seed_config.lm_hparams()
             | splits_config.lm_hparams()
-            | self.plan_config.lm_hparams()
+            | plan_config.lm_hparams()
             | input_dims_config.lm_hparams()
             | callback_config.lm_hparams()
             | augmenter.lm_hparams(),
@@ -261,7 +259,7 @@ class YuccaManager:
             p_oversample_foreground=self.p_oversample_foreground,
             splits_config=splits_config,
             split_idx=task_config.split_idx,
-            task_type=self.plan_config.task_type,
+            task_type=plan_config.task_type,
             test_dataset_class=self.test_dataset_class,
             train_data_dir=path_config.train_data_dir,
             train_dataset_class=self.train_dataset_class,
