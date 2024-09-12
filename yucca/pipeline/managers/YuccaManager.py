@@ -367,6 +367,16 @@ class YuccaManager:
         self.train_batches_per_step = 10
         self.val_batches_per_step = 5
 
+    @staticmethod
+    def get_plan_config(ckpt_plans, plans_path, stage, use_label_regions):
+        plan_config = get_plan_config(
+            ckpt_plans=ckpt_plans,
+            plans_path=plans_path,
+            use_label_regions=use_label_regions,
+            stage=stage,
+        )
+        return plan_config
+
 
 if __name__ == "__main__":
     # path = "/home/zcr545/YuccaData/yucca_models/Task001_OASIS/UNet__3D/YuccaPlanner/YuccaLightningManager/0/2023_11_08_15_19_14/checkpoints/test_ckpt.ckpt"
