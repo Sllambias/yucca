@@ -163,7 +163,6 @@ class YuccaManager:
 
         seed_config = seed_everything_and_get_seed_config(ckpt_seed=self.ckpt_config.ckpt_seed)
 
-        # WARNING: This might be overwritten by a subclass!
         plan_config = self.get_plan_config(
             ckpt_plans=self.ckpt_config.ckpt_plans,
             plans_path=path_config.plans_path,
