@@ -20,6 +20,10 @@ class PlanConfig:
     labels: dict = None
     regions: dict = None
 
+    if use_label_regions:
+        assert labels is not None
+        assert regions is not None
+
     def lm_hparams(self, without: [] = []):
         hparams = {
             "allow_missing_modalities": self.allow_missing_modalities,
