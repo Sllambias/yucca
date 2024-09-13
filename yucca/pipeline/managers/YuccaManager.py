@@ -100,7 +100,7 @@ class YuccaManager:
         self.augmentation_params = augmentation_params
         self.batch_size = batch_size
         self.optimizer = optimizer
-        self.optim_kwargs = optim_kwargs.update({"lr": self.learning_rate, "momentum": self.momentum})
+        self.optim_kwargs = optim_kwargs
         self.patch_based_training = patch_based_training
         self.patch_size = patch_size
         self.planner = planner
@@ -128,6 +128,7 @@ class YuccaManager:
         if self.kwargs.get("fast_dev_run"):
             self.setup_fast_dev_run()
 
+        self.optim_kwargs.update({"lr": self.learning_rate, "momentum": self.momentum})
         # defaults
         self.data_module_class = YuccaDataModule
         self.lightning_module = YuccaLightningModule
