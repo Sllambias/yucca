@@ -68,7 +68,7 @@ def save_multilabel_prediction_from_logits(logits, outpath, properties, compress
         pred_for_label = nib.Nifti1Image(
             pred[i],
             properties["nifti_metadata"]["affine"],
-            header=properties["nifti_metadata"]["header"],
+            header=nib.Nifti1Header(properties["nifti_metadata"]["header"]),
             dtype=np.uint8,
         )
         if properties["nifti_metadata"]["reoriented"]:

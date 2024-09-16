@@ -172,6 +172,24 @@ def test_inference():
         check=True,
     )
 
+    subprocess.run(
+        [
+            "yucca_inference",
+            "-s",
+            "Task000_TEST_SEGMENTATION",
+            "-t",
+            "Task000_TEST_SEGMENTATION",
+            "--manager",
+            "YuccaManager_labelregions",
+            "-d",
+            "3D",
+            "-m",
+            "TinyUNet",
+            "--no_wandb",
+        ],
+        check=True,
+    )
+
 
 def test_evaluation():
     subprocess.run(
