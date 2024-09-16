@@ -142,10 +142,14 @@ class YuccaEvaluator(object):
             self.name += "_BINARY"
             self.labels = [0, 1]
             self.labelarr = np.sort(np.array(self.labels, dtype=np.uint8))
-        elif isinstance(labels, int):
+        elif isinstance(self.labels, int):
             self.labelarr = np.sort(np.arange(self.labels, dtype=np.uint8))
-        else:
+        elif isinstance(self.labels, list):
+            self.labelarr = np.sort(np.array(self.labels, dtype=np.uint8))
+        elif isinstance(self.labels, dict):
             self.labelarr = np.sort(np.array(list(self.labels.keys()), dtype=np.uint8))
+        else:
+            raise ValueError(f"Incorrect label format. Got {type(self.labels)}")
 
         self.folder_with_predictions = folder_with_predictions
         self.folder_with_ground_truth = folder_with_ground_truth

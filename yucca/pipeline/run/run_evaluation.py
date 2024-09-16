@@ -121,7 +121,7 @@ def main():
         if not target_task:
             target_task = source_task
 
-        predpath = join(  # TODO: Extract this into a function
+        predpath = join(
             get_results_path(),
             target_task,
             source_task,
@@ -133,7 +133,7 @@ def main():
             checkpoint,
         )
         gtpath = join(get_raw_data_path(), target_task, "labelsTs")
-        classes = list(load_json(join(get_raw_data_path(), target_task, "dataset.json"))["labels"].keys())
+        classes = load_json(join(get_raw_data_path(), target_task, "dataset.json"))["labels"]
 
     evaluator = YuccaEvaluator(
         classes,
