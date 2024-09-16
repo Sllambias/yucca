@@ -43,7 +43,7 @@ def get_input_dims_config(
         originally overruled Y and thus should do so again.
         3. Patch size is inferred in the plans.
     """
-    num_modalities = max(1, plan.get("num_modalities") or len(plan["dataset_properties"]["modalities"]))
+    num_modalities = max(1, len(plan["dataset_properties"]["modalities"]))
 
     if isinstance(batch_size, str):
         if batch_size == "tiny":

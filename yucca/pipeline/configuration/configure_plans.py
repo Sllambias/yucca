@@ -1,11 +1,12 @@
 import yucca
-from batchgenerators.utilities.file_and_folder_operations import join, load_json
+from batchgenerators.utilities.file_and_folder_operations import join, load_json, isfile
 from dataclasses import dataclass
 from typing import Union, Literal
 from yucca.pipeline.preprocessing.UnsupervisedPreprocessor import UnsupervisedPreprocessor
 from yucca.pipeline.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
 from yucca.functional.utils.dict import without_keys
 from yucca.functional.utils.files_and_folders import recursive_find_python_class
+from yucca.functional.utils.loading import load_yaml
 import logging
 
 
@@ -53,8 +54,11 @@ def get_plan_config(
     if stage == "predict":
         # In this case we don't want to rely on plans being found in the preprocessed folder,
         # as it might not exist.
-        assert ckpt_plans is not None
-        plans = ckpt_plans
+        if isfile(plans_path):
+            plans = load_yaml(plans_path)["config"]["plans"]
+        else:
+            assert ckpt_plans is not None
+            plans = ckpt_plans
 
     regions = None
     labels = None
