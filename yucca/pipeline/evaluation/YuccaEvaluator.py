@@ -41,7 +41,6 @@ class YuccaEvaluator(object):
         task_type: Literal["segmentation", "classification", "regression"] = "segmentation",
         strict: bool = True,
     ):
-        print(labels)
         self.name = "results"
 
         self.labels = labels
@@ -146,7 +145,7 @@ class YuccaEvaluator(object):
         elif isinstance(labels, int):
             self.labelarr = np.sort(np.arange(self.labels, dtype=np.uint8))
         else:
-            self.labelarr = np.sort(np.array(list(self.labels.keys())))
+            self.labelarr = np.sort(np.array(list(self.labels.keys()), dtype=np.uint8))
 
         self.folder_with_predictions = folder_with_predictions
         self.folder_with_ground_truth = folder_with_ground_truth
