@@ -3,7 +3,7 @@ import numpy as np
 import nibabel as nib
 import logging
 from typing import Optional
-from yucca.functional.transforms.label_transforms import convert_labels_to_regions
+from yucca.functional.transforms.label_transforms import convert_labels_to_regions, translate_region_labels
 from yucca.functional.utils.nib_utils import get_nib_spacing
 from yucca.functional.evaluation.obj_metrics import get_obj_stats_for_label
 from yucca.functional.evaluation.surface_metrics import get_surface_metrics_for_label
@@ -14,7 +14,7 @@ from yucca.functional.evaluation.metrics import auroc
 
 
 def evaluate_multilabel_folder_segm(
-    labels,
+    labels: dict,
     metrics,
     subjects,
     folder_with_predictions,
@@ -28,13 +28,15 @@ def evaluate_multilabel_folder_segm(
     # predictions are multilabel at this point (c, h, w, d)
     # ground truth MAY be converted, but may also be (h, w, d) in which case we use the label_regions
     # to convert for multilabel evaluation
-    logging.info(f"Multilabel segmentation evaluation with labels: {labels}")
+    logging.info(f"Multilabel segmentation evaluation with regions: {regions} and labels: {labels}")
 
     sys.stdout.flush()
     resultdict = {}
     meandict = {}
 
-    for label in labels:
+    labelarr = np.array(range(len(regions.keys()) + 1), dtype=np.uint8)
+
+    for label in regions.keys():
         meandict[str(label)] = {k: [] for k in list(metrics.keys()) + obj_metrics + surface_metrics}
 
     for case in tqdm(subjects, desc="Evaluating"):
@@ -53,23 +55,27 @@ def evaluate_multilabel_folder_segm(
             assert (
                 regions is not None
             ), "Regions must be supplied if ground truth is not already multilabel (i.e. multiple channels)"
-            gt = convert_labels_to_regions(gt[np.newaxis], regions)
-            for i in range(len(labels) - 1):
+            translated_regions = translate_region_labels(regions=regions, labels=labels)
+            gt = convert_labels_to_regions(gt[np.newaxis], translated_regions)
+            for i in range(len(regions.keys())):
                 pred[i] *= 1 + i
                 gt[i] *= 1 + i
+
         if as_binary:
             cmat = confusion_matrix(
                 np.around(gt.flatten()).astype(bool).astype(np.uint8),
                 np.around(pred.flatten()).astype(bool).astype(np.uint8),
-                labels=labels,
+                labels=labelarr,
             )
         else:
             cmat = confusion_matrix(
                 np.around(gt.flatten()).astype(np.uint8),
                 np.around(pred.flatten()).astype(np.uint8),
-                labels=labels,
+                labels=labelarr,
             )
-        for label in labels:
+
+        for label, region_name in enumerate(regions.keys()):
+            label += 1
             labeldict = {}
 
             tp = cmat[label, label]
@@ -78,7 +84,7 @@ def evaluate_multilabel_folder_segm(
             tn = np.sum(cmat) - tp - fp - fn  # often a redundant and meaningless metric
             for k, v in metrics.items():
                 labeldict[k] = round(v(tp, fp, tn, fn), 4)
-                meandict[str(label)][k].append(labeldict[k])
+                meandict[str(region_name)][k].append(labeldict[k])
 
             if obj_metrics:
                 raise NotImplementedError
@@ -99,15 +105,15 @@ def evaluate_multilabel_folder_segm(
                     )
                 for k, v in surface_labeldict.items():
                     labeldict[k] = round(v, 4)
-                    meandict[str(label)][k].append(labeldict[k])
-            casedict[str(label)] = labeldict
+                    meandict[str(region_name)][k].append(labeldict[k])
+            casedict[str(region_name)] = labeldict
         casedict["Prediction:"] = predpath
         casedict["Ground Truth:"] = gtpath
 
         resultdict[case] = casedict
         del pred, gt, cmat
 
-    for label in labels:
+    for label in regions.keys():
         meandict[str(label)] = {
             k: round(np.nanmean(v), 4) if not np.all(np.isnan(v)) else 0 for k, v in meandict[str(label)].items()
         }

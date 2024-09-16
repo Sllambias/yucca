@@ -163,7 +163,7 @@ class YuccaManager:
             split_data_param=self.split_data_param,
         )
 
-        path_config = get_path_config(task_config=task_config)
+        path_config = get_path_config(task_config=task_config, stage=stage)
 
         self.ckpt_config = get_checkpoint_config(
             ckpt_path=self.ckpt_path,

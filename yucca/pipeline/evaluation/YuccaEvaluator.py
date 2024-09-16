@@ -1,5 +1,5 @@
 import os
-from typing import Literal, Optional
+from typing import Literal, Optional, Union
 import numpy as np
 import json
 import wandb
@@ -28,24 +28,24 @@ from yucca.paths import get_raw_data_path
 class YuccaEvaluator(object):
     def __init__(
         self,
-        labels: list | int,
+        labels: Union[dict, int],
         folder_with_predictions,
         folder_with_ground_truth,
         use_wandb: bool,
         as_binary=False,
         do_object_eval=False,
         do_surface_eval=False,
-        regions_in_order: Optional[list] = None,
-        regions_labeled: Optional[list] = None,
+        regions: Optional[dict] = None,
         overwrite: bool = False,
         surface_tol: int = 1,
         task_type: Literal["segmentation", "classification", "regression"] = "segmentation",
         strict: bool = True,
     ):
+        print(labels)
         self.name = "results"
 
-        self.regions_in_order = regions_in_order
-        self.regions_labeled = regions_labeled
+        self.labels = labels
+        self.regions = regions
         self.overwrite = overwrite
         self.use_wandb = use_wandb
         self.task_type = task_type
@@ -139,16 +139,15 @@ class YuccaEvaluator(object):
         else:
             raise ValueError(f"Unknown task type {self.task_type}")
 
-        if isinstance(labels, int):
-            self.labels = [str(i) for i in range(labels)]
-        else:
-            self.labels = labels
-
         if self.as_binary:
-            self.labels = ["0", "1"]
             self.name += "_BINARY"
+            self.labels = [0, 1]
+            self.labelarr = np.sort(np.array(self.labels, dtype=np.uint8))
+        elif isinstance(labels, int):
+            self.labelarr = np.sort(np.arange(self.labels, dtype=np.uint8))
+        else:
+            self.labelarr = np.sort(np.array(list(self.labels.keys())))
 
-        self.labelarr = np.sort(np.array(self.labels, dtype=np.uint8))
         self.folder_with_predictions = folder_with_predictions
         self.folder_with_ground_truth = folder_with_ground_truth
 
@@ -205,16 +204,16 @@ class YuccaEvaluator(object):
                 folder_with_ground_truth=self.folder_with_ground_truth,
             )
         elif self.task_type == "segmentation":
-            if self.regions_in_order is not None:
+            if self.regions is not None:
                 return evaluate_multilabel_folder_segm(
-                    labels=[0] + self.regions_labeled,
+                    labels=self.labels,
                     metrics=self.metrics,
                     subjects=self.pred_subjects,
                     folder_with_predictions=self.folder_with_predictions,
                     folder_with_ground_truth=self.folder_with_ground_truth,
                     as_binary=self.as_binary,
                     obj_metrics=self.obj_metrics,
-                    regions=self.regions_in_order,
+                    regions=self.regions,
                     surface_metrics=self.surface_metrics,
                     surface_tol=self.surface_tol,
                 )

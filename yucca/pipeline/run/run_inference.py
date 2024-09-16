@@ -284,13 +284,12 @@ def main():
 
     if isdir(ground_truth) and not no_eval:
         evaluator = YuccaEvaluator(
-            manager.model_module.num_classes,
+            manager.plan_config.labels,
             folder_with_predictions=outpath,
             folder_with_ground_truth=ground_truth,
             do_surface_eval=surface_eval,
             overwrite=overwrite,
-            regions_in_order=manager.plan_config.regions_in_order if manager.plan_config.use_label_regions else None,
-            regions_labeled=manager.plan_config.regions_labeled if manager.plan_config.use_label_regions else None,
+            regions=manager.plan_config.regions if manager.plan_config.use_label_regions else None,
             surface_tol=surface_tol,
             task_type=task_type,
             use_wandb=use_wandb,
