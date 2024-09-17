@@ -10,23 +10,19 @@ if __name__ == "__main__":
     from yucca.pipeline.configuration.split_data import get_split_config
     from yucca.modules.data.augmentation.YuccaAugmentationComposer import YuccaAugmentationComposer
     from yucca.modules.data.augmentation.augmentation_presets import no_aug
-    from yucca.modules.lightning_modules.YuccaLightningModule import YuccaLightningModule
+    from yucca.modules.lightning_modules.BaseLightningModule import BaseLightningModule
     from yucca.modules.data.data_modules.YuccaDataModule import YuccaDataModule
     from yucca.documentation.templates.template_config import config
-
-    config["plans"] = load_json(
-        os.path.join(get_preprocessed_data_path(), config["task"], config["plans_name"], config["plans_name"] + "_plans.json")
-    )
 
     task_config = TaskConfig(
         task=config.get("task"),
         continue_from_most_recent=True,
         experiment=config.get("experiment"),
         manager_name="",
-        model_dimensions=config.get("dims"),
+        model_dimensions=config.get("model_dimensions"),
         model_name=config.get("model_name"),
         patch_based_training=True,
-        planner_name=config.get("plans_name"),
+        planner_name=config.get("config_name"),
         split_idx=config.get("split_idx"),
         split_method=config.get("split_method"),
         split_param=config.get("split_param"),
@@ -49,15 +45,20 @@ if __name__ == "__main__":
     augmenter = YuccaAugmentationComposer(
         deep_supervision=config.get("deep_supervision"),
         patch_size=config.get("patch_size"),
-        is_2D=True if config.get("dims") == "2D" else False,
+        is_2D=True if config.get("model_dimensions") == "2D" else False,
         parameter_dict=no_aug,
         task_type_preset=config.get("task_type"),
     )
 
-    model_module = YuccaLightningModule(
-        config=config | task_config.lm_hparams() | path_config.lm_hparams() | callback_config.lm_hparams(),
-        deep_supervision=config.get("deep_supervision"),
-        optimizer_kwargs={"learning_rate": config.get("learning_rate"), "momentum": config.get("momentum")},
+    model_module = BaseLightningModule(
+        model=config["model"],
+        model_dimensions=config["model_dimensions"],
+        num_classes=config["num_classes"],
+        num_modalities=config["num_modalities"],
+        patch_size=config["batch_size"],
+        crop_to_nonzero=config["crop_to_nonzero"],
+        deep_supervision=config["deep_supervision"],
+        optimizer_kwargs={"lr": config.get("learning_rate"), "momentum": config.get("momentum")},
         loss_fn=config.get("loss_fn"),
     )
 
