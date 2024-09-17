@@ -2,7 +2,7 @@ import torch
 from fvcore.nn import FlopCountAnalysis
 
 
-def maybe_to_gpu(data):
+def move_to_available_device(data):
     device = get_available_device()
 
     if isinstance(data, list):
@@ -14,7 +14,7 @@ def get_available_device():
     if torch.cuda.is_available():
         return "cuda"
     elif torch.backends.mps.is_available():
-        return "mps"
+        return "cpu"  # we cannot use mps, since Conv3D is not supported here.
     else:
         return "cpu"
 

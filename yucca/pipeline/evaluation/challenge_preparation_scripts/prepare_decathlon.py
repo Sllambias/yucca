@@ -1,4 +1,4 @@
-from batchgenerators.utilities.file_and_folder_operations import subfiles, join, maybe_mkdir_p
+from batchgenerators.utilities.file_and_folder_operations import subfiles, join, maybe_mkdir_p as ensure_dir_exists
 import shutil
 
 """
@@ -68,7 +68,7 @@ blacklist = [
 ]
 
 savepath = "/home/zcr545/decathlon_submission"
-maybe_mkdir_p(savepath)
+ensure_dir_exists(savepath)
 
 for i in range(10):
     for seg_path in subfiles(folders[i], join=False):
@@ -77,6 +77,6 @@ for i in range(10):
         if new_path in blacklist:
             print("blocking: ", new_path)
             continue
-        maybe_mkdir_p(join(savepath, expected[i]))
+        ensure_dir_exists(join(savepath, expected[i]))
 
         shutil.copy(join(folders[i], seg_path), f"{savepath}/{expected[i]}/{new_filename}")

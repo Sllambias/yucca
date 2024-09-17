@@ -17,14 +17,14 @@ from yucca.functional.preprocessing import (
     reverse_preprocessing,
 )
 from yucca.functional.utils.loading import load_yaml, read_file_to_nifti_or_np
-from yucca.paths import yucca_preprocessed_data, yucca_raw_data
+from yucca.paths import get_preprocessed_data_path, get_raw_data_path
 from multiprocessing import Pool
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
     load_json,
     subfiles,
     save_pickle,
-    maybe_mkdir_p,
+    maybe_mkdir_p as ensure_dir_exists,
     isfile,
 )
 
@@ -92,8 +92,8 @@ class YuccaPreprocessor(object):
         self.preprocess_label = True
 
     def initialize_paths(self):
-        self.target_dir = join(yucca_preprocessed_data, self.task, self.plans["plans_name"])
-        self.input_dir = join(yucca_raw_data, self.task)
+        self.target_dir = join(get_preprocessed_data_path(), self.task, self.plans["plans_name"])
+        self.input_dir = join(get_raw_data_path(), self.task)
         self.imagepaths = subfiles(join(self.input_dir, "imagesTr"), suffix=self.image_extension)
         self.subject_ids = [
             file for file in subfiles(join(self.input_dir, "labelsTr"), join=False) if not file.startswith(".")
@@ -124,7 +124,7 @@ class YuccaPreprocessor(object):
     def run(self):
         self.initialize_properties()
         self.initialize_paths()
-        maybe_mkdir_p(self.target_dir)
+        ensure_dir_exists(self.target_dir)
         self.verify_compression_level(self.target_dir, self.compress)
 
         logging.info(
@@ -304,7 +304,9 @@ class YuccaPreprocessor(object):
             )
         return images, label, image_props
 
-    def preprocess_case_for_inference(self, images: list | tuple, patch_size: tuple, sliding_window_prediction: bool = True):
+    def preprocess_case_for_inference(
+        self, images: list | tuple, patch_size: tuple, ext: str = ".nii.gz", sliding_window_prediction: bool = True
+    ):
         """
         Will reorient ONLY if we have valid qform or sform codes.
         with coded=True the methods will return {affine or None} and {0 or 1}.
@@ -323,12 +325,18 @@ class YuccaPreprocessor(object):
         if sliding_window_prediction is False:
             self.target_size = patch_size
 
+        images = [
+            read_file_to_nifti_or_np(image[0]) if isinstance(image, tuple) else read_file_to_nifti_or_np(image)
+            for image in images
+        ]
+
         images, image_properties = preprocess_case_for_inference(
             crop_to_nonzero=self.plans["crop_to_nonzero"],
             keep_aspect_ratio=self.plans["keep_aspect_ratio_when_using_target_size"],
             images=images,
             intensities=self.intensities,
             normalization_scheme=self.plans["normalization_scheme"],
+            ext=ext,
             patch_size=patch_size,
             target_size=self.target_size,
             target_spacing=self.target_spacing,
@@ -336,7 +344,6 @@ class YuccaPreprocessor(object):
             transpose_forward=self.transpose_forward,
             allow_missing_modalities=self.allow_missing_modalities,
         )
-
         return images, image_properties
 
     def reverse_preprocessing(self, images: torch.Tensor, image_properties: dict):

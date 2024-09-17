@@ -3,7 +3,7 @@ import torch
 import wandb
 import logging
 from typing import Literal, Union, Optional
-from yucca.data.augmentation.YuccaAugmentationComposer import YuccaAugmentationComposer
+from yucca.modules.data.augmentation.YuccaAugmentationComposer import YuccaAugmentationComposer
 from yucca.pipeline.configuration.split_data import get_split_config, SplitConfig
 from yucca.pipeline.configuration.configure_task import get_task_config
 from yucca.pipeline.configuration.configure_callbacks import get_callback_config
@@ -12,13 +12,11 @@ from yucca.pipeline.configuration.configure_seed import seed_everything_and_get_
 from yucca.pipeline.configuration.configure_paths import get_path_config
 from yucca.pipeline.configuration.configure_plans import get_plan_config
 from yucca.pipeline.configuration.configure_input_dims import get_input_dims_config
-from yucca.data.data_modules.YuccaDataModule import YuccaDataModule
-from yucca.data.datasets.YuccaDataset import YuccaTrainDataset, YuccaTestDataset
-from yucca.data.samplers import InfiniteRandomSampler
-from yucca.lightning_modules.YuccaLightningModule import YuccaLightningModule
-from yucca.paths import yucca_results
-from yucca.functional.utils.torch_utils import measure_FLOPs
-from fvcore.nn import flop_count_table
+from yucca.modules.data.data_modules.YuccaDataModule import YuccaDataModule
+from yucca.modules.data.datasets.YuccaDataset import YuccaTrainDataset, YuccaTestDataset, YuccaTestPreprocessedDataset
+from yucca.modules.data.samplers import InfiniteRandomSampler
+from yucca.modules.lightning_modules.YuccaLightningModule import YuccaLightningModule
+from yucca.paths import get_results_path
 
 
 class YuccaManager:
@@ -131,6 +129,7 @@ class YuccaManager:
         self,
         stage: Literal["fit", "test", "predict"],
         disable_tta: bool = False,
+        disable_inference_preprocessing: bool = False,
         pred_include_cases: list = None,
         overwrite_predictions: bool = False,
         pred_data_dir: str = None,
@@ -202,13 +201,18 @@ class YuccaManager:
             patch_size=self.patch_size,
         )
 
+        if plan_config.use_label_regions:
+            assert plan_config.labels is not None
+            assert plan_config.regions is not None
+
         augmenter = YuccaAugmentationComposer(
             deep_supervision=self.deep_supervision,
             patch_size=input_dims_config.patch_size,
             is_2D=True if self.model_dimensions == "2D" else False,
             parameter_dict=self.augmentation_params,
             task_type_preset=plan_config.task_type,
-            label_regions=plan_config.regions_in_order if plan_config.use_label_regions else None,
+            labels=plan_config.labels,
+            regions=plan_config.regions if plan_config.use_label_regions else None,
         )
 
         self.model_module = self.lightning_module(
@@ -222,20 +226,21 @@ class YuccaManager:
             | callback_config.lm_hparams()
             | augmenter.lm_hparams(),
             deep_supervision=self.deep_supervision,
-            learning_rate=self.learning_rate,
+            disable_inference_preprocessing=disable_inference_preprocessing,
             loss_fn=self.loss,
-            momentum=self.momentum,
+            optimizer_kwargs={"lr": self.learning_rate, "momentum": self.momentum},
             step_logging=self.step_logging,
             test_time_augmentation=not disable_tta if disable_tta is True else augmenter.mirror_p_per_sample > 0,
         )
 
         self.data_module = self.data_module_class(
+            batch_size=input_dims_config.batch_size,
+            patch_size=input_dims_config.patch_size,
             allow_missing_modalities=plan_config.allow_missing_modalities,
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
             pred_include_cases=pred_include_cases,
             image_extension=plan_config.image_extension,
-            input_dims_config=input_dims_config,
             overwrite_predictions=overwrite_predictions,
             num_workers=self.num_workers,
             pred_data_dir=pred_data_dir,
@@ -250,9 +255,9 @@ class YuccaManager:
         )
 
         self.verify_modules_are_valid()
-        self.visualize_model_with_FLOPs(self.model_module, input_dims_config)
 
         self.trainer = L.Trainer(
+            accelerator="cpu" if torch.backends.mps.is_available() and self.model_dimensions == "3D" else "auto",
             callbacks=callback_config.callbacks,
             default_root_dir=path_config.save_dir,
             limit_train_batches=self.train_batches_per_step,
@@ -290,8 +295,9 @@ class YuccaManager:
         self,
         input_folder,
         disable_tta: bool = False,
+        disable_inference_preprocessing: bool = False,
         overwrite_predictions: bool = False,
-        output_folder: str = yucca_results,
+        output_folder: str = get_results_path(),
         pred_include_cases: list = None,
         save_softmax=False,
     ):
@@ -299,6 +305,7 @@ class YuccaManager:
         self.initialize(
             stage="predict",
             disable_tta=disable_tta,
+            disable_inference_preprocessing=disable_inference_preprocessing,
             pred_include_cases=pred_include_cases,
             overwrite_predictions=overwrite_predictions,
             pred_data_dir=input_folder,
@@ -314,15 +321,25 @@ class YuccaManager:
         )
         self.finish()
 
-    @staticmethod
-    def get_plan_config(ckpt_plans, plans_path, stage, use_label_regions):
-        plan_config = get_plan_config(
-            ckpt_plans=ckpt_plans,
-            plans_path=plans_path,
-            use_label_regions=use_label_regions,
-            stage=stage,
+    def predict_preprocessed_folder(
+        self,
+        input_folder,
+        disable_tta: bool = False,
+        overwrite_predictions: bool = False,
+        output_folder: str = get_results_path(),
+        pred_include_cases: list = None,
+        save_softmax=False,
+    ):
+        self.test_dataset_class = YuccaTestPreprocessedDataset
+        self.predict_folder(
+            input_folder=input_folder,
+            disable_tta=disable_tta,
+            disable_inference_preprocessing=True,
+            overwrite_predictions=overwrite_predictions,
+            output_folder=output_folder,
+            pred_include_cases=pred_include_cases,
+            save_softmax=save_softmax,
         )
-        return plan_config
 
     def finish(self):
         wandb.finish()
@@ -339,21 +356,6 @@ class YuccaManager:
                 "Warning: you are limiting the amount of batches pr. step, but not sampling using InfiniteRandomSampler."
             )
 
-    def visualize_model_with_FLOPs(self, lightning_module, input_dims_config):
-        try:
-            flops = self.get_flops(
-                lightning_module, input_dims_config.batch_size, input_dims_config.num_modalities, input_dims_config.patch_size
-            )
-            logging.info("\n" + flop_count_table(flops))
-        except RuntimeError:
-            logging.info("\n Model architecture could not be visualized.")
-
-    @staticmethod
-    def get_flops(lightning_module, batch_size, modalities, patch_size):
-        data = torch.randn((batch_size, modalities, *patch_size))
-        flops = measure_FLOPs(lightning_module.model, data)
-        return flops
-
     def setup_fast_dev_run(self):
         self.batch_size = 2
         self.patch_size = (32, 32)
@@ -363,6 +365,16 @@ class YuccaManager:
         self.kwargs["accelerator"] = "cpu"
         self.train_batches_per_step = 10
         self.val_batches_per_step = 5
+
+    @staticmethod
+    def get_plan_config(ckpt_plans, plans_path, stage, use_label_regions):
+        plan_config = get_plan_config(
+            ckpt_plans=ckpt_plans,
+            plans_path=plans_path,
+            use_label_regions=use_label_regions,
+            stage=stage,
+        )
+        return plan_config
 
 
 if __name__ == "__main__":

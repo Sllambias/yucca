@@ -1,10 +1,10 @@
 import shutil
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles, subdirs
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p as ensure_dir_exists, subfiles, subdirs
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
-from yucca.paths import yucca_raw_data, yucca_source
+from yucca.paths import get_raw_data_path, get_source_path
 
 
-def convert(path: str = yucca_source, subdir: str = "ACDC"):
+def convert(path: str = get_source_path(), subdir: str = "ACDC"):
     """INPUT DATA - Define input path and suffixes"""
     path = join(path, subdir)
     file_suffix = ".nii.gz"
@@ -13,7 +13,7 @@ def convert(path: str = yucca_source, subdir: str = "ACDC"):
     task_name = "Task016_ACDC"
     task_prefix = "ACDC"
 
-    """ Access the input data. If images are not split into train/test, and you wish to randomly 
+    """ Access the input data. If images are not split into train/test, and you wish to randomly
     split the data, uncomment and adapt the following lines to fit your local path. """
 
     images_dir_tr = labels_dir_tr = join(path, "database", "training")
@@ -23,7 +23,7 @@ def convert(path: str = yucca_source, subdir: str = "ACDC"):
     test_samples = subdirs(images_dir_ts, join=False)
 
     """ Then define target paths """
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(get_raw_data_path(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")
@@ -31,10 +31,10 @@ def convert(path: str = yucca_source, subdir: str = "ACDC"):
     target_imagesTs = join(target_base, "imagesTs")
     target_labelsTs = join(target_base, "labelsTs")
 
-    maybe_mkdir_p(target_imagesTr)
-    maybe_mkdir_p(target_labelsTs)
-    maybe_mkdir_p(target_imagesTs)
-    maybe_mkdir_p(target_labelsTr)
+    ensure_dir_exists(target_imagesTr)
+    ensure_dir_exists(target_labelsTs)
+    ensure_dir_exists(target_imagesTs)
+    ensure_dir_exists(target_labelsTr)
 
     """Populate Target Directory
     This is also the place to apply any re-orientation, resampling and/or label correction."""

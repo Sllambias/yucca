@@ -1,9 +1,9 @@
 import nibabel as nib
 import nibabel.processing as nibpro
 from tqdm import tqdm
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subdirs
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p as ensure_dir_exists, subdirs
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
-from yucca.paths import yucca_raw_data
+from yucca.paths import get_raw_data_path
 from sklearn.model_selection import train_test_split
 
 
@@ -24,7 +24,7 @@ def convert(path: str, subdir: str = "ISLES-2022"):
     prefix = "ISLES22_FULL"
 
     # Target paths
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(get_raw_data_path(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")
@@ -32,10 +32,10 @@ def convert(path: str, subdir: str = "ISLES-2022"):
     target_imagesTs = join(target_base, "imagesTs")
     target_labelsTs = join(target_base, "labelsTs")
 
-    maybe_mkdir_p(target_imagesTr)
-    maybe_mkdir_p(target_labelsTs)
-    maybe_mkdir_p(target_imagesTs)
-    maybe_mkdir_p(target_labelsTr)
+    ensure_dir_exists(target_imagesTr)
+    ensure_dir_exists(target_labelsTs)
+    ensure_dir_exists(target_imagesTs)
+    ensure_dir_exists(target_labelsTr)
 
     ###Populate Target Directory###
     # This is likely also the place to apply any re-orientation, resampling and/or label correction.

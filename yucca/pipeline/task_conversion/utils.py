@@ -2,7 +2,7 @@ import numpy as np
 import os
 import shutil
 import nibabel as nib
-from yucca.paths import yucca_raw_data
+from yucca.paths import get_models_path, get_preprocessed_data_path, get_raw_data_path
 from typing import Literal
 from batchgenerators.utilities.file_and_folder_operations import save_json, subfiles, join, subdirs
 from tqdm import tqdm
@@ -14,7 +14,7 @@ def combine_images_from_tasks(tasks: list, target_base: str, run_type: Literal["
     for task in tqdm(tasks):
         folders = ["imagesTr", "imagesTs", "labelsTr", "labelsTs"] if run_type == "supervised" else ["imagesTr"]
         for folder in folders:
-            source = os.path.join(yucca_raw_data, task, folder)
+            source = os.path.join(get_raw_data_path(), task, folder)
             target = os.path.join(target_base, folder)
             print("Copying ", source, target)
             copy_files_from_to(source, target)
@@ -65,8 +65,7 @@ def generate_dataset_json(
     labels: dict,
     dataset_name: str,
     label_hierarchy: dict = {},
-    regions_in_order=[],  # We do not want to do these as dicts, as its sensitive to order and they easily become sorted by mistake
-    regions_labeled=[],
+    regions: dict = {},
     tasks: list = [],
     license: str = "hands off!",
     dataset_description: str = "",
@@ -83,6 +82,20 @@ def generate_dataset_json(
     corresponds to _000.nii.gz, etc). Example: ('T1', 'T2', 'FLAIR').
     :param labels: dict with int->str (key->value) mapping the label IDs to label names. Note that 0 is always
     supposed to be background! Example: {0: 'background', 1: 'left hippocampus', 2: 'right hippocampus'}
+    :param regions: dict with str -> dict where inner dict contains specification of each region
+                    The dict must have the following form:
+                    ```
+                    {
+                        'REGION_NAME': {
+                            'priority': 1, # LOWER IS MORE IMPORTANT
+                            'labels': ['LABEL1', 'LABEL2']
+                        }
+                        ...
+                    }
+                    where
+                        priority specifies how regions are collapsed during prediction
+                        labels specify which labels to be included into a region.
+                               each label must be a key in the labels dict above.
     :param dataset_name: The name of the dataset. Can be anything you want
     :param license:
     :param dataset_description:
@@ -99,6 +112,30 @@ def generate_dataset_json(
     else:
         test_identifiers = []
 
+    labels = {str(i): labels[i] for i in labels.keys()} if labels is not None else None
+
+    # Sanity check regions
+    if regions is not None:
+        assert labels is not None
+        assert isinstance(regions, dict), "Regions must be specified using a dict mapping regions to labels"
+        priorities = []
+        for region, region_dict in regions.items():
+            assert "priority" in region_dict.keys(), f"Region {region} must have a priority specifier"
+            priorities.append(region_dict["priority"])
+            assert "labels" in region_dict.keys(), f"Region {region} must have labels"
+            assert isinstance(region_dict["labels"], list), f"Region {region} labels must be a list"
+            for label in region_dict["labels"]:
+                assert isinstance(label, str), f"label must be of type str not {type(label)}"
+                assert (
+                    label in labels.values()
+                ), f"Labels must be strings, corresponding to the values in the label dict: {labels.values()}"
+                assert len(region_dict.keys()) == 2, region_dict.keys()
+
+        # check that the priorities in the dict contains all numbers between 1 and max(priorities):
+        assert set(priorities) == set(
+            range(1, len(regions) + 1)
+        ), f"The regions dict must contain all priorities between 1 and len(regions), but instead got priorities: {priorities}"
+
     json_dict = {}
     json_dict["name"] = dataset_name
     json_dict["description"] = dataset_description
@@ -108,10 +145,9 @@ def generate_dataset_json(
     json_dict["release"] = dataset_release
     json_dict["image_extension"] = im_ext
     json_dict["modality"] = {str(i): modalities[i] for i in range(len(modalities))}
-    json_dict["labels"] = {str(i): labels[i] for i in labels.keys()} if labels is not None else None
+    json_dict["labels"] = labels
     json_dict["label_hierarchy"] = label_hierarchy
-    json_dict["regions_in_order"] = regions_in_order
-    json_dict["regions_labeled"] = regions_labeled
+    json_dict["regions"] = regions
     json_dict["tasks"] = tasks
     json_dict["numTraining"] = len(train_identifiers)
     json_dict["numTest"] = len(test_identifiers)
@@ -126,9 +162,18 @@ def generate_dataset_json(
     save_json(json_dict, os.path.join(output_file))
 
 
-def maybe_get_task_from_task_id(task_id: str | int):
+def get_task_from_task_id(task_id: str | int, stage: str):
+    assert stage in ["raw", "preprocessed", "models"], stage
     task_id = str(task_id)
-    tasks = subdirs(yucca_raw_data, join=False)
+
+    if stage == "raw":
+        stage_path = get_raw_data_path()
+    elif stage == "preprocessed":
+        stage_path = get_preprocessed_data_path()
+    elif stage == "models":
+        stage_path = get_models_path()
+
+    tasks = subdirs(stage_path, join=False)
 
     # Check if name is already complete
     if task_id in tasks:
@@ -140,8 +185,4 @@ def maybe_get_task_from_task_id(task_id: str | int):
         if task_id.lower() in task.lower():
             return task
 
-    # If we can't find anything we just return the original, on the offchance that the task does not exist in Raw Data while existing in e.g. Preprocessed
-    print(
-        f"Couldn't find a task called: {task_id} in the raw data folder: {yucca_raw_data}. If your task only exists in e.g. the Preprocessed folder things might still work."
-    )
-    return task_id
+    raise LookupError(f"Task {task_id} not found in {stage_path}.")

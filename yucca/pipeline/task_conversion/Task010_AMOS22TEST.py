@@ -1,7 +1,7 @@
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p as ensure_dir_exists, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 import shutil
-from yucca.paths import yucca_raw_data
+from yucca.paths import get_raw_data_path
 
 
 def convert(path: str, subdir: str = "amos22"):
@@ -28,16 +28,16 @@ def convert(path: str, subdir: str = "amos22"):
     prefix = "AMOS22TEST"
 
     # Target paths
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(get_raw_data_path(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")
 
     target_imagesTs = join(target_base, "imagesTs")
 
-    maybe_mkdir_p(target_imagesTr)
-    maybe_mkdir_p(target_labelsTr)
-    maybe_mkdir_p(target_imagesTs)
+    ensure_dir_exists(target_imagesTr)
+    ensure_dir_exists(target_labelsTr)
+    ensure_dir_exists(target_imagesTs)
 
     # This is likely also the place to apply any re-orientation, resampling and/or label correction.
     for sTr in training_samples:

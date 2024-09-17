@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Tuple, Union, Optional, Literal, Iterable
-from yucca.networks.utils.model_memory_estimation import find_optimal_tensor_dims
+from yucca.modules.networks.utils.model_memory_estimation import find_optimal_tensor_dims
 import logging
 
 

@@ -1,6 +1,6 @@
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subfiles
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p as ensure_dir_exists, subfiles
 from yucca.pipeline.task_conversion.utils import generate_dataset_json, dirs_in_dir
-from yucca.paths import yucca_raw_data
+from yucca.paths import get_raw_data_path
 from tqdm import tqdm
 import shutil
 
@@ -18,10 +18,10 @@ def convert(path: str, subdir: str = "ISLES-2022"):
     split the data, uncomment and adapt the following lines to fit your local path. """
 
     subjects_dir = join(path, "images")
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(get_raw_data_path(), task_name)
     target_imagesTr = join(target_base, "imagesTr")
 
-    maybe_mkdir_p(target_imagesTr)
+    ensure_dir_exists(target_imagesTr)
 
     """Populate Target Directory
     This is also the place to apply any re-orientation, resampling and/or label correction."""

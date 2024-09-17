@@ -47,7 +47,7 @@ def test_training():
         check=True,
     )
 
-    # First: a very basic short training
+    # Then: a less basic short training
     subprocess.run(
         [
             "yucca_train",
@@ -72,12 +72,34 @@ def test_training():
         check=True,
     )
 
+    subprocess.run(
+        [
+            "yucca_train",
+            "-t",
+            "Task000_TEST_SEGMENTATION",
+            "-m",
+            "TinyUNet",
+            "--manager",
+            "YuccaManager_labelregions",
+            "--epochs",
+            "2",
+            "--batch_size",
+            "2",
+            "--disable_logging",
+            "--train_batches_per_step",
+            "3",
+            "--val_batches_per_step",
+            "3",
+        ],
+        check=True,
+    )
+
 
 def test_finetune():
-    from yucca.paths import yucca_models
+    from yucca.paths import get_models_path
 
     chk = os.path.join(
-        yucca_models,
+        get_models_path(),
         "Task000_TEST_SEGMENTATION",
         "TinyUNet__3D",
         "YuccaManager__YuccaPlanner",
@@ -101,6 +123,8 @@ def test_finetune():
             "2D",
             "-pl",
             "UnsupervisedPlanner",
+            "--loss",
+            "MSE",
             "--lr",
             "0.0006",
             "--mom",

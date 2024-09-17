@@ -8,8 +8,8 @@ import numpy as np
 import pandas as pd
 import shutil
 from tqdm import tqdm
-from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p, subdirs, subfiles
-from yucca.paths import yucca_raw_data
+from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p as ensure_dir_exists, subdirs, subfiles
+from yucca.paths import get_raw_data_path
 from yucca.pipeline.task_conversion.utils import generate_dataset_json
 
 
@@ -28,7 +28,7 @@ def convert(path: str, subdir: str = "tiny-imagenet-200"):
     prefix = "tiny_imagenet_200"
 
     # Target paths
-    target_base = join(yucca_raw_data, task_name)
+    target_base = join(get_raw_data_path(), task_name)
 
     target_imagesTr = join(target_base, "imagesTr")
     target_labelsTr = join(target_base, "labelsTr")
@@ -36,10 +36,10 @@ def convert(path: str, subdir: str = "tiny-imagenet-200"):
     target_imagesTs = join(target_base, "imagesTs")
     target_labelsTs = join(target_base, "labelsTs")
 
-    maybe_mkdir_p(target_imagesTr)
-    maybe_mkdir_p(target_labelsTs)
-    maybe_mkdir_p(target_imagesTs)
-    maybe_mkdir_p(target_labelsTr)
+    ensure_dir_exists(target_imagesTr)
+    ensure_dir_exists(target_labelsTs)
+    ensure_dir_exists(target_imagesTs)
+    ensure_dir_exists(target_labelsTr)
 
     # collect labels
     next_label = 1

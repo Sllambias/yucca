@@ -1,6 +1,6 @@
 import argparse
 import yucca
-from yucca.pipeline.task_conversion.utils import maybe_get_task_from_task_id
+from yucca.pipeline.task_conversion.utils import get_task_from_task_id
 from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from batchgenerators.utilities.file_and_folder_operations import join
 
@@ -20,12 +20,14 @@ def main():
     # Optional arguments with default values #
     parser.add_argument(
         "-d",
+        "--dimension",
         help="Dimensionality of the Model. Can be 3D or 2D. "
         "Defaults to 3D. Note that this will always be 2D if ensemble is enabled.",
         default="3D",
     )
     parser.add_argument(
         "-m",
+        "--model",
         help="Model Architecture. Should be one of MultiResUNet or UNet"
         " Note that this is case sensitive. "
         "Defaults to the standard UNet.",
@@ -33,11 +35,13 @@ def main():
     )
     parser.add_argument(
         "-man",
+        "--manager",
         help="Manager Class to be used. " "Defaults to the basic YuccaManager",
         default="YuccaManager",
     )
     parser.add_argument(
         "-pl",
+        "--plan",
         help="Plan ID to be used. "
         "This specifies which plan and preprocessed data to use for training "
         "on the given task. Defaults to the YuccaPlanner folder",
@@ -52,7 +56,9 @@ def main():
         help="Batch size to be used for training. Overrides the batch size specified in the plan.",
     )
     parser.add_argument("--disable_logging", help="disable logging.", action="store_true", default=False)
-    parser.add_argument("--ds", help="Used to enable deep supervision", default=False, action="store_true")
+    parser.add_argument(
+        "-ds", "--deep_supervision", help="Used to enable deep supervision", default=False, action="store_true"
+    )
     parser.add_argument(
         "--epochs", help="Used to specify the number of epochs for training. Default is 1000", type=int, default=1000
     )
@@ -102,18 +108,18 @@ def main():
     args = parser.parse_args()
 
     # Required
-    task = maybe_get_task_from_task_id(args.task)
+    task = get_task_from_task_id(args.task, stage="preprocessed")
 
     # Optionals (frequently changed)
-    dimensions = args.d
-    model_name = args.m
-    manager_name = args.man
-    planner = args.pl
+    dimensions = args.dimension
+    model_name = args.model
+    manager_name = args.manager
+    planner = args.plan
 
     # Optionals (occasionally changed)
     log = not args.disable_logging
     batch_size = args.batch_size
-    deep_supervision = args.ds
+    deep_supervision = args.deep_supervision
     epochs = args.epochs
     experiment = args.experiment
     fast_dev_run = args.fast_dev_run

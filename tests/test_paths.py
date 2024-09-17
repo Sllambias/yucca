@@ -1,4 +1,4 @@
 def test_loads_env_var():
-    from yucca.paths import yucca_raw_data
+    from yucca.paths import get_raw_data_path
 
-    assert yucca_raw_data is not None
+    assert get_raw_data_path() is not None

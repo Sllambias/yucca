@@ -29,7 +29,7 @@ E.g. to lower the starting Learning Rate we subclass YuccaManager - the default 
 We call this new Manager "YuccaManager_1e5" and save it as "YuccaManager_1e5.py" in the /yucca/training/managers directory as this is where the Parent Class is located. Alternatively it can be saved in a subdirectory of the directory of the parent class e.g. /yucca/training/managers/lr. 
 
 ```
-from yucca.managers.YuccaManager import YuccaManager
+from yucca.pipeline.managers.YuccaManager import YuccaManager
 
 class YuccaManager_1e5(YuccaManager):
     def __init__(self, *args, **kwargs):
@@ -41,7 +41,7 @@ class YuccaManager_1e5(YuccaManager):
 # Preprocessing
 Unless otherwise mentioned, preprocessing variables and functions are handled by the YuccaPlanners. For optimal results, it is advisable to subclass the default planner when applying changes.
 
-**Default Planner Class: [YuccaPlanner](/yucca/planning/YuccaPlanner.py)**
+**Default Planner Class: [YuccaPlanner](/yucca/pipeline/planning/YuccaPlanner.py)**
 
 ## Size OR Spacing
 Parent: default planner class
@@ -74,7 +74,7 @@ Variable 2: *self.transpose_forward*
 - used to transpose samples from the starting position to a target orientation.
 
 Variable 3: *self.transpose_backward*
-- used to transpose samples back from the target orientation to the starting position. This should only be used if samples are transposed by *transpose_forward*. This is applied during inference to revert any transform applied by *transpose_forward*.
+- used to transpose samples back from the target orientation to the starting position. This should only be used if samples are transposed by *transpose_forward*. This is applied during inference to revert any transposition applied by *transpose_forward*.
 
 For example, if it is desired to first reorient all NIFTI samples to 'LPS' as the starting position, and then transpose them from [h, w, d] to [d, h, w] during training, and finally back from [d, h, w] to [h, w, d] in inference do:
 
@@ -93,7 +93,7 @@ Parent: default planner class
 
 Variable: *self.norm_op* 
 
-To find currently implemented normalization operations see the [normalizer function](/yucca/preprocessing/normalization.py). 
+To find currently implemented normalization operations see the [normalizer function](/yucca/functional/array_operations/normalization.py). 
 
 For example if 'minmax' (otherwise known as 0-1 normalization) is desired:
 ```
@@ -103,24 +103,26 @@ self.norm_op = 'minmax'
 # Training
 Unless otherwise mentioned, training variables and functions are handled by the YuccaManagers. For optimal results, it is advisable to subclass the default class when applying changes.
 
-**Default Manager Class: [YuccaManager](/yucca/training/managers/YuccaManager.py)**
+**Default Manager Class: [YuccaManager](/yucca/pipeline/managers/YuccaManager.py)**
 
 ## Data Augmentation
 Parent: default Manager class
 
 Variable: *self.augmentation_params*
 
-Changing the data augmentation parameters is achieved by defining a dictionary of augmentation parameters in the Manager, which will then automatically apply these settings to the composed augmentations. The default augmentation parameters can be found in the `setup_default_params` method of the [`YuccaAugmentationComposer`](/yucca/training/augmentation/YuccaAugmentationComposer.py). Most augmentations have a variable called "X_p_per_sample" with a floating point value between 0.0-1.0 which controls the probability they are applied to each sample. To disable an augmentation set this probability to 0.0. Some augmentations also have variables that control the possible intensity ranges of the augmentation, such as the `"rotation_x": (-30.0, 30.0)` specifying the minimum and maximum degree of rotation around the X-axis.
+Changing the data augmentation parameters is achieved by defining a dictionary of augmentation parameters in the Manager, which will then automatically apply these settings to the composed augmentations. The default augmentation parameters can be found in the `generic` dict found in [`augmentation_presets`](/yucca/data/augmentation/augmentation_presets.py). The augmentations are either on/off for all samples, controlled with a boolean, or applied with a probability, that is controlled using the "X_p_per_sample" parameter. This parameter is a floating point value between 0.0-1.0, denoting the percentage probability with which it is applied. Therefore, to disable an augmentation set this probability to 0.0. Some augmentations also have variables that control the possible intensity ranges of the augmentation, such as the `"rotation_x": (-30.0, 30.0)` specifying the minimum and maximum degree of rotation around the X-axis.
 
 
-To disable blurring entirely and modify the scaling range do:
+To disable blurring entirely, modify the scaling range and otherwise use the default do:
 ```
-from yucca.managers.YuccaManager import YuccaManager
+from yucca.pipeline.managers.YuccaManager import YuccaManager
+from yucca.modules.data.augmentation.augmentation_presets import generic
 
 class YuccaManager_NewUserSetup(YuccaManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.augmentation_parameters = {"blurring_p_per_sample": 0.0,
+        self.augmentation_params = generic
+        self.augmentation_params = {"blurring_p_per_sample": 0.0,
                                         "scale_factor": (0.7, 1.3)}
 ```
 
@@ -174,7 +176,19 @@ When doing this, the contents of the manufactured split file should be a list co
 Which is then selected using `--split_data_method custom --split_data_param version0`
 
 ## Deep Supervision
-CLI: In training and finetuning deep supervision is enabled using the --ds flag. 
+Parent: default Manager class
+
+Variable: self.deep\_supervision
+```
+from yucca.pipeline.managers.YuccaManager import YuccaManager
+
+class YuccaManager_NewUserSetup(YuccaManager):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.deep_supervision = True
+```
+
+CLI: Deep supervision can also be enabled during training and finetuning by using the --ds flag. 
 
 ## Learning Rate
 Parent: default Manager class
@@ -182,7 +196,7 @@ Parent: default Manager class
 Variable: self.learning\_rate
 
 ```
-from yucca.managers.YuccaManager import YuccaManager
+from yucca.pipeline.managers.YuccaManager import YuccaManager
 
 class YuccaManager_LowerLR(YuccaManager):
     def __init__(self, *args, **kwargs):
@@ -193,13 +207,13 @@ class YuccaManager_LowerLR(YuccaManager):
 CLI: Can also be changed using --lr flag.
 
 ## Learning Rate Scheduler
-Parent: [YuccaLightningModule](/yucca/training/lightning_modules/YuccaLightningModule.py)
+Parent: [YuccaLightningModule](/yucca/lightning_modules/YuccaLightningModule.py)
 
 Variable: self.lr\_scheduler
 - Used to determine the LR Scheduler CLASS
 
 ```
-from yucca.lightning_modules.YuccaLightningModule import YuccaLightningModule
+from yucca.pipeline.modules.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from torch import optim
 
 class YuccaLightningModule_StepLRS(YuccaLightningModule):
@@ -219,8 +233,8 @@ Variable: self.loss
 The loss class must be saved in /yucca/training/loss_and_optim/loss_functions and be a subclass of nn.Module.
 
 ```
-from yucca.managers.YuccaManager import YuccaManager
-from yucca.loss_and_optim.loss_functions import NLL
+from yucca.pipeline.managers.YuccaManager import YuccaManager
+from yucca.modules.loss_and_optim.loss_functions import NLL
 
 class YuccaManager_NLL(YuccaManager):
     def __init__(self, *args, **kwargs):
@@ -231,7 +245,7 @@ class YuccaManager_NLL(YuccaManager):
 Can also be changed using *yucca_train* --loss flag.
 
 ## Model Architecture
-CLI: In both training and inference model architecture is specified using the -m flag. Currently supported architectures can be found in [networks](/yucca/network_architectures/networks).
+CLI: In both training and inference model architecture is specified using the -m flag. Currently supported architectures can be found in [networks](/yucca/networks/networks).
 
 ## Model Dimensionality
 CLI: In both preprocessing, training and inference dimension is specified using the -d flag. Currently supported is: "2D" and "3D".
@@ -242,7 +256,7 @@ Parent: default Manager class
 Variable: self.momentum 
 
 ```
-from yucca.managers.YuccaManager import YuccaManager
+from yucca.pipeline.managers.YuccaManager import YuccaManager
 
 class YuccaManager_mom95(YuccaManager):
     def __init__(self, *args, **kwargs):
@@ -253,12 +267,12 @@ class YuccaManager_mom95(YuccaManager):
 CLI: Can also be changed using *yucca_train* --mom flag.
 
 ## Optimizer
-Parent: [YuccaLightningModule](/yucca/training/lightning_modules/YuccaLightningModule.py)
+Parent: [YuccaLightningModule](/yucca/lightning_modules/YuccaLightningModule.py)
 
 Variable: self.optim
 
 ```
-from yucca.lightning_modules.YuccaLightningModule import YuccaLightningModule
+from yucca.modules.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from torch import optim
 
 class YuccaLightningModule_Adam(YuccaLightningModule):
@@ -273,7 +287,7 @@ Parent: default Manager class
 Variable: self.patch_based_training 
 
 ```
-from yucca.managers.YuccaManager import YuccaManager
+from yucca.pipeline.managers.YuccaManager import YuccaManager
 
 class YuccaManager_NoPatches(YuccaManager):
     def __init__(self, *args, **kwargs):
