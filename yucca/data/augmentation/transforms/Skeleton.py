@@ -15,11 +15,10 @@ class Skeleton(YuccaTransform):
 
     def __skeleton__(self, array):
         array_new = array.copy()
-
         for b in range(array_new.shape[0]):
             for c in range(array_new.shape[1]):
                 array_new[b, c] = skeleton(array[b, c])
-        return array_new
+        return array_new[0]
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
