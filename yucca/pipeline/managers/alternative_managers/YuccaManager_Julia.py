@@ -1,9 +1,12 @@
 from yucca.pipeline.managers.YuccaManager import YuccaManager
-from yucca.data.augmentation.augmentation_presets import generic
+from yucca.modules.data.augmentation.augmentation_presets import generic
 
 
 class YuccaManager_Julia(YuccaManager):
-    def __init__(self, *args, **kwargs
+    def __init__(
+        self,
+        *args,
+        **kwargs,
         # self,
         # model,
         # model_dimensions: str,
@@ -18,10 +21,7 @@ class YuccaManager_Julia(YuccaManager):
     ):
         super().__init__(*args, **kwargs)
         # super().__init__(model, model_dimensions, task, folds, plan_id, starting_lr, loss_fn, momentum, continue_training)
-        # self.loss = 'DC_SkelREC_and_CE_loss' 
-        self.loss = 'DC_SkelREC_and_CE_loss' 
+        # self.loss = 'DC_SkelREC_and_CE_loss'
+        self.loss = "DC_SkelREC_and_CE_loss"
         self.augmentation_params = generic
-        self.augmentation_params['skeleton'] = True
-        
-
-
+        self.augmentation_params["skeleton"] = True

@@ -1,15 +1,12 @@
 import torch
 from torch import nn
-from yucca.optimization.loss_functions.CE import CE
-from yucca.optimization.loss_functions.nnUNet_losses import SoftDiceLoss, sum_tensor, DiceCE
+from yucca.modules.optimization.loss_functions.CE import CE
+from yucca.modules.optimization.loss_functions.nnUNet_losses import SoftDiceLoss, sum_tensor, DiceCE
 import torch.nn.functional as F
 
 
 class SoftSkeletonRecallLoss(nn.Module):
     def __init__(self, apply_softmax=True, batch_dice=False, do_bg=True, smooth=1.0):
-        """
-        saves 1.6 GB on Dataset017 3d_lowres
-        """
         super(SoftSkeletonRecallLoss, self).__init__()
 
         self.do_bg = do_bg
@@ -46,14 +43,6 @@ class SoftSkeletonRecallLoss(nn.Module):
 
         inter_rec = sum_tensor((x * y_onehot), axes) if loss_mask is None else sum_tensor(x * y_onehot * loss_mask, axes)
 
-        """  
-        if self.batch_dice:
-            inter_rec = inter_rec.sum(0)
-            sum_gt = sum_gt.sum(0) """
-
-        """ if self.batch_dice:
-            inter_rec = sum_tensor(inter_rec,0)
-            sum_gt = sum_tensor(sum_gt,0) """
         rec = (inter_rec + self.smooth) / (sum_gt + self.smooth)
 
         rec = rec.mean()
