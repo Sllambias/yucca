@@ -186,19 +186,19 @@ class YuccaLightningModule(BaseLightningModule):
             output = output[0]
             target = target[0]
 
-        output = output.long()
-        target = target.long()
-
-        if self.task_type == "segmentation" and not self.use_label_regions:
-            # GeneralizedDice doesn't support logits, so we need to argmax it.
-            output = torch.argmax(output, dim=1)
-            target = target.squeeze()
-            # Due to a bug in torchmetrics. This can be removed when GeneralizedDiceScore has a property called "input type",
-            # which is currently on their main branch...
-            output = torch.nn.functional.one_hot(output, num_classes=self.num_classes).movedim(-1, 1)
-            target = torch.nn.functional.one_hot(target.long(), num_classes=self.num_classes).movedim(-1, 1)
-            assert len(output.shape) <= 5, output.shape
-            assert len(target.shape) <= 5, target.shape
+        if self.task_type == "segmentation":
+            if self.use_label_regions:
+                output = (torch.sigmoid(output) > 0.5).long()
+            else:
+                # GeneralizedDice doesn't support logits, so we need to argmax it.
+                output = torch.argmax(output, dim=1)
+                target = target.squeeze()
+                # Due to a bug in torchmetrics. This can be removed when GeneralizedDiceScore has a property called "input type",
+                # which is currently on their main branch...
+                output = torch.nn.functional.one_hot(output, num_classes=self.num_classes).movedim(-1, 1)
+                target = torch.nn.functional.one_hot(target.long(), num_classes=self.num_classes).movedim(-1, 1)
+                assert len(output.shape) <= 5, output.shape
+                assert len(target.shape) <= 5, target.shape
 
         metrics = self.compute_metrics(self.train_metrics, output, target)
         self.log_dict(
@@ -228,19 +228,19 @@ class YuccaLightningModule(BaseLightningModule):
         output = self(inputs)
         loss = self.loss_fn_val(output, target)
 
-        output = output.long()
-        target = target.long()
-
-        if self.task_type == "segmentation" and not self.use_label_regions:
-            # GeneralizedDice doesn't support logits, so we need to argmax it.
-            output = torch.argmax(output, dim=1)
-            target = target.squeeze()
-            # Due to a bug in torchmetrics. This can be removed when GeneralizedDiceScore has a property called "input type",
-            # which is currently on their main branch...
-            output = torch.nn.functional.one_hot(output, num_classes=self.num_classes).movedim(-1, 1)
-            target = torch.nn.functional.one_hot(target, num_classes=self.num_classes).movedim(-1, 1)
-            assert len(output.shape) <= 5, output.shape
-            assert len(target.shape) <= 5, target.shape
+        if self.task_type == "segmentation":
+            if self.use_label_regions:
+                output = (torch.sigmoid(output) > 0.5).long()
+            else:
+                # GeneralizedDice doesn't support logits, so we need to argmax it.
+                output = torch.argmax(output, dim=1)
+                target = target.squeeze()
+                # Due to a bug in torchmetrics. This can be removed when GeneralizedDiceScore has a property called "input type",
+                # which is currently on their main branch...
+                output = torch.nn.functional.one_hot(output, num_classes=self.num_classes).movedim(-1, 1)
+                target = torch.nn.functional.one_hot(target.long(), num_classes=self.num_classes).movedim(-1, 1)
+                assert len(output.shape) <= 5, output.shape
+                assert len(target.shape) <= 5, target.shape
 
         metrics = self.compute_metrics(self.val_metrics, output, target)
         self.log_dict(
