@@ -8,7 +8,7 @@ import os
 import matplotlib.pyplot as plt
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
-from torchmetrics.classification import Dice
+from torchmetrics.segmentation import GeneralizedDiceScore
 from torchmetrics.regression import MeanAbsoluteError
 from yucca.modules.optimization.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.functional.utils.files_and_folders import recursive_find_python_class
@@ -146,17 +146,23 @@ class YuccaLightningModule(BaseLightningModule):
         if self.task_type == "segmentation":
             self.train_metrics = MetricCollection(
                 {
-                    "train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
-                    "train/F1": F1(
-                        num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None
+                    "train/aggregated_dice": GeneralizedDiceScore(
+                        num_classes=self.num_classes, include_background=False, weight_type="linear", per_class=False
+                    ),
+                    "train/dice": GeneralizedDiceScore(
+                        num_classes=self.num_classes, include_background=False, weight_type="linear", per_class=True
                     ),
                 },
             )
 
             self.val_metrics = MetricCollection(
                 {
-                    "val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
-                    "val/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
+                    "val/aggregated_dice": GeneralizedDiceScore(
+                        num_classes=self.num_classes, include_background=False, weight_type="linear", per_class=False
+                    ),
+                    "val/dice": GeneralizedDiceScore(
+                        num_classes=self.num_classes, include_background=False, weight_type="linear", per_class=True
+                    ),
                 },
             )
 

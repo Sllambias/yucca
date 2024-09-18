@@ -12,5 +12,4 @@ class YuccaManager_labelregions(YuccaManager):
             *args,
             **kwargs,
         )
-        self.lightning_module = YuccaLightningModule_onehot_labels
         self.use_label_regions = True
