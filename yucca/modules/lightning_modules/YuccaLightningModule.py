@@ -150,14 +150,14 @@ class YuccaLightningModule(BaseLightningModule):
                     "train/aggregated_dice": GeneralizedDiceScore(
                         multilabel=self.use_label_regions,
                         num_classes=self.num_classes,
-                        include_background=False,
+                        include_background=self.num_classes == 1,
                         weight_type="linear",
                         per_class=False,
                     ),
                     "train/dice": GeneralizedDiceScore(
                         multilabel=self.use_label_regions,
                         num_classes=self.num_classes,
-                        include_background=False,
+                        include_background=self.num_classes == 1,
                         weight_type="linear",
                         per_class=True,
                     ),
@@ -169,14 +169,14 @@ class YuccaLightningModule(BaseLightningModule):
                     "val/aggregated_dice": GeneralizedDiceScore(
                         multilabel=self.use_label_regions,
                         num_classes=self.num_classes,
-                        include_background=False,
+                        include_background=self.num_classes == 1,
                         weight_type="linear",
                         per_class=False,
                     ),
                     "val/dice": GeneralizedDiceScore(
                         multilabel=self.use_label_regions,
                         num_classes=self.num_classes,
-                        include_background=False,
+                        include_background=self.num_classes == 1,
                         weight_type="linear",
                         per_class=True,
                     ),
