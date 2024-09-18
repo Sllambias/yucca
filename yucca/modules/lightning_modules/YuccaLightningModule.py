@@ -185,16 +185,15 @@ class YuccaLightningModule(BaseLightningModule):
             target = target[0]
 
         if self.task_type == "segmentation" and not self.config["use_label_regions"]:
+            # GeneralizedDice doesn't support logits, so we need to argmax it.
             output = torch.argmax(output, dim=1)
+            target = target.squeeze()
             # Due to a bug in torchmetrics. This can be removed when GeneralizedDiceScore has a property called "input type",
             # which is currently on their main branch...
-            if self.num_classes > 2:
-                output = torch.nn.functional.one_hot(output, num_classes=self.num_classes).movedim(-1, 1)
-                target = torch.nn.functional.one_hot(target.long(), num_classes=self.num_classes).movedim(-1, 1)
-                assert len(output.shape) <= 5, output.shape
-                assert len(target.shape) <= 5, target.shape
-            else:
-                output = output.unsqueeze(1)
+            output = torch.nn.functional.one_hot(output, num_classes=self.num_classes).movedim(-1, 1)
+            target = torch.nn.functional.one_hot(target.long(), num_classes=self.num_classes).movedim(-1, 1)
+            assert len(output.shape) <= 5, output.shape
+            assert len(target.shape) <= 5, target.shape
 
         metrics = self.compute_metrics(self.train_metrics, output, target)
         self.log_dict(
@@ -225,16 +224,15 @@ class YuccaLightningModule(BaseLightningModule):
         loss = self.loss_fn_val(output, target)
 
         if self.task_type == "segmentation" and not self.config["use_label_regions"]:
+            # GeneralizedDice doesn't support logits, so we need to argmax it.
             output = torch.argmax(output, dim=1)
+            target = target.squeeze()
             # Due to a bug in torchmetrics. This can be removed when GeneralizedDiceScore has a property called "input type",
             # which is currently on their main branch...
-            if self.num_classes > 2:
-                output = torch.nn.functional.one_hot(output, num_classes=self.num_classes).movedim(-1, 1)
-                target = torch.nn.functional.one_hot(target.long(), num_classes=self.num_classes).movedim(-1, 1)
-                assert len(output.shape) <= 5, output.shape
-                assert len(target.shape) <= 5, target.shape
-            else:
-                output = output.unsqueeze(1)
+            output = torch.nn.functional.one_hot(output, num_classes=self.num_classes).movedim(-1, 1)
+            target = torch.nn.functional.one_hot(target.long(), num_classes=self.num_classes).movedim(-1, 1)
+            assert len(output.shape) <= 5, output.shape
+            assert len(target.shape) <= 5, target.shape
 
         metrics = self.compute_metrics(self.val_metrics, output, target)
         self.log_dict(
