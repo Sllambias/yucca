@@ -10,7 +10,7 @@ if __name__ == "__main__":
         get_raw_data_path,
     )
     from yucca.modules.callbacks.prediction_writer import WritePredictionFromLogits
-    from yucca.modules.lightning_modules.YuccaLightningModule import YuccaLightningModule
+    from yucca.modules.lightning_modules.BaseLightningModule import BaseLightningModule
     from yucca.modules.data.data_modules.YuccaDataModule import YuccaDataModule
     from yucca.modules.data.datasets.YuccaDataset import YuccaTestPreprocessedDataset
     from yucca.pipeline.evaluation.YuccaEvaluator import YuccaEvaluator
@@ -44,15 +44,15 @@ if __name__ == "__main__":
     ensure_dir_exists(save_path)
 
     ckpt = torch.load(ckpt_path, map_location="cpu")
-    config = ckpt["hyper_parameters"]["config"]
-
     pred_writer = WritePredictionFromLogits(output_dir=save_path, save_softmax=False, write_interval="batch")
 
-    model_module = YuccaLightningModule(
-        config=config,
-        deep_supervision=config.get("deep_supervision"),
-        optimizer_kwargs={"learning_rate": config.get("learning_rate"), "momentum": config.get("momentum")},
-        loss_fn=config.get("loss_fn"),
+    model_module = BaseLightningModule(
+        model=config["model"],
+        model_dimensions=config["model_dimensions"],
+        num_classes=config["num_classes"],
+        num_modalities=config["num_modalities"],
+        patch_size=config["patch_size"],
+        crop_to_nonzero=config["crop_to_nonzero"],
         disable_inference_preprocessing=True,
     )
 

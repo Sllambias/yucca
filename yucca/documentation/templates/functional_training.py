@@ -1,9 +1,6 @@
 if __name__ == "__main__":
 
     import lightning as L
-    import os
-    from batchgenerators.utilities.file_and_folder_operations import load_json
-    from yucca.paths import get_preprocessed_data_path
     from yucca.pipeline.configuration.configure_task import TaskConfig
     from yucca.pipeline.configuration.configure_paths import get_path_config
     from yucca.pipeline.configuration.configure_callbacks import get_callback_config
@@ -55,7 +52,7 @@ if __name__ == "__main__":
         model_dimensions=config["model_dimensions"],
         num_classes=config["num_classes"],
         num_modalities=config["num_modalities"],
-        patch_size=config["batch_size"],
+        patch_size=config["patch_size"],
         crop_to_nonzero=config["crop_to_nonzero"],
         deep_supervision=config["deep_supervision"],
         optimizer_kwargs={"lr": config.get("learning_rate"), "momentum": config.get("momentum")},
