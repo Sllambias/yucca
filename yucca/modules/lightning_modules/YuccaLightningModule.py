@@ -8,12 +8,11 @@ import os
 import matplotlib.pyplot as plt
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
-from torchmetrics.segmentation import GeneralizedDiceScore
 from torchmetrics.regression import MeanAbsoluteError
 from yucca.modules.optimization.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from yucca.functional.utils.kwargs import filter_kwargs
-from yucca.modules.metrics.training_metrics import Accuracy, AUROC
+from yucca.modules.metrics.training_metrics import Accuracy, AUROC, GeneralizedDiceScore
 from yucca.functional.visualization import get_train_fig_with_inp_out_tar
 from yucca.modules.lightning_modules.BaseLightningModule import BaseLightningModule
 from yucca.functional.utils.torch_utils import measure_FLOPs
@@ -149,10 +148,18 @@ class YuccaLightningModule(BaseLightningModule):
             self.train_metrics = MetricCollection(
                 {
                     "train/aggregated_dice": GeneralizedDiceScore(
-                        num_classes=self.num_classes, include_background=False, weight_type="linear", per_class=False
+                        multilabel=self.use_label_regions,
+                        num_classes=self.num_classes,
+                        include_background=False,
+                        weight_type="linear",
+                        per_class=False,
                     ),
                     "train/dice": GeneralizedDiceScore(
-                        num_classes=self.num_classes, include_background=False, weight_type="linear", per_class=True
+                        multilabel=self.use_label_regions,
+                        num_classes=self.num_classes,
+                        include_background=False,
+                        weight_type="linear",
+                        per_class=True,
                     ),
                 },
             )
@@ -160,10 +167,18 @@ class YuccaLightningModule(BaseLightningModule):
             self.val_metrics = MetricCollection(
                 {
                     "val/aggregated_dice": GeneralizedDiceScore(
-                        num_classes=self.num_classes, include_background=False, weight_type="linear", per_class=False
+                        multilabel=self.use_label_regions,
+                        num_classes=self.num_classes,
+                        include_background=False,
+                        weight_type="linear",
+                        per_class=False,
                     ),
                     "val/dice": GeneralizedDiceScore(
-                        num_classes=self.num_classes, include_background=False, weight_type="linear", per_class=True
+                        multilabel=self.use_label_regions,
+                        num_classes=self.num_classes,
+                        include_background=False,
+                        weight_type="linear",
+                        per_class=True,
                     ),
                 },
             )
@@ -185,20 +200,6 @@ class YuccaLightningModule(BaseLightningModule):
             # We only need the original ground truth and its corresponding prediction which is always the first entry in each list.
             output = output[0]
             target = target[0]
-
-        if self.task_type == "segmentation":
-            if self.use_label_regions:
-                output = (torch.sigmoid(output) > 0.5).long()
-            else:
-                # GeneralizedDice doesn't support logits, so we need to argmax it.
-                output = torch.argmax(output, dim=1)
-                target = target.squeeze()
-                # Due to a bug in torchmetrics. This can be removed when GeneralizedDiceScore has a property called "input type",
-                # which is currently on their main branch...
-                output = torch.nn.functional.one_hot(output, num_classes=self.num_classes).movedim(-1, 1)
-                target = torch.nn.functional.one_hot(target.long(), num_classes=self.num_classes).movedim(-1, 1)
-                assert len(output.shape) <= 5, output.shape
-                assert len(target.shape) <= 5, target.shape
 
         metrics = self.compute_metrics(self.train_metrics, output, target)
         self.log_dict(
@@ -227,20 +228,6 @@ class YuccaLightningModule(BaseLightningModule):
         inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
         output = self(inputs)
         loss = self.loss_fn_val(output, target)
-
-        if self.task_type == "segmentation":
-            if self.use_label_regions:
-                output = (torch.sigmoid(output) > 0.5).long()
-            else:
-                # GeneralizedDice doesn't support logits, so we need to argmax it.
-                output = torch.argmax(output, dim=1)
-                target = target.squeeze()
-                # Due to a bug in torchmetrics. This can be removed when GeneralizedDiceScore has a property called "input type",
-                # which is currently on their main branch...
-                output = torch.nn.functional.one_hot(output, num_classes=self.num_classes).movedim(-1, 1)
-                target = torch.nn.functional.one_hot(target.long(), num_classes=self.num_classes).movedim(-1, 1)
-                assert len(output.shape) <= 5, output.shape
-                assert len(target.shape) <= 5, target.shape
 
         metrics = self.compute_metrics(self.val_metrics, output, target)
         self.log_dict(
