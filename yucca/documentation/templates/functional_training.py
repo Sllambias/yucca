@@ -32,7 +32,7 @@ if __name__ == "__main__":
         split_param=config.get("split_param"),
     )
 
-    path_config = get_path_config(task_config=task_config)
+    path_config = get_path_config(task_config=task_config, stage="fit")
 
     split_config = get_split_config(method=task_config.split_method, param=task_config.split_param, path_config=path_config)
 

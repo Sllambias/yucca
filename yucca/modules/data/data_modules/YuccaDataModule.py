@@ -59,6 +59,7 @@ class YuccaDataModule(pl.LightningDataModule):
         pred_include_cases: Optional[list] = None,
         pred_save_dir: Optional[str] = None,
         pre_aug_patch_size: Optional[Union[list, tuple]] = None,
+        p_oversample_foreground: Optional[float] = 0.33,
         splits_config: Optional[SplitConfig] = None,
         split_idx: Optional[int] = None,
         task_type: Optional[str] = None,
@@ -83,6 +84,7 @@ class YuccaDataModule(pl.LightningDataModule):
         self.composed_train_transforms = composed_train_transforms
         self.composed_val_transforms = composed_val_transforms
         self.pre_aug_patch_size = pre_aug_patch_size
+        self.p_oversample_foreground = p_oversample_foreground
 
         # Set in the predict loop
         self.pred_include_cases = pred_include_cases
@@ -129,6 +131,7 @@ class YuccaDataModule(pl.LightningDataModule):
                 patch_size=self.pre_aug_patch_size if self.pre_aug_patch_size is not None else self.patch_size,
                 task_type=self.task_type,
                 allow_missing_modalities=self.allow_missing_modalities,
+                p_oversample_foreground=self.p_oversample_foreground,
             )
 
             self.val_dataset = self.train_dataset_class(
@@ -137,6 +140,7 @@ class YuccaDataModule(pl.LightningDataModule):
                 patch_size=self.patch_size,
                 task_type=self.task_type,
                 allow_missing_modalities=self.allow_missing_modalities,
+                p_oversample_foreground=self.p_oversample_foreground,
             )
 
         if stage == "predict":

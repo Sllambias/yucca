@@ -1,11 +1,11 @@
 import logging
+import nibabel as nib
+import numpy as np
 from typing import Dict, List
-from batchgenerators.utilities.file_and_folder_operations import subfiles, join, load_json, save_pickle
+from batchgenerators.utilities.file_and_folder_operations import subfiles, join, load_json, save_pickle, isfile
 from yucca.functional.utils.nib_utils import get_nib_spacing
 from yucca.functional.utils.type_conversions import nifti_or_np_to_np
 from yucca.functional.utils.loading import read_file_to_nifti_or_np
-import nibabel as nib
-import numpy as np
 from tqdm.contrib.concurrent import process_map
 from tqdm import tqdm
 from functools import partial
@@ -41,6 +41,8 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
     sizes = []
     spacings = []
     background_pixel_values = []
+    images_dir = join(data_dir, "imagesTr")
+    labels_dir = join(data_dir, "labelsTr")
     modalities = properties["modalities"].items()
     mod_ids = list(list(zip(*modalities))[0])
     assert sorted(mod_ids) == mod_ids
@@ -49,15 +51,18 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
     for mod_id, mod_name in modalities:
         mod_id = int(mod_id)
         suffix = f"_{mod_id:03}.{image_extension}"
-        images_dir = join(data_dir, "imagesTr")
+        subjects = []
+        images = subfiles(images_dir, suffix=suffix, join=False)
 
-        subjects = subfiles(images_dir, suffix=suffix)
-        if len(dataset_json["tasks"]) > 0:
-            for task in dataset_json["tasks"]:
-                for subject in subfiles(join(data_dir, "imagesTr", task), suffix=suffix, join=False):
-                    if subject.endswith(suffix):
-                        properties["tasks"][task].append(subject[: -len(suffix)])
-                    subjects.append(join(data_dir, "imagesTr", task, subject))
+        for image in images:
+            image_path = join(images_dir, image)
+            # Remove modality encoding
+            id = image[: -len(suffix)]
+            expected_label_path = join(labels_dir, f"{id}.{image_extension}")
+            if isfile(expected_label_path):
+                subjects.append([image_path, expected_label_path])
+            else:
+                subjects.append([image_path, None])
 
         assert subjects, (
             f"no subjects found in {images_dir}. Ensure samples are "
@@ -93,6 +98,8 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
                 "max": float(np.max(metadata["maxs"])),
                 "maxmin": float(np.max(metadata["mins"])),
                 "std": float(np.mean(metadata["stds"])),
+                "percentile_99_5": float(np.percentile(metadata["percentile_99_5"], 99.5)),
+                "percentile_00_5": float(np.percentile(metadata["percentile_00_5"], 00.5)),
             }
         )
 
@@ -125,6 +132,8 @@ def reduce(results: List[Dict]):
     stds = []
     spacings = []
     sizes = []
+    percentile_00_5 = []
+    percentile_99_5 = []
 
     for res in tqdm(results, desc="Reduce"):
         means.append(res["mean"])
@@ -133,18 +142,30 @@ def reduce(results: List[Dict]):
         stds.append(res["std"])
         spacings.append(res["spacing"])
         sizes.append(res["size"])
+        percentile_00_5.append(res["percentile_00_5"])
+        percentile_99_5.append(res["percentile_99_5"])
 
-    return {"means": means, "mins": mins, "maxs": maxs, "stds": stds, "spacings": spacings, "sizes": sizes}
+    return {
+        "means": means,
+        "mins": mins,
+        "maxs": maxs,
+        "stds": stds,
+        "spacings": spacings,
+        "sizes": sizes,
+        "percentile_00_5": percentile_00_5,
+        "percentile_99_5": percentile_99_5,
+    }
 
 
 def process(subject: str, background_pixel_value: int = 0):
+    image, label = subject
     try:
-        image = read_file_to_nifti_or_np(subject)
+        image = read_file_to_nifti_or_np(image)
         dim = len(image.shape)
 
         if dim > 3:
             logging.warn(
-                f"A volume has more than three dimensions. This is most often a mistake." f"Dims: {dim}, Vol: {subject}"
+                f"A volume has more than three dimensions. This is most often a mistake." f"Dims: {dim}, Vol: {image}"
             )
 
         size = image.shape
@@ -155,17 +176,33 @@ def process(subject: str, background_pixel_value: int = 0):
             spacing = [1.0] * dim
 
         image = nifti_or_np_to_np(image)
-        image_msk = image[image > background_pixel_value]
+        if label is not None:
+            label = read_file_to_nifti_or_np(label)
+            label = nifti_or_np_to_np(label)
+            mask = label > 0
+            image_msk = image[mask]
+        else:
+            image_msk = image[image > background_pixel_value]
 
         mean = np.mean(image_msk)
         std = np.std(image_msk)
 
-        min = np.min(image_msk)
-        max = np.max(image_msk)
+        mn = np.min(image_msk)
+        mx = np.max(image_msk)
+        percentile_00_5, percentile_99_5 = np.percentile(image_msk, np.array((0.5, 99.5)))
 
     except Exception as err:
         logging.warn(
             f"Could not read `{subject}`, got error `{err}`." "Suppressing to finalize, but you might need to act accordingly."
         )
 
-    return {"size": size, "spacing": spacing, "min": min, "max": max, "mean": mean, "std": std}
+    return {
+        "size": size,
+        "spacing": spacing,
+        "min": mn,
+        "max": mx,
+        "mean": mean,
+        "std": std,
+        "percentile_00_5": percentile_00_5,
+        "percentile_99_5": percentile_99_5,
+    }

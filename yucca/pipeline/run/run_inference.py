@@ -65,6 +65,10 @@ def main():
         help="Specify the parameter for the selected split method. For KFold use an int, for simple_split use a float between 0.0-1.0.",
         default=5,
     )
+    parser.add_argument("--surface_eval", help="enable surface evaluation", action="store_true", default=None, required=False)
+    parser.add_argument(
+        "--surface_tol", type=int, help="controls the tolerance (in mm) of the surface_evaluation", default=2, required=False
+    )
     parser.add_argument(
         "--task_type",
         default="segmentation",
@@ -159,6 +163,8 @@ def main():
     split_idx = args.split_idx
     split_data_method = args.split_data_method
     split_data_param = args.split_data_param
+    surface_eval = args.surface_eval
+    surface_tol = args.surface_tol
     task_type = args.task_type
     version = args.version
 
@@ -278,10 +284,13 @@ def main():
 
     if isdir(ground_truth) and not no_eval:
         evaluator = YuccaEvaluator(
-            manager.model_module.num_classes,
+            manager.plan_config.labels,
             folder_with_predictions=outpath,
             folder_with_ground_truth=ground_truth,
+            do_surface_eval=surface_eval,
             overwrite=overwrite,
+            regions=manager.plan_config.regions if manager.plan_config.use_label_regions else None,
+            surface_tol=surface_tol,
             task_type=task_type,
             use_wandb=use_wandb,
             strict=strict,

@@ -5,6 +5,7 @@ import os
 import logging
 import time
 import re
+from typing import Optional
 from yucca.functional.testing.data.nifti import (
     verify_spacing_is_equal,
     verify_orientation_is_equal,
@@ -346,7 +347,7 @@ class YuccaPreprocessor(object):
         )
         return images, image_properties
 
-    def reverse_preprocessing(self, images: torch.Tensor, image_properties: dict):
+    def reverse_preprocessing(self, images: torch.Tensor, image_properties: dict, num_classes: Optional[int] = None):
         """
         Expected shape of images are:
         (b, c, x, y(, z))
@@ -359,13 +360,14 @@ class YuccaPreprocessor(object):
         (5) Return: Return the reverted images as a NumPy array.
         The original orientation of the image will be re-applied when saving the prediction
         """
-        nclasses = max(1, len(self.plans["dataset_properties"]["classes"]))
+        if num_classes is None:
+            num_classes = max(1, len(self.plans["dataset_properties"]["classes"]))
 
         images, image_properties = reverse_preprocessing(
             crop_to_nonzero=self.plans["crop_to_nonzero"],
             images=images,
             image_properties=image_properties,
-            n_classes=nclasses,
+            n_classes=num_classes,
             transpose_forward=self.transpose_forward,
             transpose_backward=self.transpose_backward,
         )

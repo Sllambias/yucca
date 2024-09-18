@@ -12,7 +12,7 @@ def test_configurations(setup_preprocessed_segmentation_data):
     task_config = get_task_config(task="Task000_TEST_SEGMENTATION")
     assert task_config is not None and isinstance(task_config.continue_from_most_recent, bool)
 
-    path_config = get_path_config(task_config=task_config)
+    path_config = get_path_config(task_config=task_config, stage="fit")
     assert path_config is not None and isinstance(path_config.version, int)
 
     ckpt_config = get_checkpoint_config(
