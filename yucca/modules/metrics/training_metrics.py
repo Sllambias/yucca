@@ -1,7 +1,9 @@
-from torch import Tensor
+from torch import Tensor, argmax, sigmoid
+from torch import nn
 from torchmetrics.classification import MulticlassF1Score
 from torchmetrics.classification import Accuracy as TorchAccuracy
 from torchmetrics.classification import AUROC as TorchAUROC
+from torchmetrics.segmentation import GeneralizedDiceScore as TorchGeneralizedDiceScore
 from torchmetrics import Metric
 
 
@@ -41,6 +43,38 @@ class Accuracy(Metric):
             assert target.shape[1] == 1
             target = target[:, 0]
         return self.method(input, target.long())
+
+    def compute(self):
+        pass
+
+    def update(self):
+        pass
+
+
+class GeneralizedDiceScore(Metric):
+    def __init__(self, multilabel: bool, num_classes: int, *args, **kwargs):
+        super().__init__()
+        self.multilabel = multilabel
+        self.num_classes = num_classes
+        self.method = TorchGeneralizedDiceScore(num_classes=self.num_classes, *args, **kwargs)
+
+    def forward(self, input: Tensor, target: Tensor) -> Tensor:
+        if self.multilabel:
+            input = (sigmoid(input) > 0.5).long()
+        else:
+            # GeneralizedDice doesn't support logits, so we need to argmax it.
+            input = argmax(input, dim=1)
+            target = target.squeeze()
+
+            # The following is due to a bug in torchmetrics. This can be removed when GeneralizedDiceScore has a property
+            # argument `input_type` which is currently on their main branch, but released yet.
+            # We should then set `input_type=one_hot` only when data is from regions.
+            input = nn.functional.one_hot(input, num_classes=self.num_classes).movedim(-1, 1)
+            target = nn.functional.one_hot(target.long(), num_classes=self.num_classes).movedim(-1, 1)
+            assert len(input.shape) <= 5, input.shape
+            assert len(target.shape) <= 5, target.shape
+
+        return self.method(input, target)
 
     def compute(self):
         pass
