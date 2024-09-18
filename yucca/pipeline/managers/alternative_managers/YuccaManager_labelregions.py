@@ -1,5 +1,4 @@
 from yucca.pipeline.managers.YuccaManagerV2 import YuccaManager
-from yucca.modules.lightning_modules.YuccaLightningModule_onehot_labels import YuccaLightningModule_onehot_labels
 
 
 class YuccaManager_labelregions(YuccaManager):

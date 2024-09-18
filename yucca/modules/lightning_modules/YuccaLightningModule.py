@@ -13,7 +13,7 @@ from torchmetrics.regression import MeanAbsoluteError
 from yucca.modules.optimization.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from yucca.functional.utils.kwargs import filter_kwargs
-from yucca.modules.metrics.training_metrics import Accuracy, AUROC, F1
+from yucca.modules.metrics.training_metrics import Accuracy, AUROC
 from yucca.functional.visualization import get_train_fig_with_inp_out_tar
 from yucca.modules.lightning_modules.BaseLightningModule import BaseLightningModule
 from yucca.functional.utils.torch_utils import measure_FLOPs
@@ -184,6 +184,12 @@ class YuccaLightningModule(BaseLightningModule):
             output = output[0]
             target = target[0]
 
+        if self.task_type == "segmentation" and not self.config["use_label_regions"]:
+            # Due to a bug in torchmetrics. This can be removed when GeneralizedDiceScore has a property called "input type",
+            # which is currently in development...
+            output = torch.nn.functional.one_hot(output, num_classes=self.num_classes).movedim(-1, 1)
+            target = torch.nn.functional.one_hot(target, num_classes=self.num_classes).movedim(-1, 1)
+
         metrics = self.compute_metrics(self.train_metrics, output, target)
         self.log_dict(
             {"train/loss": loss} | metrics,
@@ -211,6 +217,12 @@ class YuccaLightningModule(BaseLightningModule):
         inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
         output = self(inputs)
         loss = self.loss_fn_val(output, target)
+
+        if self.task_type == "segmentation" and not self.config["use_label_regions"]:
+            # Due to a bug in torchmetrics. This can be removed when GeneralizedDiceScore has a property called "input type",
+            # which is currently in development...
+            output = torch.nn.functional.one_hot(output, num_classes=self.num_classes).movedim(-1, 1)
+            target = torch.nn.functional.one_hot(target, num_classes=self.num_classes).movedim(-1, 1)
 
         metrics = self.compute_metrics(self.val_metrics, output, target)
         self.log_dict(
