@@ -42,6 +42,10 @@ def convert_labels_to_regions(data, regions):
 
 
 def batch_convert_regions_to_labels(data, region_labels):
+    print(
+        "You are using the batch_convert_regions_to_labels function."
+        "Currently it does not support the priority key. Use with caution."
+    )
     b, _, *shape = data.shape
     region_canvas = np.zeros((b, 1, *shape))
     for channel, region_label in enumerate(region_labels):
@@ -52,20 +56,14 @@ def batch_convert_regions_to_labels(data, region_labels):
 
 
 def convert_regions_to_labels(data, region_labels):
+    print(
+        "You are using the convert_regions_to_labels function."
+        "Currently it does not support the priority key. Use with caution."
+    )
     _, *shape = data.shape
     region_canvas = np.zeros((1, *shape))
     for channel, region_label in enumerate(region_labels):
         mask = data[channel] > 0.5
         region_canvas[0][mask] = region_label
-    region_canvas = region_canvas
-    return region_canvas
-
-
-def batch_torch_convert_regions_to_labels(data, region_labels):
-    b, _, *shape = data.shape
-    region_canvas = torch.zeros((b, 1, *shape))
-    for channel, region_label in enumerate(region_labels):
-        mask = data[:, channel] > 0.5
-        region_canvas[:, 0][mask] = region_label
     region_canvas = region_canvas
     return region_canvas
