@@ -89,6 +89,8 @@ class YuccaLightningModule(BaseLightningModule):
         self.config = config
         self.task_type = config["task_type"]
         self.log_image_every_n_epochs = log_image_every_n_epochs
+
+        self.use_label_regions = "use_label_regions" in config.keys() and config["use_label_regions"]
         # If we are training we save params and then start training
         # Do not overwrite parameters during inference.
         self.save_hyperparameters(ignore=["lr_scheduler", "optimizer"])
@@ -184,7 +186,10 @@ class YuccaLightningModule(BaseLightningModule):
             output = output[0]
             target = target[0]
 
-        if self.task_type == "segmentation" and not self.config["use_label_regions"]:
+        output = output.long()
+        target = target.long()
+
+        if self.task_type == "segmentation" and not self.use_label_regions:
             # GeneralizedDice doesn't support logits, so we need to argmax it.
             output = torch.argmax(output, dim=1)
             target = target.squeeze()
@@ -223,14 +228,17 @@ class YuccaLightningModule(BaseLightningModule):
         output = self(inputs)
         loss = self.loss_fn_val(output, target)
 
-        if self.task_type == "segmentation" and not self.config["use_label_regions"]:
+        output = output.long()
+        target = target.long()
+
+        if self.task_type == "segmentation" and not self.use_label_regions:
             # GeneralizedDice doesn't support logits, so we need to argmax it.
             output = torch.argmax(output, dim=1)
             target = target.squeeze()
             # Due to a bug in torchmetrics. This can be removed when GeneralizedDiceScore has a property called "input type",
             # which is currently on their main branch...
             output = torch.nn.functional.one_hot(output, num_classes=self.num_classes).movedim(-1, 1)
-            target = torch.nn.functional.one_hot(target.long(), num_classes=self.num_classes).movedim(-1, 1)
+            target = torch.nn.functional.one_hot(target, num_classes=self.num_classes).movedim(-1, 1)
             assert len(output.shape) <= 5, output.shape
             assert len(target.shape) <= 5, target.shape
 
