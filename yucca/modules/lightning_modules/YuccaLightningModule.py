@@ -61,6 +61,10 @@ class YuccaLightningModule(BaseLightningModule):
             current_module="yucca.modules.optimization.loss_functions",
         )
         preprocessor = self.get_preprocessor(config)
+        self.config = config
+        self.task_type = config["task_type"]
+        self.log_image_every_n_epochs = log_image_every_n_epochs
+        self.use_label_regions = "use_label_regions" in config.keys() and config["use_label_regions"]
         super().__init__(
             model=model,
             model_dimensions=config["model_dimensions"],
@@ -85,11 +89,6 @@ class YuccaLightningModule(BaseLightningModule):
             step_logging=step_logging,
             test_time_augmentation=test_time_augmentation,
         )
-        self.config = config
-        self.task_type = config["task_type"]
-        self.log_image_every_n_epochs = log_image_every_n_epochs
-
-        self.use_label_regions = "use_label_regions" in config.keys() and config["use_label_regions"]
         # If we are training we save params and then start training
         # Do not overwrite parameters during inference.
         self.save_hyperparameters(ignore=["lr_scheduler", "optimizer"])
@@ -127,7 +126,7 @@ class YuccaLightningModule(BaseLightningModule):
         except RuntimeError:
             logging.info("\n Model architecture could not be visualized.")
 
-    def on_fit_start(self):
+    def configure_metrics(self):
         if self.task_type == "classification":
             tmetrics_task = "multiclass" if self.num_classes > 2 else "binary"
             # can we get per-class?
@@ -187,6 +186,7 @@ class YuccaLightningModule(BaseLightningModule):
             self.train_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
             self.val_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
 
+    def on_fit_start(self):
         if self.log_image_every_n_epochs is None:
             self.log_image_every_n_epochs = self.get_image_logging_epochs(self.trainer.max_epochs)
 
