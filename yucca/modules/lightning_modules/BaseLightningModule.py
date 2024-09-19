@@ -93,6 +93,7 @@ class BaseLightningModule(L.LightningModule):
         # If we are training we save params and then start training
         # Do not overwrite parameters during inference.
         self.save_hyperparameters(ignore=["model", "loss_fn", "lr_scheduler", "optimizer", "preprocessor"])
+        self.configure_metrics()
 
     def setup(self, stage):  # noqa: U100
         self.model = self.model(
@@ -116,6 +117,20 @@ class BaseLightningModule(L.LightningModule):
             metrics.pop(k)
         metrics.update(tmp)
         return metrics
+
+    def configure_metrics(self):
+        self.train_metrics = MetricCollection(
+            {
+                "train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
+                "train/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
+            },
+        )
+        self.val_metrics = MetricCollection(
+            {
+                "val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
+                "val/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
+            },
+        )
 
     def configure_optimizers(self):
         self.loss_fn_train = self.loss_fn(**self.loss_kwargs)
@@ -172,20 +187,6 @@ class BaseLightningModule(L.LightningModule):
         )
 
         return successful
-
-    def on_fit_start(self):
-        self.train_metrics = MetricCollection(
-            {
-                "train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
-                "train/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
-            },
-        )
-        self.val_metrics = MetricCollection(
-            {
-                "val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
-                "val/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
-            },
-        )
 
     def on_predict_start(self):
         if self.disable_inference_preprocessing is False:
