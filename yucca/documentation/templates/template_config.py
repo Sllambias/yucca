@@ -5,7 +5,7 @@ model = TinyUNet
 
 config = {
     "batch_size": 2,
-    "classes": [0, 1, 2],
+    "classes": [0, 1],
     "config_name": "demo",
     "crop_to_nonzero": True,
     "continue_from_most_recent": True,

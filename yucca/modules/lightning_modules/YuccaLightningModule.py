@@ -68,7 +68,7 @@ class YuccaLightningModule(BaseLightningModule):
             num_classes=config["num_classes"],
             num_modalities=config["num_modalities"],
             patch_size=config["patch_size"],
-            plans=config["plans"],
+            crop_to_nonzero=config["plans"]["crop_to_nonzero"],
             deep_supervision=deep_supervision,
             disable_inference_preprocessing=disable_inference_preprocessing,
             hparams_path=config["plans_path"],
@@ -85,6 +85,8 @@ class YuccaLightningModule(BaseLightningModule):
             sliding_window_prediction=config["patch_based_training"],
             step_logging=step_logging,
             test_time_augmentation=test_time_augmentation,
+            transpose_forward=config["plans"]["transpose_forward"],
+            transpose_backward=config["plans"]["transpose_backward"],
         )
         self.config = config
         self.task_type = config["task_type"]

@@ -80,7 +80,7 @@ if __name__ == "__main__":
     )
 
     evaluator = YuccaEvaluator(
-        labels=["0", "1", "2"],
+        labels=config["classes"],
         folder_with_ground_truth=gt_path,
         folder_with_predictions=save_path,
         use_wandb=False,
