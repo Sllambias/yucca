@@ -71,7 +71,7 @@ def get_plan_config(
         regions = plans["dataset_properties"]["regions"]
         num_classes = len(regions)
     else:
-        labels = plans["dataset_properties"].get("labels")
+        labels = plans["dataset_properties"].get("labels") or plans["dataset_properties"].get("classes")
         num_classes = max(1, len(plans["dataset_properties"]["classes"]))
     image_extension = plans.get("image_extension") or plans["dataset_properties"].get("image_extension") or "nii.gz"
     allow_missing_modalities = plans.get("allow_missing_modalities") or False
