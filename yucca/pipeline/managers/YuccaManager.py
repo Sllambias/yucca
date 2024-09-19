@@ -125,16 +125,17 @@ class YuccaManager:
             if not torch.cuda.is_bf16_supported():
                 self.precision = self.precision.replace("bf", "")
 
-        if self.kwargs.get("fast_dev_run"):
-            self.setup_fast_dev_run()
-
-        self.optim_kwargs.update({"lr": self.learning_rate, "momentum": self.momentum})
         # defaults
         self.data_module_class = YuccaDataModule
         self.lightning_module = YuccaLightningModule
         self.trainer = L.Trainer
         self.train_dataset_class = YuccaTrainDataset
         self.test_dataset_class = YuccaTestDataset
+        self.accelerator = "cpu" if torch.backends.mps.is_available() and self.model_dimensions == "3D" else "auto"
+        self.optim_kwargs.update({"lr": self.learning_rate, "momentum": self.momentum})
+
+        if self.kwargs.get("fast_dev_run"):
+            self.setup_fast_dev_run()
 
     def initialize(
         self,
@@ -269,7 +270,7 @@ class YuccaManager:
         self.verify_modules_are_valid()
 
         self.trainer = L.Trainer(
-            accelerator="cpu" if torch.backends.mps.is_available() and self.model_dimensions == "3D" else "auto",
+            accelerator=self.accelerator,
             callbacks=callback_config.callbacks,
             default_root_dir=path_config.save_dir,
             limit_train_batches=self.train_batches_per_step,
@@ -370,12 +371,12 @@ class YuccaManager:
             )
 
     def setup_fast_dev_run(self):
+        self.accelerator = "cpu"
         self.batch_size = 2
         self.patch_size = (32, 32)
         self.enable_logging = False
         self.model_dimensions = "2D"
-        self.precision = 32
-        self.kwargs["accelerator"] = "cpu"
+        self.precision = 16
         self.train_batches_per_step = 10
         self.val_batches_per_step = 5
 

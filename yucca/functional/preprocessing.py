@@ -395,7 +395,6 @@ def preprocess_case_for_training_without_label(
 
 def preprocess_case_for_inference(
     crop_to_nonzero,
-    keep_aspect_ratio,
     images: list | tuple,
     intensities: list,
     normalization_scheme: list,
@@ -403,9 +402,10 @@ def preprocess_case_for_inference(
     target_size,
     target_spacing,
     target_orientation,
-    ext=".nii.gz",
-    transpose_forward=[0, 1, 2],
     allow_missing_modalities: bool = False,
+    ext=".nii.gz",
+    keep_aspect_ratio: bool = True,
+    transpose_forward=[0, 1, 2],
 ) -> torch.Tensor:
     assert isinstance(images, (list, tuple)), "image(s) should be a list or tuple, even if only one image is passed"
 

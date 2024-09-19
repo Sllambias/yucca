@@ -137,8 +137,8 @@ class CollectMetadata(YuccaTransform):
     def __collect__(self, data_dict):
         metadata = {}
         data = data_dict[self.data_key]
-        metadata["min"] = data.min()
-        metadata["max"] = data.max()
+        metadata["min"] = data.min().astype(np.float16)
+        metadata["max"] = data.max().astype(np.float16)
         data_dict["metadata"] = metadata
         return data_dict
 

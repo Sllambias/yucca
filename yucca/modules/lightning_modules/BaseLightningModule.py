@@ -19,7 +19,7 @@ class BaseLightningModule(L.LightningModule):
         num_classes: int,
         num_modalities: int,
         patch_size: tuple,
-        plans: dict,
+        crop_to_nonzero: bool = True,
         deep_supervision: bool = False,
         disable_inference_preprocessing: bool = False,
         hparams_path: str = None,
@@ -46,19 +46,22 @@ class BaseLightningModule(L.LightningModule):
         sliding_window_prediction: bool = True,
         step_logging: bool = False,
         test_time_augmentation: bool = False,
+        transpose_forward: list = [0, 1, 2],
+        transpose_backward: list = [0, 1, 2],
     ):
         super().__init__()
-        # Extract parameters from the configurator
+        self.crop_to_nonzero = crop_to_nonzero
         self.num_classes = num_classes
         self.num_modalities = num_modalities
         self.hparams_path = hparams_path
-        self.plans = plans
         self.model = model
         self.model_dimensions = model_dimensions
         self.model_kwargs = model_kwargs
         self.patch_size = patch_size
         self.preprocessor = preprocessor
         self.sliding_window_prediction = sliding_window_prediction
+        self.transpose_forward = transpose_forward
+        self.transpose_backward = transpose_backward
 
         # Loss, optimizer and scheduler parameters
         self.deep_supervision = deep_supervision
@@ -211,12 +214,12 @@ class BaseLightningModule(L.LightningModule):
         )
         if self.disable_inference_preprocessing:
             logits, data_properties = reverse_preprocessing(
-                crop_to_nonzero=self.plans["crop_to_nonzero"],
+                crop_to_nonzero=self.crop_to_nonzero,
                 images=logits,
                 image_properties=batch["data_properties"],
                 n_classes=self.num_classes,
-                transpose_forward=self.plans["transpose_forward"],
-                transpose_backward=self.plans["transpose_backward"],
+                transpose_forward=self.transpose_forward,
+                transpose_backward=self.transpose_backward,
             )
         else:
             logits, data_properties = self.preprocessor.reverse_preprocessing(
