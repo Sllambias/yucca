@@ -15,7 +15,7 @@ def var_is_set(var):
 def get_environment_variable(var):
     load_dotenv()
     if not var_is_set(var):
-        raise ValueError("Missing required environment variable {YUCCA_SOURCE}.")
+        raise ValueError(f"Missing required environment variable {var}.")
 
     path = os.environ[var]
     ensure_dir_exists(path)

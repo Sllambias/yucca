@@ -68,7 +68,7 @@ if __name__ == "__main__":
             crop_to_nonzero=config["crop_to_nonzero"],
             images=images,
             intensities=None,
-            normalization_scheme=["volume_wise_znorm"],
+            normalization_scheme=[config["normalization_scheme"] for _ in config["modalities"]],
             patch_size=config["patch_size"],
             target_size=config["target_size"],
             target_spacing=config["target_spacing"],

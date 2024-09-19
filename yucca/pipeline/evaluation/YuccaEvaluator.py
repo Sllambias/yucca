@@ -1,12 +1,9 @@
 import os
-from typing import Literal
+from typing import Literal, Optional, Union
 import numpy as np
-import nibabel as nib
 import json
-import sys
 import wandb
 from batchgenerators.utilities.file_and_folder_operations import subfiles, join, load_json, isfile
-from sklearn.metrics import confusion_matrix
 from yucca.functional.evaluation.metrics import (
     dice,
     jaccard,
@@ -19,34 +16,41 @@ from yucca.functional.evaluation.metrics import (
     total_pos_pred,
     volume_similarity,
     accuracy,
-    auroc,
 )
-from yucca.functional.evaluation.obj_metrics import get_obj_stats_for_label
-from yucca.functional.evaluation.surface_metrics import get_surface_metrics_for_label
+from yucca.functional.evaluation.evaluate_folder import (
+    evaluate_multilabel_folder_segm,
+    evaluate_folder_segm,
+    evaluate_folder_cls,
+)
 from yucca.paths import get_raw_data_path
-from tqdm import tqdm
 
 
 class YuccaEvaluator(object):
     def __init__(
         self,
-        labels: list | int,
+        labels: Union[dict, int],
         folder_with_predictions,
         folder_with_ground_truth,
         use_wandb: bool,
         as_binary=False,
         do_object_eval=False,
         do_surface_eval=False,
+        regions: Optional[dict] = None,
         overwrite: bool = False,
+        surface_tol: int = 1,
         task_type: Literal["segmentation", "classification", "regression"] = "segmentation",
         strict: bool = True,
     ):
         self.name = "results"
 
+        self.labels = labels
+        self.regions = regions
         self.overwrite = overwrite
         self.use_wandb = use_wandb
         self.task_type = task_type
         self.strict = strict
+        self.as_binary = as_binary
+        self.surface_tol = surface_tol
 
         self.metrics = {
             "Dice": dice,
@@ -93,7 +97,7 @@ class YuccaEvaluator(object):
                 ]
 
             if do_surface_eval:
-                self.name += "_SURFACE"
+                self.name += f"_SURFACE{self.surface_tol}"
                 self.surface_metrics = [
                     "Average Surface Distance",
                 ]
@@ -134,16 +138,19 @@ class YuccaEvaluator(object):
         else:
             raise ValueError(f"Unknown task type {self.task_type}")
 
-        if isinstance(labels, int):
-            self.labels = [str(i) for i in range(labels)]
-        else:
-            self.labels = labels
-        self.as_binary = as_binary
         if self.as_binary:
-            self.labels = ["0", "1"]
             self.name += "_BINARY"
+            self.labels = [0, 1]
+            self.labelarr = np.sort(np.array(self.labels, dtype=np.uint8))
+        elif isinstance(self.labels, int):
+            self.labelarr = np.sort(np.arange(self.labels, dtype=np.uint8))
+        elif isinstance(self.labels, list):
+            self.labelarr = np.sort(np.array(self.labels, dtype=np.uint8))
+        elif isinstance(self.labels, dict):
+            self.labelarr = np.sort(np.array(list(self.labels.keys()), dtype=np.uint8))
+        else:
+            raise ValueError(f"Incorrect label format. Got {type(self.labels)}")
 
-        self.labelarr = np.sort(np.array(self.labels, dtype=np.uint8))
         self.folder_with_predictions = folder_with_predictions
         self.folder_with_ground_truth = folder_with_ground_truth
 
@@ -161,7 +168,6 @@ class YuccaEvaluator(object):
             f"STARTING EVALUATION \n"
             f"Folder with predictions: {self.folder_with_predictions}\n"
             f"Folder with ground truth: {self.folder_with_ground_truth}\n"
-            f"Evaluating performance on labels: {self.labels}"
         )
 
     def sanity_checks(self):
@@ -193,159 +199,44 @@ class YuccaEvaluator(object):
 
     def evaluate_folder(self):
         if self.task_type == "classification":
-            return self._evaluate_folder_cls()
+            return evaluate_folder_cls(
+                labels=self.labelarr,
+                metrics=self.metrics,
+                subjects=self.pred_subjects,
+                folder_with_predictions=self.folder_with_predictions,
+                folder_with_ground_truth=self.folder_with_ground_truth,
+            )
         elif self.task_type == "segmentation":
-            return self._evaluate_folder_segm()
+            if self.regions is not None:
+                return evaluate_multilabel_folder_segm(
+                    labels=self.labels,
+                    metrics=self.metrics,
+                    subjects=self.pred_subjects,
+                    folder_with_predictions=self.folder_with_predictions,
+                    folder_with_ground_truth=self.folder_with_ground_truth,
+                    as_binary=self.as_binary,
+                    obj_metrics=self.obj_metrics,
+                    regions=self.regions,
+                    surface_metrics=self.surface_metrics,
+                    surface_tol=self.surface_tol,
+                )
+            else:
+                return evaluate_folder_segm(
+                    labels=self.labelarr,
+                    metrics=self.metrics,
+                    subjects=self.pred_subjects,
+                    folder_with_predictions=self.folder_with_predictions,
+                    folder_with_ground_truth=self.folder_with_ground_truth,
+                    as_binary=self.as_binary,
+                    obj_metrics=self.obj_metrics,
+                    surface_metrics=self.surface_metrics,
+                    surface_tol=self.surface_tol,
+                )
         else:
             raise NotImplementedError("Invalid task type")
 
-    def _evaluate_folder_cls(self):
-        """
-        Evaluate classification results
-        """
-        sys.stdout.flush()
-        resultdict = {}
-
-        predictions = []
-        prediction_probs = []
-        ground_truths = []
-
-        # Flag to check if we have prediction probabilities to calculate AUROC
-        use_probs = False
-
-        # load predictions and ground truths
-        for case in tqdm(self.pred_subjects, desc="Evaluating"):
-            predpath = join(self.folder_with_predictions, case)
-            gtpath = join(self.folder_with_ground_truth, case)
-
-            pred: int = np.loadtxt(predpath)
-            gt: int = np.loadtxt(gtpath)
-
-            try:
-                if len(prediction_probs) == 0:
-                    print("Prediction probabilities found. Will use them for evaluation.")
-                    use_probs = True
-
-                pred_probs = np.load(predpath.replace(".txt", ".npz"))["data"]  # contains output probabilities
-                prediction_probs.append(pred_probs)
-            except FileNotFoundError:
-                pred_probs = None
-
-            predictions.append(pred)
-            ground_truths.append(gt)
-
-        predictions = np.array(predictions)
-        ground_truths = np.array(ground_truths)
-
-        if use_probs:
-            prediction_probs = np.array(prediction_probs)
-            assert len(predictions) == len(prediction_probs), (
-                "Number of predicted labels and prediction probabilities do not match."
-                "This likely means that the prediction probability file is missing for some of the predictions."
-            )
-
-            # add AUROC to streamtable metrics
-            self.metrics_included_in_streamtable.append("AUROC")
-
-        # calculate per-class metrics
-        cmat = confusion_matrix(ground_truths, predictions, labels=self.labelarr)
-
-        resultdict["per_class"] = {}
-
-        for label in self.labelarr:
-            tp = cmat[label, label]
-            fp = sum(cmat[:, label]) - tp
-            fn = sum(cmat[label, :]) - tp
-            tn = np.sum(cmat) - tp - fp - fn
-
-            labeldict = {}
-
-            for k, v in self.metrics.items():
-                labeldict[k] = round(v(tp, fp, tn, fn), 4)
-
-            resultdict["per_class"][str(label)] = labeldict
-
-        # calculate AUROC
-        if use_probs:
-            auroc_per_class: list[float] = auroc(ground_truths, prediction_probs)
-            for label, score in zip(self.labelarr, auroc_per_class):
-                resultdict["per_class"][str(label)]["AUROC"] = round(score, 4)
-
-        # caclulate global (mean) metrics
-        resultdict["mean"] = {}
-        for k, _ in resultdict["per_class"][str(self.labelarr[0])].items():
-            resultdict["mean"][k] = sum([resultdict["per_class"][str(label)][k] for label in self.labelarr])
-            resultdict["mean"][k] = round(resultdict["mean"][k] / len(self.labelarr), 4)
-
-        return resultdict
-
-    def _evaluate_folder_segm(self):
-        sys.stdout.flush()
-        resultdict = {}
-        meandict = {}
-
-        for label in self.labels:
-            meandict[label] = {k: [] for k in list(self.metrics.keys()) + self.obj_metrics + self.surface_metrics}
-
-        for case in tqdm(self.pred_subjects, desc="Evaluating"):
-            casedict = {}
-            predpath = join(self.folder_with_predictions, case)
-            gtpath = join(self.folder_with_ground_truth, case)
-
-            pred = nib.load(predpath)
-            gt = nib.load(gtpath)
-
-            if self.as_binary:
-                cmat = confusion_matrix(
-                    np.around(gt.get_fdata().flatten()).astype(bool).astype(int),
-                    np.around(pred.get_fdata().flatten()).astype(bool).astype(int),
-                    labels=self.labelarr,
-                )
-            else:
-                cmat = confusion_matrix(
-                    np.around(gt.get_fdata().flatten()).astype(int),
-                    np.around(pred.get_fdata().flatten()).astype(int),
-                    labels=self.labelarr,
-                )
-
-            for label in self.labelarr:
-                labeldict = {}
-
-                tp = cmat[label, label]
-                fp = sum(cmat[:, label]) - tp
-                fn = sum(cmat[label, :]) - tp
-                tn = np.sum(cmat) - tp - fp - fn  # often a redundant and meaningless metric
-                for k, v in self.metrics.items():
-                    labeldict[k] = round(v(tp, fp, tn, fn), 4)
-                    meandict[str(label)][k].append(labeldict[k])
-
-                if self.obj_metrics:
-                    # now for the object metrics
-                    obj_labeldict = get_obj_stats_for_label(gt, pred, label, as_binary=self.as_binary)
-                    for k, v in obj_labeldict.items():
-                        labeldict[k] = round(v, 4)
-                        meandict[str(label)][k].append(labeldict[k])
-
-                if self.surface_metrics:
-                    surface_labeldict = get_surface_metrics_for_label(gt, pred, label, as_binary=self.as_binary)
-                    for k, v in surface_labeldict.items():
-                        labeldict[k] = round(v, 4)
-                        meandict[str(label)][k].append(labeldict[k])
-                casedict[str(label)] = labeldict
-            casedict["Prediction:"] = predpath
-            casedict["Ground Truth:"] = gtpath
-
-            resultdict[case] = casedict
-        for label in self.labels:
-            meandict[label] = {
-                k: round(np.nanmean(v), 4) if not np.all(np.isnan(v)) else 0 for k, v in meandict[label].items()
-            }
-        resultdict["mean"] = meandict
-
-        return resultdict
-
     def save_as_json(self, dict):
-        print(f"Saving results.json" "\n" "\n" f"########################################################################")
+        print("Saving results.json \n \n ########################################################################")
         with open(self.outpath, "w") as f:
             json.dump(dict, f, default=float, indent=4)
 

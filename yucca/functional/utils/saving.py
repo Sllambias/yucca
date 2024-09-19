@@ -56,6 +56,36 @@ def save_prediction_from_logits(logits, outpath, properties, save_softmax=False,
         save_nifti_from_numpy(pred, outpath, properties, compression=compression)
 
 
+def save_multilabel_prediction_from_logits(logits, outpath, properties, compression=9):
+    nib.openers.Opener.default_compresslevel = compression
+    # here we use a sigmoid instead of the softmax/argmax functions to keep the multiple channels
+    # of predicted classes. This means predictions from this are stored as (c, h, w, d) rather than (h, w, d)
+    pred = 1.0 / (1.0 + np.exp(-logits))
+    pred = (pred > 0.5).astype(np.uint8)
+    pred = np.squeeze(pred)
+    preds = []
+    for i in range(pred.shape[0]):
+        pred_for_label = nib.Nifti1Image(
+            pred[i],
+            properties["nifti_metadata"]["affine"],
+            header=nib.Nifti1Header(properties["nifti_metadata"]["header"]),
+            dtype=np.uint8,
+        )
+        if properties["nifti_metadata"]["reoriented"]:
+            pred_for_label = reorient_nib_image(
+                pred_for_label,
+                properties["nifti_metadata"]["final_direction"],
+                properties["nifti_metadata"]["original_orientation"],
+            )
+        preds.append(pred_for_label)
+    pred = nib.concat_images(preds)
+    nib.save(
+        pred,
+        outpath + ".nii.gz",
+    )
+    del pred
+
+
 def merge_softmax_from_folders(folders: list, outpath, method="sum"):
     ensure_dir_exists(outpath)
     cases = subfiles(folders[0], suffix=".npz", join=False)

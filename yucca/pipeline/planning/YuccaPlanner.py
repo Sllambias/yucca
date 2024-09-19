@@ -82,6 +82,7 @@ class YuccaPlanner(object):
             create_dataset_properties(data_dir=self.in_dir, save_dir=self.target_dir, num_workers=self.threads)
         self.dataset_properties = load_pickle(join(self.target_dir, "dataset_properties.pkl"))
 
+        self.determine_norm_op_per_modality()
         self.determine_transpose()
         self.determine_target_size_from_fixed_size_or_spacing()
         self.determine_task_type()
@@ -90,6 +91,9 @@ class YuccaPlanner(object):
         self.populate_plans_file()
 
         save_json(self.plans, self.plans_path, sort_keys=False)
+
+    def determine_norm_op_per_modality(self):
+        self.norm_op_per_modality = [self.norm_op for _ in self.dataset_properties["modalities"]]
 
     def determine_transpose(self):
         # If no specific view is determined in run training, we select the optimal.
@@ -168,7 +172,7 @@ class YuccaPlanner(object):
             allow_missing_modalities=self.allow_missing_modalities,
             crop_to_nonzero=self.crop_to_nonzero,
             classes=self.dataset_properties["classes"],
-            norm_op=self.norm_op,
+            norm_op=self.norm_op_per_modality,
             modalities=self.dataset_properties["modalities"],
             plans_name=self.name,
             preprocessor=self.preprocessor,

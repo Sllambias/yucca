@@ -43,9 +43,10 @@ def get_foreground_locations(label, per_class=False, max_locs_total=100000):
     foreground_locations = {}
     if not per_class:
         foreground_locs_for_all = np.array(np.nonzero(label)).T[::10].tolist()
-        if len(foreground_locs_for_all) > max_locs_total:
-            foreground_locs_for_all = foreground_locs_for_all[:: round(len(foreground_locs_for_all) / max_locs_total)]
-        foreground_locations["1"] = foreground_locs_for_all
+        if len(foreground_locs_for_all) > 0:
+            if len(foreground_locs_for_all) > max_locs_total:
+                foreground_locs_for_all = foreground_locs_for_all[:: round(len(foreground_locs_for_all) / max_locs_total)]
+            foreground_locations["1"] = foreground_locs_for_all
     else:
         foreground_classes_present = np.unique(label)[1:]
         if len(foreground_classes_present) == 0:
