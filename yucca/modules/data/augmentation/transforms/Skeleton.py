@@ -22,6 +22,8 @@ class Skeleton(YuccaTransform):
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
+        print("keys", data_dict.keys())
+        print("data", data_dict)
         if self.__skeleton__:
             data_dict["skel"] = self.__skeleton__(data_dict[self.label_key])
         return data_dict

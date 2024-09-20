@@ -256,10 +256,10 @@ class YuccaAugmentationComposer:
         val_transforms = transforms.Compose(
             [
                 AddBatchDimension(),
-                Skeleton(
-                    skeleton=self.skeleton,
-                    do_tube=self.do_tube,
-                ),
+                # Skeleton(
+                #     skeleton=self.skeleton,
+                #     do_tube=self.do_tube,
+                # ),
                 ConvertLabelsToRegions(
                     convert_labels_to_regions=self.convert_labels_to_regions, regions=self.regions, labels=self.labels
                 ),
