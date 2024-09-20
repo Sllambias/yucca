@@ -63,11 +63,15 @@ class YuccaManager:
         model_name: str = "TinyUNet",
         momentum: float = 0.9,
         num_workers: Optional[int] = None,
+        optimizer: torch.optim.Optimizer = torch.optim.SGD,
+        optim_kwargs: dict = {},
         patch_based_training: bool = True,
         patch_size: Union[tuple, Literal["max", "min", "mean"]] = None,
         planner: str = "YuccaPlanner",
         precision: str = "bf16-mixed",
         profile: bool = False,
+        p_oversample_foreground: Optional[float] = 0.33,
+        scheduler=torch.optim.lr_scheduler.CosineAnnealingLR,
         split_idx: int = 0,
         split_data_method: str = "kfold",
         split_data_param: int = 5,
@@ -76,6 +80,7 @@ class YuccaManager:
         train_batches_per_step: int = 250,
         use_label_regions: bool = False,
         val_batches_per_step: int = 50,
+        wandb_log_model=False,
         **kwargs,
     ):
         self.ckpt_path = ckpt_path
@@ -94,11 +99,15 @@ class YuccaManager:
         self.num_workers = num_workers
         self.augmentation_params = augmentation_params
         self.batch_size = batch_size
+        self.optimizer = optimizer
+        self.optim_kwargs = optim_kwargs
         self.patch_based_training = patch_based_training
         self.patch_size = patch_size
         self.planner = planner
         self.precision = precision
         self.profile = profile
+        self.p_oversample_foreground = p_oversample_foreground
+        self.scheduler = scheduler
         self.split_idx = split_idx
         self.split_data_method = split_data_method
         self.split_data_param = split_data_param
@@ -107,6 +116,7 @@ class YuccaManager:
         self.train_batches_per_step = train_batches_per_step
         self.use_label_regions = use_label_regions
         self.val_batches_per_step = val_batches_per_step
+        self.wandb_log_model = wandb_log_model
         self.kwargs = kwargs
 
         # Automatically changes bfloat training if we're running on a GPU
@@ -115,15 +125,17 @@ class YuccaManager:
             if not torch.cuda.is_bf16_supported():
                 self.precision = self.precision.replace("bf", "")
 
-        if self.kwargs.get("fast_dev_run"):
-            self.setup_fast_dev_run()
-
         # defaults
         self.data_module_class = YuccaDataModule
         self.lightning_module = YuccaLightningModule
         self.trainer = L.Trainer
         self.train_dataset_class = YuccaTrainDataset
         self.test_dataset_class = YuccaTestDataset
+        self.accelerator = "cpu" if torch.backends.mps.is_available() and self.model_dimensions == "3D" else "auto"
+        self.optim_kwargs.update({"lr": self.learning_rate, "momentum": self.momentum})
+
+        if self.kwargs.get("fast_dev_run"):
+            self.setup_fast_dev_run()
 
     def initialize(
         self,
@@ -152,7 +164,7 @@ class YuccaManager:
             split_data_param=self.split_data_param,
         )
 
-        path_config = get_path_config(task_config=task_config)
+        path_config = get_path_config(task_config=task_config, stage=stage)
 
         self.ckpt_config = get_checkpoint_config(
             ckpt_path=self.ckpt_path,
@@ -163,7 +175,7 @@ class YuccaManager:
 
         seed_config = seed_everything_and_get_seed_config(ckpt_seed=self.ckpt_config.ckpt_seed)
 
-        plan_config = self.get_plan_config(
+        self.plan_config = self.get_plan_config(
             ckpt_plans=self.ckpt_config.ckpt_plans,
             plans_path=path_config.plans_path,
             stage=stage,
@@ -182,6 +194,8 @@ class YuccaManager:
             prediction_output_dir=prediction_output_dir,
             profile=self.profile,
             save_softmax=save_softmax,
+            save_multilabel_predictions=self.use_label_regions,
+            wandb_log_model=self.wandb_log_model,
         )
 
         if stage == "fit":
@@ -190,9 +204,9 @@ class YuccaManager:
             splits_config = SplitConfig()
 
         input_dims_config = get_input_dims_config(
-            plan=plan_config.plans,
+            plan=self.plan_config.plans,
             model_dimensions=task_config.model_dimensions,
-            num_classes=plan_config.num_classes,
+            num_classes=self.plan_config.num_classes,
             ckpt_patch_size=self.ckpt_config.ckpt_patch_size,
             model_name=task_config.model_name,
             max_vram=self.max_vram,
@@ -201,18 +215,14 @@ class YuccaManager:
             patch_size=self.patch_size,
         )
 
-        if plan_config.use_label_regions:
-            assert plan_config.labels is not None
-            assert plan_config.regions is not None
-
         augmenter = YuccaAugmentationComposer(
             deep_supervision=self.deep_supervision,
             patch_size=input_dims_config.patch_size,
             is_2D=True if self.model_dimensions == "2D" else False,
             parameter_dict=self.augmentation_params,
-            task_type_preset=plan_config.task_type,
-            labels=plan_config.labels,
-            regions=plan_config.regions if plan_config.use_label_regions else None,
+            task_type_preset=self.plan_config.task_type,
+            labels=self.plan_config.labels,
+            regions=self.plan_config.regions if self.plan_config.use_label_regions else None,
         )
 
         self.model_module = self.lightning_module(
@@ -221,14 +231,16 @@ class YuccaManager:
             | self.ckpt_config.lm_hparams()
             | seed_config.lm_hparams()
             | splits_config.lm_hparams()
-            | plan_config.lm_hparams()
+            | self.plan_config.lm_hparams()
             | input_dims_config.lm_hparams()
             | callback_config.lm_hparams()
             | augmenter.lm_hparams(),
             deep_supervision=self.deep_supervision,
             disable_inference_preprocessing=disable_inference_preprocessing,
             loss_fn=self.loss,
-            optimizer_kwargs={"lr": self.learning_rate, "momentum": self.momentum},
+            lr_scheduler=self.scheduler,
+            optimizer=self.optimizer,
+            optimizer_kwargs=self.optim_kwargs,
             step_logging=self.step_logging,
             test_time_augmentation=not disable_tta if disable_tta is True else augmenter.mirror_p_per_sample > 0,
         )
@@ -236,19 +248,20 @@ class YuccaManager:
         self.data_module = self.data_module_class(
             batch_size=input_dims_config.batch_size,
             patch_size=input_dims_config.patch_size,
-            allow_missing_modalities=plan_config.allow_missing_modalities,
+            allow_missing_modalities=self.plan_config.allow_missing_modalities,
             composed_train_transforms=augmenter.train_transforms,
             composed_val_transforms=augmenter.val_transforms,
             pred_include_cases=pred_include_cases,
-            image_extension=plan_config.image_extension,
+            image_extension=self.plan_config.image_extension,
             overwrite_predictions=overwrite_predictions,
             num_workers=self.num_workers,
             pred_data_dir=pred_data_dir,
             pred_save_dir=prediction_output_dir,
             pre_aug_patch_size=augmenter.pre_aug_patch_size,
+            p_oversample_foreground=self.p_oversample_foreground,
             splits_config=splits_config,
             split_idx=task_config.split_idx,
-            task_type=plan_config.task_type,
+            task_type=self.plan_config.task_type,
             test_dataset_class=self.test_dataset_class,
             train_data_dir=path_config.train_data_dir,
             train_dataset_class=self.train_dataset_class,
@@ -257,7 +270,7 @@ class YuccaManager:
         self.verify_modules_are_valid()
 
         self.trainer = L.Trainer(
-            accelerator="cpu" if torch.backends.mps.is_available() and self.model_dimensions == "3D" else "auto",
+            accelerator=self.accelerator,
             callbacks=callback_config.callbacks,
             default_root_dir=path_config.save_dir,
             limit_train_batches=self.train_batches_per_step,
@@ -268,6 +281,7 @@ class YuccaManager:
             profiler=callback_config.profiler,
             enable_progress_bar=not self.enable_logging,
             max_epochs=self.max_epochs,
+            devices=1,
             **self.kwargs,
         )
 
@@ -357,12 +371,12 @@ class YuccaManager:
             )
 
     def setup_fast_dev_run(self):
+        self.accelerator = "cpu"
         self.batch_size = 2
         self.patch_size = (32, 32)
         self.enable_logging = False
         self.model_dimensions = "2D"
-        self.precision = 32
-        self.kwargs["accelerator"] = "cpu"
+        self.precision = 16
         self.train_batches_per_step = 10
         self.val_batches_per_step = 5
 

@@ -8,12 +8,11 @@ import os
 import matplotlib.pyplot as plt
 from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
-from torchmetrics.classification import Dice
 from torchmetrics.regression import MeanAbsoluteError
 from yucca.modules.optimization.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from yucca.functional.utils.kwargs import filter_kwargs
-from yucca.modules.metrics.training_metrics import Accuracy, AUROC, F1
+from yucca.modules.metrics.training_metrics import Accuracy, AUROC, GeneralizedDiceScore
 from yucca.functional.visualization import get_train_fig_with_inp_out_tar
 from yucca.modules.lightning_modules.BaseLightningModule import BaseLightningModule
 from yucca.functional.utils.torch_utils import measure_FLOPs
@@ -62,13 +61,17 @@ class YuccaLightningModule(BaseLightningModule):
             current_module="yucca.modules.optimization.loss_functions",
         )
         preprocessor = self.get_preprocessor(config)
+        self.config = config
+        self.task_type = config["task_type"]
+        self.log_image_every_n_epochs = log_image_every_n_epochs
+        self.use_label_regions = "use_label_regions" in config.keys() and config["use_label_regions"]
         super().__init__(
             model=model,
             model_dimensions=config["model_dimensions"],
             num_classes=config["num_classes"],
             num_modalities=config["num_modalities"],
             patch_size=config["patch_size"],
-            plans=config["plans"],
+            crop_to_nonzero=config["plans"]["crop_to_nonzero"],
             deep_supervision=deep_supervision,
             disable_inference_preprocessing=disable_inference_preprocessing,
             hparams_path=config["plans_path"],
@@ -85,10 +88,9 @@ class YuccaLightningModule(BaseLightningModule):
             sliding_window_prediction=config["patch_based_training"],
             step_logging=step_logging,
             test_time_augmentation=test_time_augmentation,
+            transpose_forward=config["plans"]["transpose_forward"],
+            transpose_backward=config["plans"]["transpose_backward"],
         )
-        self.config = config
-        self.task_type = config["task_type"]
-        self.log_image_every_n_epochs = log_image_every_n_epochs
         # If we are training we save params and then start training
         # Do not overwrite parameters during inference.
         self.save_hyperparameters(ignore=["lr_scheduler", "optimizer"])
@@ -126,7 +128,7 @@ class YuccaLightningModule(BaseLightningModule):
         except RuntimeError:
             logging.info("\n Model architecture could not be visualized.")
 
-    def on_fit_start(self):
+    def configure_metrics(self):
         if self.task_type == "classification":
             tmetrics_task = "multiclass" if self.num_classes > 2 else "binary"
             # can we get per-class?
@@ -146,17 +148,39 @@ class YuccaLightningModule(BaseLightningModule):
         if self.task_type == "segmentation":
             self.train_metrics = MetricCollection(
                 {
-                    "train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
-                    "train/F1": F1(
-                        num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None
+                    "train/aggregated_dice": GeneralizedDiceScore(
+                        multilabel=self.use_label_regions,
+                        num_classes=self.num_classes,
+                        include_background=self.num_classes == 1,
+                        weight_type="linear",
+                        per_class=False,
+                    ),
+                    "train/dice": GeneralizedDiceScore(
+                        multilabel=self.use_label_regions,
+                        num_classes=self.num_classes,
+                        include_background=self.num_classes == 1,
+                        weight_type="linear",
+                        per_class=True,
                     ),
                 },
             )
 
             self.val_metrics = MetricCollection(
                 {
-                    "val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
-                    "val/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
+                    "val/aggregated_dice": GeneralizedDiceScore(
+                        multilabel=self.use_label_regions,
+                        num_classes=self.num_classes,
+                        include_background=self.num_classes == 1,
+                        weight_type="linear",
+                        per_class=False,
+                    ),
+                    "val/dice": GeneralizedDiceScore(
+                        multilabel=self.use_label_regions,
+                        num_classes=self.num_classes,
+                        include_background=self.num_classes == 1,
+                        weight_type="linear",
+                        per_class=True,
+                    ),
                 },
             )
 
@@ -164,6 +188,7 @@ class YuccaLightningModule(BaseLightningModule):
             self.train_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
             self.val_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
 
+    def on_fit_start(self):
         if self.log_image_every_n_epochs is None:
             self.log_image_every_n_epochs = self.get_image_logging_epochs(self.trainer.max_epochs)
 

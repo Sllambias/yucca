@@ -1,11 +1,12 @@
 import yucca
-from batchgenerators.utilities.file_and_folder_operations import join, load_json
+from batchgenerators.utilities.file_and_folder_operations import join, load_json, isfile
 from dataclasses import dataclass
 from typing import Union, Literal
 from yucca.pipeline.preprocessing.UnsupervisedPreprocessor import UnsupervisedPreprocessor
 from yucca.pipeline.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
 from yucca.functional.utils.dict import without_keys
 from yucca.functional.utils.files_and_folders import recursive_find_python_class
+from yucca.functional.utils.loading import load_yaml
 import logging
 
 
@@ -19,6 +20,10 @@ class PlanConfig:
     use_label_regions: bool = False
     labels: dict = None
     regions: dict = None
+
+    if use_label_regions:
+        assert labels is not None
+        assert regions is not None
 
     def lm_hparams(self, without: [] = []):
         hparams = {
@@ -49,22 +54,25 @@ def get_plan_config(
     if stage == "predict":
         # In this case we don't want to rely on plans being found in the preprocessed folder,
         # as it might not exist.
-        assert ckpt_plans is not None
-        plans = ckpt_plans
+        if isfile(plans_path):
+            plans = load_yaml(plans_path)["config"]["plans"]
+        else:
+            assert ckpt_plans is not None
+            plans = ckpt_plans
 
     regions = None
     labels = None
 
     task_type = setup_task_type(plans)
     if task_type == "self-supervised":
-        num_classes = max(1, plans.get("num_modalities") or len(plans["dataset_properties"]["modalities"]))
+        num_classes = max(1, len(plans["dataset_properties"]["modalities"]))
     elif use_label_regions:
         labels = plans["dataset_properties"]["labels"]
         regions = plans["dataset_properties"]["regions"]
         num_classes = len(regions)
     else:
-        labels = plans["dataset_properties"].get("labels")
-        num_classes = max(1, plans.get("num_classes") or len(plans["dataset_properties"]["classes"]))
+        labels = plans["dataset_properties"].get("labels") or plans["dataset_properties"].get("classes")
+        num_classes = max(1, len(plans["dataset_properties"]["classes"]))
     image_extension = plans.get("image_extension") or plans["dataset_properties"].get("image_extension") or "nii.gz"
     allow_missing_modalities = plans.get("allow_missing_modalities") or False
 

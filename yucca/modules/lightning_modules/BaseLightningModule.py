@@ -19,7 +19,7 @@ class BaseLightningModule(L.LightningModule):
         num_classes: int,
         num_modalities: int,
         patch_size: tuple,
-        plans: dict,
+        crop_to_nonzero: bool = True,
         deep_supervision: bool = False,
         disable_inference_preprocessing: bool = False,
         hparams_path: str = None,
@@ -46,19 +46,22 @@ class BaseLightningModule(L.LightningModule):
         sliding_window_prediction: bool = True,
         step_logging: bool = False,
         test_time_augmentation: bool = False,
+        transpose_forward: list = [0, 1, 2],
+        transpose_backward: list = [0, 1, 2],
     ):
         super().__init__()
-        # Extract parameters from the configurator
+        self.crop_to_nonzero = crop_to_nonzero
         self.num_classes = num_classes
         self.num_modalities = num_modalities
         self.hparams_path = hparams_path
-        self.plans = plans
         self.model = model
         self.model_dimensions = model_dimensions
         self.model_kwargs = model_kwargs
         self.patch_size = patch_size
         self.preprocessor = preprocessor
         self.sliding_window_prediction = sliding_window_prediction
+        self.transpose_forward = transpose_forward
+        self.transpose_backward = transpose_backward
 
         # Loss, optimizer and scheduler parameters
         self.deep_supervision = deep_supervision
@@ -90,6 +93,7 @@ class BaseLightningModule(L.LightningModule):
         # If we are training we save params and then start training
         # Do not overwrite parameters during inference.
         self.save_hyperparameters(ignore=["model", "loss_fn", "lr_scheduler", "optimizer", "preprocessor"])
+        self.configure_metrics()
 
     def setup(self, stage):  # noqa: U100
         self.model = self.model(
@@ -113,6 +117,20 @@ class BaseLightningModule(L.LightningModule):
             metrics.pop(k)
         metrics.update(tmp)
         return metrics
+
+    def configure_metrics(self):
+        self.train_metrics = MetricCollection(
+            {
+                "train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
+                "train/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
+            },
+        )
+        self.val_metrics = MetricCollection(
+            {
+                "val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
+                "val/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
+            },
+        )
 
     def configure_optimizers(self):
         self.loss_fn_train = self.loss_fn(**self.loss_kwargs)
@@ -170,20 +188,6 @@ class BaseLightningModule(L.LightningModule):
 
         return successful
 
-    def on_fit_start(self):
-        self.train_metrics = MetricCollection(
-            {
-                "train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
-                "train/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
-            },
-        )
-        self.val_metrics = MetricCollection(
-            {
-                "val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
-                "val/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
-            },
-        )
-
     def on_predict_start(self):
         if self.disable_inference_preprocessing is False:
             self.preprocessor = self.preprocessor(self.hparams_path)
@@ -210,15 +214,17 @@ class BaseLightningModule(L.LightningModule):
         )
         if self.disable_inference_preprocessing:
             logits, data_properties = reverse_preprocessing(
-                crop_to_nonzero=self.plans["crop_to_nonzero"],
+                crop_to_nonzero=self.crop_to_nonzero,
                 images=logits,
                 image_properties=batch["data_properties"],
                 n_classes=self.num_classes,
-                transpose_forward=self.plans["transpose_forward"],
-                transpose_backward=self.plans["transpose_backward"],
+                transpose_forward=self.transpose_forward,
+                transpose_backward=self.transpose_backward,
             )
         else:
-            logits, data_properties = self.preprocessor.reverse_preprocessing(logits, batch["data_properties"])
+            logits, data_properties = self.preprocessor.reverse_preprocessing(
+                logits, batch["data_properties"], num_classes=self.num_classes
+            )
         return {"logits": logits, "properties": data_properties, "case_id": batch["case_id"]}
 
     def training_step(self, batch, batch_idx):  # noqa: U100
