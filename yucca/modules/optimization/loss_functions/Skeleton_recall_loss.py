@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from yucca.modules.optimization.loss_functions.CE import CE
-from yucca.modules.optimization.loss_functions.nnUNet_losses import SoftDiceLoss, sum_tensor, DiceCE
+from yucca.modules.optimization.loss_functions.nnUNet_losses import SoftDiceLoss, sum_tensor
 import torch.nn.functional as F
 
 

@@ -1,11 +1,7 @@
 import wandb
 import torch
-from torchmetrics import MetricCollection
-from torchmetrics.segmentation import GeneralizedDiceScore
-from torchmetrics.classification import F1Score
 from yucca.modules.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from yucca.modules.optimization.loss_functions.Skeleton_recall_loss import DC_SkelREC_and_CE_loss
-from yucca.modules.metrics.training_metrics import Accuracy, AUROC, F1
 
 
 class YuccaLightningModule_skeleton_loss(YuccaLightningModule):
@@ -21,7 +17,6 @@ class YuccaLightningModule_skeleton_loss(YuccaLightningModule):
             **kwargs,
         )
         self.loss_fn = DC_SkelREC_and_CE_loss
-
 
     def training_step(self, batch, batch_idx):
         inputs, target, file_path, skel = batch["image"], batch["label"], batch["file_path"], batch["skel"]
@@ -58,7 +53,7 @@ class YuccaLightningModule_skeleton_loss(YuccaLightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        inputs, target, file_path, skel = batch["image"], batch["label"], batch["file_path"], batch['skel']
+        inputs, target, file_path, skel = batch["image"], batch["label"], batch["file_path"], batch["skel"]
         output = self(inputs)
 
         loss = self.loss_fn_val(output, target, skel)
