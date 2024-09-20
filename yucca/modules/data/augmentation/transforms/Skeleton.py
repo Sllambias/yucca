@@ -3,7 +3,7 @@ from yucca.functional.transforms import skeleton
 
 
 class Skeleton(YuccaTransform):
-    def __init__(self, skeleton=True, label_key="label", do_tube=True):
+    def __init__(self, skeleton=False, label_key="label", do_tube=False):
         self.label_key = label_key
         self.skeleton = skeleton
         self.do_tube = do_tube
