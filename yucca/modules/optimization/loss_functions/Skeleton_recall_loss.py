@@ -60,7 +60,6 @@ class DC_SkelREC_and_CE_loss(nn.Module):
         weight_srec=1,
         log_dice=False,
         ignore_label=None,
-        dice_class=SoftDiceLoss,
     ):
         """
         Weights for CE and Dice do not need to sum to one. You can set whatever you want.
