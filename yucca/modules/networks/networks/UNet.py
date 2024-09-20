@@ -245,3 +245,44 @@ class UNet(YuccaNet):
 
         logits = self.out_conv(x8)
         return logits
+
+
+def UNetS(
+    input_channels: int,
+    num_classes: int = 1,
+    conv_op=nn.Conv2d,
+    conv_kwargs={
+        "kernel_size": 3,
+        "stride": 1,
+        "padding": 1,
+        "dilation": 1,
+        "bias": True,
+    },
+    norm_op=nn.InstanceNorm2d,
+    norm_op_kwargs={"eps": 1e-5, "affine": True, "momentum": 0.1},
+    dropout_op=nn.Dropout2d,
+    dropout_op_kwargs={"p": 0.0, "inplace": True},
+    nonlin=nn.LeakyReLU,
+    nonlin_kwargs={"negative_slope": 1e-2, "inplace": True},
+    dropout_in_decoder=False,
+    weightInitializer=None,
+    basic_block=DoubleConvDropoutNormNonlin,
+    deep_supervision=False,
+):
+    return UNet(
+        input_channels=input_channels,
+        num_classes=num_classes,
+        starting_filters=32,
+        conv_op=conv_op,
+        conv_kwargs=conv_kwargs,
+        norm_op=norm_op,
+        norm_op_kwargs=norm_op_kwargs,
+        dropout_op=dropout_op,
+        dropout_op_kwargs=dropout_op_kwargs,
+        nonlin=nonlin,
+        nonlin_kwargs=nonlin_kwargs,
+        dropout_in_decoder=dropout_in_decoder,
+        weightInitializer=weightInitializer,
+        basic_block=basic_block,
+        deep_supervision=deep_supervision,
+    )

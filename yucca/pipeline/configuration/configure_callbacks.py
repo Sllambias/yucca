@@ -38,13 +38,14 @@ def get_callback_config(
     interval_ckpt_epochs: int = 250,
     latest_ckpt_epochs: int = 25,
     log_lr: bool = True,
-    log_model: Union[str, bool] = True,
     prediction_output_dir: Optional[str] = None,
     profile: bool = False,
     project: str = "Yucca",
     save_softmax: bool = False,
+    save_multilabel_predictions: bool = False,
     steps_per_epoch: int = 250,
     store_best_ckpt: bool = True,
+    wandb_log_model: Union[str, bool] = True,
     write_predictions: bool = True,
     run_name: Optional[str] = None,
     run_description: Optional[str] = None,
@@ -58,6 +59,7 @@ def get_callback_config(
         latest_ckpt_epochs,
         prediction_output_dir,
         save_softmax,
+        save_multilabel_predictions,
         write_predictions,
         store_best_ckpt,
         log_lr,
@@ -71,7 +73,7 @@ def get_callback_config(
         enable_logging=enable_logging,
         steps_per_epoch=steps_per_epoch,
         project=project,
-        log_model=log_model,
+        wandb_log_model=wandb_log_model,
         run_name=run_name,
         run_description=run_description,
         experiment=experiment,
@@ -87,7 +89,7 @@ def get_loggers(
     ckpt_version_dir: Union[str, None],
     ckpt_wandb_id: Union[str, None],
     enable_logging: bool,
-    log_model: Union[bool, str],
+    wandb_log_model: Union[bool, str],
     project: str,
     save_dir: str,
     steps_per_epoch: int,
@@ -124,7 +126,7 @@ def get_loggers(
                 save_dir=version_dir,
                 project=project,
                 group=experiment,
-                log_model=log_model,
+                log_model=wandb_log_model,
                 version=ckpt_wandb_id if use_ckpt_id else None,
                 resume="allow" if use_ckpt_id else None,
                 entity=wandb_entity,
@@ -139,6 +141,7 @@ def get_callbacks(
     last_ckpt_every_n_epochs: int,
     prediction_output_dir: str,
     save_softmax: bool,
+    save_multilabel_predictions: bool,
     write_predictions: bool,
     store_best_ckpt: bool,
     log_lr: bool,
@@ -163,7 +166,10 @@ def get_callbacks(
 
     if write_predictions:
         pred_writer = WritePredictionFromLogits(
-            output_dir=prediction_output_dir, save_softmax=save_softmax, write_interval="batch"
+            output_dir=prediction_output_dir,
+            save_softmax=save_softmax,
+            multilabel=save_multilabel_predictions,
+            write_interval="batch",
         )
         callbacks.append(pred_writer)
 

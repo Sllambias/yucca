@@ -1,6 +1,6 @@
 from batchgenerators.utilities.file_and_folder_operations import join, isdir, subdirs, maybe_mkdir_p as ensure_dir_exists
 from dataclasses import dataclass
-from typing import Union
+from typing import Union, Literal
 from yucca.paths import get_models_path, get_preprocessed_data_path
 from yucca.pipeline.configuration.configure_task import TaskConfig
 
@@ -24,7 +24,7 @@ class PathConfig:
         }
 
 
-def get_path_config(task_config: TaskConfig):
+def get_path_config(task_config: TaskConfig, stage: Literal["fit", "test", "predict"]):
     task_dir = join(get_preprocessed_data_path(), task_config.task)
     train_data_dir = join(task_dir, task_config.planner_name)
     save_dir = join(
@@ -39,7 +39,14 @@ def get_path_config(task_config: TaskConfig):
     version = detect_version(save_dir, task_config.continue_from_most_recent)
     version_dir = join(save_dir, f"version_{version}")
     ensure_dir_exists(version_dir)
-    plans_path = join(task_dir, task_config.planner_name, task_config.planner_name + "_plans.json")
+
+    # First try to load torch checkpoints and extract plans and carry-over information from there.
+    if stage == "fit":
+        plans_path = join(task_dir, task_config.planner_name, task_config.planner_name + "_plans.json")
+    if stage == "test":
+        raise NotImplementedError
+    if stage == "predict":
+        plans_path = join(version_dir, "hparams.yaml")
 
     return PathConfig(
         plans_path=plans_path,

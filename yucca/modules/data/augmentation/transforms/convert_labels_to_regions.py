@@ -1,6 +1,6 @@
 import numpy as np
 from typing import List
-from yucca.functional.transforms.label_transforms import convert_labels_to_regions, translate_region_labels
+from yucca.functional.transforms.label_transforms import batch_convert_labels_to_regions, translate_region_labels
 from yucca.modules.data.augmentation.transforms.YuccaTransform import YuccaTransform
 
 
@@ -29,7 +29,7 @@ class ConvertLabelsToRegions(YuccaTransform):
         pass
 
     def __convert__(self, label: np.ndarray, regions: List[List[int]]):
-        return convert_labels_to_regions(label, regions)
+        return batch_convert_labels_to_regions(label, regions)
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
