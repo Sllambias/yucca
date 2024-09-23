@@ -14,3 +14,4 @@ class YuccaManager_SkeletonLoss(YuccaManager):
         self.loss = "DC_SkelREC_and_CE_loss"
         self.augmentation_params = generic
         self.augmentation_params["skeleton"] = True
+        self.augmentation_params["do_tubes"] = True

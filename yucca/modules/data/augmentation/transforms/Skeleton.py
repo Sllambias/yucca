@@ -7,13 +7,14 @@ class Skeleton(YuccaTransform):
         self.label_key = label_key
         self.skeleton = skeleton
         self.do_tube = do_tube
+        # self.skip_label = skip_label
 
     @staticmethod
     def get_params():
         # No parameters to retrieve
         pass
 
-    def __skeleton__(self, label):
+    def __skeletonize__(self, label):
         label_skeleton = label.copy()
         for b in range(label.shape[0]):
             for c in range(label.shape[1]):
@@ -22,8 +23,6 @@ class Skeleton(YuccaTransform):
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
-        print("keys", data_dict.keys())
-        print("data", data_dict)
-        if self.__skeleton__:
-            data_dict["skel"] = self.__skeleton__(data_dict[self.label_key])
+        if self.skeleton:
+            data_dict["skel"] = self.__skeletonize__(data_dict[self.label_key])
         return data_dict
