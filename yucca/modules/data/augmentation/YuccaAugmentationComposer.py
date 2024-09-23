@@ -19,6 +19,7 @@ from yucca.modules.data.augmentation.transforms import (
     RemoveBatchDimension,
     SimulateLowres,
     Spatial,
+    Skeleton,
 )
 
 
@@ -130,6 +131,10 @@ class YuccaAugmentationComposer:
 
         self.simulate_lowres_zoom_range = (0.5, 1.0)
 
+        # Skeleton loss augmentation
+        self.do_tube = False
+        self.skeleton = False
+
     @property
     def pre_aug_patch_size(self):
         # First check if any spatial transforms are included
@@ -159,7 +164,6 @@ class YuccaAugmentationComposer:
             [
                 CollectMetadata(),
                 AddBatchDimension(),
-                # augmentations
                 Spatial(
                     patch_size=self.patch_size,
                     crop=True,
@@ -234,6 +238,10 @@ class YuccaAugmentationComposer:
                 ),
                 Normalize(normalize=self.normalize, scheme=self.normalization_scheme),
                 # seg
+                Skeleton(
+                    skeleton=self.skeleton,
+                    do_tube=self.do_tube,
+                ),
                 ConvertLabelsToRegions(
                     convert_labels_to_regions=self.convert_labels_to_regions, labels=self.labels, regions=self.regions
                 ),
@@ -311,6 +319,8 @@ class YuccaAugmentationComposer:
                 "simulate_lowres_p_per_channel": self.simulate_lowres_p_per_channel,
                 "simulate_lowres_p_per_axis": self.simulate_lowres_p_per_axis,
                 "simulate_lowres_zoom_range": self.simulate_lowres_zoom_range,
+                "skeleton": self.skeleton,
+                "do_tube": self.do_tube,
             }
         }
         return hparams
