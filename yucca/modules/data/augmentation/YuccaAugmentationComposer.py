@@ -130,8 +130,11 @@ class YuccaAugmentationComposer:
         self.scale_factor = (0.9, 1.1)
 
         self.simulate_lowres_zoom_range = (0.5, 1.0)
+
+        #Skeleton loss augmentation
         self.do_tube = False
         self.skeleton = False
+        
 
     @property
     def pre_aug_patch_size(self):
@@ -192,10 +195,7 @@ class YuccaAugmentationComposer:
                     sigma=self.blurring_sigma,
                     clip_to_input_range=self.clip_to_input_range,
                 ),
-                Skeleton(
-                    skeleton=self.skeleton,
-                    do_tube=self.do_tube,
-                ),
+                
                 MultiplicativeNoise(
                     p_per_sample=self.multiplicative_noise_p_per_sample,
                     mean=self.multiplicative_noise_mean,
@@ -248,6 +248,11 @@ class YuccaAugmentationComposer:
                 # mae
                 Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.cval, ratio=self.mask_ratio),
                 RemoveBatchDimension(),
+
+                Skeleton(
+                    skeleton=self.skeleton,
+                    do_tube=self.do_tube,
+                ),
             ]
         )
         return tr_transforms
@@ -256,10 +261,6 @@ class YuccaAugmentationComposer:
         val_transforms = transforms.Compose(
             [
                 AddBatchDimension(),
-                # Skeleton(
-                #     skeleton=self.skeleton,
-                #     do_tube=self.do_tube,
-                # ),
                 ConvertLabelsToRegions(
                     convert_labels_to_regions=self.convert_labels_to_regions, regions=self.regions, labels=self.labels
                 ),

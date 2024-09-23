@@ -7,7 +7,6 @@ class Skeleton(YuccaTransform):
         self.label_key = label_key
         self.skeleton = skeleton
         self.do_tube = do_tube
-        # self.skip_label = skip_label
 
     @staticmethod
     def get_params():
