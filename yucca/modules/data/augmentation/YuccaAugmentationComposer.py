@@ -238,6 +238,10 @@ class YuccaAugmentationComposer:
                 ),
                 Normalize(normalize=self.normalize, scheme=self.normalization_scheme),
                 # seg
+                Skeleton(
+                    skeleton=self.skeleton,
+                    do_tube=self.do_tube,
+                ),
                 ConvertLabelsToRegions(
                     convert_labels_to_regions=self.convert_labels_to_regions, labels=self.labels, regions=self.regions
                 ),
@@ -246,10 +250,6 @@ class YuccaAugmentationComposer:
                 # mae
                 Masking(mask=self.mask_image_for_reconstruction, pixel_value=self.cval, ratio=self.mask_ratio),
                 RemoveBatchDimension(),
-                Skeleton(
-                    skeleton=self.skeleton,
-                    do_tube=self.do_tube,
-                ),
             ]
         )
         return tr_transforms
