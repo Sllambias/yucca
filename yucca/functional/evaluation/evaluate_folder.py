@@ -64,8 +64,8 @@ def evaluate_folder_segm(
             case_dict = evaluate_case_segm(case, **evaluation_args)
 
         result_dict[case] = case_dict
-        for label in case_dict.keys():
-            for metric, val in case_dict[label].items():
+        for label in labels:
+            for metric, val in case_dict[str(label)].items():
                 mean_dict[str(label)][metric].append(val)
 
     for label in labels:
