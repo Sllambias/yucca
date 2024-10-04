@@ -71,7 +71,7 @@ def evaluate_folder_segm(
             for metric, val in case_dict[str(label)].items():
                 mean_dict[str(label)][metric].append(val)
 
-    for label in labels:
+    for label in metric_labels:
         mean_dict[str(label)] = {
             k: round(np.nanmean(v), 4) if not np.all(np.isnan(v)) else 0 for k, v in mean_dict[str(label)].items()
         }
@@ -87,9 +87,9 @@ def evaluate_multilabel_case_segm(
     labels: dict,
     labels_from_regions: np.array,
     metrics: dict,
+    regions: dict,
     as_binary: Optional[bool] = False,
     obj_metrics: Optional[bool] = False,
-    regions: Optional[dict] = None,
     surface_metrics: Optional[bool] = False,
     surface_tol: int = 1,
 ):
