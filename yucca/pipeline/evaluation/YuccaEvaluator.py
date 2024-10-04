@@ -18,7 +18,6 @@ from yucca.functional.evaluation.metrics import (
     accuracy,
 )
 from yucca.functional.evaluation.evaluate_folder import (
-    evaluate_multilabel_folder_segm,
     evaluate_folder_segm,
     evaluate_folder_cls,
 )
@@ -207,31 +206,20 @@ class YuccaEvaluator(object):
                 folder_with_ground_truth=self.folder_with_ground_truth,
             )
         elif self.task_type == "segmentation":
-            if self.regions is not None:
-                return evaluate_multilabel_folder_segm(
-                    labels=self.labels,
-                    metrics=self.metrics,
-                    subjects=self.pred_subjects,
-                    folder_with_predictions=self.folder_with_predictions,
-                    folder_with_ground_truth=self.folder_with_ground_truth,
-                    as_binary=self.as_binary,
-                    obj_metrics=self.obj_metrics,
-                    regions=self.regions,
-                    surface_metrics=self.surface_metrics,
-                    surface_tol=self.surface_tol,
-                )
-            else:
-                return evaluate_folder_segm(
-                    labels=self.labelarr,
-                    metrics=self.metrics,
-                    subjects=self.pred_subjects,
-                    folder_with_predictions=self.folder_with_predictions,
-                    folder_with_ground_truth=self.folder_with_ground_truth,
-                    as_binary=self.as_binary,
-                    obj_metrics=self.obj_metrics,
-                    surface_metrics=self.surface_metrics,
-                    surface_tol=self.surface_tol,
-                )
+            multilabel = self.regions is not None
+            return evaluate_folder_segm(
+                labels=self.labels if multilabel else self.labelarr,
+                metrics=self.metrics,
+                subjects=self.pred_subjects,
+                folder_with_predictions=self.folder_with_predictions,
+                folder_with_ground_truth=self.folder_with_ground_truth,
+                as_binary=self.as_binary,
+                obj_metrics=self.obj_metrics,
+                surface_metrics=self.surface_metrics,
+                surface_tol=self.surface_tol,
+                regions=self.regions,
+                multilabel=multilabel,
+            )
         else:
             raise NotImplementedError("Invalid task type")
 
