@@ -14,17 +14,17 @@ from yucca.functional.evaluation.metrics import auroc
 
 
 def evaluate_folder_segm(
+    folder_with_predictions: str,
+    folder_with_ground_truth: str,
     labels: dict,
     metrics: dict,
     subjects: list,
-    folder_with_predictions: str,
-    folder_with_ground_truth: str,
     as_binary: Optional[bool] = False,
+    multilabel: bool = False,
     obj_metrics: Optional[bool] = False,
+    regions: Optional[dict] = None,
     surface_metrics: Optional[bool] = False,
     surface_tol: int = 1,
-    regions: Optional[dict] = None,
-    multilabel: bool = False,
 ):
     sys.stdout.flush()
     result_dict = {}
@@ -64,7 +64,10 @@ def evaluate_folder_segm(
             case_dict = evaluate_case_segm(case, **evaluation_args)
 
         result_dict[case] = case_dict
-        for label in labels:
+
+        metric_labels = [key for key in case_dict.keys() if key not in ["prediction_path", "ground_truth_path"]]
+
+        for label in metric_labels:
             for metric, val in case_dict[str(label)].items():
                 mean_dict[str(label)][metric].append(val)
 
@@ -79,24 +82,24 @@ def evaluate_folder_segm(
 
 def evaluate_multilabel_case_segm(
     case: str,
-    metrics: dict,
     folder_with_predictions: str,
     folder_with_ground_truth: str,
     labels: dict,
     labels_from_regions: np.array,
-    as_binary: bool,
-    obj_metrics: bool,
-    surface_metrics: bool,
-    surface_tol: int,
-    regions: dict,
+    metrics: dict,
+    as_binary: Optional[bool] = False,
+    obj_metrics: Optional[bool] = False,
+    regions: Optional[dict] = None,
+    surface_metrics: Optional[bool] = False,
+    surface_tol: int = 1,
 ):
     assert regions is not None
 
     case_dict = {}
     predpath = join(folder_with_predictions, case)
     gtpath = join(folder_with_ground_truth, case)
-    case_dict["Prediction:"] = predpath
-    case_dict["Ground Truth:"] = gtpath
+    case_dict["prediction_path"] = predpath
+    case_dict["ground_truth_path"] = gtpath
 
     pred = nib.load(predpath)
     spacing = get_nib_spacing(pred)[:3]
@@ -170,21 +173,21 @@ def evaluate_multilabel_case_segm(
 
 def evaluate_case_segm(
     case: str,
-    metrics: dict,
     folder_with_predictions: str,
     folder_with_ground_truth: str,
     labels: dict,
-    as_binary: bool,
-    obj_metrics: bool,
-    surface_metrics: bool,
-    surface_tol: int,
+    metrics: dict,
+    as_binary: Optional[bool] = False,
+    obj_metrics: Optional[bool] = False,
+    surface_metrics: Optional[bool] = False,
+    surface_tol: int = 1,
 ):
     case_dict = {}
     predpath = join(folder_with_predictions, case)
     gtpath = join(folder_with_ground_truth, case)
 
-    case_dict["Prediction:"] = predpath
-    case_dict["Ground Truth:"] = gtpath
+    case_dict["prediction_path"] = predpath
+    case_dict["ground_truth_path"] = gtpath
 
     pred = nib.load(predpath)
     spacing = get_nib_spacing(pred)
