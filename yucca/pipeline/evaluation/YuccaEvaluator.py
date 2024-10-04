@@ -18,7 +18,6 @@ from yucca.functional.evaluation.metrics import (
     accuracy,
 )
 from yucca.functional.evaluation.evaluate_folder import (
-    evaluate_multilabel_folder_segm,
     evaluate_folder_segm,
     evaluate_folder_cls,
 )

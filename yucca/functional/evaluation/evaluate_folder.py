@@ -14,17 +14,17 @@ from yucca.functional.evaluation.metrics import auroc
 
 
 def evaluate_folder_segm(
-    labels,
-    metrics,
-    subjects,
-    folder_with_predictions,
-    folder_with_ground_truth,
+    labels: dict,
+    metrics: dict,
+    subjects: list,
+    folder_with_predictions: str,
+    folder_with_ground_truth: str,
     as_binary: Optional[bool] = False,
     obj_metrics: Optional[bool] = False,
     surface_metrics: Optional[bool] = False,
-    surface_tol=1,
-    regions=None,
-    multilabel=False,
+    surface_tol: int = 1,
+    regions: Optional[dict] = None,
+    multilabel: bool = False,
 ):
     sys.stdout.flush()
     result_dict = {}
@@ -78,18 +78,20 @@ def evaluate_folder_segm(
 
 
 def evaluate_multilabel_case_segm(
-    case,
-    metrics,
-    folder_with_predictions,
-    folder_with_ground_truth,
-    labels,
-    labels_from_regions,
-    as_binary,
-    obj_metrics,
-    surface_metrics,
-    surface_tol,
-    regions,
+    case: str,
+    metrics: dict,
+    folder_with_predictions: str,
+    folder_with_ground_truth: str,
+    labels: dict,
+    labels_from_regions: np.array,
+    as_binary: bool,
+    obj_metrics: bool,
+    surface_metrics: bool,
+    surface_tol: int,
+    regions: dict,
 ):
+    assert regions is not None
+
     case_dict = {}
     predpath = join(folder_with_predictions, case)
     gtpath = join(folder_with_ground_truth, case)
@@ -167,15 +169,15 @@ def evaluate_multilabel_case_segm(
 
 
 def evaluate_case_segm(
-    case,
-    metrics,
-    folder_with_predictions,
-    folder_with_ground_truth,
-    labels,
-    as_binary,
-    obj_metrics,
-    surface_metrics,
-    surface_tol,
+    case: str,
+    metrics: dict,
+    folder_with_predictions: str,
+    folder_with_ground_truth: str,
+    labels: dict,
+    as_binary: bool,
+    obj_metrics: bool,
+    surface_metrics: bool,
+    surface_tol: int,
 ):
     case_dict = {}
     predpath = join(folder_with_predictions, case)
