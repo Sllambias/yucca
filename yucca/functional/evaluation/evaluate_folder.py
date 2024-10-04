@@ -38,10 +38,12 @@ def evaluate_folder_segm(
 
         labels_from_regions = np.array(range(len(regions.keys()) + 1), dtype=np.uint8)
         logging.info(f"Multilabel segmentation evaluation with regions: {regions} and labels: {labels}")
+        metric_labels = regions.keys()
     else:
         logging.info(f"segmentation evaluation with labels: {labels}")
+        metric_labels = labels
 
-    for label in labels:
+    for label in metric_labels:
         mean_dict[str(label)] = {k: [] for k in list(metrics.keys()) + obj_metrics + surface_metrics}
 
     evaluation_args = {
@@ -64,8 +66,6 @@ def evaluate_folder_segm(
             case_dict = evaluate_case_segm(case, **evaluation_args)
 
         result_dict[case] = case_dict
-
-        metric_labels = [key for key in case_dict.keys() if key not in ["prediction_path", "ground_truth_path"]]
 
         for label in metric_labels:
             for metric, val in case_dict[str(label)].items():
