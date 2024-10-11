@@ -6,17 +6,17 @@
 
 # Yucca
 
-Yucca is a modular machine learning framework built on PyTorch and PyTorch Lightning, and implemented for medical imaging applications. Yucca features a three-tiered architecture: Functional, Modules, and Pipeline, to cater to a range of users with different needs. 
+Yucca is a modular machine learning framework built on PyTorch and PyTorch Lightning, presented in our paper [here](https://arxiv.org/abs/2407.19888), and inspired by Fabien Isensee's [nnUNet](https://github.com/MIC-DKFZ/nnUNet) and implemented for end-to-end medical imaging applications. This includes preprocessing volumetric data, training segmentation and self-supervised models, running inference and evaluation, and managing folder structure and naming conventions. 
+
+Yucca supports (1) external projects importing individual Yucca components, (2) standalone Yucca-based projects e.g. using the preprocessing, training, and inference template scripts, or (3) projects employing the CLI-based end-to-end Yucca implementation, illustrated in the [diagram](#yucca). To cater to our different users Yucca features a three-tiered architecture: Functional, Modules, and Pipeline.
+
 The Functional tier is inspired by torch.nn.functional and consists solely of stateless functions. This tier shapes the foundational building blocks of the framework, providing essential operations without maintaining any internal state. These functions are designed to be simple and reusable, allowing users to build custom implementations from scratch. The components are modular and can be easily tested and debugged by focusing on pure functions. 
+
 The Modules tier is responsible for composing functions established in the Functional tier with logic, and conventions. Modules introduce a layer of structure, handling the organization and processing of inputs and outputs. They encapsulate specific functionalities and are designed to be more user-friendly, reducing the complexity involved in building custom models. While modules rely on more assumptions about the data, they still offer significant flexibility for customization and extension. 
-The Pipeline represents our interpretation of an end-to-end implementation, built upon the previous two tiers. The Pipeline offers the end-to-end capabilities known from nnU-Net, while also allowing for effortless customization, as supported by the comprehensive documentation found in [Changing Parameters](yucca/documentation/guides/changing_parameters.md#model--training). This tier is perfect to quickly and robustly train baselines or conduct experiments comparing components. For cases where full control is required or simply desired the Functional and Modules tiers will be better suited.
-These tiers serve the advanced machine learning practitioners, wishing to import building blocks with which they can build their own house.
 
+The Pipeline represents our interpretation of an end-to-end implementation, built upon the previous two tiers. The Pipeline offers the end-to-end capabilities known from nnU-Net, while also allowing for effortless customization, as supported by the comprehensive documentation found in [Changing Parameters](yucca/documentation/guides/changing_parameters.md#model--training). 
 
-preprocessing volumetric data, training segmentation and self-supervised models, and running inference and evaluation.
-
-
-Yucca is designed to offer the end-to-end capabilities known from nnU-Net while still allowing for effortless customization. This allows users to employ the basic Yucca models as solid baselines, but it also allows users to change and experiment with exact features in a robust and thoroughly tested research environment. The Yucca project is inspired by Fabien Isensee's [nnUNet](https://github.com/MIC-DKFZ/nnUNet).
+This Pipeline allows users to quickly train solid baselines or change features to conduct experiments comparing individual components in a robust and thoroughly tested research environment. For situations where full control is required or simply desired, the Functional and Modules tiers are better suited. These tiers serve the advanced machine learning practitioners, wishing to import building blocks with which they can build their own house.
 
 ![alt text](yucca/documentation/illustrations/yucca_diagram.svg?raw=true)
 
