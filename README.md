@@ -31,7 +31,7 @@ Our Pipeline allows users to quickly train solid baselines or change features to
 
 # Guides
 
-- [Changing Parameters](yucca/documentation/guides/changing_parameters.md#model--training)
+- [Changing Pipeline Parameters](yucca/documentation/guides/changing_pipeline_parameters.md#model--training)
 - [Classification](yucca/documentation/guides/classification.md)
 - [Environment Variables](yucca/documentation/guides/environment_variables.md)
 - [Ensembles](yucca/documentation/guides/ensembles.md)
