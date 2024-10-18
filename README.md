@@ -14,9 +14,9 @@ The Functional tier is inspired by torch.nn.functional and consists solely of st
 
 The Modules tier is responsible for composing functions established in the Functional tier with logic, and conventions. Modules introduce a layer of structure, handling the organization and processing of inputs and outputs. They encapsulate specific functionalities and are designed to be more user-friendly, reducing the complexity involved in building custom models. While modules rely on more assumptions about the data, they still offer significant flexibility for customization and extension. 
 
-The Pipeline represents our interpretation of an end-to-end implementation, built upon the previous two tiers. The Pipeline offers the end-to-end capabilities known from nnU-Net, while also allowing for effortless customization, as supported by the comprehensive documentation found in [Changing Parameters](yucca/documentation/guides/changing_parameters.md#model--training). 
+The Pipeline tier represents our interpretation of an end-to-end implementation, built upon the previous two tiers. The Pipeline offers the end-to-end capabilities known from nnU-Net, while also allowing for effortless customization, as supported by the comprehensive documentation found in [Changing Parameters](yucca/documentation/guides/changing_parameters.md#model--training). 
 
-This Pipeline allows users to quickly train solid baselines or change features to conduct experiments comparing individual components in a robust and thoroughly tested research environment. For situations where full control is required or simply desired, the Functional and Modules tiers are better suited. These tiers serve the advanced machine learning practitioners, wishing to import building blocks with which they can build their own house.
+Our Pipeline allows users to quickly train solid baselines or change features to conduct experiments on individual components in a robust and thoroughly tested research environment. For situations where full control is required, or simply desired, the Functional and Modules tiers are better suited. These tiers serve the advanced machine learning practitioners, wishing to import building blocks with which they can build their own house.
 
 ![alt text](yucca/documentation/illustrations/yucca_diagram.svg?raw=true)
 
@@ -28,19 +28,18 @@ This Pipeline allows users to quickly train solid baselines or change features t
 - [Preprocessing](#preprocessing)
 - [Training](#training)
 - [Inference](#inference)
-- [Ensembles](#ensembles)
-- [Classification](#classification-models)
-- [Segmentation](#segmentation-models)
-- [Unsupervised](#unsupervised-models)
 
 # Guides
 
 - [Changing Parameters](yucca/documentation/guides/changing_parameters.md#model--training)
+- [Classification](yucca/documentation/guides/classification.md)
 - [Environment Variables](yucca/documentation/guides/environment_variables.md)
+- [Ensembles](yucca/documentation/guides/ensembles.md)
 - [FAQ](yucca/documentation/guides/FAQ.md)
 - [Run Scripts Advanced](yucca/documentation/guides/run_scripts_advanced.md)
 - [Task Conversion](yucca/documentation/guides/task_conversion.md)
- 
+- [Unsupervised](yucca/documentation/guides/unsupervised.md)
+
 # Installation
 
 ## Install an editable version of the project with Cuda support using Conda
@@ -79,8 +78,12 @@ this will install the code from github, not an eventual local clone.
 # Weights & Biases
 Weights & Biases is the main tool for experiment tracking in Yucca. It is extremely useful to understand how your models are behaving and often also why. Although it can be disabled, it is heavily encouraged to install and use it with Yucca.
 
-Navigate to https://wandb.ai/home and log in or sign up for Weights and Biases.
-Activate the appropriate environment, install Weights and Biases and log in by following the instructions (i.e. paste the key from https://wandb.ai/authorize into the terminal).
+When W&B is enabled Yucca will automatically generate plots and illustrations and upload these to your personal Yucca project. This happens while your experiments are running, and you'll find pages that look somewhat similar to the following:
+![alt text](yucca/documentation/illustrations/W&B Example.pdf)
+
+Setting up W&B is very simple.
+First navigate to https://wandb.ai/home and log in or sign up for Weights and Biases.
+Then activate the appropriate environment, install Weights and Biases and log in by following the instructions (i.e. paste the key from https://wandb.ai/authorize into the terminal).
 ```console
 > conda activate yuccaenv
 > pip install wandb
@@ -157,57 +160,3 @@ An example of running inference on the test set of a task called `Task002_Lungs`
 ```
 > yucca_inference -t Task002_NotBrains -s Task001_Brains -d 2D -m UNet
 ```
-
-## Ensembles
-
-To train an ensemble of models we use the `yucca_preprocess`, `yucca_train` and `yucca_inference` commands. For advanced usage see: [`run_scripts_advanced.py`](yucca/documentation/guides/run_scripts_advanced.md#ensembles). A common application of model ensembles is to train 2D models on each of the three axes of 3D data (either denoted as the X-, Y- and Z-axis or, in medical imaging, the axial, sagittal and coronal views) and then fuse their predictions in inference. 
-
-To train 3 models on the three axes of a 3D dataset called `Task001_Brains` prepare three preprocessed versions of the dataset using the three Planners `YuccaPlannerX`, `YuccaPlannerY` and `YuccaPlannerZ`:
-```console
-> yucca_preprocess -t Task001_Brains -pl YuccaPlannerX
-> yucca_preprocess -t Task001_Brains -pl YuccaPlannerY
-> yucca_preprocess -t Task001_Brains -pl YuccaPlannerZ
-```
-
-Then, train three 2D models one on each version of the preprocessed dataset:
-```console
-> yucca_train -t Task001_Brains -pl YuccaPlannerX -d 2D
-> yucca_train -t Task001_Brains -pl YuccaPlannerY -d 2D
-> yucca_train -t Task001_Brains -pl YuccaPlannerZ -d 2D
-```
-
-Then, run inference on the target dataset with each trained model.
-```console
-> yucca_inference -t Task001_Brains -pl YuccaPlannerX -d 2D
-> yucca_inference -t Task001_Brains -pl YuccaPlannerY -d 2D
-> yucca_inference -t Task001_Brains -pl YuccaPlannerZ -d 2D
-```
-
-Finally, fuse their results and evaluate the predictions.
-```console
-> yucca_ensemble --in_dirs /path/to/predictionsX /path/to/predictionsY /path/to/predictionsZ --out_dir /path/to/ensemble_predictionsXYZ
-```
-
-## Classification models
-
-Beware: The classification implementation is untrodden grounds and no guarantees on performance can therefore be made. 
-Training classification models is carried out by:
-  1. Converting your raw dataset to a Yucca compliant format with class labels in individual `.txt` files. See the [Task Conversion guide](yucca/documentation/guides/task_conversion.md) for instructions on how to convert your datasets.
-  2. Selecting a Planner that:
-    1. Always preprocesses the task converted dataset using the `ClassificationPreprocessor`, such as the [`ClassificationPlanner`](yucca/pipeline/planning/ClassificationPlanner.py). This preprocessor expects to find `.txt` files rather than image files in the label folders and it does not perform any preprocessing on the labels. Alternatively, the `ClassificationPreprocessor` can be selected using the `-pr ClassificationPreprocessor` flag in `yucca_preprocess` 
-    2. Resamples images to a fixed target size, such as the [`YuccaPlanner_224x224`](yucca/pipeline/planning/resampling/YuccaPlanner_224x224.py). Having a fixed image size enables training models on full images, rather than patches of images. This is often necessary in classification where we want 1 (or very few) image-level prediction.
-  3. Selecting a manager that trains models on full-size images. This is any manager with the ```patch_based_training=False```, such as the [`YuccaManager_NoPatches`](yucca/pipeline/managers/alternative_managers/YuccaManager_NoPatches.py).
-  4. Selecting a model architecture that supports classification. Currently that is limited to the [`ResNet50`](yucca/networks/networks/resnet.py) but most networks can be adapted to support this with limited changes (in essence, this can be achieved by adding a Linear layer with input channels equal to the flattened output of the penultimate layer and output channels equals to the number of classes in the dataset).
-  5. Running `yucca_inference` with the `--task_type classification` flag. 
-
-## Segmentation models
-
-Training segmentation models is carried out by following the standard procedure introduced in the [Introduction to Yucca](yucca)
-
-## Unsupervised models
-
-Training Unsupervised models is carried out by:
-  1. Converting your raw dataset to a Yucca compliant format with no label files. See the [Task Conversion guide](yucca/documentation/guides/task_conversion.md) for instructions on how to convert your datasets.
-  2. Selecting a Planner that always preprocesses the task converted dataset using the `UnsupervisedPreprocessor`, such as the [`UnsupervisedPlanner`](yucca/pipeline/planning/YuccaPlanner.py). This preprocessor expects to find no label files. Alternatively, the `UnsupervisedPreprocessor` can be selected using the `-pr UnsupervisedPreprocessor` flag in `yucca_preprocess`.
-
-When models are trained on a dataset preprocessed with the UnsupervisedPreprocessor, Yucca will use the `unsupervised` preset in the [`YuccaAugmentationComposer`](yucca/data/augmentation/YuccaAugmentationComposer.py). This sets (1) `skip_label` to True (which means we don't expect a label in the array), (2) `copy_image_to_label` to True, which means the image data is copied to also be the label data (the image is copied after applying normal augmentations) and finally, (3) `mask_image_for_reconstruction` to True, which means we randomly mask the image data (this is applied AFTER the image is copied to the label). 
