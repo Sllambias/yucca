@@ -79,7 +79,7 @@ this will install the code from github, not an eventual local clone.
 Weights & Biases is the main tool for experiment tracking in Yucca. It is extremely useful to understand how your models are behaving and often also why. Although it can be disabled, it is heavily encouraged to install and use it with Yucca.
 
 When W&B is enabled Yucca will automatically generate plots and illustrations and upload these to your personal Yucca project. This happens while your experiments are running, and you'll find pages that look somewhat similar to the following:
-![alt text](yucca/documentation/illustrations/W&B Example.pdf)
+![alt text](yucca/documentation/illustrations/WB_Example.pdf)
 
 Setting up W&B is very simple.
 First navigate to https://wandb.ai/home and log in or sign up for Weights and Biases.
