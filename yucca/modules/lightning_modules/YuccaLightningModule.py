@@ -88,8 +88,8 @@ class YuccaLightningModule(BaseLightningModule):
             sliding_window_prediction=config["patch_based_training"],
             step_logging=step_logging,
             test_time_augmentation=test_time_augmentation,
-            transpose_forward=config["plans"]["transpose_forward"],
-            transpose_backward=config["plans"]["transpose_backward"],
+            transpose_forward=list(map(int, config["plans"]["transpose_forward"])),
+            transpose_backward=list(map(int, config["plans"]["transpose_backward"])),
         )
         # If we are training we save params and then start training
         # Do not overwrite parameters during inference.
