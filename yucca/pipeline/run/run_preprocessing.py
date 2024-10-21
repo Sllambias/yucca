@@ -32,6 +32,14 @@ def main():
         action="store_true",
     )
     parser.add_argument("--disable_sanity_checks", help="Enable or disable sanity checks", action="store_true", default=False)
+    parser.add_argument("--preprocess_test", action="store_true", default=False)
+    parser.add_argument(
+        "--patch_size",
+        help="Required if preprocess_test is used. Enforces all cases to be minimum the size of the patch.",
+        nargs="+",
+        type=int,
+        default=None,
+    )
     parser.add_argument("--threads", help="Used to specify the number of processes to use for preprocessing", default=2)
     args = parser.parse_args()
 
@@ -42,6 +50,8 @@ def main():
     disable_sanity_checks = args.disable_sanity_checks
     ensemble = args.ensemble
     threads = args.threads
+    preprocess_test = args.preprocess_test
+    patch_size = args.patch_size
 
     if not ensemble:
         planner = recursive_find_python_class(
@@ -49,7 +59,15 @@ def main():
             class_name=planner_name,
             current_module="yucca.pipeline.planning",
         )
-        planner = planner(task, preprocessor_name, threads=threads, disable_sanity_checks=disable_sanity_checks, view=view)
+        planner = planner(
+            task,
+            preprocessor_name,
+            threads=threads,
+            disable_sanity_checks=disable_sanity_checks,
+            view=view,
+            preprocess_test=preprocess_test,
+            patch_size=patch_size,
+        )
         planner.plan()
         planner.preprocess()
     if ensemble:
@@ -60,7 +78,15 @@ def main():
                 class_name=planner_name,
                 current_module="yucca.pipeline.planning",
             )
-            planner = planner(task, preprocessor_name, threads=threads, disable_sanity_checks=disable_sanity_checks, view=view)
+            planner = planner(
+                task,
+                preprocessor_name,
+                threads=threads,
+                disable_sanity_checks=disable_sanity_checks,
+                view=view,
+                preprocess_test=preprocess_test,
+                patch_size=patch_size,
+            )
             planner.plan()
             planner.preprocess()
 

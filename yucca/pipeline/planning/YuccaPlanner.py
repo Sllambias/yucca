@@ -47,6 +47,8 @@ class YuccaPlanner(object):
         disable_cc_analysis=True,
         disable_sanity_checks=False,
         view=None,
+        preprocess_test=False,
+        patch_size=None,
     ):
         # Required arguments
         self.task = task
@@ -73,6 +75,8 @@ class YuccaPlanner(object):
         self.plans = {}
         self.suggested_dimensionality = "3D"
         self.view = view
+        self.preprocess_test = preprocess_test
+        self.patch_size = patch_size
 
     def plan(self):
         self.set_paths()
@@ -163,6 +167,8 @@ class YuccaPlanner(object):
             allow_missing_modalities=self.allow_missing_modalities,
             compress=self.compress,
             get_foreground_locs_per_label=self.get_foreground_locations_per_label,
+            preprocess_test=self.preprocess_test,
+            patch_size=self.patch_size,
         )
         preprocessor.run()
         self.postprocess()
