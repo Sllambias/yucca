@@ -1,22 +1,19 @@
-# %%
 import torch
-import yucca
 import wandb
 import logging
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
 from torchmetrics.regression import MeanAbsoluteError
 from yucca.modules.optimization.loss_functions.deep_supervision import DeepSupervisionLoss
-from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from yucca.functional.utils.kwargs import filter_kwargs
 from yucca.modules.metrics.training_metrics import Accuracy, AUROC, GeneralizedDiceScore
 from yucca.functional.visualization import get_train_fig_with_inp_out_tar
 from yucca.modules.lightning_modules.BaseLightningModule import BaseLightningModule
 from yucca.functional.utils.torch_utils import measure_FLOPs
 from fvcore.nn import flop_count_table
+from yucca.modules.optimization.loss_functions.nnUNet_losses import DiceCE
 
 
 class YuccaLightningModule(BaseLightningModule):
@@ -29,9 +26,10 @@ class YuccaLightningModule(BaseLightningModule):
     def __init__(
         self,
         config: dict,
+        model: torch.nn.Module,
         deep_supervision: bool = False,
         disable_inference_preprocessing: bool = False,
-        loss_fn: str = None,
+        loss_fn: torch.nn.Module = DiceCE,
         loss_kwargs: dict = {
             "soft_dice_kwargs": {"apply_softmax": True},
         },
@@ -47,23 +45,11 @@ class YuccaLightningModule(BaseLightningModule):
         sliding_window_overlap: float = 0.5,
         step_logging: bool = False,
         test_time_augmentation: bool = False,
+        preprocessor=None,
         progress_bar: bool = False,
         log_image_every_n_epochs: int = None,
     ):
-        model = recursive_find_python_class(
-            folder=[join(yucca.__path__[0], "modules", "networks")],
-            class_name=config["model_name"],
-            current_module="yucca.modules.networks",
-        )
-        loss_fn = recursive_find_python_class(
-            folder=[join(yucca.__path__[0], "modules", "optimization", "loss_functions")],
-            class_name=loss_fn if loss_fn is not None else "DiceCE",
-            current_module="yucca.modules.optimization.loss_functions",
-        )
-        preprocessor = self.get_preprocessor(config)
-        self.config = config
         self.task_type = config["task_type"]
-        self.log_image_every_n_epochs = log_image_every_n_epochs
         self.use_label_regions = "use_label_regions" in config.keys() and config["use_label_regions"]
         super().__init__(
             model=model,
@@ -91,9 +77,9 @@ class YuccaLightningModule(BaseLightningModule):
             transpose_forward=list(map(int, config["plans"]["transpose_forward"])),
             transpose_backward=list(map(int, config["plans"]["transpose_backward"])),
         )
-        # If we are training we save params and then start training
-        # Do not overwrite parameters during inference.
-        self.save_hyperparameters(ignore=["lr_scheduler", "optimizer"])
+        self.config = config
+        self.log_image_every_n_epochs = log_image_every_n_epochs
+        self.save_hyperparameters(ignore=["model", "loss_fn", "lr_scheduler", "optimizer", "preprocessor"])
 
     def setup(self, stage):  # noqa: U100
         logging.info(f"Loading Model: {self.model_dimensions} {self.model.__name__}")
@@ -121,7 +107,7 @@ class YuccaLightningModule(BaseLightningModule):
 
     def visualize_model_with_FLOPs(self):
         try:
-            data = torch.randn((self.config["batch_size"], self.config["num_modalities"], *self.config["patch_size"]))
+            data = torch.randn((self.config["batch_size"], self.num_modalities, *self.patch_size))
             flops = measure_FLOPs(self.model, data)
             del data
             logging.info("\n" + flop_count_table(flops))
@@ -295,17 +281,6 @@ class YuccaLightningModule(BaseLightningModule):
         wandb.log({log_key: wandb.Image(fig)}, commit=False)
         plt.close(fig)
 
-    @staticmethod
-    def get_preprocessor(config):
-        preprocessor = None
-        if config.get("plans") and config["plans"].get("preprocessor"):
-            preprocessor = recursive_find_python_class(
-                folder=[join(yucca.__path__[0], "pipeline", "preprocessing")],
-                class_name=config["plans"]["preprocessor"],
-                current_module="yucca.pipeline.preprocessing",
-            )
-        return preprocessor
-
     @property
     def log_image_this_epoch(self):
         if isinstance(self.log_image_every_n_epochs, int):
@@ -338,5 +313,3 @@ if __name__ == "__main__":
     data = torch.randn((2, 1, *(32, 32, 32)))
     f.setup(stage="test")
     f.forward(data)
-
-# %%

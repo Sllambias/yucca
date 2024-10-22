@@ -2,7 +2,10 @@ import lightning as L
 import torch
 import wandb
 import logging
+import yucca
+from batchgenerators.utilities.file_and_folder_operations import join
 from typing import Literal, Union, Optional
+from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from yucca.modules.data.augmentation.YuccaAugmentationComposer import YuccaAugmentationComposer
 from yucca.pipeline.configuration.split_data import get_split_config, SplitConfig
 from yucca.pipeline.configuration.configure_task import get_task_config
@@ -134,6 +137,9 @@ class YuccaManager:
         self.accelerator = "cpu" if torch.backends.mps.is_available() and self.model_dimensions == "3D" else "auto"
         self.optim_kwargs.update({"lr": self.learning_rate, "momentum": self.momentum})
 
+        if loss is None:
+            self.loss = "SigmoidDiceBCE" if self.use_label_regions is True else "DiceCE"
+
         if self.kwargs.get("fast_dev_run"):
             self.setup_fast_dev_run()
 
@@ -148,6 +154,7 @@ class YuccaManager:
         save_softmax: bool = False,
         prediction_output_dir: str = "./",
     ):
+
         # Here we configure the outpath we will use to store model files and metadata
         # along with the path to plans file which will also be loaded.
         task_config = get_task_config(
@@ -225,6 +232,10 @@ class YuccaManager:
             regions=self.plan_config.regions if self.plan_config.use_label_regions else None,
         )
 
+        model, loss, preprocessor = self.find_classes_recursively(
+            model=self.model_name, loss=self.loss, preprocessor=self.plan_config.plans["preprocessor"]
+        )
+
         self.model_module = self.lightning_module(
             config=task_config.lm_hparams()
             | path_config.lm_hparams()
@@ -235,12 +246,14 @@ class YuccaManager:
             | input_dims_config.lm_hparams()
             | callback_config.lm_hparams()
             | augmenter.lm_hparams(),
+            model=model,
             deep_supervision=self.deep_supervision,
             disable_inference_preprocessing=disable_inference_preprocessing,
-            loss_fn=self.loss,
+            loss_fn=loss,
             lr_scheduler=self.scheduler,
             optimizer=self.optimizer,
             optimizer_kwargs=self.optim_kwargs,
+            preprocessor=preprocessor,
             step_logging=self.step_logging,
             test_time_augmentation=not disable_tta if disable_tta is True else augmenter.mirror_p_per_sample > 0,
         )
@@ -354,6 +367,27 @@ class YuccaManager:
             pred_include_cases=pred_include_cases,
             save_softmax=save_softmax,
         )
+
+    def find_classes_recursively(self, model=None, loss=None, preprocessor=None):
+        if isinstance(model, str):
+            model = recursive_find_python_class(
+                folder=[join(yucca.__path__[0], "modules", "networks")],
+                class_name=model,
+                current_module="yucca.modules.networks",
+            )
+        if isinstance(loss, str):
+            loss = recursive_find_python_class(
+                folder=[join(yucca.__path__[0], "modules", "optimization", "loss_functions")],
+                class_name=loss,
+                current_module="yucca.modules.optimization.loss_functions",
+            )
+        if isinstance(preprocessor, str):
+            preprocessor = recursive_find_python_class(
+                folder=[join(yucca.__path__[0], "pipeline", "preprocessing")],
+                class_name=preprocessor,
+                current_module="yucca.pipeline.preprocessing",
+            )
+        return model, loss, preprocessor
 
     def finish(self):
         wandb.finish()
