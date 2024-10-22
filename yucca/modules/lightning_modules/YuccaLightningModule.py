@@ -203,7 +203,7 @@ class YuccaLightningModule(BaseLightningModule):
             output = output[0]
             target = target[0]
 
-        metrics = self.compute_metrics(self.train_metrics, output, target, ignore_index=None if self.use_label_regions else 0)
+        metrics = self.compute_metrics(self.train_metrics, output, target, ignore_index=None)
         self.log_dict(
             {"train/loss": loss} | metrics,
             on_step=self.step_logging,
@@ -231,7 +231,7 @@ class YuccaLightningModule(BaseLightningModule):
         output = self(inputs)
         loss = self.loss_fn_val(output, target)
 
-        metrics = self.compute_metrics(self.val_metrics, output, target, ignore_index=None if self.use_label_regions else 0)
+        metrics = self.compute_metrics(self.val_metrics, output, target, ignore_index=None)
         self.log_dict(
             {"val/loss": loss} | metrics,
             on_step=self.step_logging,
