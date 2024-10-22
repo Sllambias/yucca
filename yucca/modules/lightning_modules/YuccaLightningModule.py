@@ -1,4 +1,3 @@
-# %%
 import torch
 import wandb
 import logging
@@ -50,6 +49,8 @@ class YuccaLightningModule(BaseLightningModule):
         progress_bar: bool = False,
         log_image_every_n_epochs: int = None,
     ):
+        self.task_type = config["task_type"]
+        self.use_label_regions = "use_label_regions" in config.keys() and config["use_label_regions"]
         super().__init__(
             model=model,
             model_dimensions=config["model_dimensions"],
@@ -77,12 +78,8 @@ class YuccaLightningModule(BaseLightningModule):
             transpose_backward=list(map(int, config["plans"]["transpose_backward"])),
         )
         self.config = config
-        self.task_type = config["task_type"]
         self.log_image_every_n_epochs = log_image_every_n_epochs
-        self.use_label_regions = "use_label_regions" in config.keys() and config["use_label_regions"]
-        # If we are training we save params and then start training
-        # Do not overwrite parameters during inference.
-        self.save_hyperparameters(ignore=["lr_scheduler", "optimizer"])
+        self.save_hyperparameters(ignore=["model", "loss_fn", "lr_scheduler", "optimizer", "preprocessor"])
 
     def setup(self, stage):  # noqa: U100
         logging.info(f"Loading Model: {self.model_dimensions} {self.model.__name__}")
@@ -110,7 +107,7 @@ class YuccaLightningModule(BaseLightningModule):
 
     def visualize_model_with_FLOPs(self):
         try:
-            data = torch.randn((self.config["batch_size"], self.config["num_modalities"], *self.config["patch_size"]))
+            data = torch.randn((self.config["batch_size"], self.num_modalities, *self.patch_size))
             flops = measure_FLOPs(self.model, data)
             del data
             logging.info("\n" + flop_count_table(flops))
@@ -316,5 +313,3 @@ if __name__ == "__main__":
     data = torch.randn((2, 1, *(32, 32, 32)))
     f.setup(stage="test")
     f.forward(data)
-
-# %%

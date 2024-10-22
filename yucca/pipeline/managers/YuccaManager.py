@@ -137,6 +137,9 @@ class YuccaManager:
         self.accelerator = "cpu" if torch.backends.mps.is_available() and self.model_dimensions == "3D" else "auto"
         self.optim_kwargs.update({"lr": self.learning_rate, "momentum": self.momentum})
 
+        if loss is None:
+            self.loss = "SigmoidDiceBCE" if self.use_label_regions is True else "DiceCE"
+
         if self.kwargs.get("fast_dev_run"):
             self.setup_fast_dev_run()
 
@@ -229,7 +232,9 @@ class YuccaManager:
             regions=self.plan_config.regions if self.plan_config.use_label_regions else None,
         )
 
-        self.find_classes_recursively(model=self.model_name, loss=self.loss, preprocessor=self.plan_config["preprocessor"])
+        model, loss, preprocessor = self.find_classes_recursively(
+            model=self.model_name, loss=self.loss, preprocessor=self.plan_config.plans["preprocessor"]
+        )
 
         self.model_module = self.lightning_module(
             config=task_config.lm_hparams()
@@ -241,12 +246,14 @@ class YuccaManager:
             | input_dims_config.lm_hparams()
             | callback_config.lm_hparams()
             | augmenter.lm_hparams(),
+            model=model,
             deep_supervision=self.deep_supervision,
             disable_inference_preprocessing=disable_inference_preprocessing,
-            loss_fn=self.loss,
+            loss_fn=loss,
             lr_scheduler=self.scheduler,
             optimizer=self.optimizer,
             optimizer_kwargs=self.optim_kwargs,
+            preprocessor=preprocessor,
             step_logging=self.step_logging,
             test_time_augmentation=not disable_tta if disable_tta is True else augmenter.mirror_p_per_sample > 0,
         )
@@ -371,7 +378,7 @@ class YuccaManager:
         if isinstance(loss, str):
             loss = recursive_find_python_class(
                 folder=[join(yucca.__path__[0], "modules", "optimization", "loss_functions")],
-                class_name=loss if loss is not None else "DiceCE",
+                class_name=loss,
                 current_module="yucca.modules.optimization.loss_functions",
             )
         if isinstance(preprocessor, str):
