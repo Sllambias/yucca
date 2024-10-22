@@ -72,7 +72,6 @@ class YuccaPreprocessor(object):
         get_foreground_locs_per_label=False,
         preprocess_test=False,
         sliding_window_prediction=True,
-        patch_size=None,
     ):
         self.name = str(self.__class__.__name__)
         self.task = task
@@ -85,7 +84,6 @@ class YuccaPreprocessor(object):
         self.compress = compress
         self.get_foreground_locs_per_label = get_foreground_locs_per_label
         self.preprocess_test = preprocess_test
-        self.patch_size = patch_size
         self.sliding_window_prediction = sliding_window_prediction
 
         # lists for information we would like to attain
@@ -257,7 +255,7 @@ class YuccaPreprocessor(object):
         )
 
         images, image_props = self.preprocess_case_for_inference(
-            images=imagepaths, patch_size=self.patch_size, sliding_window_prediction=self.sliding_window_prediction
+            images=imagepaths, sliding_window_prediction=self.sliding_window_prediction
         )
         save_path = join(self.test_target_dir, subject_id)
         torch.save(images, save_path + ".pt")
@@ -348,7 +346,7 @@ class YuccaPreprocessor(object):
         return images, label, image_props
 
     def preprocess_case_for_inference(
-        self, images: list | tuple, patch_size: tuple, ext: str = ".nii.gz", sliding_window_prediction: bool = True
+        self, images: list | tuple, patch_size: tuple = None, ext: str = ".nii.gz", sliding_window_prediction: bool = True
     ):
         """
         Will reorient ONLY if we have valid qform or sform codes.
@@ -364,6 +362,9 @@ class YuccaPreprocessor(object):
         """
         assert isinstance(images, (list, tuple)), "image(s) should be a list or tuple, even if only one " "image is passed"
         self.initialize_properties()
+
+        if patch_size is None:
+            patch_size = (0,) * len(images[0].shape)
 
         if sliding_window_prediction is False:
             self.target_size = patch_size

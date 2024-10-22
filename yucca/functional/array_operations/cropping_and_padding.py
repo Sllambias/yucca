@@ -1,4 +1,6 @@
 import numpy as np
+import torch
+import torch.functional as F
 
 
 def crop_to_box(array, bbox):
