@@ -61,10 +61,7 @@ class YuccaLightningModule(BaseLightningModule):
             current_module="yucca.modules.optimization.loss_functions",
         )
         preprocessor = self.get_preprocessor(config)
-        self.config = config
-        self.task_type = config["task_type"]
-        self.log_image_every_n_epochs = log_image_every_n_epochs
-        self.use_label_regions = "use_label_regions" in config.keys() and config["use_label_regions"]
+
         super().__init__(
             model=model,
             model_dimensions=config["model_dimensions"],
@@ -91,6 +88,10 @@ class YuccaLightningModule(BaseLightningModule):
             transpose_forward=list(map(int, config["plans"]["transpose_forward"])),
             transpose_backward=list(map(int, config["plans"]["transpose_backward"])),
         )
+        self.config = config
+        self.task_type = config["task_type"]
+        self.log_image_every_n_epochs = log_image_every_n_epochs
+        self.use_label_regions = "use_label_regions" in config.keys() and config["use_label_regions"]
         # If we are training we save params and then start training
         # Do not overwrite parameters during inference.
         self.save_hyperparameters(ignore=["lr_scheduler", "optimizer"])
