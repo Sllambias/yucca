@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-import torch.functional as F
+import torch.nn.functional as F
 
 
 def crop_to_box(array, bbox):
@@ -99,19 +99,21 @@ def ensure_batch_fits_patch_size(batch, patch_size):
     """
     image = batch["data"]
     image_properties = batch["data_properties"]
-
+    patch_size = (64, 96)
     spatial_dims = image.dim() - 2  # Subtract batch and channel dimensions
 
+    if spatial_dims == len(patch_size) + 1:  # 2D patches from 3D data
+        patch_size = (1,) + patch_size
+
     if spatial_dims != len(patch_size):
-        raise ValueError("Input spatial dimensions and patch size dimensions do not match.")
+        raise ValueError(
+            f"Input spatial dimensions and patch size dimensions do not match. Got patch_size: {patch_size} and spatial_dims: {spatial_dims} from image of shape: {image.shape}"
+        )
 
     current_sizes = image.shape[2:]  # Spatial dimensions
 
     current_sizes_tensor = torch.tensor(current_sizes)
     patch_size_tensor = torch.tensor(patch_size)
-
-    if torch.any(current_sizes_tensor < patch_size_tensor).item():
-        return image, image_properties
 
     pad_sizes = torch.clamp(patch_size_tensor - current_sizes_tensor, min=0)
     pad_left = pad_sizes // 2
@@ -120,11 +122,11 @@ def ensure_batch_fits_patch_size(batch, patch_size):
     # Construct padding tuple in reverse order for F.pad
     padding_reversed = []
     for left, right in zip(reversed(pad_left.tolist()), reversed(pad_right.tolist())):
-        padding_reversed.extend([left.item(), right.item()])
+        padding_reversed.extend([left, right])
 
     padded_input = F.pad(image, padding_reversed)
 
-    image_properties["padded_shape"] = np.array(image.shape)
+    image_properties["padded_shape"] = np.array(padded_input.shape[2:])
     image_properties["padding"] = list(reversed(padding_reversed))
 
     return padded_input, image_properties
