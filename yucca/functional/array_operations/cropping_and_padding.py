@@ -1,4 +1,6 @@
 import numpy as np
+import torch
+import torch.nn.functional as F
 
 
 def crop_to_box(array, bbox):
@@ -76,3 +78,55 @@ def get_pad_kwargs(data, pad_value):
     else:
         print("Unrecognized pad value detected.")
     return pad_kwargs
+
+
+def ensure_batch_fits_patch_size(batch, patch_size):
+    """
+    Pads the spatial dimensions of the input tensor so that they are at least the size of the patch dimensions.
+    If all spatial dimensions are already larger than or equal to the patch size, the input tensor is returned unchanged.
+
+    Parameters:
+    - batch: dict
+        a dict with keys {"data": data, "data_properties": data_properties, "case_id": case_id},
+        where data is a Tensor of shape (B, C, *spatial_dims)
+
+    - patch_size: tuple of ints
+        The minimum desired size for each spatial dimension.
+
+    Returns:
+    - padded_input: torch.Tensor
+        The input tensor padded to the desired spatial dimensions.
+    """
+    image = batch["data"]
+    image_properties = batch["data_properties"]
+    patch_size = (64, 96)
+    spatial_dims = image.dim() - 2  # Subtract batch and channel dimensions
+
+    if spatial_dims == len(patch_size) + 1:  # 2D patches from 3D data
+        patch_size = (1,) + patch_size
+
+    if spatial_dims != len(patch_size):
+        raise ValueError(
+            f"Input spatial dimensions and patch size dimensions do not match. Got patch_size: {patch_size} and spatial_dims: {spatial_dims} from image of shape: {image.shape}"
+        )
+
+    current_sizes = image.shape[2:]  # Spatial dimensions
+
+    current_sizes_tensor = torch.tensor(current_sizes)
+    patch_size_tensor = torch.tensor(patch_size)
+
+    pad_sizes = torch.clamp(patch_size_tensor - current_sizes_tensor, min=0)
+    pad_left = pad_sizes // 2
+    pad_right = pad_sizes - pad_left
+
+    # Construct padding tuple in reverse order for F.pad
+    padding_reversed = []
+    for left, right in zip(reversed(pad_left.tolist()), reversed(pad_right.tolist())):
+        padding_reversed.extend([left, right])
+
+    padded_input = F.pad(image, padding_reversed)
+
+    image_properties["padded_shape"] = np.array(padded_input.shape[2:])
+    image_properties["padding"] = list(reversed(padding_reversed))
+
+    return padded_input, image_properties

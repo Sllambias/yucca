@@ -70,6 +70,8 @@ class YuccaPreprocessor(object):
         allow_missing_modalities=False,
         compress=False,
         get_foreground_locs_per_label=False,
+        preprocess_test=False,
+        sliding_window_prediction=True,
     ):
         self.name = str(self.__class__.__name__)
         self.task = task
@@ -81,6 +83,8 @@ class YuccaPreprocessor(object):
         self.allow_missing_modalities = allow_missing_modalities
         self.compress = compress
         self.get_foreground_locs_per_label = get_foreground_locs_per_label
+        self.preprocess_test = preprocess_test
+        self.sliding_window_prediction = sliding_window_prediction
 
         # lists for information we would like to attain
         self.transpose_forward = []
@@ -99,6 +103,12 @@ class YuccaPreprocessor(object):
         self.subject_ids = [
             file for file in subfiles(join(self.input_dir, "labelsTr"), join=False) if not file.startswith(".")
         ]
+        if self.preprocess_test:
+            self.test_imagepaths = subfiles(join(self.input_dir, "imagesTs"), suffix=self.image_extension)
+            self.test_subject_ids = [
+                file for file in subfiles(join(self.input_dir, "labelsTs"), join=False) if not file.startswith(".")
+            ]
+            self.test_target_dir = join(get_preprocessed_data_path(), self.task + "_TEST", self.plans["plans_name"])
 
     def initialize_properties(self):
         """
@@ -141,6 +151,13 @@ class YuccaPreprocessor(object):
         p.map(self.preprocess_train_subject, self.subject_ids)
         p.close()
         p.join()
+
+        if self.preprocess_test:
+            ensure_dir_exists(self.test_target_dir)
+            p = Pool(self.threads)
+            p.map(self.preprocess_test_subject, self.test_subject_ids)
+            p.close()
+            p.join()
 
     def preprocess_train_subject(self, subject_id):
         """
@@ -220,6 +237,30 @@ class YuccaPreprocessor(object):
         )
         del images, label, image_props
 
+    def preprocess_test_subject(self, subject_id):
+        subject_id = subject_id.split(os.extsep, 1)[0]
+        escaped_subject_id = re.escape(subject_id)
+
+        imagepaths = [
+            impath
+            for impath in self.test_imagepaths
+            # Check if impath is a modality of subject_id (subject_id + _XXX + .) where XXX are three digits
+            if re.search(escaped_subject_id + "_" + r"\d{3}" + ".", os.path.split(impath)[-1])
+        ]
+
+        self.sanity_check_modalities_and_return_missing(
+            imagepaths=imagepaths,
+            normalization_schemes=self.plans["normalization_scheme"],
+            allow_missing_modalities=self.allow_missing_modalities,
+        )
+
+        images, image_props = self.preprocess_case_for_inference(
+            images=imagepaths, sliding_window_prediction=self.sliding_window_prediction
+        )
+        save_path = join(self.test_target_dir, subject_id)
+        torch.save(images, save_path + ".pt")
+        save_pickle(image_props, save_path + ".pkl")
+
     def _preprocess_train_subject(self, subject_id, label_exists: bool, preprocess_label: bool):
         image_props = {}
 
@@ -237,13 +278,12 @@ class YuccaPreprocessor(object):
             if re.search(escaped_subject_id + "_" + r"\d{3}" + ".", os.path.split(impath)[-1])
         ]
 
-        expected_modalities = set([f"{i:03}" for i in range(len(self.plans["normalization_scheme"]))])
-        found_modalities = [os.path.split(impath)[-1].split(os.extsep, 1)[0][-3:] for impath in imagepaths]
-        missing_modalities = [int(missing_mod) for missing_mod in list(expected_modalities.difference(found_modalities))]
+        missing_modalities = self.sanity_check_modalities_and_return_missing(
+            imagepaths=imagepaths,
+            normalization_schemes=self.plans["normalization_scheme"],
+            allow_missing_modalities=self.allow_missing_modalities,
+        )
 
-        assert len(imagepaths) > 0, "found no images"
-        if not self.allow_missing_modalities:
-            assert not len(missing_modalities) > 0, "found missing modalities and allow_missing_modalities is not enabled."
         image_props["image files"] = imagepaths
         images = [read_file_to_nifti_or_np(image) for image in imagepaths]
 
@@ -306,7 +346,7 @@ class YuccaPreprocessor(object):
         return images, label, image_props
 
     def preprocess_case_for_inference(
-        self, images: list | tuple, patch_size: tuple, ext: str = ".nii.gz", sliding_window_prediction: bool = True
+        self, images: list | tuple, patch_size: tuple = None, ext: str = ".nii.gz", sliding_window_prediction: bool = True
     ):
         """
         Will reorient ONLY if we have valid qform or sform codes.
@@ -322,6 +362,9 @@ class YuccaPreprocessor(object):
         """
         assert isinstance(images, (list, tuple)), "image(s) should be a list or tuple, even if only one " "image is passed"
         self.initialize_properties()
+
+        if patch_size is None:
+            patch_size = (0,) * len(images[0].shape)
 
         if sliding_window_prediction is False:
             self.target_size = patch_size
@@ -406,7 +449,8 @@ class YuccaPreprocessor(object):
             for image in images:
                 verify_array_shape_is_equal(reference=images[0], target=image, id=subject_id)
 
-    def sanity_check_niftis(self, images, label, subject_id):
+    @staticmethod
+    def sanity_check_niftis(images, label, subject_id):
         if label is not None:
             verify_spacing_is_equal(reference=images[0], target=label, id=subject_id)
             verify_orientation_is_equal(reference=images[0], target=label, id=subject_id)
@@ -415,6 +459,17 @@ class YuccaPreprocessor(object):
             for image in images:
                 verify_spacing_is_equal(reference=images[0], target=image, id=subject_id)
                 verify_orientation_is_equal(reference=images[0], target=image, id=subject_id)
+
+    @staticmethod
+    def sanity_check_modalities_and_return_missing(imagepaths, normalization_schemes, allow_missing_modalities):
+        expected_modalities = set([f"{i:03}" for i in range(len(normalization_schemes))])
+        found_modalities = [os.path.split(impath)[-1].split(os.extsep, 1)[0][-3:] for impath in imagepaths]
+        missing_modalities = [int(missing_mod) for missing_mod in list(expected_modalities.difference(found_modalities))]
+
+        assert len(imagepaths) > 0, "found no images"
+        if not allow_missing_modalities:
+            assert not len(missing_modalities) > 0, "found missing modalities and allow_missing_modalities is not enabled."
+        return missing_modalities
 
     def cast_to_numpy_array(self, images: list, label=None, classification=False):
         if label is None and not self.allow_missing_modalities:  # self-supervised
