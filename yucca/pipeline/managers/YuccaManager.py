@@ -2,7 +2,10 @@ import lightning as L
 import torch
 import wandb
 import logging
+import yucca
+from batchgenerators.utilities.file_and_folder_operations import join
 from typing import Literal, Union, Optional
+from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from yucca.modules.data.augmentation.YuccaAugmentationComposer import YuccaAugmentationComposer
 from yucca.pipeline.configuration.split_data import get_split_config, SplitConfig
 from yucca.pipeline.configuration.configure_task import get_task_config
@@ -148,6 +151,7 @@ class YuccaManager:
         save_softmax: bool = False,
         prediction_output_dir: str = "./",
     ):
+
         # Here we configure the outpath we will use to store model files and metadata
         # along with the path to plans file which will also be loaded.
         task_config = get_task_config(
@@ -224,6 +228,8 @@ class YuccaManager:
             labels=self.plan_config.labels,
             regions=self.plan_config.regions if self.plan_config.use_label_regions else None,
         )
+
+        self.find_classes_recursively(model=self.model_name, loss=self.loss, preprocessor=self.plan_config["preprocessor"])
 
         self.model_module = self.lightning_module(
             config=task_config.lm_hparams()
@@ -354,6 +360,27 @@ class YuccaManager:
             pred_include_cases=pred_include_cases,
             save_softmax=save_softmax,
         )
+
+    def find_classes_recursively(self, model=None, loss=None, preprocessor=None):
+        if isinstance(model, str):
+            model = recursive_find_python_class(
+                folder=[join(yucca.__path__[0], "modules", "networks")],
+                class_name=model,
+                current_module="yucca.modules.networks",
+            )
+        if isinstance(loss, str):
+            loss = recursive_find_python_class(
+                folder=[join(yucca.__path__[0], "modules", "optimization", "loss_functions")],
+                class_name=loss if loss is not None else "DiceCE",
+                current_module="yucca.modules.optimization.loss_functions",
+            )
+        if isinstance(preprocessor, str):
+            preprocessor = recursive_find_python_class(
+                folder=[join(yucca.__path__[0], "pipeline", "preprocessing")],
+                class_name=preprocessor,
+                current_module="yucca.pipeline.preprocessing",
+            )
+        return model, loss, preprocessor
 
     def finish(self):
         wandb.finish()

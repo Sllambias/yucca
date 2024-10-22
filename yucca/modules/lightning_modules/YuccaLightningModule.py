@@ -1,22 +1,20 @@
 # %%
 import torch
-import yucca
 import wandb
 import logging
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from batchgenerators.utilities.file_and_folder_operations import join
 from torchmetrics import MetricCollection
 from torchmetrics.regression import MeanAbsoluteError
 from yucca.modules.optimization.loss_functions.deep_supervision import DeepSupervisionLoss
-from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from yucca.functional.utils.kwargs import filter_kwargs
 from yucca.modules.metrics.training_metrics import Accuracy, AUROC, GeneralizedDiceScore
 from yucca.functional.visualization import get_train_fig_with_inp_out_tar
 from yucca.modules.lightning_modules.BaseLightningModule import BaseLightningModule
 from yucca.functional.utils.torch_utils import measure_FLOPs
 from fvcore.nn import flop_count_table
+from yucca.modules.optimization.loss_functions.nnUNet_losses import DiceCE
 
 
 class YuccaLightningModule(BaseLightningModule):
@@ -29,9 +27,10 @@ class YuccaLightningModule(BaseLightningModule):
     def __init__(
         self,
         config: dict,
+        model: torch.nn.Module,
         deep_supervision: bool = False,
         disable_inference_preprocessing: bool = False,
-        loss_fn: str = None,
+        loss_fn: torch.nn.Module = DiceCE,
         loss_kwargs: dict = {
             "soft_dice_kwargs": {"apply_softmax": True},
         },
@@ -47,21 +46,10 @@ class YuccaLightningModule(BaseLightningModule):
         sliding_window_overlap: float = 0.5,
         step_logging: bool = False,
         test_time_augmentation: bool = False,
+        preprocessor=None,
         progress_bar: bool = False,
         log_image_every_n_epochs: int = None,
     ):
-        model = recursive_find_python_class(
-            folder=[join(yucca.__path__[0], "modules", "networks")],
-            class_name=config["model_name"],
-            current_module="yucca.modules.networks",
-        )
-        loss_fn = recursive_find_python_class(
-            folder=[join(yucca.__path__[0], "modules", "optimization", "loss_functions")],
-            class_name=loss_fn if loss_fn is not None else "DiceCE",
-            current_module="yucca.modules.optimization.loss_functions",
-        )
-        preprocessor = self.get_preprocessor(config)
-
         super().__init__(
             model=model,
             model_dimensions=config["model_dimensions"],
@@ -295,17 +283,6 @@ class YuccaLightningModule(BaseLightningModule):
         )
         wandb.log({log_key: wandb.Image(fig)}, commit=False)
         plt.close(fig)
-
-    @staticmethod
-    def get_preprocessor(config):
-        preprocessor = None
-        if config.get("plans") and config["plans"].get("preprocessor"):
-            preprocessor = recursive_find_python_class(
-                folder=[join(yucca.__path__[0], "pipeline", "preprocessing")],
-                class_name=config["plans"]["preprocessor"],
-                current_module="yucca.pipeline.preprocessing",
-            )
-        return preprocessor
 
     @property
     def log_image_this_epoch(self):
