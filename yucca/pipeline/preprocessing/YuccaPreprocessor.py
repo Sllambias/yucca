@@ -363,16 +363,16 @@ class YuccaPreprocessor(object):
         assert isinstance(images, (list, tuple)), "image(s) should be a list or tuple, even if only one " "image is passed"
         self.initialize_properties()
 
+        images = [
+            read_file_to_nifti_or_np(image[0]) if isinstance(image, tuple) else read_file_to_nifti_or_np(image)
+            for image in images
+        ]
+
         if patch_size is None:
             patch_size = (0,) * len(images[0].shape)
 
         if sliding_window_prediction is False:
             self.target_size = patch_size
-
-        images = [
-            read_file_to_nifti_or_np(image[0]) if isinstance(image, tuple) else read_file_to_nifti_or_np(image)
-            for image in images
-        ]
 
         images, image_properties = preprocess_case_for_inference(
             crop_to_nonzero=self.plans["crop_to_nonzero"],

@@ -457,7 +457,7 @@ def preprocess_case_for_inference(
 
     for i in range(len(images)):
         images[i], padding = pad_to_size(images[i], patch_size)
-        print(padding)
+
     image_properties["padded_shape"] = np.array(images[0].shape)
     image_properties["padding"] = padding
 
