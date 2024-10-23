@@ -203,15 +203,21 @@ class YuccaTestPreprocessedDataset(torch.utils.data.Dataset):
         self.data_path = preprocessed_data_dir
         self.pred_save_dir = pred_save_dir
         self.overwrite = overwrite_predictions
-        self.suffix = ".pt"
+        self.data_suffix = ".pt"
+        self.prediction_suffix = ".nii.gz"
         self.pred_include_cases = pred_include_cases
         self.unique_cases = np.unique(
-            [i[: -len(self.suffix)] for i in subfiles(self.data_path, suffix=self.suffix, join=False)]
+            [i[: -len(self.data_suffix)] for i in subfiles(self.data_path, suffix=self.data_suffix, join=False)]
         )
-        assert len(self.unique_cases) > 0, f"No cases found in {self.data_path}. Looking for files with suffix: {self.suffix}"
+        assert (
+            len(self.unique_cases) > 0
+        ), f"No cases found in {self.data_path}. Looking for files with suffix: {self.data_suffix}"
 
         self.cases_already_predicted = np.unique(
-            [i[: -len(self.suffix)] for i in subfiles(self.pred_save_dir, suffix=self.suffix, join=False)]
+            [
+                i[: -len(self.prediction_suffix)]
+                for i in subfiles(self.pred_save_dir, suffix=self.prediction_suffix, join=False)
+            ]
         )
         logging.info(f"Found {len(self.cases_already_predicted)} already predicted cases. Overwrite: {self.overwrite}")
         if not self.overwrite:
@@ -228,7 +234,7 @@ class YuccaTestPreprocessedDataset(torch.utils.data.Dataset):
         # will convert them to a list of tuples of strings and a tuple of a string.
         # i.e. ['path1', 'path2'] -> [('path1',), ('path2',)]
         case_id = self.unique_cases[idx]
-        data = torch.load(os.path.join(self.data_path, case_id + self.suffix), weights_only=False)
+        data = torch.load(os.path.join(self.data_path, case_id + self.data_suffix), weights_only=False)
         data_properties = load_pickle(os.path.join(self.data_path, case_id + ".pkl"))
         return {"data": data, "data_properties": data_properties, "case_id": case_id}
 
