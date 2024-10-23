@@ -197,13 +197,13 @@ class YuccaTestPreprocessedDataset(torch.utils.data.Dataset):
         preprocessed_data_dir: str,
         pred_save_dir: str,
         overwrite_predictions: bool = False,
-        suffix: str = ".pt",  # noqa U100
+        suffix: str = "pt",  # noqa U100
         pred_include_cases: list = None,
     ):
         self.data_path = preprocessed_data_dir
         self.pred_save_dir = pred_save_dir
         self.overwrite = overwrite_predictions
-        self.suffix = suffix
+        self.data_suffix = "." + suffix
         self.prediction_suffix = ".nii.gz"
         self.pred_include_cases = pred_include_cases
         self.unique_cases = np.unique(
