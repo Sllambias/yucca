@@ -99,7 +99,6 @@ def ensure_batch_fits_patch_size(batch, patch_size):
     """
     image = batch["data"]
     image_properties = batch["data_properties"]
-    patch_size = (64, 96)
     spatial_dims = image.dim() - 2  # Subtract batch and channel dimensions
 
     if spatial_dims == len(patch_size) + 1:  # 2D patches from 3D data
