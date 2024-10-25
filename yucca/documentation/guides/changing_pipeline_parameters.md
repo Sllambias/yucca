@@ -8,6 +8,8 @@
 - [Training](#training)
   * [Data Augmentation](#data-augmentation)
   * [Data Splits](#data-splits)
+  * [Deep Supervision](#deep-supervision)
+  * [Foreground Oversampling](#foreground-oversampling)
   * [Learning Rate](#learning-rate)
   * [Learning Rate Scheduler](#learning-rate-scheduler)
   * [Loss Function](#loss-function)
@@ -15,6 +17,7 @@
   * [Model Dimensionality](#model-dimensionality)
   * [Momentum](#momentum)
   * [Optimizer](#optimizer)
+  * [Patch Based Training](#patch-based-training)
 - [Inference](#inference)
   * [Evaluation](#evaluation)
   * [Fusion](#fusion)
@@ -22,9 +25,9 @@
 
 # Guide to Changing Yucca Parameters
 ## Subclassing
-Changing parameters in Yucca is generally achieved using subclasses. This means, to change a given parameter (1) Subclass the class defining the parameter, (2) change the value of the parameter to the desired value and (3) create a new .py file in the (sub)directory of the parent class.
+Changing parameters in the Yucca Pipeline is generally achieved using subclasses. This means, to change a given parameter (1) Subclass the class defining the parameter, (2) change the value of the parameter to the desired value and (3) create a new .py file in the (sub)directory of the parent class.
 
-E.g. to lower the starting Learning Rate we subclass YuccaManager - the default class responsible for handling model training, and change the variable self.learning_rate variable from 1e-3 to 1e-5.
+E.g. to lower the starting Learning Rate we subclass the YuccaManager - the default class responsible for handling model training, and change the variable self.learning_rate variable to e.g. 1e-5.
 
 We call this new Manager "YuccaManager_1e5" and save it as "YuccaManager_1e5.py" in the /yucca/training/managers directory as this is where the Parent Class is located. Alternatively it can be saved in a subdirectory of the directory of the parent class e.g. /yucca/training/managers/lr. 
 
@@ -39,7 +42,7 @@ class YuccaManager_1e5(YuccaManager):
 ```
 
 # Preprocessing
-Unless otherwise mentioned, preprocessing variables and functions are handled by the YuccaPlanners. For optimal results, it is advisable to subclass the default planner when applying changes.
+Unless otherwise mentioned, preprocessing variables and functions are set by the YuccaPlanners. For optimal results, it is advisable to subclass the default planner when applying changes.
 
 **Default Planner Class: [YuccaPlanner](/yucca/pipeline/planning/YuccaPlanner.py)**
 
@@ -122,8 +125,7 @@ class YuccaManager_NewUserSetup(YuccaManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.augmentation_params = generic
-        self.augmentation_params = {"blurring_p_per_sample": 0.0,
-                                        "scale_factor": (0.7, 1.3)}
+        self.augmentation_params["blurring_p_per_sample"] = 0.0
 ```
 
 ## Data Splits
@@ -189,6 +191,21 @@ class YuccaManager_NewUserSetup(YuccaManager):
 ```
 
 CLI: Deep supervision can also be enabled during training and finetuning by using the --ds flag. 
+
+## Foreground Oversampling
+Controls the percentage of samples containing minimum 1 foreground voxel. Remaining samples are drawn randomly and may also contain foreground voxels.
+
+Parent: default Manager class
+
+Variable: self.p\_oversample\_foreground
+```
+from yucca.pipeline.managers.YuccaManager import YuccaManager
+
+class YuccaManager_NewUserSetup(YuccaManager):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.p_oversample_foreground = 0.66
+```
 
 ## Learning Rate
 Parent: default Manager class
@@ -269,7 +286,7 @@ CLI: Can also be changed using *yucca_train* --mom flag.
 ## Optimizer
 Parent: [YuccaLightningModule](/yucca/lightning_modules/YuccaLightningModule.py)
 
-Variable: self.optim
+Variables: *self.optim* and *self.optim_kwargs*
 
 ```
 from yucca.modules.lightning_modules.YuccaLightningModule import YuccaLightningModule
@@ -279,6 +296,7 @@ class YuccaLightningModule_Adam(YuccaLightningModule):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.optim = optim.Adam
+        self.optim_kwargs = {"eps": 1e-8, "betas": (0.9, 0.99), "lr": 5e-5, "weight_decay": 5e-2}
 ```
 
 ## Patch Based Training
@@ -298,8 +316,4 @@ class YuccaManager_NoPatches(YuccaManager):
 This is used to train models on full-size images. Requires datasets are preprocessed using a Planner using fixed_target_size to ensure that all samples have identical dimensions.
 
 # Inference
-Changing inference parameters not implemented currently.
-
-## Evaluation
-## Pixel/Object
-## Fusion
+Changing inference parameters not implemented currently. Use the CLI to control inference parameters.
