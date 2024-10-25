@@ -398,7 +398,7 @@ def preprocess_case_for_inference(
     images: list | tuple,
     intensities: list,
     normalization_scheme: list,
-    patch_size: tuple,
+    patch_size: Union[tuple, None],
     target_size,
     target_spacing,
     target_orientation,
@@ -457,6 +457,7 @@ def preprocess_case_for_inference(
 
     for i in range(len(images)):
         images[i], padding = pad_to_size(images[i], patch_size)
+
     image_properties["padded_shape"] = np.array(images[0].shape)
     image_properties["padding"] = padding
 

@@ -9,6 +9,7 @@ from yucca.modules.optimization.loss_functions.deep_supervision import DeepSuper
 from yucca.modules.metrics.training_metrics import F1
 from yucca.modules.optimization.loss_functions.nnUNet_losses import DiceCE
 from yucca.functional.preprocessing import reverse_preprocessing
+from yucca.functional.array_operations.cropping_and_padding import ensure_batch_fits_patch_size
 
 
 class BaseLightningModule(L.LightningModule):
@@ -201,6 +202,9 @@ class BaseLightningModule(L.LightningModule):
                     ext=batch["extension"],
                     sliding_window_prediction=self.sliding_window_prediction,
                 )
+            else:
+                batch["data"], batch["data_properties"] = ensure_batch_fits_patch_size(batch, patch_size=self.patch_size)
+
         return super().on_before_batch_transfer(batch, dataloader_idx)
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):  # noqa: U100

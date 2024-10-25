@@ -97,7 +97,7 @@ class UNetR(YuccaNet):
             mlp_dim=mlp_dim,
             num_layers=self.num_layers,
             num_heads=num_heads,
-            pos_embed=pos_embed,
+            proj_type=pos_embed,
             classification=self.classification,
             dropout_rate=dropout_op_kwargs["p"],
             spatial_dims=self.spatial_dims,

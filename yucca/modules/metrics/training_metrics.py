@@ -52,11 +52,17 @@ class Accuracy(Metric):
 
 
 class GeneralizedDiceScore(Metric):
-    def __init__(self, multilabel: bool, num_classes: int, *args, **kwargs):
+    def __init__(self, multilabel: bool, num_classes: int, per_class: bool = False, average: bool = False, *args, **kwargs):
         super().__init__()
         self.multilabel = multilabel
         self.num_classes = num_classes
-        self.method = TorchGeneralizedDiceScore(num_classes=self.num_classes, *args, **kwargs)
+
+        self.per_class = per_class
+        self.average = average
+
+        self.method = TorchGeneralizedDiceScore(
+            num_classes=self.num_classes, per_class=self.per_class or self.average, *args, **kwargs
+        )
 
     def forward(self, input: Tensor, target: Tensor) -> Tensor:
         if self.multilabel:
@@ -74,7 +80,12 @@ class GeneralizedDiceScore(Metric):
             assert len(input.shape) <= 5, input.shape
             assert len(target.shape) <= 5, target.shape
 
-        return self.method(input, target)
+        output = self.method(input, target)
+
+        if self.average:
+            return output.mean()
+
+        return output
 
     def compute(self):
         pass

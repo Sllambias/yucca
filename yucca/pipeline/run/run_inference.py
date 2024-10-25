@@ -93,6 +93,13 @@ def main():
         help="A name for the experiment being performed, with no spaces.",
         default="default",
     )
+
+    parser.add_argument(
+        "--disable_preprocessing",
+        help="Used to disable preprocessing for already preprocessed test data. Use with caution.",
+        default=False,
+        action="store_true",
+    )
     parser.add_argument(
         "--disable_tta",
         help="Used to disable test-time augmentations (mirroring)",
@@ -175,6 +182,7 @@ def main():
     # Optionals (occasionally changed)
     experiment = args.experiment
     disable_tta = args.disable_tta
+    disable_preprocessing = args.disable_preprocessing
     no_eval = args.no_eval
     overwrite = args.overwrite
     predict_train = args.predict_train
@@ -272,14 +280,18 @@ def main():
 
     ensure_dir_exists(outpath)
 
-    manager.predict_folder(
+    if disable_preprocessing:
+        predict_fn = manager.predict_preprocessed_folder
+    else:
+        predict_fn = manager.predict_folder
+
+    predict_fn(
         inpath,
         disable_tta,
         overwrite_predictions=overwrite,
         output_folder=outpath,
         pred_include_cases=split,
         save_softmax=save_softmax,
-        # overwrite=overwrite, # Commented out until overwrite arg is added in manager.
     )
 
     if isdir(ground_truth) and not no_eval:
