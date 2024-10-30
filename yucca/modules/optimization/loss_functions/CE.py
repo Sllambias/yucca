@@ -11,6 +11,7 @@ class CE(nn.CrossEntropyLoss):
         if len(target.shape) == len(input.shape):
             assert target.shape[1] == 1
             target = target[:, 0]
+        print(input.dtype, target.long().dtype)
         return super().forward(input, target.long())
 
 

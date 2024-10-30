@@ -20,6 +20,7 @@ class BaseLightningModule(L.LightningModule):
         num_classes: int,
         num_modalities: int,
         patch_size: tuple,
+        config: dict = None,
         crop_to_nonzero: bool = True,
         deep_supervision: bool = False,
         disable_inference_preprocessing: bool = False,

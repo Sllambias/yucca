@@ -1,4 +1,5 @@
 from yucca.pipeline.planning.YuccaPlanner import YuccaPlanner
+from yucca.pipeline.planning.YuccaPlannerV2 import YuccaPlannerV2
 
 
 class ClassificationPlanner(YuccaPlanner):
@@ -6,3 +7,14 @@ class ClassificationPlanner(YuccaPlanner):
         super().__init__(task, preprocessor, threads, disable_unittests, view)
         self.name = str(self.__class__.__name__) + str(view or "")
         self.preprocessor = "ClassificationPreprocessor"
+
+
+class ClassificationV2_192x256x256(YuccaPlannerV2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name = str(self.__class__.__name__)
+        self.preprocessor = "ClassificationPreprocessor"
+
+    def determine_target_size_from_fixed_size_or_spacing(self):
+        self.fixed_target_size = (192, 256, 256)
+        self.fixed_target_spacing = None

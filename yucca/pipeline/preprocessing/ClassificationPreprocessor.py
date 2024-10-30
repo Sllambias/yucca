@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 from yucca.pipeline.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 
 
@@ -6,7 +7,6 @@ class ClassificationPreprocessor(YuccaPreprocessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # set up for classification
-        self.classification = True
         self.label_exists = True
         self.preprocess_label = False
 
@@ -17,3 +17,10 @@ class ClassificationPreprocessor(YuccaPreprocessor):
         """
         image_properties["save_format"] = "txt"
         return images.cpu().numpy(), image_properties
+
+    def cast_to_numpy_array(self, images: list, label=None, classification=False):
+        canvas = np.empty(2, dtype="object")
+        images = np.vstack([image[np.newaxis] for image in images])
+        canvas[:] = [images, label]
+        images = canvas
+        return images

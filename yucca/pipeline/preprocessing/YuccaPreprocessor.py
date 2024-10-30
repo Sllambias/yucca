@@ -92,7 +92,6 @@ class YuccaPreprocessor(object):
         self.target_spacing = []
 
         # set up for segmentation
-        self.classification = False
         self.label_exists = True
         self.preprocess_label = True
 
@@ -213,7 +212,7 @@ class YuccaPreprocessor(object):
         images, label, image_props = self._preprocess_train_subject(
             subject_id, label_exists=self.label_exists, preprocess_label=self.preprocess_label
         )
-        images = self.cast_to_numpy_array(images=images, label=label, classification=self.classification)
+        images = self.cast_to_numpy_array(images=images, label=label)
 
         # save the image
         if self.compress:
@@ -475,9 +474,6 @@ class YuccaPreprocessor(object):
         if label is None and not self.allow_missing_modalities:  # self-supervised
             images = np.array(images, dtype=np.float32)
         elif label is None and self.allow_missing_modalities:  # self-supervised with missing mods
-            images = np.array(images, dtype="object")
-        elif classification:  # Classification is always "object"
-            images.append(label)
             images = np.array(images, dtype="object")
         elif self.allow_missing_modalities:  # segmentation with missing modalities
             images.append(np.array(label)[np.newaxis])

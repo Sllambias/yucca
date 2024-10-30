@@ -1,0 +1,20 @@
+import torch
+import torch.nn as nn
+from yucca.pipeline.managers.YuccaManagerV2 import YuccaManagerV2
+from yucca.modules.data.augmentation.augmentation_presets import no_aug
+from yucca.modules.lightning_modules.ClassificationLightningModule import ClassificationLightningModule
+from yucca.modules.data.datasets.ClassificationDataset import ClassificationDataset
+from yucca.modules.optimization.loss_functions.CE import CE
+
+
+class ClassificationManager(YuccaManagerV2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.augmentation_params = no_aug
+        self.model_name = "ResNet50_3D"
+        self.loss = CE
+        self.lightning_module = ClassificationLightningModule
+        self.model_dimensions = "3D"
+        self.patch_based_training = False
+        self.deep_supervision = False
+        self.train_dataset_class = ClassificationDataset

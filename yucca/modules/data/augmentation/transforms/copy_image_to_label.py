@@ -18,10 +18,10 @@ class CopyImageToLabel(YuccaTransform):
 
     def __call__(self, packed_data_dict=None, **unpacked_data_dict):
         data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
-        assert (
-            len(data_dict[self.data_key].shape) == 5 or len(data_dict[self.data_key].shape) == 4
-        ), f"Incorrect data size or shape.\
-            \nShould be (b, c, x, y, z) or (b, c, x, y) and is: {data_dict[self.data_key].shape}"
         if self.copy:
+            assert (
+                len(data_dict[self.data_key].shape) == 5 or len(data_dict[self.data_key].shape) == 4
+            ), f"Incorrect data size or shape.\
+                \nShould be (b, c, x, y, z) or (b, c, x, y) and is: {data_dict[self.data_key].shape}"
             data_dict = self.__copy__(data_dict)
         return data_dict
