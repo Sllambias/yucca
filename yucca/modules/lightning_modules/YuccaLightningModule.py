@@ -9,7 +9,7 @@ from torchmetrics.regression import MeanAbsoluteError
 from yucca.modules.optimization.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.functional.utils.kwargs import filter_kwargs
 from yucca.modules.metrics.training_metrics import Accuracy, AUROC, GeneralizedDiceScore
-from yucca.functional.visualization import get_train_fig_with_inp_out_tar
+from yucca.functional.visualization import get_segm_train_fig_with_inp_out_tar
 from yucca.modules.lightning_modules.BaseLightningModule import BaseLightningModule
 from yucca.functional.utils.torch_utils import measure_FLOPs
 from fvcore.nn import flop_count_table
@@ -49,7 +49,6 @@ class YuccaLightningModule(BaseLightningModule):
         progress_bar: bool = False,
         log_image_every_n_epochs: int = None,
     ):
-        self.task_type = config["task_type"]
         self.use_label_regions = "use_label_regions" in config.keys() and config["use_label_regions"]
         super().__init__(
             model=model,
@@ -79,6 +78,7 @@ class YuccaLightningModule(BaseLightningModule):
         )
         self.config = config
         self.log_image_every_n_epochs = log_image_every_n_epochs
+        self.get_train_fig_fn = get_segm_train_fig_with_inp_out_tar
         self.save_hyperparameters(ignore=["model", "loss_fn", "lr_scheduler", "optimizer", "preprocessor"])
 
     def setup(self, stage):  # noqa: U100
@@ -115,78 +115,57 @@ class YuccaLightningModule(BaseLightningModule):
             logging.info("\n Model architecture could not be visualized.")
 
     def configure_metrics(self):
-        if self.task_type == "classification":
-            tmetrics_task = "multiclass" if self.num_classes > 2 else "binary"
-            # can we get per-class?
-            self.train_metrics = MetricCollection(
-                {
-                    "train/acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
-                    "train/roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
-                }
-            )
-            self.val_metrics = MetricCollection(
-                {
-                    "val/acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
-                    "val/roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
-                }
-            )
+        self.train_metrics = MetricCollection(
+            {
+                "train/aggregated_dice": GeneralizedDiceScore(
+                    multilabel=self.use_label_regions,
+                    num_classes=self.num_classes,
+                    include_background=self.num_classes == 1 or self.use_label_regions,
+                    weight_type="linear",
+                    per_class=False,
+                ),
+                "train/mean_dice": GeneralizedDiceScore(
+                    multilabel=self.use_label_regions,
+                    num_classes=self.num_classes,
+                    include_background=self.num_classes == 1 or self.use_label_regions,
+                    weight_type="linear",
+                    average=True,
+                ),
+                "train/dice": GeneralizedDiceScore(
+                    multilabel=self.use_label_regions,
+                    num_classes=self.num_classes,
+                    include_background=self.num_classes == 1 or self.use_label_regions,
+                    weight_type="linear",
+                    per_class=True,
+                ),
+            },
+        )
 
-        if self.task_type == "segmentation":
-            self.train_metrics = MetricCollection(
-                {
-                    "train/aggregated_dice": GeneralizedDiceScore(
-                        multilabel=self.use_label_regions,
-                        num_classes=self.num_classes,
-                        include_background=self.num_classes == 1 or self.use_label_regions,
-                        weight_type="linear",
-                        per_class=False,
-                    ),
-                    "train/mean_dice": GeneralizedDiceScore(
-                        multilabel=self.use_label_regions,
-                        num_classes=self.num_classes,
-                        include_background=self.num_classes == 1 or self.use_label_regions,
-                        weight_type="linear",
-                        average=True,
-                    ),
-                    "train/dice": GeneralizedDiceScore(
-                        multilabel=self.use_label_regions,
-                        num_classes=self.num_classes,
-                        include_background=self.num_classes == 1 or self.use_label_regions,
-                        weight_type="linear",
-                        per_class=True,
-                    ),
-                },
-            )
-
-            self.val_metrics = MetricCollection(
-                {
-                    "val/aggregated_dice": GeneralizedDiceScore(
-                        multilabel=self.use_label_regions,
-                        num_classes=self.num_classes,
-                        include_background=self.num_classes == 1 or self.use_label_regions,
-                        weight_type="linear",
-                        per_class=False,
-                    ),
-                    "val/mean_dice": GeneralizedDiceScore(
-                        multilabel=self.use_label_regions,
-                        num_classes=self.num_classes,
-                        include_background=self.num_classes == 1 or self.use_label_regions,
-                        weight_type="linear",
-                        average=True,
-                    ),
-                    "val/dice": GeneralizedDiceScore(
-                        multilabel=self.use_label_regions,
-                        num_classes=self.num_classes,
-                        include_background=self.num_classes == 1 or self.use_label_regions,
-                        weight_type="linear",
-                        per_class=True,
-                    ),
-                },
-            )
-
-        if self.task_type == "self-supervised":
-            self.train_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
-            self.val_metrics = MetricCollection({"train/MAE": MeanAbsoluteError()})
+        self.val_metrics = MetricCollection(
+            {
+                "val/aggregated_dice": GeneralizedDiceScore(
+                    multilabel=self.use_label_regions,
+                    num_classes=self.num_classes,
+                    include_background=self.num_classes == 1 or self.use_label_regions,
+                    weight_type="linear",
+                    per_class=False,
+                ),
+                "val/mean_dice": GeneralizedDiceScore(
+                    multilabel=self.use_label_regions,
+                    num_classes=self.num_classes,
+                    include_background=self.num_classes == 1 or self.use_label_regions,
+                    weight_type="linear",
+                    average=True,
+                ),
+                "val/dice": GeneralizedDiceScore(
+                    multilabel=self.use_label_regions,
+                    num_classes=self.num_classes,
+                    include_background=self.num_classes == 1 or self.use_label_regions,
+                    weight_type="linear",
+                    per_class=True,
+                ),
+            },
+        )
 
     def on_fit_start(self):
         if self.log_image_every_n_epochs is None:
@@ -221,7 +200,6 @@ class YuccaLightningModule(BaseLightningModule):
                     "file_path": file_path,
                 },
                 log_key="train",
-                task_type=self.task_type,
             )
 
         return loss
@@ -249,7 +227,6 @@ class YuccaLightningModule(BaseLightningModule):
                     "file_path": file_path,
                 },
                 log_key="val",
-                task_type=self.task_type,
             )
 
     def configure_optimizers(self):
@@ -281,16 +258,15 @@ class YuccaLightningModule(BaseLightningModule):
         # Finally return the optimizer and scheduler - the loss is not returned.
         return {"optimizer": self.optim, "lr_scheduler": self.lr_scheduler}
 
-    def _log_dict_of_images_to_wandb(self, imagedict: {}, log_key: str, task_type: str = "segmentation"):
+    def _log_dict_of_images_to_wandb(self, imagedict: {}, log_key: str):
         batch_idx = np.random.randint(0, imagedict["input"].shape[0])
         case = os.path.splitext(os.path.split(imagedict["file_path"][batch_idx])[-1])[0]
 
-        fig = get_train_fig_with_inp_out_tar(
+        fig = self.get_train_fig_fn(
             input=imagedict["input"][batch_idx],
             output=imagedict["output"][batch_idx],
             target=imagedict["target"][batch_idx],
             fig_title=case,
-            task_type=task_type,
         )
         wandb.log({log_key: wandb.Image(fig)}, commit=False)
         plt.close(fig)
@@ -321,7 +297,6 @@ if __name__ == "__main__":
             "patch_size": (32, 32, 32),
             "plans_path": "",
             "patch_based_training": True,
-            "task_type": "segmentation",
         },
     )
     data = torch.randn((2, 1, *(32, 32, 32)))

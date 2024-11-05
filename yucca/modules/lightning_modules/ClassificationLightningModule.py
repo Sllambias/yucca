@@ -15,6 +15,8 @@ from yucca.functional.utils.torch_utils import measure_FLOPs
 from fvcore.nn import flop_count_table
 from yucca.modules.optimization.loss_functions.nnUNet_losses import DiceCE
 
+from yucca.functional.visualization import get_cls_train_fig_with_inp_out_tar
+
 
 class ClassificationLightningModule(YuccaLightningModule):
     """
@@ -70,6 +72,7 @@ class ClassificationLightningModule(YuccaLightningModule):
 
         self.config = config
         self.log_image_every_n_epochs = log_image_every_n_epochs
+        self.get_train_fig_fn = get_cls_train_fig_with_inp_out_tar
         self.save_hyperparameters(ignore=["model", "loss_fn", "lr_scheduler", "optimizer", "preprocessor"])
 
     def setup(self, stage):  # noqa: U100
@@ -88,24 +91,23 @@ class ClassificationLightningModule(YuccaLightningModule):
         self.visualize_model_with_FLOPs()
 
     def configure_metrics(self):
-        tmetrics_task = "multiclass" if self.num_classes > 2 else "binary"
+        tmetrics_task = "multiclass"  # if self.num_classes > 2 else "binary"
         self.train_metrics = MetricCollection(
             {
                 "train/acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
-                "train/roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
+                # "train/roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
             }
         )
         self.val_metrics = MetricCollection(
             {
                 "val/acc": Accuracy(task=tmetrics_task, num_classes=self.num_classes),
-                "val/roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
+                # "val/roc_auc": AUROC(task=tmetrics_task, num_classes=self.num_classes),
             }
         )
 
     def training_step(self, batch, batch_idx):
         inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
         output = self(inputs)
-        print("O", output, "T", target)
         loss = self.loss_fn_train(output, target)
 
         if self.deep_supervision:
@@ -132,7 +134,6 @@ class ClassificationLightningModule(YuccaLightningModule):
                     "file_path": file_path,
                 },
                 log_key="train",
-                task_type="classification",
             )
 
         return loss
@@ -140,7 +141,6 @@ class ClassificationLightningModule(YuccaLightningModule):
     def validation_step(self, batch, batch_idx):
         inputs, target, file_path = batch["image"], batch["label"], batch["file_path"]
         output = self(inputs)
-        print("O", output, "T", target)
 
         loss = self.loss_fn_val(output, target)
 
@@ -162,5 +162,4 @@ class ClassificationLightningModule(YuccaLightningModule):
                     "file_path": file_path,
                 },
                 log_key="val",
-                task_type="classification",
             )

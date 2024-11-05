@@ -18,3 +18,25 @@ class ClassificationV2_192x256x256(YuccaPlannerV2):
     def determine_target_size_from_fixed_size_or_spacing(self):
         self.fixed_target_size = (192, 256, 256)
         self.fixed_target_spacing = None
+
+
+class ClassificationV2_128x128x128(YuccaPlannerV2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name = str(self.__class__.__name__)
+        self.preprocessor = "ClassificationPreprocessor"
+
+    def determine_target_size_from_fixed_size_or_spacing(self):
+        self.fixed_target_size = (128, 128, 128)
+        self.fixed_target_spacing = None
+
+
+class ClassificationV2_192x192x192(YuccaPlannerV2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name = str(self.__class__.__name__)
+        self.preprocessor = "ClassificationPreprocessor"
+
+    def determine_target_size_from_fixed_size_or_spacing(self):
+        self.fixed_target_size = (192, 192, 192)
+        self.fixed_target_spacing = None
