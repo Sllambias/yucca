@@ -9,7 +9,6 @@ from torchmetrics.regression import MeanAbsoluteError
 from yucca.modules.optimization.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.functional.utils.kwargs import filter_kwargs
 from yucca.modules.metrics.training_metrics import Accuracy, AUROC, GeneralizedDiceScore
-from yucca.functional.visualization import get_train_fig_with_inp_out_tar
 from yucca.modules.lightning_modules.YuccaLightningModule import YuccaLightningModule
 from yucca.functional.utils.torch_utils import measure_FLOPs
 from fvcore.nn import flop_count_table
