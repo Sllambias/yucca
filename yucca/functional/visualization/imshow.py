@@ -53,9 +53,9 @@ def get_cls_train_fig_with_inp_out_tar(input, output, target, fig_title):
     output = output.argmax(0)
 
     fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(5, 5), dpi=100, constrained_layout=True)
-    axes[0].imshow(image, cmap="gray", vmin=np.quantile(image, 0.01), vmax=np.quantile(image, 0.99))
-    axes[0].set_title("input")
-    fig.suptitle(f"{fig_title}. Target: {target} | Output: {output}", fontsize=16)
+    axes.imshow(image, cmap="gray", vmin=np.quantile(image, 0.01), vmax=np.quantile(image, 0.99))
+    axes.set_title(f"Input: {fig_title}", fontsize=12)
+    fig.suptitle(f"Target: {target} | Output: {output}", fontsize=12)
     return fig
 
 

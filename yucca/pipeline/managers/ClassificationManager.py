@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from yucca.pipeline.managers.YuccaManagerV2 import YuccaManagerV2
-from yucca.modules.data.augmentation.augmentation_presets import no_aug
+from yucca.modules.data.augmentation.augmentation_presets import genericV2
 from yucca.modules.lightning_modules.ClassificationLightningModule import ClassificationLightningModule
 from yucca.modules.data.datasets.ClassificationDataset import ClassificationDataset
 from yucca.modules.optimization.loss_functions.CE import CE
@@ -10,7 +10,8 @@ from yucca.modules.optimization.loss_functions.CE import CE
 class ClassificationManager(YuccaManagerV2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.augmentation_params = no_aug
+        self.augmentation_params = genericV2
+        self.augmentation_params["skip_label"] = True
         self.model_name = "ResNet50_3D"
         self.loss = CE
         self.lightning_module = ClassificationLightningModule
