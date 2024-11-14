@@ -1,4 +1,3 @@
-# %%
 import numpy as np
 import torch
 import os
@@ -38,7 +37,6 @@ class ClassificationDataset(YuccaTrainDataset):
         # remove extension if file splits include extensions
         case, _ = os.path.splitext(self.all_cases[idx])
         data = self.load_and_maybe_keep_volume(case)
-        print(data[0].base)
         metadata = self.load_and_maybe_keep_pickle(case)
 
         if self.allow_missing_modalities:
@@ -74,9 +72,8 @@ class ClassificationDataset(YuccaTrainDataset):
         return images, label
 
 
-# if __name__ == "__main__":
-from batchgenerators.utilities.file_and_folder_operations import subfiles
+if __name__ == "__main__":
+    from batchgenerators.utilities.file_and_folder_operations import subfiles
 
-files = subfiles("/home/zcr545/yuccadata/yucca_preprocessed/Task503_ADNI300_MRI/ClassificationV2_112x224x224")
-data = ClassificationDataset(files, patch_size=(12, 12, 12))
-# %%
+    files = subfiles("/home/zcr545/yuccadata/yucca_preprocessed/Task503_ADNI300_MRI/ClassificationV2_112x224x224")
+    data = ClassificationDataset(files, patch_size=(12, 12, 12))
