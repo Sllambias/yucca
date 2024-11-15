@@ -1,6 +1,6 @@
 [project]
 name = "yucca"
-version = "2.2.2"
+version = "2.2.3"
 authors = [
   { name="Sebastian Llambias", email="llambias@live.com" },
   { name="Asbjørn Munk", email="9844416+asbjrnmunk@users.noreply.github.com" },
@@ -61,6 +61,9 @@ yucca_ensemble = 'yucca.pipeline.run.run_ensemble:main'
 [project.urls]
 "Homepage" = "https://github.com/sllambias/yucca"
 "Bug Tracker" = "https://github.com/sllambias/yucca/issues"
+
+[project.entry-points.pyinstaller40]
+hook-dirs = 'yucca:_pyinstaller_hooks_dir'
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
