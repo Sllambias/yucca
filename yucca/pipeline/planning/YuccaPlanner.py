@@ -323,3 +323,4 @@ class YuccaPlanner_224x224_MinMax(YuccaPlanner):
     def determine_target_size_from_fixed_size_or_spacing(self):
         self.fixed_target_size = (224, 224)
         self.fixed_target_spacing = None
+

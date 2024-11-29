@@ -182,6 +182,8 @@ def process(subject: str, background_pixel_value: int = 0):
             mask = label > 0
             image_msk = image[mask]
         else:
+            if np.max(image) <= background_pixel_value:
+                background_pixel_value = np.min(image)
             image_msk = image[image > background_pixel_value]
 
         mean = np.mean(image_msk)

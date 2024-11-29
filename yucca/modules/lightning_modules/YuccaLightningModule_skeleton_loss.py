@@ -47,7 +47,6 @@ class YuccaLightningModule_skeleton_loss(YuccaLightningModule):
                     "file_path": file_path,
                 },
                 log_key="train",
-                task_type=self.task_type,
             )
 
         return loss
@@ -76,5 +75,4 @@ class YuccaLightningModule_skeleton_loss(YuccaLightningModule):
                     "file_path": file_path,
                 },
                 log_key="val",
-                task_type=self.task_type,
             )

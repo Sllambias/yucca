@@ -99,7 +99,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
             image, label = self.unpack(data, supervised=self.supervised)
 
         data_dict = {"file_path": case}  # metadata that can be very useful for debugging.
-        if self.task_type in ["classification", "segmentation"]:
+        if self.task_type == "segmentation":
             data_dict.update({"image": image, "label": label})
         elif self.task_type == "self-supervised":
             data_dict.update({"image": image})
@@ -153,12 +153,14 @@ class YuccaTestDataset(torch.utils.data.Dataset):
         pred_save_dir: str,
         overwrite_predictions: bool = False,
         suffix="nii.gz",
+        prediction_suffix="nii.gz",
         pred_include_cases: list = None,
     ):
         self.data_path = raw_data_dir
         self.pred_save_dir = pred_save_dir
         self.overwrite = overwrite_predictions
         self.suffix = suffix
+        self.prediction_suffix = prediction_suffix
         self.pred_include_cases = pred_include_cases
         self.unique_cases = np.unique(
             [i[: -len("_000." + suffix)] for i in subfiles(self.data_path, suffix=self.suffix, join=False)]
@@ -166,7 +168,10 @@ class YuccaTestDataset(torch.utils.data.Dataset):
         assert len(self.unique_cases) > 0, f"No cases found in {self.data_path}. Looking for files with suffix: {self.suffix}"
 
         self.cases_already_predicted = np.unique(
-            [i[: -len("." + suffix)] for i in subfiles(self.pred_save_dir, suffix=self.suffix, join=False)]
+            [
+                i[: -len("." + self.prediction_suffix)]
+                for i in subfiles(self.pred_save_dir, suffix=self.prediction_suffix, join=False)
+            ]
         )
         logging.info(f"Found {len(self.cases_already_predicted)} already predicted cases. Overwrite: {self.overwrite}")
         if not self.overwrite:

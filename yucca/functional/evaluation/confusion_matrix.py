@@ -35,3 +35,12 @@ def torch_get_tp_fp_tn_fn(confusion_matrix, ignore_label=0):
         TN.append(tn.cpu().numpy())
         FN.append(fn.cpu().numpy())
     return TP, FP, TN, FN
+
+
+def convert_confusion_matrix_to_dict(confusion_matrix):
+    d = {}
+    for true_label, row in enumerate(confusion_matrix):
+        d[str(true_label)] = {}
+        for predicted_label, value in enumerate(row):
+            d[str(true_label)][str(predicted_label)] = value
+    return d

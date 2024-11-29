@@ -29,6 +29,7 @@ dependencies = [
     "numpy>=1.26.4",
     "pandas>=2.2.1",
     "python-dotenv==1.0.0",
+    "pytorchvideo==0.1.5",
     "scikit_image>=0.22.0",
     "scikit_learn>=1.4.1.post1",
     "seaborn>=0.13.2",

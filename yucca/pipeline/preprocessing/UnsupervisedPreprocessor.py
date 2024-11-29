@@ -11,7 +11,6 @@ class UnsupervisedPreprocessor(YuccaPreprocessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # set up for self-/unsupervised
-        self.classification = False
         self.label_exists = False
         self.preprocess_label = False
 

@@ -4,5 +4,6 @@ from .TinyUNet import TinyUNet
 from .UNet import UNet
 from .UNetR import UNetR
 from .UXNet import UXNet
+from .YuccaNet import YuccaNet
 
 networks = [MedNeXt, MultiResUNet, TinyUNet, UNet, UNetR, UXNet]

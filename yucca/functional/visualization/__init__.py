@@ -1,1 +1,3 @@
-from yucca.functional.visualization.imshow import get_train_fig_with_inp_out_tar
+from yucca.functional.visualization.imshow import get_segm_train_fig_with_inp_out_tar
+from yucca.functional.visualization.imshow import get_cls_train_fig_with_inp_out_tar
+from yucca.functional.visualization.imshow import get_ssl_train_fig_with_inp_out_tar

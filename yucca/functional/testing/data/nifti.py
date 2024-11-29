@@ -1,6 +1,7 @@
 import nibabel as nib
 import numpy as np
 import nibabel.orientations as nio
+import logging
 from yucca.functional.utils.nib_utils import get_nib_orientation, get_nib_spacing
 
 
@@ -48,4 +49,5 @@ def verify_orientation_is_LR_PA_IS(image: nib.Nifti1Image):
     if np.all(nio.axcodes2ornt(orientation)[:, 0] == expected_orientation_code):
         return True
     else:
+        logging.info(f"Found orientation {orientation}")
         return False
