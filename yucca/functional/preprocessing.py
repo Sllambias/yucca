@@ -402,6 +402,7 @@ def preprocess_case_for_inference(
     target_size,
     target_spacing,
     target_orientation,
+    background_pixel_value: int = 0,
     allow_missing_modalities: bool = False,
     ext=".nii.gz",
     keep_aspect_ratio: bool = True,
@@ -425,7 +426,9 @@ def preprocess_case_for_inference(
     image_properties["uncropped_shape"] = np.array(images[0].shape)
 
     if crop_to_nonzero:
-        nonzero_box = get_bbox_for_foreground(images[0], background_label=0)
+        if np.max(images[0]) <= background_pixel_value:
+            background_pixel_value = np.min(images[0])
+        nonzero_box = get_bbox_for_foreground(images[0], background_label=background_pixel_value)
         for i in range(len(images)):
             images[i] = crop_to_box(images[i], nonzero_box)
         image_properties["nonzero_box"] = nonzero_box

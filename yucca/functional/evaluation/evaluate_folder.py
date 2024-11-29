@@ -1,4 +1,5 @@
 import sys
+import os
 import numpy as np
 import nibabel as nib
 import logging
@@ -257,9 +258,6 @@ def evaluate_folder_cls(
     prediction_probs = []
     ground_truths = []
 
-    # Flag to check if we have prediction probabilities to calculate AUROC
-    use_probs = False
-
     # load predictions and ground truths
     for case in tqdm(subjects, desc="Evaluating"):
         predpath = join(folder_with_predictions, case)
@@ -268,15 +266,9 @@ def evaluate_folder_cls(
         pred: int = np.loadtxt(predpath)
         gt: int = np.loadtxt(gtpath)
 
-        try:
-            if len(prediction_probs) == 0:
-                print("Prediction probabilities found. Will use them for evaluation.")
-                use_probs = True
-
+        if os.path.isfile(predpath.replace(".txt", ".npz")):
             pred_probs = np.load(predpath.replace(".txt", ".npz"))["data"]  # contains output probabilities
             prediction_probs.append(pred_probs)
-        except FileNotFoundError:
-            pred_probs = None
 
         predictions.append(pred)
         ground_truths.append(gt)
@@ -303,7 +295,7 @@ def evaluate_folder_cls(
         resultdict["per_class"][str(label)] = labeldict
 
     # calculate AUROC
-    if use_probs:
+    if len(prediction_probs) > 0:
         auroc_per_class: list[float] = auroc(ground_truths, prediction_probs)
         for label, score in zip(labels, auroc_per_class):
             resultdict["per_class"][str(label)]["AUROC"] = round(score, 4)

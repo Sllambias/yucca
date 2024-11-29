@@ -24,3 +24,20 @@ class Classification_PsyBrain(YuccaPlannerV2):
     def determine_transpose(self):
         self.transpose_fw = [0, 1, 2]
         self.transpose_bw = [0, 1, 2]
+
+
+class Classification_PsyBrain128(YuccaPlannerV2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name = str(self.__class__.__name__)
+        self.preprocessor = "ClassificationPreprocessor"
+        self.keep_aspect_ratio_when_using_target_size = False
+        self.crop_to_nonzero = False
+
+    def determine_target_size_from_fixed_size_or_spacing(self):
+        self.fixed_target_size = (128, 128, 128)
+        self.fixed_target_spacing = None
+
+    def determine_transpose(self):
+        self.transpose_fw = [0, 1, 2]
+        self.transpose_bw = [0, 1, 2]

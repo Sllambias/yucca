@@ -6,10 +6,10 @@ from typing import Union, Literal, Optional
 from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle, isfile
 from yucca.modules.data.augmentation.transforms.cropping_and_padding import CropPad
 from yucca.modules.data.augmentation.transforms.formatting import NumpyToTorch
-from yucca.modules.data.datasets.YuccaDataset import YuccaTrainDataset
+from yucca.modules.data.datasets.YuccaDataset import YuccaTrainDataset, YuccaTestDataset
 
 
-class ClassificationDataset(YuccaTrainDataset):
+class ClassificationTrainDataset(YuccaTrainDataset):
     def __init__(
         self,
         samples: list,
@@ -70,6 +70,26 @@ class ClassificationDataset(YuccaTrainDataset):
         label = data[-1:][0]
 
         return images, label
+
+
+class ClassificationTestDataset(YuccaTestDataset):
+    def __init__(
+        self,
+        raw_data_dir: str,
+        pred_save_dir: str,
+        overwrite_predictions: bool = False,
+        suffix="nii.gz",
+        prediction_suffix=None,
+        pred_include_cases: list = None,
+    ):
+        super().__init__(
+            raw_data_dir=raw_data_dir,
+            pred_save_dir=pred_save_dir,
+            overwrite_predictions=overwrite_predictions,
+            suffix=suffix,
+            prediction_suffix="txt",
+            pred_include_cases=pred_include_cases,
+        )
 
 
 if __name__ == "__main__":

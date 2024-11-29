@@ -16,6 +16,8 @@ class BasicBlock(nn.Module):
         base_width: int = 64,
         dilation: int = 1,
         conv_op=nn.Conv2d,
+        dropout_op: Optional[nn.Module] = None,
+        dropout_kwargs={"p": 0.25},
         norm_op=nn.BatchNorm2d,
         nonlin=nn.LeakyReLU,
         nonlin_kwargs={"inplace": True},
@@ -35,6 +37,10 @@ class BasicBlock(nn.Module):
         self.conv2 = conv_k3(conv_op=conv_op, in_planes=planes, out_planes=planes, stride=1, groups=1, dilation=1)
         self.norm2 = norm_op(planes)
         self.downsample = downsample
+        if dropout_op is not None:
+            self.dropout = dropout_op(**dropout_kwargs)
+        else:
+            self.dropout = None
 
     def forward(self, x: Tensor) -> Tensor:
         identity = x
@@ -50,6 +56,9 @@ class BasicBlock(nn.Module):
             identity = self.downsample(x)
         out += identity
         out = self.relu(out)
+
+        if self.dropout is not None:
+            out = self.dropout(out)
 
         return out
 

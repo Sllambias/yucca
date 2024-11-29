@@ -3,9 +3,10 @@ from pytorchvideo.models.resnet import create_resnet
 from torch import nn, Tensor
 import torch
 from yucca.modules.networks.blocks_and_layers.res_blocks import BasicBlock, conv_k1
+from yucca.modules.networks.networks import YuccaNet
 
 
-class ResNet(nn.Module):
+class ResNet(YuccaNet):
     def __init__(
         self,
         block: Type[BasicBlock],
@@ -16,6 +17,8 @@ class ResNet(nn.Module):
         groups: int = 1,
         width_per_group: int = 64,
         replace_stride_with_dilation: Optional[List[bool]] = None,
+        dropout_op: Optional[nn.Module] = None,
+        dropout_kwargs: Optional[dict] = None,
         conv_op=nn.Conv2d,
         norm_op=nn.BatchNorm2d,
         nonlin=nn.LeakyReLU,
@@ -46,40 +49,52 @@ class ResNet(nn.Module):
         self.layer1 = self._make_layer(
             block=block,
             blocks=layers[0],
+            dropout_op=dropout_op,
+            dropout_kwargs=dropout_kwargs,
             conv_op=conv_op,
             norm_op=norm_op,
             nonlin=nonlin,
+            nonlin_kwargs=nonlin_kwargs,
             planes=64,
         )
         self.layer2 = self._make_layer(
             block=block,
             blocks=layers[1],
             conv_op=conv_op,
+            dilate=replace_stride_with_dilation[0],
+            dropout_op=dropout_op,
+            dropout_kwargs=dropout_kwargs,
             norm_op=norm_op,
             nonlin=nonlin,
+            nonlin_kwargs=nonlin_kwargs,
             planes=128,
             stride=2,
-            dilate=replace_stride_with_dilation[0],
         )
         self.layer3 = self._make_layer(
             block=block,
             blocks=layers[2],
             conv_op=conv_op,
+            dilate=replace_stride_with_dilation[1],
+            dropout_op=dropout_op,
+            dropout_kwargs=dropout_kwargs,
             norm_op=norm_op,
             nonlin=nonlin,
+            nonlin_kwargs=nonlin_kwargs,
             planes=256,
             stride=2,
-            dilate=replace_stride_with_dilation[1],
         )
         self.layer4 = self._make_layer(
             block=block,
             blocks=layers[3],
             conv_op=conv_op,
+            dilate=replace_stride_with_dilation[2],
+            dropout_op=dropout_op,
+            dropout_kwargs=dropout_kwargs,
             norm_op=norm_op,
             nonlin=nonlin,
+            nonlin_kwargs=nonlin_kwargs,
             planes=512,
             stride=2,
-            dilate=replace_stride_with_dilation[2],
         )
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
@@ -105,8 +120,11 @@ class ResNet(nn.Module):
         block: Type[BasicBlock],
         blocks: int,
         conv_op,
+        dropout_op,
+        dropout_kwargs,
         norm_op,
         nonlin,
+        nonlin_kwargs,
         planes: int,
         stride: int = 1,
         dilate: bool = False,
@@ -121,33 +139,40 @@ class ResNet(nn.Module):
                 conv_k1(conv_op, self.inplanes, planes * block.expansion, stride),
                 norm_op(planes * block.expansion),
             )
-            print(downsample)
 
         layers = []
         layers.append(
             block(
+                base_width=self.base_width,
                 conv_op=conv_op,
+                dilation=previous_dilation,
+                downsample=downsample,
+                dropout_op=dropout_op,
+                dropout_kwargs=dropout_kwargs,
+                groups=self.groups,
                 inplanes=self.inplanes,
+                nonlin=nonlin,
+                nonlin_kwargs=nonlin_kwargs,
+                norm_op=norm_op,
                 planes=planes,
                 stride=stride,
-                downsample=downsample,
-                groups=self.groups,
-                base_width=self.base_width,
-                dilation=previous_dilation,
-                norm_op=norm_op,
             )
         )
         self.inplanes = planes * block.expansion
         for _ in range(1, blocks):
             layers.append(
                 block(
-                    conv_op=conv_op,
-                    inplanes=self.inplanes,
-                    planes=planes,
-                    groups=self.groups,
                     base_width=self.base_width,
+                    conv_op=conv_op,
                     dilation=self.dilation,
+                    dropout_op=dropout_op,
+                    dropout_kwargs=dropout_kwargs,
+                    groups=self.groups,
+                    inplanes=self.inplanes,
+                    nonlin=nonlin,
+                    nonlin_kwargs=nonlin_kwargs,
                     norm_op=norm_op,
+                    planes=planes,
                 )
             )
 
@@ -222,7 +247,14 @@ def ResNet50_Volumetric(input_channels: int, num_classes: int):
 
 
 def resnet18(
-    num_classes, in_channels, conv_op, norm_op, nonlin, nonlin_kwargs={"inplace": True}, replace_stride_with_dilation=None
+    input_channels: int,
+    num_classes: int = 1,
+    conv_op=nn.Conv3d,
+    dropout_op=None,
+    dropout_kwargs={"p": 0.25},
+    norm_op=nn.InstanceNorm3d,
+    nonlin=nn.LeakyReLU,
+    nonlin_kwargs={"inplace": True},
 ) -> ResNet:
     """ResNet-18 from `Deep Residual Learning for Image Recognition <https://arxiv.org/abs/1512.03385>`__.
 
@@ -246,13 +278,43 @@ def resnet18(
     return ResNet(
         block=BasicBlock,
         layers=[2, 2, 2, 2],
-        in_channels=in_channels,
+        in_channels=input_channels,
         num_classes=num_classes,
         zero_init_residual=False,
         groups=1,
         width_per_group=64,
-        replace_stride_with_dilation=replace_stride_with_dilation,
+        replace_stride_with_dilation=None,
         conv_op=conv_op,
+        dropout_op=dropout_op,
+        dropout_kwargs=dropout_kwargs,
+        norm_op=norm_op,
+        nonlin=nonlin,
+        nonlin_kwargs=nonlin_kwargs,
+    )
+
+
+def resnet18_dropout(
+    input_channels: int,
+    num_classes: int = 1,
+    conv_op=nn.Conv3d,
+    dropout_op=nn.Dropout3d,
+    dropout_kwargs={"p": 0.25},
+    norm_op=nn.InstanceNorm3d,
+    nonlin=nn.LeakyReLU,
+    nonlin_kwargs={"inplace": True},
+) -> ResNet:
+    return ResNet(
+        block=BasicBlock,
+        layers=[2, 2, 2, 2],
+        in_channels=input_channels,
+        num_classes=num_classes,
+        zero_init_residual=False,
+        groups=1,
+        width_per_group=64,
+        replace_stride_with_dilation=None,
+        conv_op=conv_op,
+        dropout_op=dropout_op,
+        dropout_kwargs=dropout_kwargs,
         norm_op=norm_op,
         nonlin=nonlin,
         nonlin_kwargs=nonlin_kwargs,

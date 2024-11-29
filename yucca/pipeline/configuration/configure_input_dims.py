@@ -56,12 +56,12 @@ def get_input_dims_config(
         assert plan.get("new_max_size") == plan.get(
             "new_min_size"
         ), "sizes in dataset are not uniform. Non-patch based training only works for datasets with uniform data shapes."
-        patch_size = tuple(plan.get("new_max_size"))
-        logging.info(f"Getting patch size for non-patch based training")
+        patch_size = tuple(map(int, plan.get("new_max_size")))
+        logging.info(f"Found patch size: {patch_size} for non-patch based training")
     else:
         # B.1. Try get patch from manager
         if patch_size is not None:
-            logging.info(f"Getting patch size based on manual input of: {patch_size}")
+            logging.info(f"Found patch size: {patch_size} from manual input")
             # Can be three things here: 1. a list/tuple of ints, 2. a list of one int/str or 3. just an int/str
             # First check case 1.
             if isinstance(patch_size, (list, tuple)) and len(patch_size) > 1:

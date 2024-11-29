@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+from typing import Optional
 from yucca.pipeline.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 
 
@@ -10,13 +11,13 @@ class ClassificationPreprocessor(YuccaPreprocessor):
         self.label_exists = True
         self.preprocess_label = False
 
-    def reverse_preprocessing(self, images: torch.Tensor, image_properties: dict):
+    def reverse_preprocessing(self, images: torch.Tensor, image_properties: dict, num_classes: Optional[int] = None):
         """
         Expected shape of images are:
         (b, c, x)
         """
         image_properties["save_format"] = "txt"
-        return images.cpu().numpy(), image_properties
+        return images.float().cpu().numpy(), image_properties
 
     def cast_to_numpy_array(self, images: list, label=None, classification=False):
         canvas = np.empty(2, dtype="object")
