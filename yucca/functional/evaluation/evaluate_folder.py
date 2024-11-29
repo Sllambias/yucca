@@ -12,6 +12,7 @@ from tqdm import tqdm
 from batchgenerators.utilities.file_and_folder_operations import join
 from sklearn.metrics import confusion_matrix
 from yucca.functional.evaluation.metrics import auroc
+from yucca.functional.evaluation.confusion_matrix import convert_confusion_matrix_to_dict
 
 
 def evaluate_folder_segm(
@@ -279,6 +280,8 @@ def evaluate_folder_cls(
     # calculate per-class metrics
     cmat = confusion_matrix(ground_truths, predictions, labels=labels)
 
+    cmat_dict = convert_confusion_matrix_to_dict(cmat)
+    resultdict["confusion_matrix"] = cmat_dict
     resultdict["per_class"] = {}
 
     for label in labels:

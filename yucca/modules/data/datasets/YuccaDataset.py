@@ -174,7 +174,6 @@ class YuccaTestDataset(torch.utils.data.Dataset):
             ]
         )
         logging.info(f"Found {len(self.cases_already_predicted)} already predicted cases. Overwrite: {self.overwrite}")
-        print(self.unique_cases, self.cases_already_predicted)
         if not self.overwrite:
             self.unique_cases = [i for i in self.unique_cases if i not in self.cases_already_predicted]
         if self.pred_include_cases is not None:
