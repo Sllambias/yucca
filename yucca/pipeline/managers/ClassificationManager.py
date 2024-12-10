@@ -442,3 +442,16 @@ class ClassificationManagerV15_5(ClassificationManagerV15):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.optim_kwargs["lr"] = 5e-6
+
+
+class ClassificationManagerV15_6(ClassificationManagerV15):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.optim_kwargs["lr"] = 2e-6
+
+
+class ClassificationManagerV15_7(ClassificationManagerV15):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.optim_kwargs["weight_decay"] = 9e-3
+        self.optim_kwargs["lr"] = 2e-6
