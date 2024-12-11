@@ -28,6 +28,7 @@ Our Pipeline allows users to quickly train solid baselines or change features to
 - [Preprocessing](#preprocessing)
 - [Training](#training)
 - [Inference](#inference)
+- [Referencing Yucca](#referencing)
 
 # Guides
 
@@ -159,3 +160,10 @@ An example of running inference on the test set of a task called `Task002_Lungs`
 ```
 > yucca_inference -t Task002_NotBrains -s Task001_Brains -d 2D -m UNet
 ```
+
+## Referencing
+
+When referring to this work please cite [this paper](https://arxiv.org/abs/2407.19888):
+
+Llambias, S. N., Machnio, J., Munk, A., Ambsdorf, J., Nielsen, M., & Ghazi, M. M. (2024). Yucca: A deep learning framework for medical image analysis. arXiv preprint arXiv:2407.19888.
+
