@@ -110,7 +110,6 @@ def get_loggers(
 
     loggers = [
         YuccaLogger(
-            disable_logging=not enable_logging,
             save_dir=save_dir,
             name=None,
             version=version,
