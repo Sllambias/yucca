@@ -551,3 +551,30 @@ class ClassificationManagerV31(YuccaManager):
             "simulate_lowres_p_per_axis": 0.66,
             # default augmentation values
         }
+
+
+class ClassificationManagerV31_1(ClassificationManagerV31):
+    # LR 5e-5 --> 5e-6
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.optim_kwargs["lr"] = 5e-6
+
+
+class ClassificationManagerV31_2(ClassificationManagerV31):
+    # LR 5e-5 --> 5e-6
+    # WD 5e-3 --> 8e-3
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.optim_kwargs["lr"] = 5e-6
+        self.optim_kwargs["weight_decay"] = 8e-3
+
+
+class ClassificationManagerV31_3(ClassificationManagerV31):
+    # LR 5e-5 --> 5e-6
+    # WD 5e-3 --> 8e-3
+    # Biiig Resnet
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.optim_kwargs["lr"] = 5e-6
+        self.optim_kwargs["weight_decay"] = 8e-3
+        self.model_name = "ResNet50_Volumetric"
