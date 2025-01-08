@@ -33,8 +33,9 @@ class BiasField(YuccaTransform):
         ), f"Incorrect data size or shape. \nShould be (b, c, x, y, z) or (b, c, x, y) and is:\
                 {data_dict[self.data_key].shape}"
 
-        if not isinstance(self.p_per_channel, (list, tuple)):
-            self.p_per_channel = [self.p_per_channel for _ in data_dict[self.data_key].shape[1]]
+        self.p_per_channel = self.__ensure_p_per_channel_is_iterable__(
+            self.p_per_channel, n_channels=data_dict[self.data_key].shape[1]
+        )
 
         for b in range(data_dict[self.data_key].shape[0]):
             if np.random.uniform() < self.p_per_sample:
