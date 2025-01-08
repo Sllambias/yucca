@@ -69,6 +69,7 @@ class YuccaAugmentationComposer:
         self.cval = "min"  # can be an int, float or a str in ['min', 'max']
         self.clip_to_input_range = False  # ensures no augmentations go beyond the input range of the image/patch
         self.normalize = False
+        self.interpolation_order = 3
 
         # label/segmentation transforms
         self.skip_label = False
@@ -78,17 +79,23 @@ class YuccaAugmentationComposer:
 
         # default augmentation probabilities
         self.additive_noise_p_per_sample = 0.2
+        self.additive_noise_p_per_channel = 1.0
         self.biasfield_p_per_sample = 0.33
+        self.biasfield_p_per_channel = 1
         self.blurring_p_per_sample = 0.2
         self.blurring_p_per_channel = 0.5
         self.elastic_deform_p_per_sample = 0.33
         self.gamma_p_per_sample = 0.2
+        self.gamma_p_per_channel = 1.0
         self.gamma_p_invert_image = 0.05
         self.gibbs_ringing_p_per_sample = 0.2
+        self.gibbs_ringing_p_per_channel = 1.0
         self.mirror_p_per_sample = 0.0
         self.mirror_p_per_axis = 0.33
         self.motion_ghosting_p_per_sample = 0.2
+        self.motion_ghosting_p_per_channel = 1.0
         self.multiplicative_noise_p_per_sample = 0.2
+        self.multiplicative_noise_p_per_channel = 1.0
         self.rotation_p_per_sample = 0.2
         self.rotation_p_per_axis = 0.66
         self.scale_p_per_sample = 0.2
@@ -170,6 +177,7 @@ class YuccaAugmentationComposer:
                     random_crop=self.random_crop,
                     cval=self.cval,
                     clip_to_input_range=self.clip_to_input_range,
+                    order=self.interpolation_order,
                     p_deform_per_sample=self.elastic_deform_p_per_sample,
                     deform_sigma=self.elastic_deform_sigma,
                     deform_alpha=self.elastic_deform_alpha,
@@ -184,6 +192,7 @@ class YuccaAugmentationComposer:
                 ),
                 AdditiveNoise(
                     p_per_sample=self.additive_noise_p_per_sample,
+                    p_per_channel=self.additive_noise_p_per_channel,
                     mean=self.additive_noise_mean,
                     sigma=self.additive_noise_sigma,
                     clip_to_input_range=self.clip_to_input_range,
@@ -196,12 +205,14 @@ class YuccaAugmentationComposer:
                 ),
                 MultiplicativeNoise(
                     p_per_sample=self.multiplicative_noise_p_per_sample,
+                    p_per_channel=self.multiplicative_noise_p_per_channel,
                     mean=self.multiplicative_noise_mean,
                     sigma=self.multiplicative_noise_sigma,
                     clip_to_input_range=self.clip_to_input_range,
                 ),
                 MotionGhosting(
                     p_per_sample=self.motion_ghosting_p_per_sample,
+                    p_per_channel=self.motion_ghosting_p_per_channel,
                     alpha=self.motion_ghosting_alpha,
                     num_reps=self.motion_ghosting_num_reps,
                     axes=self.motion_ghosting_axes,
@@ -209,6 +220,7 @@ class YuccaAugmentationComposer:
                 ),
                 GibbsRinging(
                     p_per_sample=self.gibbs_ringing_p_per_sample,
+                    p_per_channel=self.gibbs_ringing_p_per_channel,
                     cut_freq=self.gibbs_ringing_cut_freq,
                     axes=self.gibbs_ringing_axes,
                     clip_to_input_range=self.clip_to_input_range,
@@ -222,10 +234,12 @@ class YuccaAugmentationComposer:
                 ),
                 BiasField(
                     p_per_sample=self.biasfield_p_per_sample,
+                    p_per_channel=self.biasfield_p_per_channel,
                     clip_to_input_range=self.clip_to_input_range,
                 ),
                 Gamma(
                     p_per_sample=self.gamma_p_per_sample,
+                    p_per_channel=self.gamma_p_per_channel,
                     p_invert_image=self.gamma_p_invert_image,
                     gamma_range=self.gamma_range,
                     clip_to_input_range=self.clip_to_input_range,
@@ -282,19 +296,24 @@ class YuccaAugmentationComposer:
                 "copy_image_to_label": self.copy_image_to_label,
                 "convert_labels_to_regions": self.convert_labels_to_regions,
                 "additive_noise_p_per_sample": self.additive_noise_p_per_sample,
+                "additive_noise_p_per_channel": self.additive_noise_p_per_channel,
                 "additive_noise_mean": self.additive_noise_mean,
                 "additive_noise_sigma": self.additive_noise_sigma,
                 "biasfield_p_per_sample": self.biasfield_p_per_sample,
+                "biasfield_p_per_channel": self.biasfield_p_per_channel,
                 "blurring_p_per_sample": self.blurring_p_per_sample,
+                "blurring_p_per_channel": self.blurring_p_per_channel,
                 "blurring_sigma": self.blurring_sigma,
                 "blurring_p_per_channel": self.blurring_p_per_channel,
                 "elastic_deform_p_per_sample": self.elastic_deform_p_per_sample,
                 "elastic_deform_alpha": self.elastic_deform_alpha,
                 "elastic_deform_sigma": self.elastic_deform_sigma,
                 "gamma_p_per_sample": self.gamma_p_per_sample,
+                "gamma_p_per_channel": self.gamma_p_per_channel,
                 "gamma_p_invert_image": self.gamma_p_invert_image,
                 "gamma_range": self.gamma_range,
                 "gibbs_ringing_p_per_sample": self.gibbs_ringing_p_per_sample,
+                "gibbs_ringing_p_per_channel": self.gibbs_ringing_p_per_channel,
                 "gibbs_ringing_cut_freq": self.gibbs_ringing_cut_freq,
                 "gibbs_ringing_axes": self.gibbs_ringing_axes,
                 "mask_ratio": self.mask_ratio,
@@ -302,10 +321,12 @@ class YuccaAugmentationComposer:
                 "mirror_p_per_axis": self.mirror_p_per_axis,
                 "mirror_axes": self.mirror_axes,
                 "motion_ghosting_p_per_sample": self.motion_ghosting_p_per_sample,
+                "motion_ghosting_p_per_channel": self.motion_ghosting_p_per_channel,
                 "motion_ghosting_alpha": self.motion_ghosting_alpha,
                 "motion_ghosting_num_reps": self.motion_ghosting_num_reps,
                 "motion_ghosting_axes": self.motion_ghosting_axes,
                 "multiplicative_noise_p_per_sample": self.multiplicative_noise_p_per_sample,
+                "multiplicative_noise_p_per_channel": self.multiplicative_noise_p_per_channel,
                 "multiplicative_noise_mean": self.multiplicative_noise_mean,
                 "multiplicative_noise_sigma": self.multiplicative_noise_sigma,
                 "rotation_p_per_sample": self.rotation_p_per_sample,

@@ -4,16 +4,19 @@ import numpy as np
 
 
 class GibbsRinging(YuccaTransform):
+
     def __init__(
         self,
         data_key="image",
         p_per_sample: float = 1.0,
+        p_per_channel=1.0,
         cut_freq=(96, 129),
         axes=(0, 3),
         clip_to_input_range=False,
     ):
         self.data_key = data_key
         self.p_per_sample = p_per_sample
+        self.p_per_channel = p_per_channel
         self.cut_freq = cut_freq
         self.axes = axes
         self.clip_to_input_range = clip_to_input_range
@@ -35,9 +38,13 @@ class GibbsRinging(YuccaTransform):
         ), f"Incorrect data size or shape.\
             \nShould be (b, c, x, y, z) or (b, c, x, y) and is: {data_dict[self.data_key].shape}"
 
+        if not isinstance(self.p_per_channel, (list, tuple)):
+            self.p_per_channel = [self.p_per_channel for _ in data_dict[self.data_key].shape[1]]
+
         for b in range(data_dict[self.data_key].shape[0]):
-            for c in range(data_dict[self.data_key][b].shape[0]):
-                if np.random.uniform() < self.p_per_sample:
-                    cut_freq, axis = self.get_params(self.cut_freq, self.axes)
-                    data_dict[self.data_key][b, c] = self.__gibbsRinging__(data_dict[self.data_key][b, c], cut_freq, axis)
+            if np.random.uniform() < self.p_per_sample:
+                for c in range(data_dict[self.data_key][b].shape[0]):
+                    if np.random.uniform() < self.p_per_channel[c]:
+                        cut_freq, axis = self.get_params(self.cut_freq, self.axes)
+                        data_dict[self.data_key][b, c] = self.__gibbsRinging__(data_dict[self.data_key][b, c], cut_freq, axis)
         return data_dict

@@ -122,3 +122,16 @@ genericV2 = {
     "simulate_lowres_p_per_axis": 0.66,
     # default augmentation values
 }
+
+channel_specific_probas = {
+    "interpolation_order": [3, 0],
+    "additive_noise_p_per_channel": [1.0, 0.0],
+    "biasfield_p_per_channel": [1.0, 0.0],
+    "blurring_p_per_channel": [1.0, 0.0],
+    "gamma_p_per_channel": [0.2, 0.0],
+    "gibbs_ringing_p_per_channel": [0.0, 0.0],
+    "motion_ghosting_p_per_channel": [0.0, 0.0],
+    "multiplicative_noise_p_per_channel": [0.2, 0.0],
+    "simulate_lowres_p_per_channel": [0.5, 0],
+    # default augmentation values
+}

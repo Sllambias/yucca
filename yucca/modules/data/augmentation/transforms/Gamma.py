@@ -23,6 +23,7 @@ class Gamma(YuccaTransform):
         self,
         data_key="image",
         p_per_sample: float = 1.0,
+        p_per_channel=1.0,
         p_invert_image: float = 0.05,
         gamma_range=(0.5, 2.0),
         per_channel=True,
@@ -30,6 +31,7 @@ class Gamma(YuccaTransform):
     ):
         self.data_key = data_key
         self.p_per_sample = p_per_sample
+        self.p_per_channel = p_per_channel
         self.gamma_range = gamma_range
         self.p_invert_image = p_invert_image
         self.per_channel = per_channel
@@ -43,12 +45,13 @@ class Gamma(YuccaTransform):
             do_invert = True
         return do_invert
 
-    def __gamma__(self, image, gamma_range, invert_image, per_channel):
+    def __gamma__(self, image, gamma_range, invert_image, per_channel, p_per_channel):
         return augment_gamma(
             image,
             gamma_range,
             invert_image,
-            per_channel,
+            per_channel=per_channel,
+            p_per_channel=p_per_channel,
             clip_to_input_range=self.clip_to_input_range,
         )
 
@@ -59,6 +62,9 @@ class Gamma(YuccaTransform):
         ), f"Incorrect data size or shape.\
             \nShould be (b, c, x, y, z) or (b, c, x, y) and is: {data_dict[self.data_key].shape}"
 
+        if not isinstance(self.p_per_channel, (list, tuple)):
+            self.p_per_channel = [self.p_per_channel for _ in data_dict[self.data_key].shape[1]]
+
         for b in range(data_dict[self.data_key].shape[0]):
             if np.random.uniform() < self.p_per_sample:
                 do_invert = self.get_params(self.p_invert_image)
@@ -67,5 +73,6 @@ class Gamma(YuccaTransform):
                     self.gamma_range,
                     do_invert,
                     per_channel=self.per_channel,
+                    p_per_channel=self.p_per_channel,
                 )
         return data_dict

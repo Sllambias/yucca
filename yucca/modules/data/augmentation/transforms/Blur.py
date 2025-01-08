@@ -26,7 +26,7 @@ class Blur(YuccaTransform):
 
     def __blur__(self, image, sigma):
         for c in range(image.shape[0]):
-            if np.random.uniform() < self.p_per_channel:
+            if np.random.uniform() < self.p_per_channel[c]:
                 image[c] = blur(image[c], sigma, clip_to_input_range=self.clip_to_input_range)
         return image
 
@@ -36,6 +36,9 @@ class Blur(YuccaTransform):
             len(data_dict[self.data_key].shape) == 5 or len(data_dict[self.data_key].shape) == 4
         ), f"Incorrect data size or shape.\
             \nShould be (b, c, x, y, z) or (b, c, x, y) and is: {data_dict[self.data_key].shape}"
+
+        if not isinstance(self.p_per_channel, (list, tuple)):
+            self.p_per_channel = [self.p_per_channel for _ in data_dict[self.data_key].shape[1]]
 
         for b in range(data_dict[self.data_key].shape[0]):
             if np.random.uniform() < self.p_per_sample:

@@ -578,3 +578,17 @@ class ClassificationManagerV31_3(ClassificationManagerV31):
         self.optim_kwargs["lr"] = 5e-6
         self.optim_kwargs["weight_decay"] = 8e-3
         self.model_name = "ResNet50_Volumetric"
+
+
+class ClassificationManagerV9_5(ClassificationManagerV9):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from yucca.modules.data.augmentation.augmentation_presets import channel_specific_probas
+
+        self.augmentation_params.update(channel_specific_probas)
+
+
+class ClassificationManagerV9_6(ClassificationManagerV9):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.model_name = "ResNet50_Volumetric"

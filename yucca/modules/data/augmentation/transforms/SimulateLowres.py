@@ -44,10 +44,13 @@ class SimulateLowres(YuccaTransform):
         ), f"Incorrect data size or shape.\
             \nShould be (b, c, x, y, z) or (b, c, x, y) and is: {data_dict[self.data_key].shape}"
 
+        if not isinstance(self.p_per_channel, (list, tuple)):
+            self.p_per_channel = [self.p_per_channel for _ in data_dict[self.data_key].shape[1]]
+
         for b in range(data_dict[self.data_key].shape[0]):
             if np.random.uniform() < self.p_per_sample:
                 for c in range(data_dict[self.data_key][b].shape[0]):
-                    if np.random.uniform() < self.p_per_channel:
+                    if np.random.uniform() < self.p_per_channel[c]:
                         target_shape = self.get_params(
                             self.zoom_range,
                             data_dict[self.data_key][b, c].shape,

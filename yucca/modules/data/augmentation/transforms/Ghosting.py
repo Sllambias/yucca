@@ -5,10 +5,12 @@ from typing import Tuple
 
 
 class MotionGhosting(YuccaTransform):
+
     def __init__(
         self,
         data_key="image",
         p_per_sample: float = 1.0,
+        p_per_channel=1.0,
         alpha=(0.85, 0.95),
         num_reps=(2, 5),
         axes=(0, 3),
@@ -16,6 +18,7 @@ class MotionGhosting(YuccaTransform):
     ):
         self.data_key = data_key
         self.p_per_sample = p_per_sample
+        self.p_per_channel = p_per_channel
         self.alpha = alpha
         self.num_reps = num_reps
         self.axes = axes
@@ -41,11 +44,15 @@ class MotionGhosting(YuccaTransform):
         ), f"Incorrect data size or shape.\
             \nShould be (b, c, x, y, z) or (b, c, x, y) and is: {data_dict[self.data_key].shape}"
 
+        if not isinstance(self.p_per_channel, (list, tuple)):
+            self.p_per_channel = [self.p_per_channel for _ in data_dict[self.data_key].shape[1]]
+
         for b in range(data_dict[self.data_key].shape[0]):
-            for c in range(data_dict[self.data_key][b].shape[0]):
-                if np.random.uniform() < self.p_per_sample:
-                    alpha, num_reps, axis = self.get_params(self.alpha, self.num_reps, self.axes)
-                    data_dict[self.data_key][b, c] = self.__motionGhosting__(
-                        data_dict[self.data_key][b, c], alpha, num_reps, axis
-                    )
+            if np.random.uniform() < self.p_per_sample:
+                for c in range(data_dict[self.data_key][b].shape[0]):
+                    if np.random.uniform() < self.p_per_channel[c]:
+                        alpha, num_reps, axis = self.get_params(self.alpha, self.num_reps, self.axes)
+                        data_dict[self.data_key][b, c] = self.__motionGhosting__(
+                            data_dict[self.data_key][b, c], alpha, num_reps, axis
+                        )
         return data_dict

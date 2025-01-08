@@ -26,6 +26,7 @@ def spatial(
     scale_factor,
     clip_to_input_range,
     label: Optional[np.ndarray] = None,
+    linear_interpolation_channel=None,
     skip_label: bool = False,
     do_crop: bool = True,
     random_crop: bool = True,
@@ -39,6 +40,9 @@ def spatial(
     else:
         cval = cval
     assert isinstance(cval, (int, float)), f"got {cval} of type {type(cval)}"
+
+    if isinstance(order, (int, float)):
+        order = [order for _ in range(image.shape[1])]
 
     coords = create_zero_centered_coordinate_matrix(patch_size)
     image_canvas = np.zeros((image.shape[0], image.shape[1], *patch_size), dtype=np.float32)
@@ -92,7 +96,7 @@ def spatial(
             image_canvas[b, c] = map_coordinates(
                 image[b, c].astype(float),
                 coords,
-                order=order,
+                order=order[c],
                 mode="constant",
                 cval=cval,
             ).astype(image.dtype)
@@ -106,7 +110,7 @@ def spatial(
             dtype=np.float32,
         )
 
-        # Mapping the labelmentations to the distorted coordinates
+        # Mapping the label to the distorted coordinates
         for b in range(label.shape[0]):
             for c in range(label.shape[1]):
                 label_canvas[b, c] = map_coordinates(label[b, c], coords, order=0, mode="constant", cval=0.0).astype(

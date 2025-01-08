@@ -41,3 +41,11 @@ class Classification_PsyBrain128(YuccaPlannerV2):
     def determine_transpose(self):
         self.transpose_fw = [0, 1, 2]
         self.transpose_bw = [0, 1, 2]
+
+
+class Classification_PsyBrain128V2(Classification_PsyBrain128):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def determine_norm_op_per_modality(self):
+        self.norm_op_per_modality = ["volume_wise_znorm", "no_norm"]
