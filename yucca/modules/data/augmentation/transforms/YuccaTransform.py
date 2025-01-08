@@ -46,5 +46,5 @@ class YuccaTransform(AbstractTransform):
     @staticmethod
     def __ensure_p_per_channel_is_iterable__(p_per_channel, n_channels):
         if not isinstance(p_per_channel, (list, tuple)):
-            p_per_channel = [self.p_per_channel for _ in range(n_channels)]
+            p_per_channel = [p_per_channel for _ in range(n_channels)]
         return p_per_channel
