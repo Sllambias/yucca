@@ -245,7 +245,7 @@ def ResNet50_Volumetric(input_channels: int, num_classes: int):
         head_pool_kernel_size=(7, 7, 7),
     )
 
-    def pred(data):
+    def pred(mode, data, patch_size, overlap, sliding_window_prediction=True, mirror=False):
         return model.forward(data)
 
     model.predict = pred
