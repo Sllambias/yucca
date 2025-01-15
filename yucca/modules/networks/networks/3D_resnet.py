@@ -244,7 +244,11 @@ def ResNet50_Volumetric(input_channels: int, num_classes: int):
         stage_spatial_w_stride=(1, 1, 1, 1),
         head_pool_kernel_size=(7, 7, 7),
     )
-    model.predict = model.forward
+
+    def pred(data):
+        return model.forward(data)
+
+    model.predict = pred
     return model
 
 
