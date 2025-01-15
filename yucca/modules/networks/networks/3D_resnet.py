@@ -224,7 +224,7 @@ def ResNet50_Volumetric(input_channels: int, num_classes: int):
 
 
 def ResNet50_Volumetric(input_channels: int, num_classes: int):
-    return create_resnet(
+    model = create_resnet(
         input_channel=input_channels,
         model_depth=50,
         model_num_class=num_classes,
@@ -244,6 +244,8 @@ def ResNet50_Volumetric(input_channels: int, num_classes: int):
         stage_spatial_w_stride=(1, 1, 1, 1),
         head_pool_kernel_size=(7, 7, 7),
     )
+    model.predict = model.forward
+    return model
 
 
 def resnet18(
