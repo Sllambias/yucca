@@ -592,3 +592,17 @@ class ClassificationManagerV9_6(ClassificationManagerV9):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.model_name = "ResNet50_Volumetric"
+
+
+class ClassificationManagerV9_7(ClassificationManagerV9_5):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.optim_kwargs["lr"] = 3e-6
+        self.optim_kwargs["weight_decay"] = 1e-2
+
+
+class ClassificationManagerV9_8(ClassificationManagerV9_5):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.optim_kwargs["lr"] = 5e-6
+        self.optim_kwargs["weight_decay"] = 5e-3
