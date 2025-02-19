@@ -65,6 +65,7 @@ def generate_dataset_json(
     labels: dict,
     dataset_name: str,
     label_hierarchy: dict = {},
+    im_ext: str = None,
     regions: dict = {},
     tasks: list = [],
     license: str = "hands off!",
@@ -104,7 +105,10 @@ def generate_dataset_json(
     :return:
     """
     first_file = files_in_dir(imagesTr_dir)[0]
-    im_ext = os.path.split(first_file)[-1].split(os.extsep, 1)[-1]
+
+    if im_ext is None:
+        im_ext = os.path.split(first_file)[-1].split(os.extsep, 1)[-1]
+
     train_identifiers = get_identifiers_from_splitted_files(imagesTr_dir, im_ext, tasks)
 
     if imagesTs_dir is not None:

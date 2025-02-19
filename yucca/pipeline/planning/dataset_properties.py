@@ -53,7 +53,7 @@ def create_dataset_properties(data_dir, save_dir, suffix=".nii.gz", num_workers=
         suffix = f"_{mod_id:03}.{image_extension}"
         subjects = []
         images = subfiles(images_dir, suffix=suffix, join=False)
-
+        print(images_dir, suffix)
         for image in images:
             image_path = join(images_dir, image)
             # Remove modality encoding

@@ -201,29 +201,6 @@ def ResNet50_3D(input_channels: int, num_classes: int):
 
 
 def ResNet50_Volumetric(input_channels: int, num_classes: int):
-    return create_resnet(
-        input_channel=input_channels,
-        model_depth=50,
-        model_num_class=num_classes,
-        stem_conv_kernel_size=(7, 7, 7),
-        stem_conv_stride=(2, 2, 2),
-        stem_pool_kernel_size=(3, 3, 3),
-        stem_pool_stride=(2, 2, 2),
-        stage1_pool_kernel_size=(1, 1, 1),
-        stage_conv_a_kernel_size=((1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1)),
-        stage_conv_b_kernel_size=(
-            (3, 3, 3),
-            (3, 3, 3),
-            (3, 3, 3),
-            (3, 3, 3),
-        ),
-        stage_spatial_h_stride=(1, 1, 1, 1),
-        stage_spatial_w_stride=(1, 1, 1, 1),
-        head_pool_kernel_size=(7, 7, 7),
-    )
-
-
-def ResNet50_Volumetric(input_channels: int, num_classes: int):
     model = create_resnet(
         input_channel=input_channels,
         model_depth=50,

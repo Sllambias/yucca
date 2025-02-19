@@ -92,6 +92,46 @@ class ClassificationTestDataset(YuccaTestDataset):
         )
 
 
+class ClassificationTrainDatasetWithCovariates(ClassificationTrainDataset):
+    def __init__(
+        self,
+        samples: list,
+        patch_size: list | tuple,
+        keep_in_ram: Union[bool, None] = None,
+        label_dtype: Optional[Union[int, float]] = torch.int32,
+        task_type: str = "classification",
+        composed_transforms=None,
+        allow_missing_modalities=False,
+        p_oversample_foreground=0.33,
+    ):
+        super().__init__(
+            samples=samples,
+            patch_size=patch_size,
+            keep_in_ram=keep_in_ram,
+            label_dtype=label_dtype,
+            task_type=task_type,
+            composed_transforms=composed_transforms,
+            allow_missing_modalities=allow_missing_modalities,
+            p_oversample_foreground=p_oversample_foreground,
+        )
+
+    def __getitem__(self, idx):
+        # remove extension if file splits include extensions
+        case, _ = os.path.splitext(self.all_cases[idx])
+        data = self.load_and_maybe_keep_volume(case)
+        metadata = self.load_and_maybe_keep_pickle(case)
+
+        image, covariates, label = self.unpack(data)
+        print(covariates, label)
+        data_dict = {"file_path": case}
+        data_dict.update({"image": image, "covariates": covariates, "label": label})
+
+        return self._transform(data_dict, metadata)
+
+    def unpack(self, data):
+        return data[0], data[-2][0], data[-1][0]
+
+
 if __name__ == "__main__":
     from batchgenerators.utilities.file_and_folder_operations import subfiles
 

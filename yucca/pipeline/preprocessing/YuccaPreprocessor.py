@@ -276,7 +276,6 @@ class YuccaPreprocessor(object):
             # Check if impath is a modality of subject_id (subject_id + _XXX + .) where XXX are three digits
             if re.search(escaped_subject_id + "_" + r"\d{3}" + ".", os.path.split(impath)[-1])
         ]
-
         missing_modalities = self.sanity_check_modalities_and_return_missing(
             imagepaths=imagepaths,
             normalization_schemes=self.plans["normalization_scheme"],
@@ -467,7 +466,9 @@ class YuccaPreprocessor(object):
 
         assert len(imagepaths) > 0, "found no images"
         if not allow_missing_modalities:
-            assert not len(missing_modalities) > 0, "found missing modalities and allow_missing_modalities is not enabled."
+            assert (
+                not len(missing_modalities) > 0
+            ), f"found missing modalities and allow_missing_modalities is not enabled. Expected: {expected_modalities} and found: {found_modalities}"
         return missing_modalities
 
     def cast_to_numpy_array(self, images: list, label=None, classification=False):

@@ -49,3 +49,12 @@ class Classification_PsyBrain128V2(Classification_PsyBrain128):
 
     def determine_norm_op_per_modality(self):
         self.norm_op_per_modality = ["volume_wise_znorm", "no_norm"]
+
+
+class Classification_PsyBrain128V2Cov(Classification_PsyBrain128):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.preprocessor = "ClassificationPreprocessorWithCovariates"
+
+    def determine_norm_op_per_modality(self):
+        self.norm_op_per_modality = ["volume_wise_znorm"]
