@@ -1,19 +1,11 @@
 import torch
 import wandb
 import logging
-import numpy as np
-import os
-import matplotlib.pyplot as plt
 from torchmetrics import MetricCollection
-from torchmetrics.regression import MeanAbsoluteError
-from yucca.modules.optimization.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.functional.utils.kwargs import filter_kwargs
-from yucca.modules.metrics.training_metrics import Accuracy, AUROC, GeneralizedDiceScore
+from yucca.modules.metrics.training_metrics import Accuracy
 from yucca.modules.lightning_modules.YuccaLightningModule import YuccaLightningModule
-from yucca.functional.utils.torch_utils import measure_FLOPs
-from fvcore.nn import flop_count_table
 from yucca.modules.optimization.loss_functions.nnUNet_losses import DiceCE
-
 from yucca.functional.visualization import get_cls_train_fig_with_inp_out_tar
 
 

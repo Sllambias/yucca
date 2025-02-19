@@ -10,7 +10,7 @@ class ClassificationManagerV2(YuccaManagerV2):
         super().__init__(*args, **kwargs)
         self.augmentation_params = genericV2
         self.augmentation_params["skip_label"] = True
-        self.model_name = "ResNet50_Volumetric"
+        self.model_name = "resnet18"
         self.loss = CE
         self.lightning_module = ClassificationLightningModule
         self.model_dimensions = "3D"
@@ -24,7 +24,6 @@ class ClassificationManagerV9(ClassificationManagerV2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.augmentation_params = self.set_aug_params()
-        self.model_name = "resnet18"
         self.optim_kwargs["weight_decay"] = 5e-2
 
     def set_aug_params(self):

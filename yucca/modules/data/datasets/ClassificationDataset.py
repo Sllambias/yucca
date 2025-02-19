@@ -1,9 +1,8 @@
 import numpy as np
 import torch
 import os
-import logging
-from typing import Union, Literal, Optional
-from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle, isfile
+from typing import Union, Optional
+from batchgenerators.utilities.file_and_folder_operations import subfiles
 from yucca.modules.data.augmentation.transforms.cropping_and_padding import CropPad
 from yucca.modules.data.augmentation.transforms.formatting import NumpyToTorch
 from yucca.modules.data.datasets.YuccaDataset import YuccaTrainDataset, YuccaTestDataset
@@ -122,7 +121,6 @@ class ClassificationTrainDatasetWithCovariates(ClassificationTrainDataset):
         metadata = self.load_and_maybe_keep_pickle(case)
 
         image, covariates, label = self.unpack(data)
-        print(covariates, label)
         data_dict = {"file_path": case}
         data_dict.update({"image": image, "covariates": covariates, "label": label})
 

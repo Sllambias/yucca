@@ -96,6 +96,7 @@ class ResNet(YuccaNet):
             planes=512,
             stride=2,
         )
+
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
         for m in self.modules():
@@ -196,37 +197,64 @@ class ResNet(YuccaNet):
         return x
 
 
-def ResNet50_3D(input_channels: int, num_classes: int):
-    return create_resnet(input_channel=input_channels, model_depth=50, model_num_class=num_classes)
+class ResNet_cov(ResNet):
+    def __init__(
+        self,
+        n_covariates,
+        block: Type[BasicBlock],
+        layers: List[int],
+        in_channels,
+        num_classes: int = 1,
+        zero_init_residual: bool = False,
+        groups: int = 1,
+        width_per_group: int = 64,
+        replace_stride_with_dilation: Optional[List[bool]] = None,
+        dropout_op: Optional[nn.Module] = None,
+        dropout_kwargs: Optional[dict] = None,
+        conv_op=nn.Conv2d,
+        norm_op=nn.BatchNorm2d,
+        nonlin=nn.LeakyReLU,
+        nonlin_kwargs={"inplace": True},
+    ) -> None:
+        super().__init__(
+            block=block,
+            layers=layers,
+            in_channels=in_channels,
+            num_classes=num_classes,
+            zero_init_residual=zero_init_residual,
+            groups=groups,
+            width_per_group=width_per_group,
+            replace_stride_with_dilation=replace_stride_with_dilation,
+            dropout_op=dropout_op,
+            dropout_kwargs=dropout_kwargs,
+            conv_op=conv_op,
+            norm_op=norm_op,
+            nonlin=nonlin,
+            nonlin_kwargs=nonlin_kwargs,
+        )
 
+        self.fc1 = nn.Linear(512 * block.expansion, 100 - n_covariates)
+        self.fc2 = nn.Linear(100, num_classes)
 
-def ResNet50_Volumetric(input_channels: int, num_classes: int):
-    model = create_resnet(
-        input_channel=input_channels,
-        model_depth=50,
-        model_num_class=num_classes,
-        stem_conv_kernel_size=(7, 7, 7),
-        stem_conv_stride=(2, 2, 2),
-        stem_pool_kernel_size=(3, 3, 3),
-        stem_pool_stride=(2, 2, 2),
-        stage1_pool_kernel_size=(1, 1, 1),
-        stage_conv_a_kernel_size=((1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1)),
-        stage_conv_b_kernel_size=(
-            (3, 3, 3),
-            (3, 3, 3),
-            (3, 3, 3),
-            (3, 3, 3),
-        ),
-        stage_spatial_h_stride=(1, 1, 1, 1),
-        stage_spatial_w_stride=(1, 1, 1, 1),
-        head_pool_kernel_size=(7, 7, 7),
-    )
+    def forward(self, x: Tensor, cov: Tensor) -> Tensor:
+        print(cov)
+        x = self.conv1(x)
+        x = self.norm1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
 
-    def pred(mode, data, patch_size, overlap, sliding_window_prediction=True, mirror=False):
-        return model.forward(data)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
 
-    model.predict = pred
-    return model
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.fc1(x)
+        x = torch.concat((x, cov))
+        x = self.fc2(x)
+
+        return x
 
 
 def resnet18(
@@ -263,6 +291,54 @@ def resnet18(
         layers=[2, 2, 2, 2],
         in_channels=input_channels,
         num_classes=num_classes,
+        zero_init_residual=False,
+        groups=1,
+        width_per_group=64,
+        replace_stride_with_dilation=None,
+        conv_op=conv_op,
+        dropout_op=dropout_op,
+        dropout_kwargs=dropout_kwargs,
+        norm_op=norm_op,
+        nonlin=nonlin,
+        nonlin_kwargs=nonlin_kwargs,
+    )
+
+
+def resnet18_2cov(
+    input_channels: int,
+    num_classes: int = 1,
+    conv_op=nn.Conv3d,
+    dropout_op=None,
+    dropout_kwargs={"p": 0.25},
+    norm_op=nn.InstanceNorm3d,
+    nonlin=nn.LeakyReLU,
+    nonlin_kwargs={"inplace": True},
+) -> ResNet:
+    """ResNet-18 from `Deep Residual Learning for Image Recognition <https://arxiv.org/abs/1512.03385>`__.
+
+    Args:
+        weights (:class:`~torchvision.models.ResNet18_Weights`, optional): The
+            pretrained weights to use. See
+            :class:`~torchvision.models.ResNet18_Weights` below for
+            more details, and possible values. By default, no pre-trained
+            weights are used.
+        progress (bool, optional): If True, displays a progress bar of the
+            download to stderr. Default is True.
+        **kwargs: parameters passed to the ``torchvision.models.resnet.ResNet``
+            base class. Please refer to the `source code
+            <https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py>`_
+            for more details about this class.
+
+    .. autoclass:: torchvision.models.ResNet18_Weights
+        :members:
+    """
+
+    return ResNet_cov(
+        block=BasicBlock,
+        layers=[2, 2, 2, 2],
+        in_channels=input_channels,
+        num_classes=num_classes,
+        n_covariates=2,
         zero_init_residual=False,
         groups=1,
         width_per_group=64,
@@ -315,3 +391,7 @@ if __name__ == "__main__":
     )
     data = torch.zeros((2, 1, 64, 64, 64))
     out = net(data)
+
+# %%
+
+# %%
