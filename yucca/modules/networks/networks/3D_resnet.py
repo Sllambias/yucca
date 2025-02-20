@@ -237,7 +237,6 @@ class ResNet_cov(ResNet):
         self.fc2 = nn.Linear(100, num_classes)
 
     def forward(self, x: Tensor, cov: Tensor) -> Tensor:
-        print(cov)
         x = self.conv1(x)
         x = self.norm1(x)
         x = self.relu(x)
@@ -251,7 +250,7 @@ class ResNet_cov(ResNet):
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
         x = self.fc1(x)
-        x = torch.concat((x, cov))
+        x = torch.concat((x, cov.to(x.dtype)), dim=1)
         x = self.fc2(x)
 
         return x

@@ -127,7 +127,7 @@ class ClassificationTrainDatasetWithCovariates(ClassificationTrainDataset):
         return self._transform(data_dict, metadata)
 
     def unpack(self, data):
-        return data[0], data[-2][0], data[-1][0]
+        return data[0], data[-2], data[-1][0]
 
 
 if __name__ == "__main__":

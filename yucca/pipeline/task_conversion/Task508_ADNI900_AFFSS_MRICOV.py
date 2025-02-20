@@ -65,7 +65,7 @@ def convert(path: str = "/home/zcr545/data/data/projects/PsyBrainPrediction", su
     all_test = pd.concat([test_AD, test_CN, test_MCI])
 
     # Populate the training folders
-    for _, row in tqdm(all_train[:20].iterrows(), total=len(all_train)):
+    for _, row in tqdm(all_train.iterrows(), total=len(all_train)):
         subject = row["Subject"]
         label = row["Group"]
         age = row["Age"]
@@ -102,7 +102,7 @@ def convert(path: str = "/home/zcr545/data/data/projects/PsyBrainPrediction", su
             shutil.copy2(image_path, image_save_path)
 
     # Populate the test folders
-    for _, row in tqdm(all_test[:20].iterrows(), total=len(all_test)):
+    for _, row in tqdm(all_test.iterrows(), total=len(all_test)):
         subject = row["Subject"]
         label = row["Group"]
         age = row["Age"]
