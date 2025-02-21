@@ -926,3 +926,23 @@ class MedNeXt_decoder(nn.Module):
             x = self.out_0(x)
 
         return x
+
+
+def mednext_s3(
+    input_channels: int,
+    num_classes: int = 1,
+    conv_op=nn.Conv3d,
+    grn: bool = False,
+    deep_supervision: bool = False,
+):
+    return MedNeXt(
+        input_channels=input_channels,
+        num_classes=num_classes,
+        conv_op=conv_op,
+        kernel_size=3,
+        exp_r=2,
+        block_counts=[2, 2, 2, 2, 2, 2, 2, 2, 2],
+        grn=grn,
+        deep_supervision=deep_supervision,
+        checkpoint_style=None,
+    )
