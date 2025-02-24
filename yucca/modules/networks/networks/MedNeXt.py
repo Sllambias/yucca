@@ -946,3 +946,23 @@ def mednext_s3(
         deep_supervision=deep_supervision,
         checkpoint_style=None,
     )
+
+
+def mednext_m3(
+    input_channels: int,
+    num_classes: int = 1,
+    conv_op=nn.Conv3d,
+    grn: bool = False,
+    deep_supervision: bool = False,
+):
+    return MedNeXt(
+        input_channels=input_channels,
+        num_classes=num_classes,
+        conv_op=conv_op,
+        kernel_size=3,
+        exp_r=[2, 3, 4, 4, 4,4, 4, 3, 2],
+        block_counts=[3, 4, 4, 4, 4,4, 4, 4, 3],
+        grn=grn,
+        deep_supervision=deep_supervision,
+        checkpoint_style=None,
+    )

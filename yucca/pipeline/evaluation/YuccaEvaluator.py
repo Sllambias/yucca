@@ -38,6 +38,7 @@ class YuccaEvaluator(object):
         overwrite: bool = False,
         surface_tol: int = 1,
         task_type: Literal["segmentation", "classification", "regression"] = "segmentation",
+        extension: str = ".nii.gz",
         strict: bool = True,
     ):
         self.name = "results"
@@ -159,8 +160,8 @@ class YuccaEvaluator(object):
             self.pred_subjects = subfiles(self.folder_with_predictions, suffix=".txt", join=False)
             self.gt_subjects = subfiles(self.folder_with_ground_truth, suffix=".txt", join=False)
         else:
-            self.pred_subjects = subfiles(self.folder_with_predictions, suffix=".nii.gz", join=False)
-            self.gt_subjects = subfiles(self.folder_with_ground_truth, suffix=".nii.gz", join=False)
+            self.pred_subjects = subfiles(self.folder_with_predictions, suffix=extension, join=False)
+            self.gt_subjects = subfiles(self.folder_with_ground_truth, suffix=extension, join=False)
 
         print(
             f"\n"

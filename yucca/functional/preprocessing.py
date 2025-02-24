@@ -500,14 +500,16 @@ def reverse_preprocessing(crop_to_nonzero, images, image_properties, n_classes, 
             pad[2] : shape[1] - pad[3],
             pad[4] : shape[2] - pad[5],
         ]
+        mode = "trilinear"
     elif len(pad) == 4:
         images = images[:, :, pad[0] : shape[0] - pad[1], pad[2] : shape[1] - pad[3]]
+        mode = "bilinear"
 
     verify_shape_is_equal(reference=images.shape[2:], target=image_properties["resampled_transposed_shape"])
 
     # Here we Interpolate the array to the original size. The shape starts as [H, W (,D)]. For Torch functionality it is changed to [B, C, H, W (,D)].
     # Afterwards it's squeezed back into [H, W (,D)] and transposed to the original direction.
-    images = F.interpolate(images, size=shape_after_crop_transposed.tolist(), mode="trilinear").permute(
+    images = F.interpolate(images, size=shape_after_crop_transposed.tolist(), mode=mode).permute(
         [0, 1] + [i + 2 for i in transpose_backward]
     )
 
