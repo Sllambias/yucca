@@ -59,7 +59,7 @@ class DenseNet(nn.Module):
         self.features = nn.Sequential(
             OrderedDict(
                 [
-                    ("conv0", conv_type(input_channels, init_features, kernel_size=7, stride=2, padding=3, bias=False)),
+                    ("conv0", conv_type(in_channels, init_features, kernel_size=7, stride=2, padding=3, bias=False)),
                     ("norm0", get_norm_layer(name=norm, spatial_dims=spatial_dims, channels=init_features)),
                     ("relu0", get_act_layer(name=act)),
                     ("pool0", pool_type(kernel_size=3, stride=2, padding=1)),
@@ -72,7 +72,7 @@ class DenseNet(nn.Module):
             block = _DenseBlock(
                 spatial_dims=spatial_dims,
                 layers=num_layers,
-                input_channels=input_channels,
+                in_channels=input_channels,
                 bn_size=bn_size,
                 growth_rate=growth_rate,
                 dropout_prob=dropout_prob,
@@ -87,9 +87,7 @@ class DenseNet(nn.Module):
                 )
             else:
                 _out_channels = input_channels // 2
-                trans = _Transition(
-                    spatial_dims, input_channels=input_channels, out_channels=_out_channels, act=act, norm=norm
-                )
+                trans = _Transition(spatial_dims, in_channels=input_channels, out_channels=_out_channels, act=act, norm=norm)
                 self.features.add_module(f"transition{i + 1}", trans)
                 input_channels = _out_channels
 
