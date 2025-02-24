@@ -75,7 +75,7 @@ class ClassificationLightningModule(YuccaLightningModule):
             conv_op = torch.nn.Conv2d
             norm_op = torch.nn.BatchNorm2d
 
-        model_kwargs = {}
+        model_kwargs = {"conv_op": conv_op, "norm_op": norm_op}
         model_kwargs.update(self.model_kwargs)
         model_kwargs = filter_kwargs(self.model, model_kwargs)
         self.model = self.model(input_channels=self.num_modalities, num_classes=self.num_classes, **model_kwargs)
