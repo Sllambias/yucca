@@ -261,6 +261,25 @@ class DenseNet_cov(DenseNet):
         return x
 
 
+def densenet121_2cov(
+    conv_op,
+    in_channels: int,
+    num_classes: int,
+    init_features: int = 64,
+    growth_rate: int = 32,
+    block_config: Sequence[int] = (6, 12, 24, 16),
+):
+    return DenseNet_cov(
+        conv_op=conv_op,
+        in_channels=in_channels,
+        num_classes=num_classes,
+        n_covariates=2,
+        init_features=init_features,
+        growth_rate=growth_rate,
+        block_config=block_config,
+    )
+
+
 Densenet = DenseNet
 Densenet121 = densenet121 = DenseNet121
 Densenet169 = densenet169 = DenseNet169

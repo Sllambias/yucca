@@ -12,3 +12,12 @@ class ClassificationManagerV9_Cov(ClassificationManagerV9):
         self.lightning_module = ClassificationLightningModule_Covariates
         self.train_dataset_class = ClassificationTrainDatasetWithCovariates
         # self.test_dataset_class = ClassificationTestDatasetWithCovariates
+
+
+class ClassificationManagerV9_DenseCov(ClassificationManagerV9):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.model_name = "densenet121_2cov"
+        self.lightning_module = ClassificationLightningModule_Covariates
+        self.train_dataset_class = ClassificationTrainDatasetWithCovariates
+        # self.test_dataset_class = ClassificationTestDatasetWithCovariates
