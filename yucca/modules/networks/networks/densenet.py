@@ -18,7 +18,7 @@ class DenseNet(nn.Module):
 
     Args:
         spatial_dims: number of spatial dimensions of the input image.
-        in_channels: number of the input channel.
+        input_channels: number of the input channel.
         num_classes: number of the output classes.
         init_features: number of filters in the first convolution layer.
         growth_rate: how many filters to add each layer (k in paper).
@@ -33,7 +33,7 @@ class DenseNet(nn.Module):
     def __init__(
         self,
         conv_op: int,
-        in_channels: int,
+        input_channels: int,
         num_classes: int,
         init_features: int = 64,
         growth_rate: int = 32,
@@ -59,7 +59,7 @@ class DenseNet(nn.Module):
         self.features = nn.Sequential(
             OrderedDict(
                 [
-                    ("conv0", conv_type(in_channels, init_features, kernel_size=7, stride=2, padding=3, bias=False)),
+                    ("conv0", conv_type(input_channels, init_features, kernel_size=7, stride=2, padding=3, bias=False)),
                     ("norm0", get_norm_layer(name=norm, spatial_dims=spatial_dims, channels=init_features)),
                     ("relu0", get_act_layer(name=act)),
                     ("pool0", pool_type(kernel_size=3, stride=2, padding=1)),
@@ -67,12 +67,12 @@ class DenseNet(nn.Module):
             )
         )
 
-        in_channels = init_features
+        input_channels = init_features
         for i, num_layers in enumerate(block_config):
             block = _DenseBlock(
                 spatial_dims=spatial_dims,
                 layers=num_layers,
-                in_channels=in_channels,
+                input_channels=input_channels,
                 bn_size=bn_size,
                 growth_rate=growth_rate,
                 dropout_prob=dropout_prob,
@@ -80,17 +80,21 @@ class DenseNet(nn.Module):
                 norm=norm,
             )
             self.features.add_module(f"denseblock{i + 1}", block)
-            in_channels += num_layers * growth_rate
+            input_channels += num_layers * growth_rate
             if i == len(block_config) - 1:
-                self.features.add_module("norm5", get_norm_layer(name=norm, spatial_dims=spatial_dims, channels=in_channels))
+                self.features.add_module(
+                    "norm5", get_norm_layer(name=norm, spatial_dims=spatial_dims, channels=input_channels)
+                )
             else:
-                _out_channels = in_channels // 2
-                trans = _Transition(spatial_dims, in_channels=in_channels, out_channels=_out_channels, act=act, norm=norm)
+                _out_channels = input_channels // 2
+                trans = _Transition(
+                    spatial_dims, input_channels=input_channels, out_channels=_out_channels, act=act, norm=norm
+                )
                 self.features.add_module(f"transition{i + 1}", trans)
-                in_channels = _out_channels
+                input_channels = _out_channels
 
         # pooling and classification
-        self.fc_channels = in_channels
+        self.fc_channels = input_channels
         self.class_layers = nn.Sequential(
             OrderedDict(
                 [
@@ -122,7 +126,7 @@ class DenseNet121(DenseNet):
     def __init__(
         self,
         conv_op,
-        in_channels: int,
+        input_channels: int,
         num_classes: int,
         init_features: int = 64,
         growth_rate: int = 32,
@@ -131,7 +135,7 @@ class DenseNet121(DenseNet):
     ) -> None:
         super().__init__(
             conv_op=conv_op,
-            in_channels=in_channels,
+            input_channels=input_channels,
             num_classes=num_classes,
             init_features=init_features,
             growth_rate=growth_rate,
@@ -146,7 +150,7 @@ class DenseNet169(DenseNet):
     def __init__(
         self,
         conv_op,
-        in_channels: int,
+        input_channels: int,
         num_classes: int,
         init_features: int = 64,
         growth_rate: int = 32,
@@ -155,7 +159,7 @@ class DenseNet169(DenseNet):
     ) -> None:
         super().__init__(
             conv_op=conv_op,
-            in_channels=in_channels,
+            input_channels=input_channels,
             num_classes=num_classes,
             init_features=init_features,
             growth_rate=growth_rate,
@@ -170,7 +174,7 @@ class DenseNet201(DenseNet):
     def __init__(
         self,
         conv_op,
-        in_channels: int,
+        input_channels: int,
         num_classes: int,
         init_features: int = 64,
         growth_rate: int = 32,
@@ -179,7 +183,7 @@ class DenseNet201(DenseNet):
     ) -> None:
         super().__init__(
             conv_op=conv_op,
-            in_channels=in_channels,
+            input_channels=input_channels,
             num_classes=num_classes,
             init_features=init_features,
             growth_rate=growth_rate,
@@ -194,7 +198,7 @@ class DenseNet264(DenseNet):
     def __init__(
         self,
         spatial_dims: int,
-        in_channels: int,
+        input_channels: int,
         num_classes: int,
         init_features: int = 64,
         growth_rate: int = 32,
@@ -203,7 +207,7 @@ class DenseNet264(DenseNet):
     ) -> None:
         super().__init__(
             spatial_dims=spatial_dims,
-            in_channels=in_channels,
+            input_channels=input_channels,
             num_classes=num_classes,
             init_features=init_features,
             growth_rate=growth_rate,
@@ -216,7 +220,7 @@ class DenseNet_cov(DenseNet):
     def __init__(
         self,
         conv_op: int,
-        in_channels: int,
+        input_channels: int,
         num_classes: int,
         n_covariates: int,
         init_features: int = 64,
@@ -229,7 +233,7 @@ class DenseNet_cov(DenseNet):
     ) -> None:
         super().__init__(
             conv_op=conv_op,
-            in_channels=in_channels,
+            input_channels=input_channels,
             num_classes=num_classes,
             init_features=init_features,
             growth_rate=growth_rate,
@@ -263,7 +267,7 @@ class DenseNet_cov(DenseNet):
 
 def densenet121_2cov(
     conv_op,
-    in_channels: int,
+    input_channels: int,
     num_classes: int,
     init_features: int = 64,
     growth_rate: int = 32,
@@ -271,7 +275,7 @@ def densenet121_2cov(
 ):
     return DenseNet_cov(
         conv_op=conv_op,
-        in_channels=in_channels,
+        input_channels=input_channels,
         num_classes=num_classes,
         n_covariates=2,
         init_features=init_features,
@@ -289,6 +293,6 @@ Densenet264 = densenet264 = DenseNet264
 if __name__ == "__main__":
     im = torch.ones((2, 1, 32, 32, 32))
     cov = torch.ones(2, 3)
-    net = DenseNet_cov(conv_op=torch.nn.Conv3d, n_covariates=3, in_channels=1, num_classes=4)
+    net = DenseNet_cov(conv_op=torch.nn.Conv3d, n_covariates=3, input_channels=1, num_classes=4)
     out = net(im, cov)
     print(out)
