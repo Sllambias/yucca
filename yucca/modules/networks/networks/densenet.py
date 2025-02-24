@@ -59,7 +59,7 @@ class DenseNet(nn.Module):
         self.features = nn.Sequential(
             OrderedDict(
                 [
-                    ("conv0", conv_type(in_channels, init_features, kernel_size=7, stride=2, padding=3, bias=False)),
+                    ("conv0", conv_type(input_channels, init_features, kernel_size=7, stride=2, padding=3, bias=False)),
                     ("norm0", get_norm_layer(name=norm, spatial_dims=spatial_dims, channels=init_features)),
                     ("relu0", get_act_layer(name=act)),
                     ("pool0", pool_type(kernel_size=3, stride=2, padding=1)),
