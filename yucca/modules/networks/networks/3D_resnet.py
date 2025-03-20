@@ -2,7 +2,7 @@ from typing import Union, List, Optional, Callable, Type
 from pytorchvideo.models.resnet import create_resnet
 from torch import nn, Tensor
 import torch
-from yucca.modules.networks.blocks_and_layers.res_blocks import BasicBlock, conv_k1
+from yucca.modules.networks.blocks_and_layers.res_blocks import BasicBlock, Bottleneck, conv_k1
 from yucca.modules.networks.networks import YuccaNet
 
 
@@ -364,27 +364,37 @@ def resnet34_2cov(
     nonlin=nn.LeakyReLU,
     nonlin_kwargs={"inplace": True},
 ) -> ResNet:
-    """ResNet-18 from `Deep Residual Learning for Image Recognition <https://arxiv.org/abs/1512.03385>`__.
-
-    Args:
-        weights (:class:`~torchvision.models.ResNet18_Weights`, optional): The
-            pretrained weights to use. See
-            :class:`~torchvision.models.ResNet18_Weights` below for
-            more details, and possible values. By default, no pre-trained
-            weights are used.
-        progress (bool, optional): If True, displays a progress bar of the
-            download to stderr. Default is True.
-        **kwargs: parameters passed to the ``torchvision.models.resnet.ResNet``
-            base class. Please refer to the `source code
-            <https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py>`_
-            for more details about this class.
-
-    .. autoclass:: torchvision.models.ResNet18_Weights
-        :members:
-    """
-
     return ResNet_cov(
         block=BasicBlock,
+        layers=[3, 4, 6, 3],
+        in_channels=input_channels,
+        num_classes=num_classes,
+        n_covariates=2,
+        zero_init_residual=False,
+        groups=1,
+        width_per_group=64,
+        replace_stride_with_dilation=None,
+        conv_op=conv_op,
+        dropout_op=dropout_op,
+        dropout_kwargs=dropout_kwargs,
+        norm_op=norm_op,
+        nonlin=nonlin,
+        nonlin_kwargs=nonlin_kwargs,
+    )
+
+
+def resnet50_2cov(
+    input_channels: int,
+    num_classes: int = 1,
+    conv_op=nn.Conv3d,
+    dropout_op=None,
+    dropout_kwargs={"p": 0.25},
+    norm_op=nn.InstanceNorm3d,
+    nonlin=nn.LeakyReLU,
+    nonlin_kwargs={"inplace": True},
+) -> ResNet:
+    return ResNet_cov(
+        block=Bottleneck,
         layers=[3, 4, 6, 3],
         in_channels=input_channels,
         num_classes=num_classes,
@@ -431,17 +441,17 @@ def resnet18_dropout(
 
 
 if __name__ == "__main__":
-    net = resnet18(
+    net = resnet50_2cov(
         2,
         1,
         conv_op=nn.Conv3d,
         norm_op=nn.InstanceNorm3d,
         nonlin=nn.LeakyReLU,
-        replace_stride_with_dilation=[False, False, False],
     )
-    data = torch.zeros((2, 1, 64, 64, 64))
-    out = net(data)
-
+    data = torch.zeros((2, 2, 64, 64, 64))
+    cov = torch.zeros((2, 2))
+    out = net(data, cov)
+    print(out)
 # %%
 
 # %%

@@ -80,6 +80,65 @@ def conv_k3(conv_op, in_planes: int, out_planes: int, stride: int = 1, groups: i
     )
 
 
-# class Bottleneck:
-# To be implemented
-#
+class Bottleneck(nn.Module):
+    expansion: int = 4
+
+    def __init__(
+        self,
+        inplanes: int,
+        planes: int,
+        stride: int = 1,
+        downsample: Optional[nn.Module] = None,
+        groups: int = 1,
+        base_width: int = 64,
+        dilation: int = 1,
+        conv_op=nn.Conv2d,
+        norm_op=nn.BatchNorm2d,
+        dropout_op: Optional[nn.Module] = None,
+        dropout_kwargs={"p": 0.25},
+        nonlin=nn.LeakyReLU,
+        nonlin_kwargs={"inplace": True},
+    ) -> None:
+        super().__init__()
+        width = int(planes * (base_width / 64.0)) * groups
+        # Both self.conv2 and self.downsample layers downsample the input when stride != 1
+        self.conv1 = conv_k1(conv_op=conv_op, in_planes=inplanes, out_planes=planes)
+        self.bn1 = norm_op(width)
+        self.conv2 = conv_k3(
+            conv_op=conv_op, in_planes=width, out_planes=width, stride=stride, groups=groups, dilation=dilation
+        )
+        self.bn2 = norm_op(width)
+        self.conv3 = conv_k1(conv_op=conv_op, in_planes=width, out_planes=planes * self.expansion)
+        self.bn3 = norm_op(planes * self.expansion)
+        self.relu = nonlin(**nonlin_kwargs)
+        self.downsample = downsample
+        self.stride = stride
+        if dropout_op is not None:
+            self.dropout = dropout_op(**dropout_kwargs)
+        else:
+            self.dropout = None
+
+    def forward(self, x: Tensor) -> Tensor:
+        identity = x
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+        out = self.relu(out)
+
+        out = self.conv3(out)
+        out = self.bn3(out)
+
+        if self.downsample is not None:
+            identity = self.downsample(x)
+
+        out += identity
+        out = self.relu(out)
+
+        if self.dropout is not None:
+            out = self.dropout(out)
+
+        return out
