@@ -161,7 +161,7 @@ class ClassificationTestDatasetWithCovariates(YuccaTestDataset):
             if os.path.split(impath)[-1][: -len("_000." + self.suffix)] == case_id
         ]
         covariatepath = self.data_path.replace("imagesTs", "covariatesTs")
-        covariates = torch.tensor(np.loadtxt(os.path.join(covariatepath, case_id + "_COV.txt")))
+        covariates = torch.tensor(np.loadtxt(os.path.join(covariatepath, case_id + "_COV.txt"))).unsqueeze(0)
         return {"data_paths": image_paths, "covariates": covariates, "extension": self.suffix, "case_id": case_id}
 
 
