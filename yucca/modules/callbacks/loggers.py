@@ -74,7 +74,7 @@ class YuccaLogger(Logger):
             self.log_dir,
             "training_log.txt",
         )
-        with open(self.log_file, "w") as f:
+        with open(self.log_file, "a+") as f:
             f.write("Starting model training")
             logging.info("Starting model training \n" f'{"log file:":20} {self.log_file} \n')
             f.write("\n")

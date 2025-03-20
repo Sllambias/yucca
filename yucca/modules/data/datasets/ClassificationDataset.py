@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import os
+import re
 from typing import Union, Optional
 from batchgenerators.utilities.file_and_folder_operations import subfiles
 from yucca.modules.data.augmentation.transforms.cropping_and_padding import CropPad
@@ -128,6 +129,41 @@ class ClassificationTrainDatasetWithCovariates(ClassificationTrainDataset):
 
     def unpack(self, data):
         return data[0], data[-2], data[-1][0]
+
+
+class ClassificationTestDatasetWithCovariates(YuccaTestDataset):
+    def __init__(
+        self,
+        raw_data_dir: str,
+        pred_save_dir: str,
+        overwrite_predictions: bool = False,
+        suffix="nii.gz",
+        prediction_suffix=None,
+        pred_include_cases: list = None,
+    ):
+        super().__init__(
+            raw_data_dir=raw_data_dir,
+            pred_save_dir=pred_save_dir,
+            overwrite_predictions=overwrite_predictions,
+            suffix=suffix,
+            prediction_suffix="txt",
+            pred_include_cases=pred_include_cases,
+        )
+
+    def __getitem__(self, idx):
+        # Here we generate the paths to the cases along with their ID which they will be saved as.
+        # we pass "case" as a list of strings and case_id as a string to the dataloader which
+        # will convert them to a list of tuples of strings and a tuple of a string.
+        # i.e. ['path1', 'path2'] -> [('path1',), ('path2',)]
+        case_id = self.unique_cases[idx]
+        image_paths = [
+            impath
+            for impath in subfiles(self.data_path, suffix=self.suffix)
+            if os.path.split(impath)[-1][: -len("_000." + self.suffix)] == case_id
+        ]
+        covariatepath = self.data_path.replace("imagesTs", "covariatesTs")
+        covariates = np.loadtxt(os.path.join(covariatepath, re.escape(case_id) + "_COV.txt"))
+        return {"data_paths": image_paths, "covariates": covariates, "extension": self.suffix, "case_id": case_id}
 
 
 if __name__ == "__main__":
