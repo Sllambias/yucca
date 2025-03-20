@@ -74,7 +74,7 @@ class ClassificationLightningModule_Covariates(ClassificationLightningModule):
             )
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):  # noqa: U100
-        logits = self.model.predict(data=batch["data"], cov=batch["covariates"])
+        logits = self.model.predict(x=batch["data"], cov=batch["covariates"])
         if self.disable_inference_preprocessing:
             logits, data_properties = reverse_preprocessing(
                 crop_to_nonzero=self.crop_to_nonzero,
