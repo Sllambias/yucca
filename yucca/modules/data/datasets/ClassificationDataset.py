@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 import os
-import re
 from typing import Union, Optional
 from batchgenerators.utilities.file_and_folder_operations import subfiles
 from yucca.modules.data.augmentation.transforms.cropping_and_padding import CropPad
@@ -162,7 +161,7 @@ class ClassificationTestDatasetWithCovariates(YuccaTestDataset):
             if os.path.split(impath)[-1][: -len("_000." + self.suffix)] == case_id
         ]
         covariatepath = self.data_path.replace("imagesTs", "covariatesTs")
-        covariates = np.array(np.loadtxt(os.path.join(covariatepath, case_id + "_COV.txt")))
+        covariates = torch.tensor(np.loadtxt(os.path.join(covariatepath, case_id + "_COV.txt")))
         return {"data_paths": image_paths, "covariates": covariates, "extension": self.suffix, "case_id": case_id}
 
 
