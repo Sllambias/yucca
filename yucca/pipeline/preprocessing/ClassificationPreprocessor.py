@@ -35,12 +35,11 @@ class ClassificationPreprocessorWithCovariates(ClassificationPreprocessor):
 
     def initialize_paths(self):
         super().initialize_paths()
-        self.covariatepathsTr = os.path.join(self.input_dir, "covariatesTr")
-        self.covariatepathsTs = os.path.join(self.input_dir, "covariatesTs")
+        self.covariatepaths = os.path.join(self.input_dir, "covariatesTr")
 
     def _preprocess_train_subject(self, subject_id, label_exists: bool, preprocess_label: bool):
         images, label, image_props = super()._preprocess_train_subject(subject_id, label_exists, preprocess_label)
-        covariates = np.loadtxt(os.path.join(self.covariatepathsTr, re.escape(subject_id) + "_COV.txt"))
+        covariates = np.loadtxt(os.path.join(self.covariatepaths, re.escape(subject_id) + "_COV.txt"))
         label = np.array([covariates, label], dtype="object")
         return images, label, image_props
 
