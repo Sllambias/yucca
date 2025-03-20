@@ -255,6 +255,9 @@ class ResNet_cov(ResNet):
 
         return x
 
+    def predict(self, x: Tensor, cov: Tensor) -> Tensor:
+        return self.forward(x, cov)
+
 
 def resnet18(
     input_channels: int,

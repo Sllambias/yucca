@@ -1,4 +1,5 @@
 from yucca.modules.lightning_modules.ClassificationLightningModule import ClassificationLightningModule
+from yucca.functional.preprocessing import reverse_preprocessing
 import wandb
 import torch
 import logging
@@ -71,6 +72,23 @@ class ClassificationLightningModule_Covariates(ClassificationLightningModule):
                 },
                 log_key="val",
             )
+
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):  # noqa: U100
+        logits = self.model.predict(data=batch["data"], cov=batch["covariates"])
+        if self.disable_inference_preprocessing:
+            logits, data_properties = reverse_preprocessing(
+                crop_to_nonzero=self.crop_to_nonzero,
+                images=logits,
+                image_properties=batch["data_properties"],
+                n_classes=self.num_classes,
+                transpose_forward=self.transpose_forward,
+                transpose_backward=self.transpose_backward,
+            )
+        else:
+            logits, data_properties = self.preprocessor.reverse_preprocessing(
+                logits, batch["data_properties"], num_classes=self.num_classes
+            )
+        return {"logits": logits, "properties": data_properties, "case_id": batch["case_id"]}
 
     def visualize_model_with_FLOPs(self):
         try:
