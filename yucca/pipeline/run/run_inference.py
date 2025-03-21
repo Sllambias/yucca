@@ -154,6 +154,7 @@ def main():
         required=False,
         help="Save softmax outputs. Required for softmax fusion.",
     )
+    parser.add_argument("--ext", help="file extension e.g. '.nii.gz', '.png' or '.txt'")
 
     args = parser.parse_args()
 
@@ -190,6 +191,7 @@ def main():
     profile = args.profile
     save_softmax = args.save_softmax
     use_wandb = not args.no_wandb
+    ext = args.ext
 
     kwargs = {}
     strict = True
@@ -306,6 +308,7 @@ def main():
             task_type=task_type,
             use_wandb=use_wandb,
             strict=strict,
+            extension=ext,
         )
         evaluator.run()
 

@@ -91,6 +91,7 @@ def main():
     parser.add_argument(
         "--version", "-v", help="version number of the model. Defaults to 0.", default=0, type=int, required=False
     )
+    parser.add_argument("--ext", help="file extension e.g. '.nii.gz', '.png' or '.txt'")
     args = parser.parse_args()
 
     source_task = get_task_from_task_id(args.s, stage="raw")
@@ -107,6 +108,7 @@ def main():
     predpath = args.pred
     gtpath = args.gt
     experiment = args.experiment
+    ext = args.ext
     num_version = args.version
     task_type = args.task_type
     use_wandb = not args.no_wandb
@@ -146,6 +148,7 @@ def main():
         surface_tol=surface_tol,
         task_type=task_type,
         use_wandb=use_wandb,
+        extension=ext,
     )
     evaluator.run()
 

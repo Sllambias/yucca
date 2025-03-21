@@ -80,7 +80,7 @@ def get_checkpoint_config(
 
 
 def get_checkpoint_config_from_ckpt(ckpt_path: str):
-    checkpoint = torch.load(ckpt_path, map_location="cpu")["hyper_parameters"]["config"]
+    checkpoint = torch.load(ckpt_path, map_location="cpu", weights_only=False)["hyper_parameters"]["config"]
     base_experiment, plans, patch_size, seed, version_dir, wandb_id = get_checkpoint_params(checkpoint)
 
     return CkptConfig(

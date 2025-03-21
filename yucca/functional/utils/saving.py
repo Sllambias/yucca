@@ -31,8 +31,8 @@ def save_nifti_from_numpy(pred, outpath, properties, compression=9):
 
 
 def save_png_from_numpy(pred, outpath):
-    pred = Image.fromarray(pred)
-    pred.save(outpath)
+    pred = Image.fromarray(pred.astype(np.uint8))
+    pred.save(outpath + ".png")
     del pred
 
 
@@ -50,7 +50,7 @@ def save_prediction_from_logits(logits, outpath, properties, save_softmax=False,
     pred = np.squeeze(logits)
     if properties.get("save_format") == "png":
         save_png_from_numpy(pred, outpath)
-    if properties.get("save_format") == "txt":
+    elif properties.get("save_format") == "txt":
         save_txt_from_numpy(pred, outpath)
     else:
         save_nifti_from_numpy(pred, outpath, properties, compression=compression)

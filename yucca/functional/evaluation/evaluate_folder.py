@@ -5,6 +5,7 @@ import logging
 from typing import Optional
 from yucca.functional.transforms.label_transforms import convert_labels_to_regions, translate_region_labels
 from yucca.functional.utils.nib_utils import get_nib_spacing
+from yucca.functional.utils.loading import read_file_to_nifti_or_np
 from yucca.functional.evaluation.obj_metrics import get_obj_stats_for_label
 from yucca.functional.evaluation.surface_metrics import get_surface_metrics_for_label
 from tqdm import tqdm
@@ -189,10 +190,16 @@ def evaluate_case_segm(
     case_dict["prediction_path"] = predpath
     case_dict["ground_truth_path"] = gtpath
 
-    pred = nib.load(predpath)
-    spacing = get_nib_spacing(pred)
-    pred = pred.get_fdata()
-    gt = nib.load(gtpath).get_fdata()
+    pred = read_file_to_nifti_or_np(predpath)
+    if isinstance(pred, nib.Nifti1Image):
+        spacing = get_nib_spacing(pred)
+        pred = pred.get_fdata()
+    else:
+        spacing = [1.0] * len(pred.shape)
+
+    gt = read_file_to_nifti_or_np(gtpath)
+    if isinstance(gt, nib.Nifti1Image):
+        gt = gt.get_fdata()
 
     if as_binary:
         cmat = confusion_matrix(

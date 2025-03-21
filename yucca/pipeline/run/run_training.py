@@ -142,6 +142,7 @@ def main():
     assert model_name in [
         "MedNeXt",
         "mednext_s3",
+        "mednext_m3",
         "MultiResUNet",
         "UNet",
         "UNetR",

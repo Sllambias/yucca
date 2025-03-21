@@ -60,7 +60,7 @@ def croppad_3D_case_from_3D(
     to_pad = []
     for d in range(3):
         if image.shape[d + 1] < patch_size[d]:
-            to_pad += [(patch_size[d] - image.shape[d + 1])]
+            to_pad += [patch_size[d] - image.shape[d + 1]]
         else:
             to_pad += [0]
 
@@ -144,7 +144,7 @@ def croppad_2D_case_from_3D(
     to_pad = []
     for d in range(2):
         if image.shape[d + 2] < patch_size[d]:
-            to_pad += [(patch_size[d] - image.shape[d + 2])]
+            to_pad += [patch_size[d] - image.shape[d + 2]]
         else:
             to_pad += [0]
 
@@ -221,7 +221,7 @@ def croppad_2D_case_from_2D(
     to_pad = []
     for d in range(2):
         if image.shape[d + 1] < patch_size[d]:
-            to_pad += [(patch_size[d] - image.shape[d + 1])]
+            to_pad += [patch_size[d] - image.shape[d + 1]]
         else:
             to_pad += [0]
 

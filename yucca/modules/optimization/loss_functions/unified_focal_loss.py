@@ -1,11 +1,11 @@
 """
 Unified Focal losses from the paper:
 
-Yeung M, Sala E, Schönlieb CB, Rundo L. 
-    Unified Focal loss: Generalising Dice and cross entropy-based losses to handle class imbalanced 
-    medical image segmentation. 
-    Comput Med Imaging Graph. 2022 Jan;95:102026. 
-    doi: 10.1016/j.compmedimag.2021.102026. 
+Yeung M, Sala E, Schönlieb CB, Rundo L.
+    Unified Focal loss: Generalising Dice and cross entropy-based losses to handle class imbalanced
+    medical image segmentation.
+    Comput Med Imaging Graph. 2022 Jan;95:102026.
+    doi: 10.1016/j.compmedimag.2021.102026.
     Epub 2021 Dec 13. PMID: 34953431; PMCID: PMC8785124.
 
 Code implementation from:
