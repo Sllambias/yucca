@@ -32,7 +32,7 @@ def save_nifti_from_numpy(pred, outpath, properties, compression=9):
 
 def save_png_from_numpy(pred, outpath):
     pred = Image.fromarray(pred.astype(np.uint8))
-    pred.save(outpath+".png")
+    pred.save(outpath + ".png")
     del pred
 
 

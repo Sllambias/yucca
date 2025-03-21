@@ -10,6 +10,7 @@ if __name__ == "__main__":
     )
     from yucca.pipeline.task_conversion.utils import generate_dataset_json
     from yucca.paths import get_raw_data_path, get_preprocessed_data_path
+
     """
     FASS nnU-Net task conversion script.
     """
@@ -43,10 +44,10 @@ if __name__ == "__main__":
         case = case[: -len(file_extension)]
 
         image = Image.open(join(base, "train", "images", case + file_extension))
-        image = np.array(image)[:,:,0]
+        image = np.array(image)[:, :, 0]
         image = Image.fromarray(image)
         image.save(join(target_imagesTr, case + "_000.png"))
-        
+
         label = Image.open(join(base, "train", "annotations", case + file_extension))
         label.save(join(target_labelsTr, case + ".png"))
 
@@ -56,10 +57,10 @@ if __name__ == "__main__":
         case = case[: -len(file_extension)]
 
         image = Image.open(join(base, "val", "images", case + file_extension))
-        image = np.array(image)[:,:,0]
+        image = np.array(image)[:, :, 0]
         image = Image.fromarray(image)
         image.save(join(target_imagesTr, case + "_000.png"))
-        
+
         label = Image.open(join(base, "val", "annotations", case + file_extension))
         label.save(join(target_labelsTr, case + ".png"))
 
@@ -69,10 +70,10 @@ if __name__ == "__main__":
         case = case[: -len(file_extension)]
 
         image = Image.open(join(base, "test", "images", case + file_extension))
-        image = np.array(image)[:,:,0]
+        image = np.array(image)[:, :, 0]
         image = Image.fromarray(image)
         image.save(join(target_imagesTs, case + "_000.png"))
-        
+
         label = Image.open(join(base, "test", "annotations", case + file_extension))
         label.save(join(target_labelsTs, case + ".png"))
 
@@ -84,11 +85,11 @@ if __name__ == "__main__":
     save_json(splits, join(pp_out_dir, "splits_final.json"), sort_keys=False)
 
     labels = {
-        0:"background",
-        1:"artery",
-        2:"liver",
-        3:"stomach",
-        4:"vein",
+        0: "background",
+        1: "artery",
+        2: "liver",
+        3: "stomach",
+        4: "vein",
     }
 
     generate_dataset_json(

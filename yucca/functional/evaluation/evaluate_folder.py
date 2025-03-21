@@ -195,8 +195,8 @@ def evaluate_case_segm(
         spacing = get_nib_spacing(pred)
         pred = pred.get_fdata()
     else:
-        spacing = [1.0]*len(pred.shape)
-    
+        spacing = [1.0] * len(pred.shape)
+
     gt = read_file_to_nifti_or_np(gtpath)
     if isinstance(gt, nib.Nifti1Image):
         gt = gt.get_fdata()
