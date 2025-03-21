@@ -35,7 +35,7 @@ dependencies = [
     "SimpleITK>=2.3.1",
     "tqdm>=4.66.2",
     "timm>=0.9.8",
-    "torchmetrics>=1.4.0.post0",
+    "torchmetrics==1.4.0.post0",
     "wandb>=0.16.3",
     "weave>=0.39.0",
 ]
