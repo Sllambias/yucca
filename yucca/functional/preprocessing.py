@@ -321,7 +321,7 @@ def preprocess_case_for_training_without_label(
     crop_to_nonzero: bool = True,
     keep_aspect_ratio_when_using_target_size: bool = False,
     image_properties: Optional[dict] = {},
-    intensities: Optional[List] = [],
+    intensities: Optional[List] = None,
     target_orientation: Optional[str] = "RAS",
     target_size: Optional[List] = None,
     target_spacing: Optional[List] = None,
