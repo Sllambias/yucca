@@ -1,4 +1,3 @@
-import warnings
 from skimage import exposure
 import numpy as np
 from typing import Optional
@@ -48,18 +47,6 @@ def normalizer(array: np.ndarray, scheme: str, intensities: Optional[dict] = Non
 
     elif scheme == "volume_wise_znorm":
         empty_val = array.min()  # We assume the background is the minimum value
-        if len(array.shape) == 2:
-            if empty_val != array[0, 0]:
-                warnings.warn(
-                    "Tried to normalize an array where the top right value was not the same as the minimum value."
-                    f"empty_val: {empty_val}, top right: {array[0, 0]}"
-                )
-        else:
-            if empty_val != array[0, 0, 0]:
-                warnings.warn(
-                    "Tried to normalize an array where the top right value was not the same as the minimum value."
-                    f"empty_val: {empty_val}, top right: {array[0, 0, 0]}"
-                )
         mask = array != empty_val
         array = clamp(array, mask=mask)
         array = znormalize(array, mask=mask)
