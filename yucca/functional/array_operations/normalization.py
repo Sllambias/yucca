@@ -1,4 +1,3 @@
-import warnings
 from skimage import exposure
 import numpy as np
 from typing import Optional
