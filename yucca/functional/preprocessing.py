@@ -326,6 +326,7 @@ def preprocess_case_for_training_without_label(
     target_size: Optional[List] = None,
     target_spacing: Optional[List] = None,
     transpose: Optional[list] = [0, 1, 2],
+    strict: bool = True,
 ):
     """
     one of target_size or target_spacing is required.
@@ -337,6 +338,7 @@ def preprocess_case_for_training_without_label(
         target_orientation=target_orientation,
         label=None,
         include_header=False,
+        strict=strict,
     )
 
     original_size = images[0].shape
