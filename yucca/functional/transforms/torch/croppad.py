@@ -145,14 +145,16 @@ def croppad_3D_case_from_3D(
             crop_start_idx[1] : crop_start_idx[1] + patch_size[1],
             crop_start_idx[2] : crop_start_idx[2] + patch_size[2],
         ],
-        pad_lb_z,
-        pad_ub_z,
-        pad_lb_y,
-        pad_ub_y,
-        pad_lb_x,
-        pad_ub_x,
-        0,
-        0,
+        (
+            pad_lb_z,
+            pad_ub_z,
+            pad_lb_y,
+            pad_ub_y,
+            pad_lb_x,
+            pad_ub_x,
+            0,
+            0,
+        ),
     )
     return image_out, label_out
 
@@ -173,8 +175,8 @@ def croppad_2D_case_from_3D(
     For 3D we want to first select a slice from the first dimension, i.e. volume[idx, :, :],
     then pad or crop as necessary.
     """
-    image_out = F.pad(target_image_shape)
-    label_out = F.pad(target_label_shape)
+    image_out = torch.zeros(target_image_shape)
+    label_out = torch.zeros(target_label_shape)
 
     # First we pad to ensure min size is met
     to_pad = []
@@ -221,13 +223,15 @@ def croppad_2D_case_from_3D(
             crop_start_idx[0] : crop_start_idx[0] + patch_size[0],
             crop_start_idx[1] : crop_start_idx[1] + patch_size[1],
         ],
-        pad_lb_z,
-        pad_ub_z,
-        pad_lb_y,
-        pad_ub_y,
-        0,
-        0,
-        **pad_kwargs,
+        (
+            pad_lb_z,
+            pad_ub_z,
+            pad_lb_y,
+            pad_ub_y,
+            0,
+            0,
+        )
+        ** pad_kwargs,
     )
 
     if label is None:
@@ -240,7 +244,14 @@ def croppad_2D_case_from_3D(
             crop_start_idx[0] : crop_start_idx[0] + patch_size[0],
             crop_start_idx[1] : crop_start_idx[1] + patch_size[1],
         ],
-        ((0, 0), (pad_lb_y, pad_ub_y), (pad_lb_z, pad_ub_z)),
+        (
+            pad_lb_z,
+            pad_ub_z,
+            pad_lb_y,
+            pad_ub_y,
+            0,
+            0,
+        ),
     )
 
     return image_out, label_out
@@ -307,7 +318,14 @@ def croppad_2D_case_from_2D(
             crop_start_idx[0] : crop_start_idx[0] + patch_size[0],
             crop_start_idx[1] : crop_start_idx[1] + patch_size[1],
         ],
-        ((0, 0), (pad_lb_x, pad_ub_x), (pad_lb_y, pad_ub_y)),
+        (
+            pad_lb_y,
+            pad_ub_y,
+            pad_lb_x,
+            pad_ub_x,
+            0,
+            0,
+        ),
         **pad_kwargs,
     )
 
@@ -323,12 +341,14 @@ def croppad_2D_case_from_2D(
             crop_start_idx[0] : crop_start_idx[0] + patch_size[0],
             crop_start_idx[1] : crop_start_idx[1] + patch_size[1],
         ],
-        pad_lb_y,
-        pad_ub_y,
-        pad_lb_x,
-        pad_ub_x,
-        0,
-        0,
+        (
+            pad_lb_y,
+            pad_ub_y,
+            pad_lb_x,
+            pad_ub_x,
+            0,
+            0,
+        ),
     )
 
     return image_out, label_out
