@@ -230,8 +230,8 @@ def croppad_2D_case_from_3D(
             pad_ub_y,
             0,
             0,
-        )
-        ** pad_kwargs,
+        ),
+        **pad_kwargs,
     )
 
     if label is None:
