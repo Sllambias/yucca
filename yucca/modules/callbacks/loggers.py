@@ -37,6 +37,7 @@ class YuccaLogger(Logger):
         self.previous_epoch = 0
         self.hparams: Dict[str, Any] = {}
         self.NAME_HPARAMS_FILE = "hparams.yaml"
+        self.keys_logged_this_epoch = []
 
         if self.disable_logging is False:
             if self.log_file is None:
@@ -103,6 +104,7 @@ class YuccaLogger(Logger):
         with open(self.log_file, "a+") as f:
             current_epoch = (step + 1) // self.steps_per_epoch
             if current_epoch != self.previous_epoch:
+                self.keys_logged_this_epoch = ["epoch"]
                 epoch_end_time = time()
                 f.write("\n")
                 f.write("\n")
@@ -114,10 +116,13 @@ class YuccaLogger(Logger):
                 self.previous_epoch = current_epoch
                 self.epoch_start_time = epoch_end_time
             for key in metrics:
-                if key == "epoch":
+                if key in self.keys_logged_this_epoch:
                     continue
-                f.write(f"{t} {key+':':20} {metrics[key]} \n")
-                print(f"{t} {key+':':20} {metrics[key]}")
+                else:
+                    f.write(f"{t} {key+':':20} {metrics[key]} \n")
+                    print(f"{t} {key+':':20} {metrics[key]}")
+                    self.keys_logged_this_epoch.append(key)
+
         sys.stdout.flush()
 
     @rank_zero_only
