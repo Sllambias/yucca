@@ -19,4 +19,4 @@ def torch_multiplicative_noise(image, mean, sigma, clip_to_input_range: bool = F
     image = image + image * gauss
     if clip_to_input_range:
         image = torch.clamp(image, min=img_min, max=img_max)
-    return image 
+    return image

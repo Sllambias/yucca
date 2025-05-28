@@ -36,8 +36,8 @@ def torch_motion_ghosting(
         image = torch.abs(torch.fft.ifftn(image, dim=[0, 1]))
 
     image = image - abs(m)
-    
+
     if clip_to_input_range:
         image = torch.clamp(image, min=img_min, max=img_max)
-        
+
     return image

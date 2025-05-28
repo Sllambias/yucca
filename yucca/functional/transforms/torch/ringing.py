@@ -1,6 +1,9 @@
 import torch
 
-def torch_gibbs_ringing(image: torch.Tensor, num_sample: int, mode: str = "rect", axes: list[int] = None, clip_to_input_range: bool = False) -> torch.Tensor:
+
+def torch_gibbs_ringing(
+    image: torch.Tensor, num_sample: int, mode: str = "rect", axes: list[int] = None, clip_to_input_range: bool = False
+) -> torch.Tensor:
     assert image.ndim in [2, 3], "Only 2D or 3D images supported"
     if mode == "rect":
         assert axes is not None and all(0 <= ax < image.ndim for ax in axes), f"Invalid axes for mode 'rect'"
@@ -23,12 +26,12 @@ def torch_gibbs_ringing(image: torch.Tensor, num_sample: int, mode: str = "rect"
             slc = [slice(None)] * image.ndim
             for i in range(shape[axis]):
                 if not (c - half <= i < c + half):
-                    slc[axis] = slice(i, i+1)
+                    slc[axis] = slice(i, i + 1)
                     mask[tuple(slc)] = False
         kspace[~mask] = 0
     elif mode == "radial":
         coords = torch.meshgrid([torch.arange(s, device=image.device) - c for s, c in zip(shape, center)], indexing="ij")
-        dist = torch.sqrt(sum((g.float()**2 for g in coords)))
+        dist = torch.sqrt(sum((g.float() ** 2 for g in coords)))
         mask = dist <= num_sample
         kspace[~mask] = 0
     else:

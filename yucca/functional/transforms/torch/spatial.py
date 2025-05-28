@@ -4,7 +4,10 @@ from typing import Optional, Union
 from yucca.functional.array_operations.matrix_ops import (
     create_zero_centered_coordinate_matrix,
     deform_coordinate_matrix,
-    Rx, Ry, Rz, Rz2D,
+    Rx,
+    Ry,
+    Rz,
+    Rz2D,
 )
 
 
@@ -26,7 +29,7 @@ def torch_spatial(
     skip_label: bool = False,
     do_crop: bool = True,
     random_crop: bool = True,
-    interpolation_mode: str = "bilinear",  # was: order
+    interpolation_mode: str = "bilinear",
     cval: Optional[Union[str, float]] = "min",
     seed: Optional[int] = None,
 ):
@@ -98,10 +101,7 @@ def torch_spatial(
     if random_crop and do_crop:
         for d in range(ndim):
             crop_center = torch.randint(
-                low=patch_size[d] // 2,
-                high=image.shape[d + 2] - patch_size[d] // 2 + 1,
-                size=(1,),
-                device=device
+                low=patch_size[d] // 2, high=image.shape[d + 2] - patch_size[d] // 2 + 1, size=(1,), device=device
             )
             coords[d] += crop_center
     else:
@@ -120,24 +120,15 @@ def torch_spatial(
     if interpolation_mode not in {"bilinear", "nearest"}:
         raise ValueError("interpolation_mode must be 'bilinear' or 'nearest'")
 
-    image_canvas = F.grid_sample(
-        image,
-        grid,
-        mode=interpolation_mode,
-        padding_mode='zeros',
-        align_corners=True
-    )
+    image_canvas = F.grid_sample(image, grid, mode=interpolation_mode, padding_mode="zeros", align_corners=True)
 
     if clip_to_input_range:
         image_canvas = torch.clamp(image_canvas, min=img_min, max=img_max)
 
     if label is not None and not skip_label:
-        label_canvas = F.grid_sample(
-            label,
-            grid,
-            mode='nearest',
-            padding_mode='zeros',
-            align_corners=True
+        dtype = label.dtype
+        label_canvas = F.grid_sample(label.to(torch.float), grid, mode="nearest", padding_mode="zeros", align_corners=True).to(
+            dtype
         )
 
     def restore_shape(t: torch.Tensor, original_ndim: int) -> torch.Tensor:

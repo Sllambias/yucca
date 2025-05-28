@@ -2,13 +2,13 @@ import torch
 import torchvision.transforms.functional as TF
 
 
-def torch_blur(image: torch.tensor, input_dims: torch.tensor, sigma: float, clip_to_input_range: bool = True) -> torch.tensor:
+def torch_blur(image: torch.tensor, sigma: float, clip_to_input_range: bool = True) -> torch.tensor:
     img_min = image.min()
     img_max = image.max()
 
-    if input_dims == 2:
+    if image.ndim == 2:
         image = blur_2D(image, sigma)
-    elif input_dims == 3:
+    elif image.ndim == 3:
         image = blur_3D(image, sigma)
     else:
         raise ValueError(f"Unsupported image shape for blur: {image.shape}")
@@ -49,7 +49,7 @@ def blur_3D(image: torch.Tensor, sigma: float) -> torch.Tensor:
 
         shape = volume.shape
         volume = volume.view(-1, 1, shape[-1])
-        volume = torch.nn.functional.conv1d(volume, kernel, padding=kernel.shape[-1] // 2)
+        volume = torch.nn.functional.conv1d(volume, kernel.to(volume.device), padding=kernel.shape[-1] // 2)
         volume = volume.view(shape)
         volume = volume.permute(permute_order).contiguous()
 
