@@ -230,8 +230,8 @@ def croppad_2D_case_from_3D(
             pad_ub_y,
             0,
             0,
-        )
-        ** pad_kwargs,
+        ),
+        **pad_kwargs,
     )
 
     if label is None:
@@ -273,8 +273,8 @@ def croppad_2D_case_from_2D(
     For 3D we want to first select a slice from the first dimension, i.e. volume[idx, :, :],
     then pad or crop as necessary.
     """
-    image_out = F.pad(target_image_shape, device=image.device)
-    label_out = F.pad(target_label_shape, device=image.device)
+    image_out = torch.zeros(target_image_shape, device=image.device)
+    label_out = torch.zeros(target_label_shape, device=image.device)
 
     # First we pad to ensure min size is met
     to_pad = []

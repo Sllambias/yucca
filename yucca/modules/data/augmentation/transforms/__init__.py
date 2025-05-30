@@ -1,7 +1,7 @@
 from yucca.modules.data.augmentation.transforms.BiasField import BiasField, Torch_BiasField
 from yucca.modules.data.augmentation.transforms.Blur import Blur, Torch_Blur
 from yucca.modules.data.augmentation.transforms.convert_labels_to_regions import ConvertLabelsToRegions
-from yucca.modules.data.augmentation.transforms.copy_image_to_label import CopyImageToLabel
+from yucca.modules.data.augmentation.transforms.copy_image_to_label import CopyImageToLabel, Torch_CopyImageToLabel
 from yucca.modules.data.augmentation.transforms.cropping_and_padding import CropPad, Torch_CropPad
 from yucca.modules.data.augmentation.transforms.formatting import (
     RemoveBatchDimension,
