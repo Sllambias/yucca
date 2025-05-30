@@ -2,7 +2,6 @@ from yucca.modules.data.augmentation.transforms.YuccaTransform import YuccaTrans
 from yucca.functional.transforms import additive_noise, multiplicative_noise, torch_additive_noise, torch_multiplicative_noise
 import numpy as np
 from typing import Tuple
-import torch
 
 
 class AdditiveNoise(YuccaTransform):
