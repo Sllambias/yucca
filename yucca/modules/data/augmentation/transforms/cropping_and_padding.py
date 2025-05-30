@@ -155,9 +155,7 @@ class Torch_CropPad(YuccaTransform):
             data_dict[self.label_key] = label
         return data_dict
 
-    def __call__(self, packed_data_dict=None, foreground_locations=[], **unpacked_data_dict):
-        data_dict = packed_data_dict if packed_data_dict else unpacked_data_dict
-
+    def __call__(self, data_dict, foreground_locations=[]):
         input_shape, target_image_shape, target_label_shape, pad_kwargs = self.get_params(
             data=data_dict[self.data_key], pad_value=self.pad_value, target_shape=self.patch_size
         )
