@@ -264,7 +264,6 @@ class Torch_Spatial(YuccaTransform):
         return data_dict
 
     def __call__(self, data_dict):
-
         (
             deform_alpha,
             deform_sigma,
