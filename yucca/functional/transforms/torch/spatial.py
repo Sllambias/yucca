@@ -1,15 +1,15 @@
 import torch
 import torch.nn.functional as F
 from typing import Optional, Union
-from yucca.functional.array_operations.matrix_ops import (
-    create_zero_centered_coordinate_matrix,
-    deform_coordinate_matrix,
-    Rx,
-    Ry,
-    Rz,
-    Rz2D,
-)
+from yucca.functional.array_operations.matrix_ops import Rx, Ry, Rz, Rz2D
 
+
+def _create_zero_centered_coordinate_matrix(shape: tuple[int, ...]) -> torch.Tensor:
+    ranges = [torch.arange(s, dtype=torch.float32) for s in shape]
+    mesh = torch.stack(torch.meshgrid(*ranges, indexing="ij"))  # (D, ...)
+    for d, s in enumerate(shape):
+        mesh[d] -= (s - 1) / 2.0
+    return mesh
 
 def torch_spatial(
     image: torch.Tensor,
@@ -33,113 +33,102 @@ def torch_spatial(
     cval: Optional[Union[str, float]] = "min",
     seed: Optional[int] = None,
 ):
-    device = image.device
-    dtype = image.dtype
-    ndim = len(patch_size)
-
     if seed is not None:
         torch.manual_seed(seed)
 
-    # Store original ndim for shape restoration
-    original_image_ndim = image.ndim
-    original_label_ndim = label.ndim if label is not None else None
+    device, dtype = image.device, image.dtype
+    ndim = len(patch_size)
 
-    # : handle standard torch image dimensions
-    if image.dim() == ndim:
-        image = image.unsqueeze(0).unsqueeze(0)
-    elif image.dim() == ndim + 1:
-        image = image.unsqueeze(0)
-    elif image.dim() != ndim + 2:
-        raise ValueError(f"Expected input to have {ndim} spatial dimensions, got {image.dim()} dimensions")
-
+    # Expand dims if needed
+    def _prepare(x): 
+        return x[None, None] if x.ndim == ndim else x[None] if x.ndim == ndim + 1 else x
+    image = _prepare(image)
     if label is not None:
-        if label.dim() == ndim:
-            label = label.unsqueeze(0).unsqueeze(0)
-        elif label.dim() == ndim + 1:
-            label = label.unsqueeze(0)
-        elif label.dim() != ndim + 2:
-            raise ValueError(f"Expected label to have {ndim} spatial dimensions, got {label.dim()} dimensions")
+        label = _prepare(label)
 
-    # : cropping, use full image size
     if not do_crop:
         patch_size = image.shape[2:]
 
-    # : clipping stats
-    if cval == "min":
-        cval = float(image.min())
-    else:
-        assert isinstance(cval, (int, float)), f"Invalid cval: {cval}"
+    coords = _create_zero_centered_coordinate_matrix(patch_size).to(device, dtype)
 
-    img_min = image.min()
-    img_max = image.max()
-
-    # : deformation
-    coords_np = create_zero_centered_coordinate_matrix(patch_size)
     if torch.rand(1) < p_deform:
-        coords_np = deform_coordinate_matrix(coords_np, alpha=alpha, sigma=sigma)
-    coords = torch.from_numpy(coords_np).to(device=device, dtype=dtype)
-
-    # : rotation
-    if torch.rand(1) < p_rot:
-        rot_matrix = torch.eye(ndim, device=device, dtype=dtype)
+        noise = torch.randn(1, ndim, *patch_size, device=device, dtype=dtype)
         if ndim == 2:
-            rot_matrix = rot_matrix @ torch.from_numpy(Rz2D(z_rot)).to(device=device, dtype=dtype)
+            # Separable 2D blur
+            ksize = 21
+            ax = torch.arange(ksize, device=device, dtype=dtype) - ksize // 2
+            k = torch.exp(-0.5 * (ax / sigma) ** 2)
+            k /= k.sum()
+            ky = k.view(1, 1, -1, 1)
+            kx = k.view(1, 1, 1, -1)
+            noise = F.conv2d(noise, ky, padding=(ksize//2, 0), groups=ndim)
+            noise = F.conv2d(noise, kx, padding=(0, ksize//2), groups=ndim)
+        else:
+            # Separable 3D blur
+            ksize = 9
+            ax = torch.arange(ksize, device=device, dtype=dtype) - ksize // 2
+            k = torch.exp(-0.5 * (ax / sigma) ** 2)
+            k /= k.sum()
+            for dim in range(3):
+                shape = [1, 1, 1, 1, 1]
+                shape[dim + 2] = ksize
+                kernel = k.view(*shape).repeat(ndim, 1, 1, 1, 1)
+                padding = [ksize // 2 if i == dim else 0 for i in range(3)]
+                noise = F.conv3d(noise, kernel, padding=padding, groups=ndim)
+        coords += (noise[0] * alpha)
+
+    if torch.rand(1) < p_rot:
+        rot = torch.eye(ndim, device=device, dtype=dtype)
+        if ndim == 2:
+            rot = rot @ torch.from_numpy(Rz2D(z_rot)).to(device=device, dtype=dtype)
         else:
             if torch.rand(1) < p_rot_per_axis:
-                rot_matrix = rot_matrix @ torch.from_numpy(Rx(x_rot)).to(device=device, dtype=dtype)
+                rot = rot @ torch.from_numpy(Rx(x_rot)).to(device=device, dtype=dtype)
             if torch.rand(1) < p_rot_per_axis:
-                rot_matrix = rot_matrix @ torch.from_numpy(Ry(y_rot)).to(device=device, dtype=dtype)
+                rot = rot @ torch.from_numpy(Ry(y_rot)).to(device=device, dtype=dtype)
             if torch.rand(1) < p_rot_per_axis:
-                rot_matrix = rot_matrix @ torch.from_numpy(Rz(z_rot)).to(device=device, dtype=dtype)
-        coords = torch.matmul(coords.reshape(ndim, -1).T, rot_matrix).T.reshape(coords.shape)
+                rot = rot @ torch.from_numpy(Rz(z_rot)).to(device=device, dtype=dtype)
+        coords = (coords.view(ndim, -1).T @ rot).T.view_as(coords)
 
-    # : scaling
     if torch.rand(1) < p_scale:
         coords *= scale_factor
 
-    # : cropping, random or centered
     if random_crop and do_crop:
         for d in range(ndim):
-            crop_center = torch.randint(
-                low=patch_size[d] // 2, high=image.shape[d + 2] - patch_size[d] // 2 + 1, size=(1,), device=device
-            )
-            coords[d] += crop_center
+            lo = patch_size[d] // 2
+            hi = image.shape[d + 2] - patch_size[d] // 2 + 1
+            coords[d] += torch.randint(lo, hi, (1,), device=device)
     else:
         for d in range(ndim):
-            coords[d] += image.shape[d + 2] / 2.0 - 0.5
+            coords[d] += image.shape[d + 2] / 2 - 0.5
 
-    # : normalize to [-1, 1] for grid_sample
     for d in range(ndim):
-        coords[d] = 2.0 * coords[d] / (image.shape[d + 2] - 1) - 1.0
+        coords[d] = 2 * coords[d] / (image.shape[d + 2] - 1) - 1
 
-    if ndim == 2:
-        grid = coords.permute(1, 2, 0).unsqueeze(0)  # (1, H, W, 2)
-    else:
-        grid = coords.permute(1, 2, 3, 0).unsqueeze(0)  # (1, D, H, W, 3)
+    grid = coords.permute(*range(1, ndim + 1), 0)[None]
+    grid_sample_args = {
+        "mode": interpolation_mode,
+        "padding_mode": "zeros",
+        "align_corners": True
+    }
 
-    if interpolation_mode not in {"bilinear", "nearest"}:
-        raise ValueError("interpolation_mode must be 'bilinear' or 'nearest'")
-
-    image_canvas = F.grid_sample(image, grid, mode=interpolation_mode, padding_mode="zeros", align_corners=True)
-
+    image_canvas = F.grid_sample(image, grid, **grid_sample_args)
     if clip_to_input_range:
-        image_canvas = torch.clamp(image_canvas, min=img_min, max=img_max)
+        image_canvas = torch.clamp(image_canvas, min=image.min(), max=image.max())
 
     if label is not None and not skip_label:
-        dtype = label.dtype
-        label_canvas = F.grid_sample(label.to(torch.float), grid, mode="nearest", padding_mode="zeros", align_corners=True).to(
-            dtype
-        )
+        label_canvas = F.grid_sample(label.float(), grid, mode="nearest", padding_mode="zeros", align_corners=True)
+        label_canvas = label_canvas.to(label.dtype)
+    else:
+        label_canvas = None
 
-    def restore_shape(t: torch.Tensor, original_ndim: int) -> torch.Tensor:
-        while t.ndim > original_ndim:
-            t = t.squeeze(0)
-        return t
-
-    image_canvas = restore_shape(image_canvas, original_image_ndim)
-
-    if label is not None and not skip_label:
-        label_canvas = restore_shape(label_canvas, original_label_ndim)
-        return image_canvas, label_canvas
-
-    return image_canvas, None
+    def _restore(x: Optional[torch.Tensor], target_ndim: int) -> Optional[torch.Tensor]:
+        if x is None:
+            return None
+        # For 3D volumes, we want to keep the spatial dimensions
+        if target_ndim == 3:
+            return x.squeeze(0) if x.ndim == 4 else x
+        # For 2D slices, remove all extra dimensions
+        return x.squeeze()
+    
+    return _restore(image_canvas, image.ndim), _restore(label_canvas, label.ndim if label is not None else 0) if label_canvas is not None else None
