@@ -154,7 +154,6 @@ class YuccaManager:
         save_softmax: bool = False,
         prediction_output_dir: str = "./",
     ):
-
         # Here we configure the outpath we will use to store model files and metadata
         # along with the path to plans file which will also be loaded.
         task_config = get_task_config(

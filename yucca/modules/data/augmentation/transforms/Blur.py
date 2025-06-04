@@ -2,6 +2,7 @@ from yucca.modules.data.augmentation.transforms.YuccaTransform import YuccaTrans
 import numpy as np
 from typing import Tuple
 from yucca.functional.transforms import blur
+from yucca.functional.transforms.torch.blur import torch_blur
 
 
 class Blur(YuccaTransform):
@@ -41,4 +42,34 @@ class Blur(YuccaTransform):
             if np.random.uniform() < self.p_per_sample:
                 sigma = self.get_params(self.sigma)
                 data_dict[self.data_key][b] = self.__blur__(data_dict[self.data_key][b], sigma)
+        return data_dict
+
+
+class Torch_Blur(YuccaTransform):
+    def __init__(
+        self,
+        data_key="image",
+        p_per_channel: float = 0.0,
+        sigma=(0.5, 1.0),
+        clip_to_input_range=False,
+    ):
+        self.data_key = data_key
+        self.p_per_channel = p_per_channel
+        self.sigma = sigma
+        self.clip_to_input_range = clip_to_input_range
+
+    @staticmethod
+    def get_params(sigma: Tuple[float]):
+        sigma = np.random.uniform(*sigma)
+        return sigma
+
+    def __blur__(self, image, sigma):
+        image = torch_blur(image, sigma, clip_to_input_range=self.clip_to_input_range)
+        return image
+
+    def __call__(self, data_dict):
+        for c in range(data_dict[self.data_key].shape[0]):
+            if np.random.uniform() < self.p_per_channel:
+                sigma = self.get_params(self.sigma)
+                data_dict[self.data_key][c] = self.__blur__(data_dict[self.data_key][c], sigma)
         return data_dict

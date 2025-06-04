@@ -5,7 +5,6 @@ from yucca.modules.optimization.loss_functions.Dice import SoftSigmoidDiceLoss
 
 
 class SigmoidDiceBCE(nn.Module):
-
     def __init__(
         self,
         sigmoid_dice_kwargs={},

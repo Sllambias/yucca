@@ -85,7 +85,6 @@ def spatial(
     # Mapping the images to the distorted coordinates
     for b in range(image.shape[0]):
         for c in range(image.shape[1]):
-
             img_min = image.min()
             img_max = image.max()
 

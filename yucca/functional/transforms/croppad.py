@@ -12,7 +12,6 @@ def croppad(
     label: np.ndarray = None,
     **pad_kwargs,
 ):
-
     if len(patch_size) == 3:
         image, label = croppad_3D_case_from_3D(
             image=image,

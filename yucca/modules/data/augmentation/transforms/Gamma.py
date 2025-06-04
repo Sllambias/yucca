@@ -1,5 +1,5 @@
 from yucca.modules.data.augmentation.transforms.YuccaTransform import YuccaTransform
-from yucca.functional.transforms import augment_gamma
+from yucca.functional.transforms import augment_gamma, torch_gamma
 import numpy as np
 
 
@@ -68,4 +68,50 @@ class Gamma(YuccaTransform):
                     do_invert,
                     per_channel=self.per_channel,
                 )
+        return data_dict
+
+
+class Torch_Gamma(YuccaTransform):
+    def __init__(
+        self,
+        data_key="image",
+        p_all_channel: float = 0.0,
+        p_invert_image: float = 0.05,
+        gamma_range=(0.5, 2.0),
+        per_channel=True,
+        clip_to_input_range=False,
+    ):
+        self.data_key = data_key
+        self.p_all_channel = p_all_channel
+        self.gamma_range = gamma_range
+        self.p_invert_image = p_invert_image
+        self.per_channel = per_channel
+        self.clip_to_input_range = clip_to_input_range
+
+    @staticmethod
+    def get_params(p_invert_image):
+        # No parameters to retrieve
+        do_invert = False
+        if np.random.uniform() < p_invert_image:
+            do_invert = True
+        return do_invert
+
+    def __gamma__(self, image, gamma_range, invert_image, per_channel):
+        return torch_gamma(
+            image,
+            gamma_range,
+            invert_image,
+            per_channel,
+            clip_to_input_range=self.clip_to_input_range,
+        )
+
+    def __call__(self, data_dict):
+        if np.random.uniform() < self.p_all_channel:
+            do_invert = self.get_params(self.p_invert_image)
+            data_dict[self.data_key] = self.__gamma__(
+                data_dict[self.data_key],
+                self.gamma_range,
+                do_invert,
+                per_channel=self.per_channel,
+            )
         return data_dict
