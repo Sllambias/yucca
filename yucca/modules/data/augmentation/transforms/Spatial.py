@@ -160,14 +160,13 @@ class Torch_Spatial(YuccaTransform):
         data_key="image",
         label_key="label",
         crop=True,
-        cval="min",
         interpolation_mode="bilinear",
         patch_size: Tuple[int] = None,
         clip_to_input_range=True,
         random_crop=True,
         p_deform_all_channel: float = 1.0,
-        deform_sigma=(20, 30),
-        deform_alpha=(300, 600),
+        deform_sigma=(5, 20),
+        deform_alpha=(5, 20),
         p_rot_all_channel: float = 1.0,
         p_rot_per_axis: float = 1.0,
         x_rot_in_degrees=(0.0, 10.0),
@@ -182,7 +181,6 @@ class Torch_Spatial(YuccaTransform):
         self.skip_label = skip_label
         self.interpolation_mode = interpolation_mode
         self.do_crop = crop
-        self.cval = cval
         self.patch_size = patch_size
         self.random_crop = random_crop
         self.clip_to_input_range = clip_to_input_range
@@ -256,7 +254,6 @@ class Torch_Spatial(YuccaTransform):
             do_crop=self.do_crop,
             random_crop=self.random_crop,
             interpolation_mode=self.interpolation_mode,
-            cval=self.cval,
         )
         data_dict[self.data_key] = image
         if label is not None and not self.skip_label:

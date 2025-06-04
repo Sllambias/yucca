@@ -31,7 +31,6 @@ def torch_spatial(
     do_crop: bool = True,
     random_crop: bool = True,
     interpolation_mode: str = "bilinear",
-    cval: Optional[Union[str, float]] = "min",
     seed: Optional[int] = None,
 ):
     if seed is not None:
@@ -41,8 +40,9 @@ def torch_spatial(
     ndim = len(patch_size)
 
     # Expand dims if needed
-    def _prepare(x): 
+    def _prepare(x):
         return x[None, None] if x.ndim == ndim else x[None] if x.ndim == ndim + 1 else x
+
     image = _prepare(image)
     if label is not None:
         label = _prepare(label)
@@ -62,8 +62,8 @@ def torch_spatial(
             k /= k.sum()
             ky = k.view(1, 1, -1, 1)
             kx = k.view(1, 1, 1, -1)
-            noise = F.conv2d(noise, ky, padding=(ksize//2, 0), groups=ndim)
-            noise = F.conv2d(noise, kx, padding=(0, ksize//2), groups=ndim)
+            noise = F.conv2d(noise, ky, padding=(ksize // 2, 0), groups=ndim)
+            noise = F.conv2d(noise, kx, padding=(0, ksize // 2), groups=ndim)
         else:
             # Separable 3D blur
             ksize = 9
@@ -76,7 +76,7 @@ def torch_spatial(
                 kernel = k.view(*shape).repeat(ndim, 1, 1, 1, 1)
                 padding = [ksize // 2 if i == dim else 0 for i in range(3)]
                 noise = F.conv3d(noise, kernel, padding=padding, groups=ndim)
-        coords += (noise[0] * alpha)
+        coords += noise[0] * alpha
 
     if torch.rand(1) < p_rot:
         rot = torch.eye(ndim, device=device, dtype=dtype)
@@ -114,11 +114,7 @@ def torch_spatial(
         grid = grid[..., [2, 1, 0]]
     else:
         raise ValueError("Only 2D and 3D supported")
-    grid_sample_args = {
-        "mode": interpolation_mode,
-        "padding_mode": "zeros",
-        "align_corners": True
-    }
+    grid_sample_args = {"mode": interpolation_mode, "padding_mode": "zeros", "align_corners": True}
 
     image_canvas = F.grid_sample(image, grid, **grid_sample_args)
     if clip_to_input_range:
@@ -138,5 +134,40 @@ def torch_spatial(
             return x.squeeze(0) if x.ndim == 4 else x
         # For 2D slices, remove all extra dimensions
         return x.squeeze()
-    
-    return _restore(image_canvas, image.ndim), _restore(label_canvas, label.ndim if label is not None else 0) if label_canvas is not None else None
+
+    return _restore(image_canvas, image.ndim), (
+        _restore(label_canvas, label.ndim if label is not None else 0) if label_canvas is not None else None
+    )
+
+
+if __name__ == "__main__":
+    import torch
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    array = torch.zeros((1, 12, 12, 12))
+    array[:, 4:8, 4:8, 4:8] = 1
+    array[:, 4, 4:8, 4:8] = 2
+    array = torch.from_numpy(
+        np.load("/Users/zcr545/Desktop/Projects/repos/asparagus_data/preprocessed_data/Task001_OASIS/imagesTr/1000.nii.npy")
+    )
+    out, _ = torch_spatial(
+        array,
+        patch_size=array.shape[1:],
+        p_deform=0,
+        p_rot=1,
+        p_rot_per_axis=1,
+        p_scale=0,
+        alpha=5,  # 5-20
+        sigma=10,  # 5-20
+        x_rot=0,
+        y_rot=0,
+        z_rot=0.1,
+        scale_factor=0,
+        clip_to_input_range=False,
+        do_crop=False,
+    )
+
+    fig, ax = plt.subplots(1, 2)
+    ax[0].imshow(array[0, :, 40], cmap="gray")
+    ax[1].imshow(out[:, 40], cmap="gray")
