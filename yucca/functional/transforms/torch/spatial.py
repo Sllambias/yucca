@@ -5,11 +5,12 @@ from yucca.functional.array_operations.matrix_ops import Rx, Ry, Rz, Rz2D
 
 
 def _create_zero_centered_coordinate_matrix(shape: tuple[int, ...]) -> torch.Tensor:
-    ranges = [torch.arange(s, dtype=torch.float32) for s in shape]
-    mesh = torch.stack(torch.meshgrid(*ranges, indexing="ij"))  # (D, ...)
+    # Using standard numpy indexing 'ij', 2D: (H, W) = (y, x), 3D: (D, H, W) = (z, y, x)
+    mesh = torch.stack(torch.meshgrid(*[torch.arange(s, dtype=torch.float32) for s in shape], indexing="ij"))
     for d, s in enumerate(shape):
         mesh[d] -= (s - 1) / 2.0
     return mesh
+
 
 def torch_spatial(
     image: torch.Tensor,
@@ -88,7 +89,7 @@ def torch_spatial(
                 rot = rot @ torch.from_numpy(Ry(y_rot)).to(device=device, dtype=dtype)
             if torch.rand(1) < p_rot_per_axis:
                 rot = rot @ torch.from_numpy(Rz(z_rot)).to(device=device, dtype=dtype)
-        coords = (coords.view(ndim, -1).T @ rot).T.view_as(coords)
+        coords = (rot @ coords.view(ndim, -1)).view_as(coords)
 
     if torch.rand(1) < p_scale:
         coords *= scale_factor
@@ -105,7 +106,14 @@ def torch_spatial(
     for d in range(ndim):
         coords[d] = 2 * coords[d] / (image.shape[d + 2] - 1) - 1
 
+    # Swap axes to (x, y) or (x, y, z) order for grid_sample (torch does not default to numpy indexing here)
     grid = coords.permute(*range(1, ndim + 1), 0)[None]
+    if ndim == 2:
+        grid = grid[..., [1, 0]]
+    elif ndim == 3:
+        grid = grid[..., [2, 1, 0]]
+    else:
+        raise ValueError("Only 2D and 3D supported")
     grid_sample_args = {
         "mode": interpolation_mode,
         "padding_mode": "zeros",
