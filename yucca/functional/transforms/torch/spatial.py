@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from typing import Optional, Union
+from typing import Optional
 from yucca.functional.array_operations.matrix_ops import Rx, Ry, Rz, Rz2D
 
 
