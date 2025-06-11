@@ -3,7 +3,7 @@ import logging
 from yucca.modules.data.augmentation.transforms.YuccaTransform import YuccaTransform
 from typing import Union, Iterable
 from yucca.functional.transforms import mask_batch
-from yucca.functional.transforms.torch.masking import torch_mask
+from yucca.functional.transforms.torch.masking import torch_mask_all_channels
 
 
 class Masking(YuccaTransform):
@@ -122,7 +122,7 @@ class Torch_Mask(YuccaTransform):
         self,
         image,
     ):
-        image, mask = torch_mask(
+        image, mask = torch_mask_all_channels(
             image=image,
             pixel_value=self.pixel_value,
             ratio=self.ratio,
