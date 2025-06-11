@@ -3,7 +3,6 @@ import torch
 import logging
 import copy
 from torchmetrics import MetricCollection
-from torchmetrics.classification import Dice
 from yucca.pipeline.preprocessing.YuccaPreprocessor import YuccaPreprocessor
 from yucca.modules.optimization.loss_functions.deep_supervision import DeepSupervisionLoss
 from yucca.modules.metrics.training_metrics import F1
@@ -122,13 +121,11 @@ class BaseLightningModule(L.LightningModule):
     def configure_metrics(self):
         self.train_metrics = MetricCollection(
             {
-                "train/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
                 "train/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
             },
         )
         self.val_metrics = MetricCollection(
             {
-                "val/dice": Dice(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None),
                 "val/F1": F1(num_classes=self.num_classes, ignore_index=0 if self.num_classes > 1 else None, average=None),
             },
         )

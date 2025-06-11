@@ -3,6 +3,7 @@ import logging
 from yucca.modules.data.augmentation.transforms.YuccaTransform import YuccaTransform
 from typing import Union, Iterable
 from yucca.functional.transforms import mask_batch
+from yucca.functional.transforms.torch.masking import torch_mask_all_channels
 
 
 class Masking(YuccaTransform):
@@ -95,4 +96,42 @@ class Masking(YuccaTransform):
                 self.token_size,
             )
             data_dict[self.data_key] = self.__mask__(data_dict[self.data_key], pixel_value, ratio, token_size)
+        return data_dict
+
+
+class Torch_Mask(YuccaTransform):
+    def __init__(
+        self,
+        data_key: str = "image",
+        mask_key: str = "mask",
+        pixel_value: float = 0.0,
+        ratio: float = 0.6,
+        token_size: list[int] = [4],
+    ):
+        self.data_key = data_key
+        self.mask_key = mask_key
+        self.pixel_value = pixel_value
+        self.ratio = ratio
+        self.token_size = token_size
+
+    @staticmethod
+    def get_params():
+        pass
+
+    def __mask__(
+        self,
+        image,
+    ):
+        image, mask = torch_mask_all_channels(
+            image=image,
+            pixel_value=self.pixel_value,
+            ratio=self.ratio,
+            token_size=self.token_size,
+        )
+        return image, mask
+
+    def __call__(self, data_dict):
+        image, mask = self.__mask__(data_dict[self.data_key])
+        data_dict[self.data_key] = image
+        data_dict[self.mask_key] = mask
         return data_dict

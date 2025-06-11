@@ -1,5 +1,4 @@
 if __name__ == "__main__":
-
     import lightning as L
     from yucca.pipeline.configuration.configure_task import TaskConfig
     from yucca.pipeline.configuration.configure_paths import get_path_config
