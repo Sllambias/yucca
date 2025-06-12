@@ -51,7 +51,6 @@ def torch_spatial(
         patch_size = image.shape[2:]
 
     coords = _create_zero_centered_coordinate_matrix(patch_size).to(device, dtype)
-
     if torch.rand(1) < p_deform:
         noise = torch.randn(1, ndim, *patch_size, device=device, dtype=dtype)
         if ndim == 2:
@@ -107,7 +106,9 @@ def torch_spatial(
         coords[d] = 2 * coords[d] / (image.shape[d + 2] - 1) - 1
 
     # Swap axes to (x, y) or (x, y, z) order for grid_sample (torch does not default to numpy indexing here)
-    grid = coords.permute(*range(1, ndim + 1), 0)[None]
+    grid = coords.permute(*range(1, ndim + 1), 0)
+    grid = torch.stack([grid] * image.shape[0], dim=0)
+
     if ndim == 2:
         grid = grid[..., [1, 0]]
     elif ndim == 3:
@@ -115,7 +116,6 @@ def torch_spatial(
     else:
         raise ValueError("Only 2D and 3D supported")
     grid_sample_args = {"mode": interpolation_mode, "padding_mode": "zeros", "align_corners": True}
-
     image_canvas = F.grid_sample(image, grid, **grid_sample_args)
     if clip_to_input_range:
         image_canvas = torch.clamp(image_canvas, min=image.min(), max=image.max())
@@ -151,6 +151,8 @@ if __name__ == "__main__":
     array = torch.from_numpy(
         np.load("/Users/zcr545/Desktop/Projects/repos/asparagus_data/preprocessed_data/Task001_OASIS/imagesTr/1000.nii.npy")
     )
+    # array = torch.stack([array, array, array])
+    array = array
     out, _ = torch_spatial(
         array,
         patch_size=array.shape[1:],
