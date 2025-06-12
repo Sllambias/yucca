@@ -36,12 +36,12 @@ def torch_spatial(
     if seed is not None:
         torch.manual_seed(seed)
 
-    device, dtype = image.device, image.dtype
+    device, dtype, orig_ndim = image.device, image.dtype, image.ndim
     ndim = len(patch_size)
 
     # Expand dims if needed
     def _prepare(x):
-        return x[None, None] if x.ndim == ndim else x[None] if x.ndim == ndim + 1 else x
+        return x[None, None] if orig_ndim == ndim else x[None] if orig_ndim == ndim + 1 else x
 
     image = _prepare(image)
     if label is not None:
@@ -130,13 +130,13 @@ def torch_spatial(
         if x is None:
             return None
         # For 3D volumes, we want to keep the spatial dimensions
-        if target_ndim == 3:
-            return x.squeeze(0) if x.ndim == 4 else x
-        # For 2D slices, remove all extra dimensions
-        return x.squeeze()
+        current_dims = x.ndim
+        for i in range(current_dims - target_ndim):
+            x = x.squeeze(0)
+        return x
 
-    return _restore(image_canvas, image.ndim), (
-        _restore(label_canvas, label.ndim if label is not None else 0) if label_canvas is not None else None
+    return _restore(image_canvas, orig_ndim), (
+        _restore(label_canvas, orig_ndim if label is not None else 0) if label_canvas is not None else None
     )
 
 
@@ -150,12 +150,15 @@ if __name__ == "__main__":
     array[:, 4, 4:8, 4:8] = 2
     array = torch.from_numpy(
         np.load("/Users/zcr545/Desktop/Projects/repos/asparagus_data/preprocessed_data/Task001_OASIS/imagesTr/1000.nii.npy")
-    )
-    # array = torch.stack([array, array, array])
-    array = array
+    ).squeeze(0)
+    array = torch.stack([array, array], dim=0)
+    print(array.shape)
+    array = torch.stack([array, array, array])
+    print(array.shape)
+
     out, _ = torch_spatial(
         array,
-        patch_size=array.shape[1:],
+        patch_size=array.shape[-3:],
         p_deform=0,
         p_rot=1,
         p_rot_per_axis=1,
@@ -169,7 +172,7 @@ if __name__ == "__main__":
         clip_to_input_range=False,
         do_crop=False,
     )
-
+    print("IN", array.shape, "OUT", out.shape)
     fig, ax = plt.subplots(1, 2)
     ax[0].imshow(array[0, :, 40], cmap="gray")
     ax[1].imshow(out[:, 40], cmap="gray")
