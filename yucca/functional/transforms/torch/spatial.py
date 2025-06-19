@@ -52,19 +52,20 @@ def torch_spatial(
 
     coords = _create_zero_centered_coordinate_matrix(patch_size).to(device, dtype)
     if torch.rand(1) < p_deform:
-        noise = torch.randn(1, ndim, *patch_size, device=device, dtype=dtype)
         if ndim == 2:
             # Separable 2D blur
+            noise = torch.randn(1, 1, *patch_size, device=device, dtype=dtype)
             ksize = 21
             ax = torch.arange(ksize, device=device, dtype=dtype) - ksize // 2
             k = torch.exp(-0.5 * (ax / sigma) ** 2)
             k /= k.sum()
             ky = k.view(1, 1, -1, 1)
             kx = k.view(1, 1, 1, -1)
-            noise = F.conv2d(noise, ky, padding=(ksize // 2, 0), groups=ndim)
-            noise = F.conv2d(noise, kx, padding=(0, ksize // 2), groups=ndim)
+            noise = F.conv2d(noise, ky, padding=(ksize // 2, 0), groups=1)
+            noise = F.conv2d(noise, kx, padding=(0, ksize // 2), groups=1)
         else:
             # Separable 3D blur
+            noise = torch.randn(1, ndim, *patch_size, device=device, dtype=dtype)
             ksize = 9
             ax = torch.arange(ksize, device=device, dtype=dtype) - ksize // 2
             k = torch.exp(-0.5 * (ax / sigma) ** 2)
