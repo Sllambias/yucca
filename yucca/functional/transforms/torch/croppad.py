@@ -18,6 +18,8 @@ def torch_croppad(
     Crops and pads the input image and label to the specified patch size.
     Input includes channel/modality dimension so 3D is actually 4D and 2D is 3D.
     """
+    if foreground_locations is None:
+        foreground_locations = []
 
     if len(patch_size) == 3:
         image, label = croppad_3D_case_from_3D(
