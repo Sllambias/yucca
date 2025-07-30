@@ -64,7 +64,11 @@ def normalizer(array: np.ndarray, scheme: str, intensities: Optional[dict] = Non
         array -= mean_intensity
         array /= max(std_intensity, 1e-8)
         return array
-
+        
+    elif scheme == "ct_brain_norm"
+        np.clip(array, a_min=-200, a_max=400, out=array)
+        array /= 200
+        return array
 
 def clamp(x, mask, q=0.99):
     q_val = np.quantile(x[mask], q)
