@@ -15,7 +15,7 @@ def normalizer(array: np.ndarray, scheme: str, intensities: Optional[dict] = Non
     Clip = for contrast clipping. This will clip values to the 0.01 and 99.99th percentiles
         and then perform 0-1 normalization.
     """
-    accepted_schemes = ["clipping", "ct", "minmax", "range", "no_norm", "standardize", "volume_wise_znorm", "255to1"]
+    accepted_schemes = ["clipping", "ct", "minmax", "range", "no_norm", "standardize", "volume_wise_znorm", "255to1", "ct_brain_norm"]
 
     assert scheme in accepted_schemes, "invalid normalization scheme inserted" f"attempted scheme: {scheme}"
     assert array is not None
