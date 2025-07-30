@@ -7,7 +7,7 @@ def mask_batch(batch, pixel_value, ratio, token_size):
     )
     # np.ceil to get a grid with exact or larger dims than the input image
     # later we will crop it to the desired dims
-    slices = [slice(0, shape) for shape in batch.shape[2:]]
+    slices = (slice(0, shape) for shape in batch.shape[2:])
     grid_dims = np.ceil(batch.shape[2:] / np.array(token_size)).astype(np.uint8)
 
     grid_flat = np.ones(np.prod(grid_dims))
@@ -17,5 +17,5 @@ def mask_batch(batch, pixel_value, ratio, token_size):
     for idx, size in enumerate(token_size):
         grid = np.repeat(grid, repeats=size, axis=idx)
 
-    batch[:, :, grid[*slices] == 0] = pixel_value
+    batch[:, :, grid[slices] == 0] = pixel_value
     return batch
