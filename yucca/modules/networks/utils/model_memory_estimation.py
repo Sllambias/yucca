@@ -150,6 +150,9 @@ def find_optimal_tensor_dims(
     ):  # ViT needs to be reinstantiated each time patch_size is changed so we use the normal UNet for proxy.
         model_name = "UNet"
 
+    elif model_name[-3:].lower() == "cov":
+        model_name = model_name.split("_")[0]
+
     model = recursive_find_python_class(
         folder=[join(yucca.__path__[0], "modules", "networks")],
         class_name=model_name,
