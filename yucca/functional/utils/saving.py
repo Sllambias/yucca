@@ -1,13 +1,10 @@
 import nibabel as nib
 import numpy as np
+import os
 from yucca.functional.utils.softmax import softmax
 from yucca.functional.utils.nib_utils import reorient_nib_image
+from yucca.functional.utils.file_and_folders import subfiles
 from PIL import Image
-from batchgenerators.utilities.file_and_folder_operations import (
-    join,
-    subfiles,
-    maybe_mkdir_p as ensure_dir_exists,
-)
 
 
 def save_nifti_from_numpy(pred, outpath, properties, compression=9):
@@ -87,7 +84,7 @@ def save_multilabel_prediction_from_logits(logits, outpath, properties, compress
 
 
 def merge_softmax_from_folders(folders: list, outpath, method="sum"):
-    ensure_dir_exists(outpath)
+    os.makedirs(outpath, exists_ok=True)
     cases = subfiles(folders[0], suffix=".npz", join=False)
     for folder in folders:
         assert cases == subfiles(folder, suffix=".npz", join=False), (
@@ -98,7 +95,7 @@ def merge_softmax_from_folders(folders: list, outpath, method="sum"):
         )
 
     for case in cases:
-        files_for_case = [np.load(join(folder, case), allow_pickle=True) for folder in folders]
+        files_for_case = [np.load(os.path.join(folder, case), allow_pickle=True) for folder in folders]
         properties_for_case = files_for_case[0]["properties"]
         files_for_case = [file["data"].astype(np.float32) for file in files_for_case]
 
@@ -108,7 +105,7 @@ def merge_softmax_from_folders(folders: list, outpath, method="sum"):
         files_for_case = np.argmax(files_for_case, 0)
         save_nifti_from_numpy(
             files_for_case,
-            join(outpath, case[:-4]),
+            os.path.join(outpath, case[:-4]),
             properties=properties_for_case.item(),
         )
 

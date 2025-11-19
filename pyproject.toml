@@ -41,6 +41,20 @@ dependencies = [
 ]
 
 
+[dependency-groups]
+light = [
+    "connected_components_3d>=3.12.4",
+    "numpy>=1.26.4",
+    "scikit_image>=0.22.0",
+    "scikit_learn>=1.4.1.post1",
+    "scipy>=1.12.0",
+    "torchmetrics>=1.4.0.post0",
+    "nibabel>=5.2.1",
+    "tqdm>=4.66.2",
+    "pillow>=10.2.0",
+]
+
+
 [project.optional-dependencies]
 test = [
     'pytest>=7.3',

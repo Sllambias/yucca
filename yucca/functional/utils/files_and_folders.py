@@ -4,11 +4,29 @@ import fileinput
 import re
 import shutil
 import os
-from batchgenerators.utilities.file_and_folder_operations import (
-    join,
-    subdirs,
-)
 from typing import Union, List
+
+
+def subdirs(
+    folder: str, join: bool = True, prefix: Optional[str] = None, suffix: Optional[str] = None, sort: bool = True
+) -> List[str]:
+    """
+    implementation by: https://github.com/MIC-DKFZ/batchgenerators
+    """
+    subdirectories = []
+    with os.scandir(folder) as entries:
+        for entry in entries:
+            if (
+                entry.is_dir()
+                and (prefix is None or entry.name.startswith(prefix))
+                and (suffix is None or entry.name.endswith(suffix))
+            ):
+                dir_path = entry.path if join else entry.name
+                subdirectories.append(dir_path)
+
+    if sort:
+        subdirectories.sort()
+    return subdirectories
 
 
 def replace_in_file(file_path, pattern_replacement):
@@ -139,7 +157,7 @@ def recursive_find_python_class(folder: list, class_name: str, current_module: s
                 if ispkg:
                     next_current_module = current_module + "." + modname
                     tr = _recursive_find_python_class(
-                        [join(folder[0], modname)],
+                        [os.path.join(folder[0], modname)],
                         class_name,
                         current_module=next_current_module,
                     )
