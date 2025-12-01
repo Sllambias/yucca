@@ -1,4 +1,4 @@
-from batchgenerators.utilities.file_and_folder_operations import load_json
+from yucca.functional.utils.loading import load_json
 
 
 class node:

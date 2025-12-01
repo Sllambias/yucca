@@ -1,9 +1,22 @@
-from batchgenerators.transforms.abstract_transforms import AbstractTransform
-from abc import abstractmethod
+import abc
+
+
+class AbstractTransform(object):
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def __call__(self, **data_dict):
+        raise NotImplementedError("Abstract, so implement")
+
+    def __repr__(self):
+        ret_str = (
+            str(type(self).__name__) + "( " + ", ".join([key + " = " + repr(val) for key, val in self.__dict__.items()]) + " )"
+        )
+        return ret_str
 
 
 class YuccaTransform(AbstractTransform):
-    @abstractmethod
+    @abc.abstractmethod
     def get_params(self):
         """
         This will return a random value between
@@ -35,7 +48,7 @@ class YuccaTransform(AbstractTransform):
         data modalities and labels remain registered.
         """
 
-    @abstractmethod
+    @abc.abstractmethod
     def __call__(self):
         """
         This will be of the form __call__(self, packed_dict: dict = None, **unpacked_dict):

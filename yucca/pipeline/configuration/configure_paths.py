@@ -1,4 +1,5 @@
-from batchgenerators.utilities.file_and_folder_operations import join, isdir, subdirs, maybe_mkdir_p as ensure_dir_exists
+import os
+from yucca.functional.utils.files_and_folders import subdirs
 from dataclasses import dataclass
 from typing import Union, Literal
 from yucca.paths import get_models_path, get_preprocessed_data_path
@@ -25,9 +26,9 @@ class PathConfig:
 
 
 def get_path_config(task_config: TaskConfig, stage: Literal["fit", "test", "predict"]):
-    task_dir = join(get_preprocessed_data_path(), task_config.task)
-    train_data_dir = join(task_dir, task_config.planner_name)
-    save_dir = join(
+    task_dir = os.path.join(get_preprocessed_data_path(), task_config.task)
+    train_data_dir = os.path.join(task_dir, task_config.planner_name)
+    save_dir = os.path.join(
         get_models_path(),
         task_config.task,
         task_config.model_name + "__" + task_config.model_dimensions,
@@ -37,16 +38,16 @@ def get_path_config(task_config: TaskConfig, stage: Literal["fit", "test", "pred
     )
 
     version = detect_version(save_dir, task_config.continue_from_most_recent)
-    version_dir = join(save_dir, f"version_{version}")
-    ensure_dir_exists(version_dir)
+    version_dir = os.path.join(save_dir, f"version_{version}")
+    os.makedirs(version_dir, exist_ok=True)
 
     # First try to load torch checkpoints and extract plans and carry-over information from there.
     if stage == "fit":
-        plans_path = join(task_dir, task_config.planner_name, task_config.planner_name + "_plans.json")
+        plans_path = os.path.join(task_dir, task_config.planner_name, task_config.planner_name + "_plans.json")
     if stage == "test":
         raise NotImplementedError
     if stage == "predict":
-        plans_path = join(version_dir, "hparams.yaml")
+        plans_path = os.path.join(version_dir, "hparams.yaml")
 
     return PathConfig(
         plans_path=plans_path,
@@ -60,7 +61,7 @@ def get_path_config(task_config: TaskConfig, stage: Literal["fit", "test", "pred
 
 def detect_version(save_dir, continue_from_most_recent) -> Union[None, int]:
     # If the dir doesn't exist we return version 0
-    if not isdir(save_dir):
+    if not os.path.isdir(save_dir):
         return 0
 
     # The dir exists. Check if any previous version exists in dir.

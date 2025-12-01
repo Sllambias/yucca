@@ -2,9 +2,9 @@ import lightning as pl
 import torchvision
 import logging
 import torch
+import os
 from typing import Literal, Optional, Union
 from torch.utils.data import DataLoader, Sampler
-from batchgenerators.utilities.file_and_folder_operations import join
 from yucca.pipeline.configuration.split_data import SplitConfig
 from yucca.modules.data.datasets.YuccaDataset import YuccaTestDataset, YuccaTrainDataset
 from yucca.modules.data.samplers import InfiniteRandomSampler
@@ -116,8 +116,8 @@ class YuccaDataModule(pl.LightningDataModule):
             assert self.splits_config is not None
             assert self.task_type is not None
 
-            self.train_samples = [join(self.train_data_dir, i) for i in self.splits_config.train(self.split_idx)]
-            self.val_samples = [join(self.train_data_dir, i) for i in self.splits_config.val(self.split_idx)]
+            self.train_samples = [os.path.join(self.train_data_dir, i) for i in self.splits_config.train(self.split_idx)]
+            self.val_samples = [os.path.join(self.train_data_dir, i) for i in self.splits_config.val(self.split_idx)]
 
             if len(self.train_samples) < 100:
                 logging.info(f"Training on samples: {self.train_samples}")

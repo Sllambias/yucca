@@ -1,5 +1,4 @@
-from typing import Union, List, Optional, Callable, Type
-from pytorchvideo.models.resnet import create_resnet
+from typing import List, Optional, Type
 from torch import nn, Tensor
 import torch
 from yucca.modules.networks.blocks_and_layers.res_blocks import BasicBlock, Bottleneck, conv_k1

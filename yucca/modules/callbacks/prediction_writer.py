@@ -1,6 +1,6 @@
 from lightning.pytorch.callbacks import BasePredictionWriter
 from yucca.functional.utils.saving import save_prediction_from_logits, save_multilabel_prediction_from_logits
-from batchgenerators.utilities.file_and_folder_operations import join
+import os
 
 
 class WritePredictionFromLogits(BasePredictionWriter):
@@ -21,13 +21,13 @@ class WritePredictionFromLogits(BasePredictionWriter):
         if self.multilabel:
             save_multilabel_prediction_from_logits(
                 logits,
-                join(self.output_dir, case_id),
+                os.path.join(self.output_dir, case_id),
                 properties=properties,
             )
         else:
             save_prediction_from_logits(
                 logits,
-                join(self.output_dir, case_id),
+                os.path.join(self.output_dir, case_id),
                 properties=properties,
                 save_softmax=self.save_softmax,
             )

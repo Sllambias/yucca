@@ -2,6 +2,7 @@ import sys
 import numpy as np
 import nibabel as nib
 import logging
+import os
 from typing import Optional
 from yucca.functional.transforms.label_transforms import convert_labels_to_regions, translate_region_labels
 from yucca.functional.utils.nib_utils import get_nib_spacing
@@ -9,7 +10,6 @@ from yucca.functional.utils.loading import read_file_to_nifti_or_np
 from yucca.functional.evaluation.obj_metrics import get_obj_stats_for_label
 from yucca.functional.evaluation.surface_metrics import get_surface_metrics_for_label
 from tqdm import tqdm
-from batchgenerators.utilities.file_and_folder_operations import join
 from sklearn.metrics import confusion_matrix
 from yucca.functional.evaluation.metrics import auroc
 
@@ -97,8 +97,8 @@ def evaluate_multilabel_case_segm(
     assert regions is not None
 
     case_dict = {}
-    predpath = join(folder_with_predictions, case)
-    gtpath = join(folder_with_ground_truth, case)
+    predpath = os.path.join(folder_with_predictions, case)
+    gtpath = os.path.join(folder_with_ground_truth, case)
     case_dict["prediction_path"] = predpath
     case_dict["ground_truth_path"] = gtpath
 
@@ -184,8 +184,8 @@ def evaluate_case_segm(
     surface_tol: int = 1,
 ):
     case_dict = {}
-    predpath = join(folder_with_predictions, case)
-    gtpath = join(folder_with_ground_truth, case)
+    predpath = os.path.join(folder_with_predictions, case)
+    gtpath = os.path.join(folder_with_ground_truth, case)
 
     case_dict["prediction_path"] = predpath
     case_dict["ground_truth_path"] = gtpath
@@ -269,8 +269,8 @@ def evaluate_folder_cls(
 
     # load predictions and ground truths
     for case in tqdm(subjects, desc="Evaluating"):
-        predpath = join(folder_with_predictions, case)
-        gtpath = join(folder_with_ground_truth, case)
+        predpath = os.path.join(folder_with_predictions, case)
+        gtpath = os.path.join(folder_with_ground_truth, case)
 
         pred: int = np.loadtxt(predpath)
         gt: int = np.loadtxt(gtpath)

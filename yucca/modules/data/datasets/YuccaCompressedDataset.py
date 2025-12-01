@@ -1,12 +1,12 @@
 import numpy as np
-from batchgenerators.utilities.file_and_folder_operations import isfile
+import os
 from yucca.modules.data.datasets.YuccaDataset import YuccaTrainDataset
 
 
 class YuccaCompressedTrainDataset(YuccaTrainDataset):
     def load_and_maybe_keep_volume(self, path: str):
         path = path + ".npz"
-        if isfile(path):
+        if os.path.isfile(path):
             try:
                 return np.load(path, "r")["data"]
             except ValueError:

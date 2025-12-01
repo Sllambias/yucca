@@ -231,37 +231,3 @@ class YuccaEvaluator(object):
         print("Saving results.json \n \n ########################################################################")
         with open(self.outpath, "w") as f:
             json.dump(dict, f, default=float, indent=4)
-
-    def update_streamtable(self, results_dict):
-        """
-        Save evaluation results to a wandb StreamTable
-
-        :param results_dict: dictionary with evaluation results
-        """
-        from weave.monitoring import StreamTable
-
-        task = self.outpath.split(os.path.sep)[-5]
-        target = self.outpath.split(os.path.sep)[-6]
-        model_name = "/".join(self.outpath.split(os.path.sep)[-4:])
-
-        st = StreamTable(table_name=task, entity_name=wandb.api.viewer()["entity"], project_name="Yucca")
-
-        stream_dict = {"0. Experiment": model_name, "0. Target Task": target}
-
-        if self.task_type == "classification":
-            stream_dict = {**stream_dict, **results_dict}
-
-        elif self.task_type == "segmentation":
-            for key, _ in results_dict.items():
-                if key == "0":
-                    continue
-                else:
-                    stream_dict.update(
-                        {f"{key}. " + k: v for k, v in results_dict[key].items() if k in self.metrics_included_in_streamtable}
-                    )
-
-        else:
-            raise NotImplementedError("Task type not supported")
-
-        st.log(stream_dict)
-        st.finish()

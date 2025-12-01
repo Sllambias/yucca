@@ -2,7 +2,6 @@ if __name__ == "__main__":
     import lightning as L
     import os
     import torch
-    from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p as ensure_dir_exists
     from yucca.paths import (
         get_models_path,
         get_results_path,
@@ -41,7 +40,7 @@ if __name__ == "__main__":
         "version_0",
         "best",
     )
-    ensure_dir_exists(save_path)
+    os.makedirs(save_path, exist_ok=True)
 
     ckpt = torch.load(ckpt_path, map_location="cpu")
     pred_writer = WritePredictionFromLogits(output_dir=save_path, save_softmax=False, write_interval="batch")
