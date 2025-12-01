@@ -26,11 +26,10 @@ import numpy as np
 import yucca
 import math
 import logging
+import os
 from yucca.functional.utils.torch_utils import get_available_device, flush_and_get_torch_memory_allocated
 from yucca.functional.utils.files_and_folders import recursive_find_python_class
 from yucca.functional.utils.kwargs import filter_kwargs
-
-from batchgenerators.utilities.file_and_folder_operations import join
 from torch import nn
 
 
@@ -154,7 +153,7 @@ def find_optimal_tensor_dims(
         model_name = model_name.split("_")[0]
 
     model = recursive_find_python_class(
-        folder=[join(yucca.__path__[0], "modules", "networks")],
+        folder=[os.path.join(yucca.__path__[0], "modules", "networks")],
         class_name=model_name,
         current_module="yucca.modules.networks",
     )

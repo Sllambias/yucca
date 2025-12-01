@@ -7,11 +7,6 @@ from lightning.pytorch.utilities.rank_zero import rank_zero_only
 from lightning.pytorch.core.saving import save_hparams_to_yaml
 from lightning.fabric.utilities.logger import _convert_params
 from time import localtime, strftime, time
-from batchgenerators.utilities.file_and_folder_operations import (
-    join,
-    maybe_mkdir_p as ensure_dir_exists,
-    isdir,
-)
 from typing import Any, Dict, Optional, Union
 
 
@@ -60,18 +55,18 @@ class YuccaLogger(Logger):
     def log_dir(self):
         log_dir = self.root_dir
         if self.name is not None:
-            log_dir = join(log_dir, self.name)
+            log_dir = os.path.join(log_dir, self.name)
         if self.version is not None:
             version = self.version if isinstance(self.version, str) else f"version_{self.version}"
-            log_dir = join(log_dir, version)
-        if not isdir(log_dir):
-            ensure_dir_exists(log_dir)
+            log_dir = os.path.join(log_dir, version)
+        if not os.path.isdir(log_dir):
+            os.makedirs(log_dir, exist_ok=True)
         return log_dir
 
     @rank_zero_only
     def create_logfile(self):
-        ensure_dir_exists(self.log_dir)
-        self.log_file = join(
+        os.makedirs(self.log_dir, exist_ok=True)
+        self.log_file = os.path.join(
             self.log_dir,
             "training_log.txt",
         )

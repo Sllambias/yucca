@@ -3,7 +3,8 @@ import torch
 import os
 import logging
 from typing import Union, Literal, Optional
-from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle, isfile
+from yucca.functional.utils.files_and_folders import subfiles
+from yucca.functional.utils.loading import load_pickle
 from yucca.modules.data.augmentation.transforms.cropping_and_padding import CropPad
 from yucca.modules.data.augmentation.transforms.formatting import NumpyToTorch
 
@@ -64,7 +65,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
     def load_and_maybe_keep_volume(self, path):
         path = path + ".npy"
         if not self.keep_in_ram:
-            if isfile(path):
+            if os.path.isfile(path):
                 try:
                     return np.load(path, "r")
                 except ValueError:
@@ -72,7 +73,7 @@ class YuccaTrainDataset(torch.utils.data.Dataset):
             else:
                 print("uncompressed data was not found.")
 
-        if isfile(path):
+        if os.path.isfile(path):
             if path in self.already_loaded_cases:
                 return self.already_loaded_cases[path]
             try:
@@ -242,10 +243,9 @@ class YuccaTestPreprocessedDataset(torch.utils.data.Dataset):
 if __name__ == "__main__":
     import torch
     from yucca.paths import get_preprocessed_data_path
-    from batchgenerators.utilities.file_and_folder_operations import join
     from yucca.modules.data.samplers import InfiniteRandomSampler
 
-    files = subfiles(join(get_preprocessed_data_path(), "Task001_OASIS/YuccaPlanner"), suffix="npy")
+    files = subfiles(os.path.join(get_preprocessed_data_path(), "Task001_OASIS/YuccaPlanner"), suffix="npy")
     ds = YuccaTrainDataset(files, patch_size=(12, 12, 12))
     sampler = InfiniteRandomSampler(ds)
     dl = torch.utils.data.DataLoader(ds, num_workers=2, batch_size=2, sampler=sampler)

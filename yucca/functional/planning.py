@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Optional, List, Union
-from batchgenerators.utilities.file_and_folder_operations import subfiles, load_pickle
+from yucca.functional.utils.files_and_folders import subfiles
+from yucca.functional.utils.loading import load_pickle
 
 
 def make_plans_file(

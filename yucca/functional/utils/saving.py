@@ -1,10 +1,16 @@
 import nibabel as nib
 import numpy as np
 import os
+import pickle
 from yucca.functional.utils.softmax import softmax
 from yucca.functional.utils.nib_utils import reorient_nib_image
 from yucca.functional.utils.file_and_folders import subfiles
 from PIL import Image
+
+
+def save_pickle(obj, file: str, mode: str = "wb") -> None:
+    with open(file, mode) as f:
+        pickle.dump(obj, f)
 
 
 def save_nifti_from_numpy(pred, outpath, properties, compression=9):

@@ -1,5 +1,5 @@
+import os
 import torch
-from batchgenerators.utilities.file_and_folder_operations import join, isfile
 from dataclasses import dataclass
 from typing import Union
 from yucca.pipeline.configuration.configure_paths import PathConfig
@@ -96,12 +96,16 @@ def get_checkpoint_config_from_ckpt(ckpt_path: str):
 
 def find_checkpoint_path(ckpt_path: Union[str, None], continue_from_most_recent: bool, version: int, version_dir: str):
     if ckpt_path:
-        assert isfile(ckpt_path), f"Checkpoint was not found. Looked in: {ckpt_path}"
+        assert os.path.isfile(ckpt_path), f"Checkpoint was not found. Looked in: {ckpt_path}"
         logging.info(f"Using ckpt file: {ckpt_path}")
         return ckpt_path
-    elif version is not None and continue_from_most_recent and isfile(join(version_dir, "checkpoints", "last.ckpt")):
+    elif (
+        version is not None
+        and continue_from_most_recent
+        and os.path.isfile(os.path.join(version_dir, "checkpoints", "last.ckpt"))
+    ):
         logging.info("Using last checkpoint and continuing training")
-        return join(version_dir, "checkpoints", "last.ckpt")
+        return os.path.join(version_dir, "checkpoints", "last.ckpt")
     else:
         return None
 

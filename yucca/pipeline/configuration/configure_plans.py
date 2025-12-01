@@ -1,12 +1,12 @@
 import yucca
-from batchgenerators.utilities.file_and_folder_operations import join, load_json, isfile
+import os
 from dataclasses import dataclass
 from typing import Union, Literal
 from yucca.pipeline.preprocessing.UnsupervisedPreprocessor import UnsupervisedPreprocessor
 from yucca.pipeline.preprocessing.ClassificationPreprocessor import ClassificationPreprocessor
 from yucca.functional.utils.dict import without_keys
 from yucca.functional.utils.files_and_folders import recursive_find_python_class
-from yucca.functional.utils.loading import load_yaml
+from yucca.functional.utils.loading import load_yaml, load_json
 import logging
 
 
@@ -54,7 +54,7 @@ def get_plan_config(
     if stage == "predict":
         # In this case we don't want to rely on plans being found in the preprocessed folder,
         # as it might not exist.
-        if isfile(plans_path):
+        if os.path.isfile(plans_path):
             plans = load_yaml(plans_path)["config"]["plans"]
         else:
             assert ckpt_plans is not None
@@ -109,7 +109,7 @@ def setup_task_type(plans):
 
     # If key is not present in plan then we try to infer the task_type from the Type of Preprocessor
     preprocessor_class = recursive_find_python_class(
-        folder=[join(yucca.__path__[0], "pipeline", "preprocessing")],
+        folder=[os.path.join(yucca.__path__[0], "pipeline", "preprocessing")],
         class_name=plans["preprocessor"],
         current_module="yucca.pipeline.preprocessing",
     )

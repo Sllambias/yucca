@@ -2,6 +2,7 @@ import yaml
 import os
 import nibabel as nib
 import numpy as np
+import pickle
 from PIL import Image
 
 
@@ -21,3 +22,14 @@ def read_file_to_nifti_or_np(imagepath, dtype=np.float32):
         return np.atleast_1d(np.genfromtxt(imagepath, delimiter=",", dtype=dtype))
     else:
         raise TypeError(f"File type invalid. Found extension: {ext} and expected one in [nii, nii.gz, png, csv, txt]")
+
+
+def load_pickle(file: str, mode: str = "rb"):
+    with open(file, mode) as f:
+        a = pickle.load(f)
+    return a
+
+
+def load_json(p):
+    with open(p, "r") as f:
+        return json.load(f)

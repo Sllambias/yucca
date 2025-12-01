@@ -5,8 +5,6 @@ PLEASE READ YUCCA/DOCUMENTATION/TUTORIALS/ENVIRONMENT_VARIABLES.MD FOR INFORMATI
 import os
 from dotenv import load_dotenv
 
-from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p as ensure_dir_exists
-
 
 def var_is_set(var):
     return var in os.environ.keys()
@@ -18,7 +16,7 @@ def get_environment_variable(var):
         raise ValueError(f"Missing required environment variable {var}.")
 
     path = os.environ[var]
-    ensure_dir_exists(path)
+    os.makedirs(path, exist_ok=True)
     return path
 
 
