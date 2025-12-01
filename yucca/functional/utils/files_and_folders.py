@@ -4,7 +4,7 @@ import fileinput
 import re
 import shutil
 import os
-from typing import Union, List
+from typing import Union, List, Optional
 
 
 def subdirs(
