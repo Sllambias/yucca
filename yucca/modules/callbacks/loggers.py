@@ -3,9 +3,9 @@ import os
 import logging
 from argparse import Namespace
 from lightning.pytorch.loggers.logger import Logger
-from pytorch_lightning.utilities.rank_zero import rank_zero_only
-from pytorch_lightning.core.saving import save_hparams_to_yaml
-from lightning_fabric.utilities.logger import _convert_params
+from lightning.pytorch.utilities.rank_zero import rank_zero_only
+from lightning.pytorch.core.saving import save_hparams_to_yaml
+from lightning.fabric.utilities.logger import _convert_params
 from time import localtime, strftime, time
 from batchgenerators.utilities.file_and_folder_operations import (
     join,
